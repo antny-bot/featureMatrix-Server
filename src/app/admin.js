@@ -40,6 +40,9 @@ export function requireAdmin(callback) {
   if (!modal) { callback(); return; } // 모달 없으면 그냥 실행
   document.getElementById('adminPwInp').value = '';
   document.getElementById('adminAuthErr').textContent = '';
+  // 이미 열린 모달보다 위에 표시
+  document.querySelectorAll('.ov.on').forEach(m => { m.style.zIndex = '1000'; });
+  modal.style.zIndex = '1010';
   modal.classList.add('on');
   modal._callback = callback;
   setTimeout(() => document.getElementById('adminPwInp').focus(), 100);

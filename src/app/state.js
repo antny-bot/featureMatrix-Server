@@ -166,9 +166,11 @@ export async function saveToServer() {
     const json = await res.json();
     if (!json.ok) { notify('서버 저장 실패: ' + json.error, true); return false; }
     lastServerTs = json.serverTs;
+    window.setServerStatus?.('ok');
     saveLocal();
     return true;
   } catch(e) {
+    window.setServerStatus?.('error');
     notify('서버에 연결할 수 없습니다. 로컬에 임시 저장됩니다.', true);
     saveLocal();
     return false;
@@ -186,12 +188,14 @@ export async function loadFromServer() {
     if (json.payload) {
       applyServerPayload(json.payload); // 공유 데이터 반영
       lastServerTs = json.serverTs;
+      window.setServerStatus?.('ok');
       saveLocal();                      // 개인 설정 캐시 갱신
       return true;
     }
     // 서버에 데이터 없음 → 로컬 캐시 items 유지
     return false;
   } catch(e) {
+    window.setServerStatus?.('error');
     notify('서버 연결 실패 — 로컬 캐시를 불러옵니다.', true);
     return false;
   }
@@ -228,14 +232,6 @@ export function resolveConflictKeepMine() {
 
 export function resolveConflictUseServer(serverData) {
   applyServerPayload(serverData.payload || serverData);
-  lastServerTs = serverData.serverTs || lastServerTs;
-  saveLocal();
-  window.__sobukRenderAll?.();
-  notify('서버 데이터로 업데이트됐습니다.');
-}
-
-export function resolveConflictUseServer(serverData) {
-  applyPayload(serverData.payload || serverData);
   lastServerTs = serverData.serverTs || lastServerTs;
   saveLocal();
   window.__sobukRenderAll?.();

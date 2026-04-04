@@ -58,7 +58,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 추가
     </button>
     <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">⚙ 설정</button>
-    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default">🌐 서버</span>
+    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:5px">
+      <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
+      <span id="serverStatusLabel">🌐 서버</span>
+    </span>
     <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">🔑 관리자</span>
     <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;font-size:.7rem">잠금</button>
     <button class="btn btn-g btn-sm" onclick="openModal('shortcutsModal')" title="단축키 (?)">?</button>
@@ -147,7 +150,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="field"><label class="lbl">담당</label><input class="inp" id="fOwner" list="dlOwner"><datalist id="dlOwner"></datalist></div>
         <div class="field"><label class="lbl">진행상태</label><select class="sel" id="fStatus"><option value="">—</option><option value="기획">기획</option><option value="개발중">개발중</option><option value="완료">완료</option><option value="보류">보류</option></select></div>
         <div class="field"><label class="lbl">연관 시스템</label><input class="inp" id="fRel"></div>
-        <div class="s2" style="display:flex;gap:18px;padding-top:2px">
+        <div style="display:flex;gap:18px;align-items:center;padding-top:2px">
           <label class="tgl"><input type="checkbox" id="fIsImp"><span class="tgl-track"></span><span class="tgl-lbl">★ 중요</span></label>
           <label class="tgl"><input type="checkbox" id="fIsDel"><span class="tgl-track"></span><span class="tgl-lbl">삭제 처리</span></label>
         </div>
@@ -383,13 +386,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div>
             <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
             <div style="display:flex;gap:6px;align-items:center">
-              <button class="btn btn-s btn-sm" data-admin onclick="openModal('importModal')">📥 CSV/TSV 가져오기</button>
+              <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>openModal('importModal'))">📥 CSV/TSV 가져오기</button>
             </div>
           </div>
         </div>
         <div style="margin-bottom:4px">
           <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}_{기능명}.md 파일을 key로 자동 매핑</div>
-          <button class="btn btn-s btn-sm" data-admin onclick="document.getElementById('mdImpInp').click()">📂 MD ZIP 가져오기</button>
+          <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>document.getElementById('mdImpInp').click())">📂 MD ZIP 가져오기</button>
           <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
         </div>
 

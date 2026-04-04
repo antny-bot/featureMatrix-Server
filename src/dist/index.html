@@ -404,7 +404,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 추가
     </button>
     <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">⚙ 설정</button>
-    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default">🌐 서버</span>
+    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:5px">
+      <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
+      <span id="serverStatusLabel">🌐 서버</span>
+    </span>
     <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">🔑 관리자</span>
     <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;font-size:.7rem">잠금</button>
     <button class="btn btn-g btn-sm" onclick="openModal('shortcutsModal')" title="단축키 (?)">?</button>
@@ -493,7 +496,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="field"><label class="lbl">담당</label><input class="inp" id="fOwner" list="dlOwner"><datalist id="dlOwner"></datalist></div>
         <div class="field"><label class="lbl">진행상태</label><select class="sel" id="fStatus"><option value="">—</option><option value="기획">기획</option><option value="개발중">개발중</option><option value="완료">완료</option><option value="보류">보류</option></select></div>
         <div class="field"><label class="lbl">연관 시스템</label><input class="inp" id="fRel"></div>
-        <div class="s2" style="display:flex;gap:18px;padding-top:2px">
+        <div style="display:flex;gap:18px;align-items:center;padding-top:2px">
           <label class="tgl"><input type="checkbox" id="fIsImp"><span class="tgl-track"></span><span class="tgl-lbl">★ 중요</span></label>
           <label class="tgl"><input type="checkbox" id="fIsDel"><span class="tgl-track"></span><span class="tgl-lbl">삭제 처리</span></label>
         </div>
@@ -729,13 +732,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div>
             <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
             <div style="display:flex;gap:6px;align-items:center">
-              <button class="btn btn-s btn-sm" data-admin onclick="openModal('importModal')">📥 CSV/TSV 가져오기</button>
+              <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>openModal('importModal'))">📥 CSV/TSV 가져오기</button>
             </div>
           </div>
         </div>
         <div style="margin-bottom:4px">
           <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}_{기능명}.md 파일을 key로 자동 매핑</div>
-          <button class="btn btn-s btn-sm" data-admin onclick="document.getElementById('mdImpInp').click()">📂 MD ZIP 가져오기</button>
+          <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>document.getElementById('mdImpInp').click())">📂 MD ZIP 가져오기</button>
           <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
         </div>
 
@@ -1078,9 +1081,11 @@ async function saveToServer() {
     const json = await res.json();
     if (!json.ok) { notify('서버 저장 실패: ' + json.error, true); return false; }
     lastServerTs = json.serverTs;
+    window.setServerStatus?.('ok');
     saveLocal();
     return true;
   } catch(e) {
+    window.setServerStatus?.('error');
     notify('서버에 연결할 수 없습니다. 로컬에 임시 저장됩니다.', true);
     saveLocal();
     return false;
@@ -1097,12 +1102,14 @@ async function loadFromServer() {
     if (json.payload) {
       applyServerPayload(json.payload); // 공유 데이터 반영
       lastServerTs = json.serverTs;
+      window.setServerStatus?.('ok');
       saveLocal();                      // 개인 설정 캐시 갱신
       return true;
     }
     // 서버에 데이터 없음 → 로컬 캐시 items 유지
     return false;
   } catch(e) {
+    window.setServerStatus?.('error');
     notify('서버 연결 실패 — 로컬 캐시를 불러옵니다.', true);
     return false;
   }
@@ -1134,13 +1141,6 @@ function resolveConflictKeepMine() {
 }
 function resolveConflictUseServer(serverData) {
   applyServerPayload(serverData.payload || serverData);
-  lastServerTs = serverData.serverTs || lastServerTs;
-  saveLocal();
-  renderAll();
-  notify('서버 데이터로 업데이트됐습니다.');
-}
-function resolveConflictUseServer(serverData) {
-  applyPayload(serverData.payload || serverData);
   lastServerTs = serverData.serverTs || lastServerTs;
   saveLocal();
   renderAll();
@@ -1295,6 +1295,9 @@ function requireAdmin(callback) {
   if (!modal) { callback(); return; } // 모달 없으면 그냥 실행
   document.getElementById('adminPwInp').value = '';
   document.getElementById('adminAuthErr').textContent = '';
+  // 이미 열린 모달보다 위에 표시
+  document.querySelectorAll('.ov.on').forEach(m => { m.style.zIndex = '1000'; });
+  modal.style.zIndex = '1010';
   modal.classList.add('on');
   modal._callback = callback;
   setTimeout(() => document.getElementById('adminPwInp').focus(), 100);
@@ -1975,7 +1978,8 @@ function switchView(v) {
   document.getElementById('listView').style.display   = v==='list'   ? '' : 'none';
   document.getElementById('tabM').className = 'vtab' + (v==='matrix' ? ' on' : '');
   document.getElementById('tabL').className = 'vtab' + (v==='list'   ? ' on' : '');
-  if (v === 'matrix') renderMatrix(); else renderList();
+  if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }
+  else renderList();
 }
 
 /* ── 필터 UI ── */
@@ -1991,8 +1995,7 @@ function renderPrioChips() {
     const style = ck
       ? `color:${col};background:${bg};border-color:${col};border-width:2px;`
       : `color:var(--text-2);background:var(--surface-2);border-color:var(--border-2);`;
-    const mark = ck ? '<span style="font-size:.6rem;margin-right:2px">✓</span>' : '';
-    return `<label class="pchip" style="${style}"><input type="checkbox" value="${pd.val}" ${ck?'checked':''} onchange="onPrioChip(this)">${mark}${pd.val}</label>`;
+    return `<label class="pchip" style="${style}"><input type="checkbox" value="${pd.val}" ${ck?'checked':''} onchange="onPrioChip(this)">${pd.val}</label>`;
   }).join('');
 }
 function renderStatusChips() {
@@ -3362,6 +3365,7 @@ function startPolling() {
   _pollTimer = setInterval(async () => {
     const result = await pollServerTs();
     if (result !== null) {
+      setServerStatus('ok');
       // locks 업데이트
       if (result.locks) { updateLocks(result.locks); renderAll(); }
       if (result.serverTs > lastServerTs) {
@@ -3374,6 +3378,8 @@ function startPolling() {
           banner.classList.add('on');
         }
       }
+    } else {
+      setServerStatus('error');
     }
   }, interval);
 }
@@ -3493,6 +3499,24 @@ window.openActivityLog = async () => {
     }
   });
 };
+function setServerStatus(status) {
+  const dot   = document.getElementById('serverStatusDot');
+  const badge = document.getElementById('storageModeBadge');
+  if (!dot) return;
+  if (S.settings.storageMode !== 'server') { dot.style.display = 'none'; return; }
+  dot.style.display = 'inline-block';
+  if (status === 'ok') {
+    dot.style.background = '#16a34a';
+    dot.title = '서버 연결됨';
+    if (badge) badge.style.opacity = '1';
+  } else {
+    dot.style.background = '#dc2626';
+    dot.title = '서버 연결 오류';
+    if (badge) badge.style.opacity = '0.7';
+  }
+}
+window.setServerStatus = setServerStatus;
+
 function syncServerSettingsUI() {
   const mode = S.settings.storageMode || 'server';
   ['modeServer','modeLocal'].forEach(id => {
@@ -3508,10 +3532,10 @@ function syncServerSettingsUI() {
   const nameEl = document.getElementById('sUserName');
   if (nameEl) nameEl.value = S.settings.userName    || '';
   const badge  = document.getElementById('storageModeBadge');
-  if (badge) {
-    badge.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
-    badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
-  }
+  const label  = document.getElementById('serverStatusLabel');
+  if (label) label.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
+  if (badge) badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
+  setServerStatus(mode === 'server' ? 'ok' : 'off');
   // 활동 로그 버튼: 서버 모드 + 관리자일 때만 표시
   const logBtn = document.getElementById('showLogBtn');
   if (logBtn) logBtn.style.display = (mode === 'server' && isAdmin()) ? 'inline-flex' : 'none';

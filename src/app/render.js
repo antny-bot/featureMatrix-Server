@@ -403,7 +403,8 @@ export function switchView(v) {
   document.getElementById('listView').style.display   = v==='list'   ? '' : 'none';
   document.getElementById('tabM').className = 'vtab' + (v==='matrix' ? ' on' : '');
   document.getElementById('tabL').className = 'vtab' + (v==='list'   ? ' on' : '');
-  if (v === 'matrix') renderMatrix(); else renderList();
+  if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }
+  else renderList();
 }
 
 /* ── 필터 UI ── */
@@ -419,8 +420,7 @@ export function renderPrioChips() {
     const style = ck
       ? `color:${col};background:${bg};border-color:${col};border-width:2px;`
       : `color:var(--text-2);background:var(--surface-2);border-color:var(--border-2);`;
-    const mark = ck ? '<span style="font-size:.6rem;margin-right:2px">✓</span>' : '';
-    return `<label class="pchip" style="${style}"><input type="checkbox" value="${pd.val}" ${ck?'checked':''} onchange="onPrioChip(this)">${mark}${pd.val}</label>`;
+    return `<label class="pchip" style="${style}"><input type="checkbox" value="${pd.val}" ${ck?'checked':''} onchange="onPrioChip(this)">${pd.val}</label>`;
   }).join('');
 }
 

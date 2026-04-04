@@ -9,10 +9,11 @@ import json, os, time, argparse, secrets
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, abort
 
-BASE_DIR    = Path(__file__).parent
-STATIC_DIR  = BASE_DIR / 'static'
-DATA_FILE   = BASE_DIR / 'data.json'
-CONFIG_FILE = BASE_DIR / 'config.json'
+BASE_DIR       = Path(__file__).parent
+STATIC_DIR     = BASE_DIR / 'static'
+DATA_FILE      = BASE_DIR / 'data.json'
+CONFIG_FILE    = BASE_DIR / 'config.json'
+ACTIVITY_FILE  = BASE_DIR / 'activity.json'
 
 app = Flask(__name__, static_folder=str(STATIC_DIR))
 
@@ -21,6 +22,9 @@ RUNTIME = {'admin_password': None}
 
 # ── 세션 토큰 저장소 (메모리, 서버 재시작 시 초기화) ───────
 admin_tokens = set()
+
+# ── 편집 락 저장소 (메모리) ───────────────────────────────
+edit_locks = {}  # { key: { user, ts } }
 
 # ── config.json 로드 ──────────────────────────────────────
 def load_config():
@@ -54,6 +58,16 @@ def write_data(payload, server_ts, editor=''):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(obj, f, ensure_ascii=False, separators=(',', ':'))
 
+def read_activity():
+    if not ACTIVITY_FILE.exists():
+        return []
+    with open(ACTIVITY_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def write_activity(entries):
+    with open(ACTIVITY_FILE, 'w', encoding='utf-8') as f:
+        json.dump(entries, f, ensure_ascii=False, separators=(',', ':'))
+
 # ── 인증 ──────────────────────────────────────────────────
 def check_auth():
     key = request.headers.get('X-API-Key', '')
@@ -74,6 +88,9 @@ def add_cors(response):
 
 @app.route('/api/data', methods=['OPTIONS'])
 @app.route('/api/auth', methods=['OPTIONS'])
+@app.route('/api/log', methods=['OPTIONS'])
+@app.route('/api/lock', methods=['OPTIONS'])
+@app.route('/api/unlock', methods=['OPTIONS'])
 def options_handler():
     return '', 204
 
@@ -120,14 +137,73 @@ def post_data():
     write_data(payload, new_ts, editor)
     return jsonify({'ok': True, 'serverTs': new_ts})
 
-# ── GET /api/ping ─── 폴링 (lastEditor 포함) ─────────────
+# ── GET /api/ping ─── 폴링 (lastEditor, locks 포함) ──────
 @app.route('/api/ping', methods=['GET'])
 def ping():
     check_auth()
     store = read_data()
+    now   = int(time.time() * 1000)
+    stale = [k for k, v in edit_locks.items() if now - v['ts'] > 60000]
+    for k in stale:
+        del edit_locks[k]
     return jsonify({'ok': True, 'serverTs': store['serverTs'],
                     'lastEditor': store['lastEditor'],
-                    'lastEditTime': store['lastEditTime']})
+                    'lastEditTime': store['lastEditTime'],
+                    'locks': edit_locks})
+
+# ── GET /api/log ─── 활동 로그 조회 (관리자 전용) ─────────
+@app.route('/api/log', methods=['GET'])
+def get_log():
+    check_auth()
+    if not check_admin_token():
+        return jsonify({'ok': False, 'error': '관리자 권한이 필요합니다.'}), 403
+    entries = read_activity()
+    return jsonify({'ok': True, 'entries': list(reversed(entries))})
+
+# ── POST /api/log ─── 활동 로그 기록 ──────────────────────
+@app.route('/api/log', methods=['POST'])
+def post_log():
+    check_auth()
+    body = request.get_json(silent=True) or {}
+    entry = {
+        'action': body.get('action', ''),
+        'detail': body.get('detail', ''),
+        'user':   body.get('user', '익명'),
+        'ts':     body.get('ts', int(time.time() * 1000))
+    }
+    entries = read_activity()
+    entries.append(entry)
+    if len(entries) > 500:
+        entries = entries[-500:]
+    write_activity(entries)
+    return jsonify({'ok': True})
+
+# ── POST /api/lock ─── 편집 락 등록 ───────────────────────
+@app.route('/api/lock', methods=['POST'])
+def lock_item():
+    check_auth()
+    body = request.get_json(silent=True) or {}
+    key  = body.get('key', '')
+    user = body.get('user', '익명')
+    if not key:
+        return jsonify({'ok': False, 'error': 'Missing key'}), 400
+    now      = int(time.time() * 1000)
+    existing = edit_locks.get(key)
+    if existing and existing['user'] != user and (now - existing['ts']) < 60000:
+        return jsonify({'ok': False, 'lockedBy': existing['user']})
+    edit_locks[key] = {'user': user, 'ts': now}
+    return jsonify({'ok': True, 'locks': edit_locks})
+
+# ── POST /api/unlock ─── 편집 락 해제 ─────────────────────
+@app.route('/api/unlock', methods=['POST'])
+def unlock_item():
+    check_auth()
+    body = request.get_json(silent=True) or {}
+    key  = body.get('key', '')
+    user = body.get('user', '익명')
+    if key in edit_locks and edit_locks[key]['user'] == user:
+        del edit_locks[key]
+    return jsonify({'ok': True, 'locks': edit_locks})
 
 # ── 정적 파일 서빙 ────────────────────────────────────────
 @app.route('/', defaults={'path': ''})

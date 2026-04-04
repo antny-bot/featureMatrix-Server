@@ -5,7 +5,7 @@
 import { DEMO } from './constants.js';
 import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
          pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
-         loadFromServer, saveToServer, logActivity,
+         loadFromServer, saveToServer, logActivity, notify,
          lockItem, unlockItem, updateLocks, editLocks } from './state.js';
 import { isAdmin, requireAdmin, submitAdminAuth, closeAdminModal,
          adminLogout, updateAdminUI, getAdminToken } from './admin.js';
@@ -16,7 +16,7 @@ import { applyVars, applyBlurSetting, toggleTheme, applyTheme,
 import { renderAll, renderStats, renderMatrix, renderList,
          renderOwnerChips, renderPrioChips, renderStatusChips,
          switchView, sortL, expandCell, collapseCell,
-         bulkToggle, bulkToggleAll, bulkClear, renderBulkBar } from './render.js';
+         bulkToggle, bulkToggleAll, bulkClear, renderBulkBar, bulkSel } from './render.js';
 import { openModal, closeModal, openEditModal, openAddModal, openAddInCell,
          saveItem, hardDelete, duplicateItem, quickToggleDel,
          openEditOrMd, openMdModal, copyPath,
@@ -257,6 +257,7 @@ function startPolling() {
   _pollTimer = setInterval(async () => {
     const result = await pollServerTs();
     if (result !== null) {
+      setServerStatus('ok');
       // locks 업데이트
       if (result.locks) { updateLocks(result.locks); renderAll(); }
       if (result.serverTs > lastServerTs) {
@@ -269,6 +270,8 @@ function startPolling() {
           banner.classList.add('on');
         }
       }
+    } else {
+      setServerStatus('error');
     }
   }, interval);
 }
@@ -388,6 +391,24 @@ window.openActivityLog = async () => {
     }
   });
 };
+function setServerStatus(status) {
+  const dot   = document.getElementById('serverStatusDot');
+  const badge = document.getElementById('storageModeBadge');
+  if (!dot) return;
+  if (S.settings.storageMode !== 'server') { dot.style.display = 'none'; return; }
+  dot.style.display = 'inline-block';
+  if (status === 'ok') {
+    dot.style.background = '#16a34a';
+    dot.title = '서버 연결됨';
+    if (badge) badge.style.opacity = '1';
+  } else {
+    dot.style.background = '#dc2626';
+    dot.title = '서버 연결 오류';
+    if (badge) badge.style.opacity = '0.7';
+  }
+}
+window.setServerStatus = setServerStatus;
+
 function syncServerSettingsUI() {
   const mode = S.settings.storageMode || 'server';
   ['modeServer','modeLocal'].forEach(id => {
@@ -403,10 +424,10 @@ function syncServerSettingsUI() {
   const nameEl = document.getElementById('sUserName');
   if (nameEl) nameEl.value = S.settings.userName    || '';
   const badge  = document.getElementById('storageModeBadge');
-  if (badge) {
-    badge.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
-    badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
-  }
+  const label  = document.getElementById('serverStatusLabel');
+  if (label) label.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
+  if (badge) badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
+  setServerStatus(mode === 'server' ? 'ok' : 'off');
   // 활동 로그 버튼: 서버 모드 + 관리자일 때만 표시
   const logBtn = document.getElementById('showLogBtn');
   if (logBtn) logBtn.style.display = (mode === 'server' && isAdmin()) ? 'inline-flex' : 'none';
