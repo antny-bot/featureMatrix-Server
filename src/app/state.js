@@ -2,7 +2,7 @@
    state.js — 전역 상태(S), 저장/로드 (서버/로컬), Undo
 ══════════════════════════════════════════ */
 
-import { SK, UNDO_MAX, DEFAULT_LIST_COLS } from './constants.js';
+import { SK, UNDO_MAX, DEFAULT_LIST_COLS, ADMIN_TOKEN_KEY } from './constants.js';
 
 /** 전역 상태 — 앱 전체에서 import해서 사용 */
 export const S = {
@@ -47,7 +47,7 @@ function apiBase() {
 }
 function apiHeaders() {
   const h = { 'Content-Type': 'application/json', 'X-API-Key': S.settings.apiKey || '' };
-  const token = sessionStorage.getItem('fmAdminToken');
+  const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
   if (token) h['X-Admin-Token'] = token;
   return h;
 }

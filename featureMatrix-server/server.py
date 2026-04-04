@@ -14,24 +14,62 @@ STATIC_DIR     = BASE_DIR / 'static'
 DATA_FILE      = BASE_DIR / 'data.json'
 CONFIG_FILE    = BASE_DIR / 'config.json'
 ACTIVITY_FILE  = BASE_DIR / 'activity.json'
+TOKENS_FILE    = BASE_DIR / 'tokens.json'
+
+TOKEN_TTL_MS   = 24 * 60 * 60 * 1000  # 24시간
 
 app = Flask(__name__, static_folder=str(STATIC_DIR))
 
 # ── 런타임 설정 (argparse 결과 저장) ──────────────────────
 RUNTIME = {'admin_password': None}
 
-# ── 세션 토큰 저장소 (메모리, 서버 재시작 시 초기화) ───────
-admin_tokens = set()
+# ── 세션 토큰 저장소 { token: expire_ts } ────────────────
+admin_tokens: dict = {}
 
 # ── 편집 락 저장소 (메모리) ───────────────────────────────
 edit_locks = {}  # { key: { user, ts } }
+
+# ── 토큰 파일 저장/로드 ───────────────────────────────────
+def load_tokens():
+    """서버 시작 시 토큰 파일을 읽어 만료되지 않은 토큰만 복원."""
+    global admin_tokens
+    if not TOKENS_FILE.exists():
+        return
+    try:
+        with open(TOKENS_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        now = int(time.time() * 1000)
+        admin_tokens = {t: exp for t, exp in data.items() if exp > now}
+    except Exception:
+        admin_tokens = {}
+
+def save_tokens():
+    """현재 유효 토큰을 파일에 저장."""
+    try:
+        with open(TOKENS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(admin_tokens, f, separators=(',', ':'))
+    except Exception:
+        pass
+
+def purge_expired_tokens():
+    """만료 토큰 정리."""
+    now = int(time.time() * 1000)
+    expired = [t for t, exp in admin_tokens.items() if exp <= now]
+    for t in expired:
+        del admin_tokens[t]
 
 # ── config.json 로드 ──────────────────────────────────────
 def load_config():
     if CONFIG_FILE.exists():
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    cfg = {'api_key': secrets.token_hex(16)}
+            cfg = json.load(f)
+        # 구버전 config에 allowed_origins 없으면 추가
+        if 'allowed_origins' not in cfg:
+            cfg['allowed_origins'] = []
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                json.dump(cfg, f, indent=2, ensure_ascii=False)
+        return cfg
+    cfg = {'api_key': secrets.token_hex(16), 'allowed_origins': []}
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(cfg, f, indent=2, ensure_ascii=False)
     print(f'\n✅ config.json 생성됨')
@@ -40,6 +78,7 @@ def load_config():
     return cfg
 
 CONFIG = load_config()
+load_tokens()
 
 # ── 데이터 파일 ───────────────────────────────────────────
 def read_data():
@@ -76,12 +115,30 @@ def check_auth():
 
 def check_admin_token():
     token = request.headers.get('X-Admin-Token', '')
-    return token in admin_tokens
+    if not token:
+        return False
+    exp = admin_tokens.get(token)
+    if exp is None:
+        return False
+    if int(time.time() * 1000) > exp:
+        del admin_tokens[token]
+        save_tokens()
+        return False
+    return True
 
 # ── CORS ──────────────────────────────────────────────────
 @app.after_request
 def add_cors(response):
-    response.headers['Access-Control-Allow-Origin']  = '*'
+    allowed_origins = CONFIG.get('allowed_origins') or []
+    if allowed_origins:
+        origin = request.headers.get('Origin', '')
+        if origin in allowed_origins:
+            response.headers['Access-Control-Allow-Origin'] = origin
+            response.headers['Vary'] = 'Origin'
+        # 허용 목록에 없는 Origin은 헤더 미포함 → 브라우저가 차단
+    else:
+        # allowed_origins 미설정 시 제한 없음 (하위 호환)
+        response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-API-Key, X-Admin-Token'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
@@ -104,13 +161,17 @@ def auth():
 
     # 서버에 admin_password 미설정 시 → 인증 없이 허용
     if not admin_pw:
+        purge_expired_tokens()
         token = secrets.token_hex(16)
-        admin_tokens.add(token)
+        admin_tokens[token] = int(time.time() * 1000) + TOKEN_TTL_MS
+        save_tokens()
         return jsonify({'ok': True, 'token': token, 'noPassword': True})
 
     if password == admin_pw:
+        purge_expired_tokens()
         token = secrets.token_hex(16)
-        admin_tokens.add(token)
+        admin_tokens[token] = int(time.time() * 1000) + TOKEN_TTL_MS
+        save_tokens()
         return jsonify({'ok': True, 'token': token})
     return jsonify({'ok': False, 'error': '비밀번호가 올바르지 않습니다.'}), 401
 
@@ -160,10 +221,12 @@ def get_log():
     entries = read_activity()
     return jsonify({'ok': True, 'entries': list(reversed(entries))})
 
-# ── POST /api/log ─── 활동 로그 기록 ──────────────────────
+# ── POST /api/log ─── 활동 로그 기록 (관리자 전용) ────────
 @app.route('/api/log', methods=['POST'])
 def post_log():
     check_auth()
+    if not check_admin_token():
+        return jsonify({'ok': False, 'error': '관리자 권한이 필요합니다.'}), 403
     body = request.get_json(silent=True) or {}
     entry = {
         'action': body.get('action', ''),

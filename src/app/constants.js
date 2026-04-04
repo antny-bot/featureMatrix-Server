@@ -2,9 +2,10 @@
    constants.js — 상수 / 설정 기본값 / 데모 데이터
 ══════════════════════════════════════════ */
 
-export const SK       = 'sobukMXv6';
-export const UNDO_MAX = 20;
-export const CELL_OV  = 5;
+export const SK             = 'sobukMXv6';
+export const UNDO_MAX       = 20;
+export const CELL_OV        = 5;
+export const ADMIN_TOKEN_KEY = 'fmAdminToken';
 
 export const FIELDS = [
   'key','name','desc','path','group','subGroup','category','subCategory',

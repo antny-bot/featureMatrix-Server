@@ -5,8 +5,7 @@
 ══════════════════════════════════════════ */
 
 import { S, notify } from './state.js';
-
-const ADMIN_TOKEN_KEY = 'fmAdminToken';
+import { ADMIN_TOKEN_KEY } from './constants.js';
 
 /* ── 서버 모드 여부 ── */
 function isServerMode() {

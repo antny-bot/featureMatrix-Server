@@ -3,6 +3,8 @@ config.json
 data.json
 featureMatrix-server/config.json
 featureMatrix-server/data.json
+featureMatrix-server/tokens.json
+featureMatrix-server/activity.json
 
 # Python
 __pycache__/
