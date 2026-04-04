@@ -22,7 +22,8 @@ export function sstab(btn, paneId) {
   if (paneId === 'saxis') renderAxisEditor();
   if (paneId === 'sanim') syncAnimUI();
   if (paneId === 'scs')  { renderPrioStyleRows(); renderPreviewCards(); }
-  if (paneId === 'ssrv') window.syncServerSettingsUI?.();
+  if (paneId === 'ssrv')   window.syncServerSettingsUI?.();
+  if (paneId === 'sadmin') window.loadInlineActivityLog?.();
 }
 
 /* ── 설정 UI 전체 동기화 ── */

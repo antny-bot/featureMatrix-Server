@@ -423,7 +423,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-p btn-sm" onclick="saveServerSettings()">설정 저장</button>
           <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>{updateAdminUI();notify('관리자 인증 완료')})" title="관리자 인증">🔑 관리자 인증</button>
-          <button class="btn btn-s btn-sm" id="showLogBtn" onclick="openActivityLog()" style="display:none">📋 활동 로그</button>
         </div>
       </div>
       <div class="spane" id="sadmin">
@@ -446,6 +445,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         </div>
         <div class="sec-ttl" style="margin-top:12px">데이터 초기화</div>
         <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" onclick="resetData()">초기화</button></div>
+        <div class="sec-ttl" style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+          <span>활동 로그</span>
+          <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
+        </div>
+        <div id="inlineLogBody" style="height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:.78rem">
+          <div style="padding:16px;text-align:center;color:var(--text-3)">탭을 열면 자동으로 불러옵니다.</div>
+        </div>
       </div>
     </div>
     <div class="mfoot"><button class="btn btn-p btn-sm" onclick="closeModal('settingsModal')">닫기</button></div>
@@ -520,23 +526,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   </div>
 </div>
 
-<!-- 활동 로그 모달 -->
-<div class="ov" id="activityLogModal">
-  <div class="mbox" style="width:640px">
-    <div class="mhd">
-      <span class="mtitle">📋 활동 로그</span>
-      <button class="mclose" onclick="closeModal('activityLogModal')">✕</button>
-    </div>
-    <div class="mbody" style="padding:0">
-      <div id="activityLogBody" style="font-size:.78rem;max-height:60vh;overflow-y:auto">
-        <div style="padding:20px;text-align:center;color:var(--text-3)">불러오는 중...</div>
-      </div>
-    </div>
-    <div class="mfoot">
-      <button class="btn btn-s btn-sm" onclick="closeModal('activityLogModal')">닫기</button>
-    </div>
-  </div>
-</div>
+
 <!-- Diff 뷰 모달 -->
 <div class="ov" id="diffModal">
   <div class="mbox" style="width:640px">

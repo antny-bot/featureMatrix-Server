@@ -354,51 +354,47 @@ window.saveUserNamePopup = (skip = false) => {
   document.getElementById('userNameModal').classList.remove('on');
 };
 
-window.openActivityLog = async () => {
-  requireAdmin(async () => {
-    openModal('activityLogModal');
-    const body = document.getElementById('activityLogBody');
-    if (!body) return;
-    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3)">불러오는 중...</div>';
-    try {
-      const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
-      const headers = { 'X-API-Key': S.settings.apiKey || '', 'X-Admin-Token': sessionStorage.getItem('fmAdminToken') || '' };
-      const res  = await fetch(apiUrl + '/api/log', { headers });
-      const json = await res.json();
-      if (!json.ok) {
-        if (res.status === 403) {
-          sessionStorage.removeItem('fmAdminToken');
-          updateAdminUI();
-          closeModal('activityLogModal');
-          requireAdmin(() => window.openActivityLog());
-          return;
-        }
-        body.innerHTML = `<div style="padding:20px;color:var(--danger)">${json.error}</div>`; return;
+window.loadInlineActivityLog = async () => {
+  const body = document.getElementById('inlineLogBody');
+  if (!body) return;
+  body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">불러오는 중...</div>';
+  try {
+    const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
+    const headers = { 'X-API-Key': S.settings.apiKey || '', 'X-Admin-Token': sessionStorage.getItem('fmAdminToken') || '' };
+    const res  = await fetch(apiUrl + '/api/log', { headers });
+    const json = await res.json();
+    if (!json.ok) {
+      if (res.status === 403) {
+        sessionStorage.removeItem('fmAdminToken');
+        updateAdminUI();
+        body.innerHTML = '<div style="padding:16px;color:var(--danger)">세션이 만료됐습니다. 관리자 재인증이 필요합니다.</div>';
+        return;
       }
-      if (!json.entries?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
-      const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
-      body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
-        '<thead><tr>' +
-        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">시각</th>' +
-        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">사용자</th>' +
-        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">액션</th>' +
-        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">내용</th>' +
-        '</tr></thead><tbody>' +
-        json.entries.map(e => {
-          const d = new Date(e.ts);
-          const timeStr = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-          const col = actionColor[e.action] || 'var(--text)';
-          return `<tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:6px 12px;font-size:.72rem;color:var(--text-3);white-space:nowrap">${timeStr}</td>
-            <td style="padding:6px 12px;font-size:.78rem;font-weight:600">${e.user||'익명'}</td>
-            <td style="padding:6px 12px;font-size:.75rem;font-weight:700;color:${col};white-space:nowrap">${e.action}</td>
-            <td style="padding:6px 12px;font-size:.75rem;color:var(--text-2)">${e.detail||''}</td>
-          </tr>`;
-        }).join('') + '</tbody></table>';
-    } catch(err) {
-      body.innerHTML = '<div style="padding:20px;color:var(--danger)">서버에 연결할 수 없습니다.</div>';
+      body.innerHTML = `<div style="padding:16px;color:var(--danger)">${json.error}</div>`; return;
     }
-  });
+    if (!json.entries?.length) { body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
+    const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
+    body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
+      '<thead><tr style="position:sticky;top:0;background:var(--surface)">' +
+      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">시각</th>' +
+      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">사용자</th>' +
+      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">액션</th>' +
+      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">내용</th>' +
+      '</tr></thead><tbody>' +
+      json.entries.map(e => {
+        const d = new Date(e.ts);
+        const timeStr = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+        const col = actionColor[e.action] || 'var(--text)';
+        return `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:5px 10px;font-size:.7rem;color:var(--text-3);white-space:nowrap">${timeStr}</td>
+          <td style="padding:5px 10px;font-size:.75rem;font-weight:600">${e.user||'익명'}</td>
+          <td style="padding:5px 10px;font-size:.72rem;font-weight:700;color:${col};white-space:nowrap">${e.action}</td>
+          <td style="padding:5px 10px;font-size:.72rem;color:var(--text-2)">${e.detail||''}</td>
+        </tr>`;
+      }).join('') + '</tbody></table>';
+  } catch(err) {
+    body.innerHTML = '<div style="padding:16px;color:var(--danger)">서버에 연결할 수 없습니다.</div>';
+  }
 };
 function setServerStatus(status) {
   const dot   = document.getElementById('serverStatusDot');
@@ -437,9 +433,6 @@ function syncServerSettingsUI() {
   if (label) label.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
   if (badge) badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
   setServerStatus(mode === 'server' ? 'ok' : 'off');
-  // 활동 로그 버튼: 서버 모드 + 관리자일 때만 표시
-  const logBtn = document.getElementById('showLogBtn');
-  if (logBtn) logBtn.style.display = (mode === 'server' && isAdmin()) ? 'inline-flex' : 'none';
 }
 
 /* ── 초기화 ── */
