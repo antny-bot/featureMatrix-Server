@@ -15,6 +15,10 @@ export function animOk(k) {
   return a.enabled && (k ? !!a[k] : true);
 }
 
+/* 카드 등장 애니메이션은 의도적 진입(초기 로드·항목 추가)에만 허용 */
+let _cardAnimEnabled = false;
+export function scheduleCardAnim() { _cardAnimEnabled = true; }
+
 /* ── CountUp ── */
 const _cu = {};
 export function countUp(id, target) {
@@ -126,7 +130,6 @@ export function renderAll(withFade = false) {
     renderOwnerChips();
     renderPrioChips();
     renderStatusChips();
-    renderPrioStyleRows();
   };
   if (withFade && animOk('filter')) {
     const area = document.getElementById('contentArea');
@@ -224,10 +227,11 @@ export function renderMatrix() {
           const isExp = S.expandedCells.has(ck) || !!S.searchQ || fold === 0;
           const show  = isExp ? ci : ci.slice(0, fold);
           const hidden = ci.length - show.length;
-          h += `<td class="m-cell" style="background:var(--bg)"
+          const doCardAnim = animOk('card') && _cardAnimEnabled;
+          h += `<td class="m-cell${doCardAnim ? ' anim-card-entrance' : ''}" style="background:var(--bg)"
             data-g="${eattr(gn)}" data-sg="${eattr(sg)}" data-c="${eattr(cn)}" data-sc="${eattr(scn)}"
             ondragenter="onDE(event)" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onDrop(event)">`;
-          show.forEach((it, ii) => { h += renderCard(it, c, animOk('card') ? ii : -1); });
+          show.forEach((it, ii) => { h += renderCard(it, c, doCardAnim ? ii : -1); });
           if (hidden > 0)
             h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">▼ ${hidden}개 더보기</button>`;
           if (isExp && ci.length > fold && fold > 0)
@@ -244,6 +248,7 @@ export function renderMatrix() {
   });
   h += '</tbody></table></div>';
   el.innerHTML = h;
+  _cardAnimEnabled = false;
 }
 
 export function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    renderMatrix(); }
@@ -344,7 +349,7 @@ export function renderList() {
   if (!items.length) { el.innerHTML = '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>'; bulkSel.keys.clear(); renderBulkBar(); return; }
   const vcols    = getVisibleCols();
   const sorted   = items.slice().sort((a,b) => { const va=a[S.sort.key]||'', vb=b[S.sort.key]||''; const r=va<vb?-1:va>vb?1:0; return S.sort.dir==='asc'?r:-r; });
-  const useShimmer = animOk('shimmer'), useRow = animOk('card');
+  const useShimmer = animOk('shimmer'), useRow = animOk('card') && _cardAnimEnabled;
   const allChecked = sorted.length > 0 && sorted.every(it => bulkSel.keys.has(it.key));
   let h = '<div class="ltbl-wrap"><div class="ltbl-scroll"><table class="ltbl"><thead><tr>';
   h += `<th style="width:32px;text-align:center"><input type="checkbox" ${allChecked?'checked':''} onchange="bulkToggleAll(this.checked)" title="전체 선택"></th>`;
@@ -369,6 +374,7 @@ export function renderList() {
   });
   h += '</tbody></table></div></div>';
   el.innerHTML = h;
+  _cardAnimEnabled = false;
 }
 
 function renderListCell(it, key) {

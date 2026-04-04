@@ -7,7 +7,7 @@
 ══════════════════════════════════════════ */
 
 import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, logActivity, lockItem, unlockItem } from './state.js';
-import { renderAll } from './render.js';
+import { renderAll, scheduleCardAnim } from './render.js';
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS } from './constants.js';
 import { requireAdmin } from './admin.js';
 
@@ -315,6 +315,7 @@ export function saveItem() {
     S.items.push(ni);
     logActivity('추가', `${ni.key} ${ni.name}`);
     notify('기능이 추가되었습니다.');
+    scheduleCardAnim();
   }
   closeModal('editModal'); unlockItem(S.editKey); save(); renderAll();
 }

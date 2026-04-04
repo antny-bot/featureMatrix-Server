@@ -228,7 +228,7 @@ export function resetSettings() {
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},
     listColumns:JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-    animations:{enabled:true,countUp:true,card:true,filter:true,shimmer:true,blur:true}
+    animations:{enabled:true,countUp:true,card:true,filter:true,shimmer:true,blur:false}
   });
   save(); applyVars(); applyBlurSetting(); syncSettingsUI(); renderAll();
   notify('설정이 초기화되었습니다.');

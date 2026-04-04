@@ -54,7 +54,7 @@ html{-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-
 body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고딕',sans-serif;font-size:1rem;font-weight:400;line-height:1.75;letter-spacing:-.01em;color:var(--text);background:var(--bg);min-height:100vh}
 
 /* ── 버튼 ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.8125rem;font-weight:500;letter-spacing:-.01em;padding:0 13px;height:33px;border-radius:7px;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all .18s;user-select:none;line-height:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.8125rem;font-weight:500;letter-spacing:-.01em;padding:0 13px;height:33px;border-radius:7px;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:background .18s,transform .18s,box-shadow .18s,color .18s,border-color .18s;user-select:none;line-height:1}
 .btn-p{background:var(--accent);color:var(--accent-text);box-shadow:var(--shadow-sm)}.btn-p:hover{background:var(--accent-h);transform:translateY(-1px)}
 .btn-s{background:var(--surface);color:var(--text);border-color:var(--border-2);box-shadow:var(--shadow-xs)}.btn-s:hover{background:var(--surface-2)}
 .btn-g{background:transparent;color:var(--text-2)}.btn-g:hover{background:var(--overlay);color:var(--text)}
@@ -100,7 +100,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 
 /* ── 설정 탭 ── */
 .stab-row{display:flex;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0;flex-wrap:wrap}
-.stab{padding:8px 14px;border:none;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.8rem;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .14s}
+.stab{padding:8px 14px;border:none;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.8rem;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .14s,border-color .14s}
 .stab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .spane{display:none}.spane.on{display:block}
 .srow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);gap:12px}
@@ -109,9 +109,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .ssub{font-size:.7rem;color:var(--text-3);margin-top:1px}
 .stepper{display:flex;align-items:center;gap:5px}
 .stepper span{font-size:.8125rem;font-weight:600;min-width:42px;text-align:center;color:var(--text)}
-.stepbtn{width:26px;height:26px;border:1px solid var(--border-2);border-radius:5px;background:var(--surface-2);cursor:pointer;color:var(--text-2);font-size:.875rem;line-height:1;transition:all .14s}
+.stepbtn{width:26px;height:26px;border:1px solid var(--border-2);border-radius:5px;background:var(--surface-2);cursor:pointer;color:var(--text-2);font-size:.875rem;line-height:1;transition:background .14s,color .14s}
 .stepbtn:hover{background:var(--surface-3)}
-.rbtn{height:27px;padding:0 11px;border:1px solid var(--border-2);border-radius:5px;background:var(--surface);color:var(--text-2);font-size:.77rem;font-weight:500;cursor:pointer;transition:all .14s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif}
+.rbtn{height:27px;padding:0 11px;border:1px solid var(--border-2);border-radius:5px;background:var(--surface);color:var(--text-2);font-size:.77rem;font-weight:500;cursor:pointer;transition:background .14s,color .14s,border-color .14s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif}
 .rbtn.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
 .sec-ttl{font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3);margin:13px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 .sec-ttl:first-child{margin-top:0}
@@ -129,7 +129,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .sv-t{color:var(--text)}.sv-h{color:var(--p-high,#C0312A)}.sv-m{color:var(--p-mid,#9A6200)}
 .sv-l{color:var(--text-3)}.sv-i{color:var(--accent)}.sv-n{color:var(--success)}
 .fbadge{display:none;font-size:.6rem;color:var(--accent);background:var(--accent-l);border-radius:3px;padding:1px 5px;margin-left:5px;font-weight:600;white-space:nowrap}
-.fbadge.on{display:inline;animation:pulse-badge 1.8s ease infinite}
+.fbadge.on{display:inline;animation:pulse-badge 1.8s ease 3}
 /* B - 필터 뱃지 */
 .filter-badge{display:none;position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--accent);border-radius:50%;border:1.5px solid var(--surface);pointer-events:none}
 .filter-badge.on{display:block}
@@ -148,19 +148,19 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* ── 레이아웃 ── */
 .layout{display:flex;height:calc(100vh - 50px);overflow:hidden}
 .layout.pr{flex-direction:row-reverse}
-.fpanel{width:204px;min-width:204px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;transition:width .22s,min-width .22s,border-width .22s}
-.fpanel.collapsed{width:0;min-width:0;border-width:0}
+.fpanel{width:204px;max-width:204px;background:var(--surface);border-right:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:max-width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
+.fpanel.collapsed{max-width:0;border-width:0}
 .layout.pr .fpanel{border-right:none;border-left:1px solid var(--border)}
 .layout.pr .fpanel.collapsed{border-left-width:0}
-.fpinner{padding:12px 11px;min-width:182px}
+.fpinner{padding:12px 11px;min-width:182px;overflow-y:auto;flex:1}
 .fsec{margin-bottom:12px}
 .fsec-ttl{font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
 .fsep{height:1px;background:var(--border);margin:10px 0}
 .pchips{display:flex;gap:4px}
-.pchip{display:inline-flex;align-items:center;padding:4px 9px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;transition:all .14s;font-size:.75rem;font-weight:700}
+.pchip{display:inline-flex;align-items:center;padding:4px 9px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;transition:background .14s,color .14s,border-color .14s;font-size:.75rem;font-weight:700}
 .pchip input{position:absolute;opacity:0;width:0;height:0}
 .owner-chips{display:flex;flex-wrap:wrap;gap:4px}
-.owner-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;font-size:.73rem;transition:all .14s}
+.owner-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;font-size:.73rem;transition:background .14s,color .14s,border-color .14s}
 .owner-chip input{position:absolute;opacity:0;width:0;height:0}
 .owner-chip.chip-on{border-width:1.5px;font-weight:600}
 /* content: overflow-x hidden, overflow-y auto → sticky 정상 동작 */
@@ -266,13 +266,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .crow{display:flex;align-items:center;justify-content:space-between;padding:5px 0}
 .crow-lbl{font-size:.8rem;color:var(--text-2)}
 .theme-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px}
-.theme-card{cursor:pointer;border:2px solid var(--border);border-radius:9px;padding:7px 5px;text-align:center;transition:all .15s}
+.theme-card{cursor:pointer;border:2px solid var(--border);border-radius:9px;padding:7px 5px;text-align:center;transition:background .15s,border-color .15s}
 .theme-card:hover{background:var(--surface-2)}.theme-card.on{border-color:var(--accent);background:var(--accent-l)}
 .theme-swatches{display:flex;gap:2px;height:22px;border-radius:5px;overflow:hidden;margin-bottom:4px}
 .theme-swatch{flex:1}.theme-name{font-size:.62rem;font-weight:600;color:var(--text-2)}
 /* #4 - 카드스타일 compact */
 .preset-grid{display:flex;flex-wrap:wrap;gap:4px}
-.preset-btn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 5px;border-radius:5px;border:2px solid transparent;transition:all .14s}
+.preset-btn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 5px;border-radius:5px;border:2px solid transparent;transition:background .14s,border-color .14s}
 .preset-btn:hover{background:var(--surface-2)}.preset-btn.on{border-color:var(--accent);background:var(--accent-l)}
 .preset-prev{width:28px;height:14px;border-radius:3px}
 .preset-lbl{font-size:.55rem;font-weight:500;color:var(--text-3)}
@@ -942,7 +942,7 @@ const S = {
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },
     customColors: { light:{}, dark:{} },
     listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-    animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:true },
+    animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:false },
     groupOrder: [],
     catOrder: [],
     storageMode: 'server',
@@ -1612,6 +1612,10 @@ function animOk(k) {
   return a.enabled && (k ? !!a[k] : true);
 }
 
+/* 카드 등장 애니메이션은 의도적 진입(초기 로드·항목 추가)에만 허용 */
+let _cardAnimEnabled = false;
+function scheduleCardAnim() { _cardAnimEnabled = true; }
+
 /* ── CountUp ── */
 const _cu = {};
 function countUp(id, target) {
@@ -1721,7 +1725,6 @@ function renderAll(withFade = false) {
     renderOwnerChips();
     renderPrioChips();
     renderStatusChips();
-    renderPrioStyleRows();
   };
   if (withFade && animOk('filter')) {
     const area = document.getElementById('contentArea');
@@ -1819,10 +1822,11 @@ function renderMatrix() {
           const isExp = S.expandedCells.has(ck) || !!S.searchQ || fold === 0;
           const show  = isExp ? ci : ci.slice(0, fold);
           const hidden = ci.length - show.length;
-          h += `<td class="m-cell" style="background:var(--bg)"
+          const doCardAnim = animOk('card') && _cardAnimEnabled;
+          h += `<td class="m-cell${doCardAnim ? ' anim-card-entrance' : ''}" style="background:var(--bg)"
             data-g="${eattr(gn)}" data-sg="${eattr(sg)}" data-c="${eattr(cn)}" data-sc="${eattr(scn)}"
             ondragenter="onDE(event)" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onDrop(event)">`;
-          show.forEach((it, ii) => { h += renderCard(it, c, animOk('card') ? ii : -1); });
+          show.forEach((it, ii) => { h += renderCard(it, c, doCardAnim ? ii : -1); });
           if (hidden > 0)
             h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">▼ ${hidden}개 더보기</button>`;
           if (isExp && ci.length > fold && fold > 0)
@@ -1839,6 +1843,7 @@ function renderMatrix() {
   });
   h += '</tbody></table></div>';
   el.innerHTML = h;
+  _cardAnimEnabled = false;
 }
 function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    renderMatrix(); }
 function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); renderMatrix(); }
@@ -1937,7 +1942,7 @@ function renderList() {
   if (!items.length) { el.innerHTML = '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>'; bulkSel.keys.clear(); renderBulkBar(); return; }
   const vcols    = getVisibleCols();
   const sorted   = items.slice().sort((a,b) => { const va=a[S.sort.key]||'', vb=b[S.sort.key]||''; const r=va<vb?-1:va>vb?1:0; return S.sort.dir==='asc'?r:-r; });
-  const useShimmer = animOk('shimmer'), useRow = animOk('card');
+  const useShimmer = animOk('shimmer'), useRow = animOk('card') && _cardAnimEnabled;
   const allChecked = sorted.length > 0 && sorted.every(it => bulkSel.keys.has(it.key));
   let h = '<div class="ltbl-wrap"><div class="ltbl-scroll"><table class="ltbl"><thead><tr>';
   h += `<th style="width:32px;text-align:center"><input type="checkbox" ${allChecked?'checked':''} onchange="bulkToggleAll(this.checked)" title="전체 선택"></th>`;
@@ -1962,6 +1967,7 @@ function renderList() {
   });
   h += '</tbody></table></div></div>';
   el.innerHTML = h;
+  _cardAnimEnabled = false;
 }
 
 function renderListCell(it, key) {
@@ -2351,6 +2357,7 @@ function renderKatex(container) {
     S.items.push(ni);
     logActivity('추가', `${ni.key} ${ni.name}`);
     notify('기능이 추가되었습니다.');
+    scheduleCardAnim();
   }
   closeModal('editModal'); unlockItem(S.editKey); save(); renderAll();
 }function hardDelete() {
@@ -3138,7 +3145,7 @@ function resetSettings() {
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},
     listColumns:JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-    animations:{enabled:true,countUp:true,card:true,filter:true,shimmer:true,blur:true}
+    animations:{enabled:true,countUp:true,card:true,filter:true,shimmer:true,blur:false}
   });
   save(); applyVars(); applyBlurSetting(); syncSettingsUI(); renderAll();
   notify('설정이 초기화되었습니다.');
@@ -3549,6 +3556,7 @@ async function init() {
   syncSettingsUI();
   syncServerSettingsUI();
   updateAdminUI();
+  scheduleCardAnim();
   renderAll();
   updateUndoFab();
   startPolling();

@@ -16,7 +16,8 @@ import { applyVars, applyBlurSetting, toggleTheme, applyTheme,
 import { renderAll, renderStats, renderMatrix, renderList,
          renderOwnerChips, renderPrioChips, renderStatusChips,
          switchView, sortL, expandCell, collapseCell,
-         bulkToggle, bulkToggleAll, bulkClear, renderBulkBar, bulkSel } from './render.js';
+         bulkToggle, bulkToggleAll, bulkClear, renderBulkBar, bulkSel,
+         scheduleCardAnim } from './render.js';
 import { openModal, closeModal, openEditModal, openAddModal, openAddInCell,
          saveItem, hardDelete, duplicateItem, quickToggleDel,
          openEditOrMd, openMdModal, copyPath,
@@ -453,6 +454,7 @@ async function init() {
   syncSettingsUI();
   syncServerSettingsUI();
   updateAdminUI();
+  scheduleCardAnim();
   renderAll();
   updateUndoFab();
   startPolling();

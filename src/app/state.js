@@ -20,7 +20,7 @@ export const S = {
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },
     customColors: { light:{}, dark:{} },
     listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-    animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:true },
+    animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:false },
     groupOrder: [],
     catOrder: [],
     storageMode: 'server',
