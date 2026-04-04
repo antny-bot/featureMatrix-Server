@@ -310,18 +310,13 @@ export function renderDashboard() {
               `).join('')}
             </div>
           </div>
-          <!-- 우: 담당자 × 진행상태 -->
+          <!-- 우: 담당자 × 진행상태 (이름은 좌측과 중복이므로 생략) -->
           <div>
             <div class="db-owners-col-title">진행상태</div>
             <div class="db-owners-list">
               ${owners.map(([owner, cnt]) => `
                 <div class="db-owner-row">
-                  <div class="db-owner-info">
-                    <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
-                    <span class="db-owner-name">${esc(owner)}</span>
-                    <span class="db-owner-total">${cnt.total}</span>
-                  </div>
-                  <div class="db-owner-bar-wrap">
+                  <div class="db-owner-bar-wrap" style="flex:1">
                     <div class="db-bar-track">
                       <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['기획']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
                       <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['개발중']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>

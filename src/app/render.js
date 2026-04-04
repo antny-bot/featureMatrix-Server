@@ -433,17 +433,7 @@ export function sortL(k) {
 
 export function switchView(v) {
   S.view = v;
-  document.getElementById('dashboardView').style.display = v==='dashboard' ? '' : 'none';
-  document.getElementById('matrixView').style.display    = v==='matrix'    ? '' : 'none';
-  document.getElementById('listView').style.display      = v==='list'      ? '' : 'none';
-  /* 사이드바 nav 활성 상태 */
-  ['navD','navM','navL'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.className = 'nav-item' + (id === {dashboard:'navD',matrix:'navM',list:'navL'}[v] ? ' on' : '');
-  });
-  /* 오른쪽 필터 패널: 대시보드에서 숨김 */
-  const fp = document.getElementById('fpanel');
-  if (fp) fp.style.display = v === 'dashboard' ? 'none' : '';
+  syncLayout();
   if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }
   else if (v === 'list') renderList();
   else { document.getElementById('bulkBar').style.display = 'none'; if (window.renderDashboard) window.renderDashboard(); }
