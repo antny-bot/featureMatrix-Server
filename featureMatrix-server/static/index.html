@@ -648,13 +648,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <button class="stab" onclick="sstab(this,'sth')">테마</button>
       <button class="stab" onclick="sstab(this,'sdat')">데이터</button>
       <button class="stab" onclick="sstab(this,'ssrv')">서버</button>
+      <button class="stab" id="sadminTab" onclick="sstab(this,'sadmin')" style="display:none">🔑 관리자</button>
     </div>
     <div class="mbody" style="padding:14px 20px">
       <div class="spane on" id="sg">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브타이틀</div><input class="inp" id="sSub" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
-        </div>
         <div class="sec-ttl">폰트 &amp; 카드</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
           <div class="srow"><div><div class="slbl">기준 폰트</div></div><div class="stepper"><button class="stepbtn" onclick="adjFont(-1)">−</button><span id="dBaseFont">16px</span><button class="stepbtn" onclick="adjFont(1)">+</button></div></div>
@@ -725,27 +722,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <button class="btn btn-s btn-sm" onclick="expMdZip()">📦 MD ZIP</button>
         </div>
 
-        <div class="sec-ttl" style="margin-top:12px">
-          가져오기 <span style="font-size:.65rem;color:var(--warning);font-weight:700">🔒 관리자</span>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
-          <div>
-            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>openModal('importModal'))">📥 CSV/TSV 가져오기</button>
-            </div>
-          </div>
-        </div>
-        <div style="margin-bottom:4px">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}_{기능명}.md 파일을 key로 자동 매핑</div>
-          <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>document.getElementById('mdImpInp').click())">📂 MD ZIP 가져오기</button>
-          <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
-        </div>
-
-        <div class="sec-ttl" style="margin-top:12px">
-          초기화 <span style="font-size:.65rem;color:var(--danger);font-weight:700">🔒 관리자</span>
-        </div>
-        <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" data-admin onclick="resetData()">초기화</button></div>
+        <div class="sec-ttl" style="margin-top:12px">초기화</div>
         <div class="srow" style="margin-top:8px"><div><div class="slbl">설정 초기화</div></div><button class="btn btn-s btn-sm" onclick="resetSettings()">설정만 초기화</button></div>
 
         <div class="sec-ttl" style="margin-top:12px">설정 파일</div>
@@ -794,6 +771,27 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>{updateAdminUI();notify('관리자 인증 완료')})" title="관리자 인증">🔑 관리자 인증</button>
           <button class="btn btn-s btn-sm" id="showLogBtn" onclick="openActivityLog()" style="display:none">📋 활동 로그</button>
         </div>
+      </div>
+      <div class="spane" id="sadmin">
+        <div class="sec-ttl">헤더</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
+          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브타이틀</div><input class="inp" id="sSub" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">가져오기</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
+          <div>
+            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
+            <button class="btn btn-s btn-sm" onclick="openModal('importModal')">📥 CSV/TSV 가져오기</button>
+          </div>
+        </div>
+        <div style="margin-bottom:4px">
+          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}_{기능명}.md 파일을 key로 자동 매핑</div>
+          <button class="btn btn-s btn-sm" onclick="document.getElementById('mdImpInp').click()">📂 MD ZIP 가져오기</button>
+          <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">데이터 초기화</div>
+        <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" onclick="resetData()">초기화</button></div>
       </div>
     </div>
     <div class="mfoot"><button class="btn btn-p btn-sm" onclick="closeModal('settingsModal')">닫기</button></div>
@@ -849,9 +847,10 @@ function __inlineNotify(msg, isErr) {
 /* ══════════════════════════════════════════
    constants.js — 상수 / 설정 기본값 / 데모 데이터
 ══════════════════════════════════════════ */
-const SK       = 'sobukMXv6';
-const UNDO_MAX = 20;
-const CELL_OV  = 5;
+const SK             = 'sobukMXv6';
+const UNDO_MAX       = 20;
+const CELL_OV        = 5;
+const ADMIN_TOKEN_KEY = 'fmAdminToken';
 const FIELDS = [
   'key','name','desc','path','group','subGroup','category','subCategory',
   'priority','status','owner','isDelete','isImportant','relSystem','memo','mdPath','mdContent'
@@ -963,7 +962,7 @@ function apiBase() {
 }
 function apiHeaders() {
   const h = { 'Content-Type': 'application/json', 'X-API-Key': S.settings.apiKey || '' };
-  const token = sessionStorage.getItem('fmAdminToken');
+  const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
   if (token) h['X-Admin-Token'] = token;
   return h;
 }
@@ -1262,7 +1261,6 @@ async function unlockItem(key) {
 
 
 
-const ADMIN_TOKEN_KEY = 'fmAdminToken';
 
 /* ── 서버 모드 여부 ── */
 function isServerMode() {
@@ -1360,6 +1358,18 @@ function updateAdminUI() {
   const logoutBtn = document.getElementById('adminLogoutBtn');
   if (logoutBtn) {
     logoutBtn.style.display = admin && isServerMode() ? 'inline-flex' : 'none';
+  }
+  // 관리자 탭 표시 여부
+  const sadminTab = document.getElementById('sadminTab');
+  if (sadminTab) {
+    sadminTab.style.display = admin ? '' : 'none';
+    // 관리자 탭 활성 상태에서 로그아웃 시 일반 탭으로 강제 전환
+    if (!admin && document.getElementById('sadmin')?.classList.contains('on')) {
+      document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
+      document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
+      document.querySelector('.stab:not(#sadminTab)')?.classList.add('on');
+      document.getElementById('sg')?.classList.add('on');
+    }
   }
 }
 
@@ -2053,18 +2063,15 @@ function updateDL() {
             + C 빠른 상태 변경
             + E MD 툴바
             + #5 표·수식 파서
-══════════════════════════════════════════ */
-function openModal(id) {
+══════════════════════════════════════════ */function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
   document.querySelectorAll('.ov.on').forEach(m => { m.style.zIndex = '1000'; });
   el.style.zIndex = '1010';
   el.classList.add('on');
-}
-const closeModal = id => document.getElementById(id)?.classList.remove('on');
+}const closeModal = id => document.getElementById(id)?.classList.remove('on');
 
-/* ── 편집 탭 전환 ── */
-function switchEditTab(tab) {
+/* ── 편집 탭 전환 ── */function switchEditTab(tab) {
   ['info','md'].forEach(t => {
     document.getElementById(`etab-${t}`)?.classList.toggle('on', t === tab);
     const pane = document.getElementById(`epane-${t}`);
@@ -2073,8 +2080,7 @@ function switchEditTab(tab) {
   if (tab === 'md') { updateMdStat(); syncMdPreview(); }
 }
 
-/* ── MD 뷰 모드 ── */
-function switchMdView(mode) {
+/* ── MD 뷰 모드 ── */function switchMdView(mode) {
   const ta = document.getElementById('fMdContent');
   const pv = document.getElementById('mdPreviewPane');
   const modeIdMap = { edit:'mdTabEdit', preview:'mdTabPrev', split:'mdTabSplit' };
@@ -2087,25 +2093,21 @@ function switchMdView(mode) {
   } else {
     ta.style.display=''; ta.style.flex='1'; pv.style.display=''; pv.style.flex='1'; syncMdPreview();
   }
-}
-function syncMdPreview() {
+}function syncMdPreview() {
   const pv = document.getElementById('mdPreviewPane');
   if (pv && pv.style.display !== 'none') {
     pv.innerHTML = parseMd(document.getElementById('fMdContent').value);
     /* KaTeX 렌더링 */
     if (window.katex) renderKatex(pv);
   }
-}
-function onMdInput() { updateMdStat(); syncMdPreview(); }
-function updateMdStat() {
+}function onMdInput() { updateMdStat(); syncMdPreview(); }function updateMdStat() {
   const v = document.getElementById('fMdContent').value;
   document.getElementById('mdStatChars').textContent = v.length + '자';
   document.getElementById('mdStatLines').textContent = (v ? v.split('\n').length : 0) + '줄';
   document.getElementById('mdStatWords').textContent = (v.trim() ? v.trim().split(/\s+/).length : 0) + '단어';
 }
 
-/* E - MD 툴바 삽입 헬퍼 */
-function mdInsert(before, after) {
+/* E - MD 툴바 삽입 헬퍼 */function mdInsert(before, after) {
   const ta = document.getElementById('fMdContent');
   const s = ta.selectionStart, e = ta.selectionEnd;
   const sel = ta.value.substring(s, e);
@@ -2115,8 +2117,7 @@ function mdInsert(before, after) {
   ta.selectionStart = s + before.length;
   ta.selectionEnd   = s + before.length + (sel||'텍스트').length;
   onMdInput();
-}
-function mdInsertLine(prefix) {
+}function mdInsertLine(prefix) {
   const ta = document.getElementById('fMdContent');
   const s = ta.selectionStart;
   const lineStart = ta.value.lastIndexOf('\n', s - 1) + 1;
@@ -2126,8 +2127,7 @@ function mdInsertLine(prefix) {
   onMdInput();
 }
 
-/* ── #5 MD 파서 (표 + 수식 + 헤딩 버그 수정) ── */
-function parseMd(md) {
+/* ── #5 MD 파서 (표 + 수식 + 헤딩 버그 수정) ── */function parseMd(md) {
   if (!md) return '';
   let h = esc(md);
 
@@ -2251,8 +2251,7 @@ function renderKatex(container) {
   });
 }
 
-/* ── 모달 열기: 편집 ── */
-function openEditModal(key) {
+/* ── 모달 열기: 편집 ── */function openEditModal(key) {
   S.editKey = key;
   const item = findItem(key);
   if (!item) return;
@@ -2276,8 +2275,7 @@ function openEditModal(key) {
     }
   });
   openModal('editModal');
-}
-function openAddModal() {
+}function openAddModal() {
   S.editKey = null;
   ['fName','fDesc','fPath','fGroup','fSubGroup','fCat','fSubCat','fOwner','fRel','fMemo','fMdContent']
     .forEach(id => { document.getElementById(id).value = ''; });
@@ -2290,28 +2288,24 @@ function openAddModal() {
   document.getElementById('btnHardDel').style.display = 'none';
   switchEditTab('info'); switchMdView('edit'); updateMdStat();
   openModal('editModal');
-}
-function openAddInCell(g, sg, c, sc) {
+}function openAddInCell(g, sg, c, sc) {
   openAddModal();
   document.getElementById('fGroup').value    = g;
   document.getElementById('fSubGroup').value = sg;
   document.getElementById('fCat').value      = c;
   document.getElementById('fSubCat').value   = sc;
-}
-function openEditOrMd(key) {
+}function openEditOrMd(key) {
   const it = findItem(key); if (!it) return;
   openEditModal(key);
   switchEditTab('info');
-}
-function openMdModal(key) {
+}function openMdModal(key) {
   const it = findItem(key); if (!it) return;
   openEditModal(key);
   switchEditTab('md');
   switchMdView('preview');
 }
 
-/* ── 저장 ── */
-function saveItem() {
+/* ── 저장 ── */function saveItem() {
   const name = document.getElementById('fName').value.trim();
   if (!name) { notify('기능명을 입력해주세요.', true); return; }
   const ni = {
@@ -2353,8 +2347,7 @@ function saveItem() {
     notify('기능이 추가되었습니다.');
   }
   closeModal('editModal'); unlockItem(S.editKey); save(); renderAll();
-}
-function hardDelete() {
+}function hardDelete() {
   if (!S.editKey) return;
   requireAdmin(() => {
     const it = findItem(S.editKey);
@@ -2364,14 +2357,12 @@ function hardDelete() {
     S.items = S.items.filter(it => it.key !== S.editKey);
     closeModal('editModal'); unlockItem(S.editKey); save(); renderAll(); notify('완전 삭제되었습니다.');
   });
-}
-function duplicateItem(key) {
+}function duplicateItem(key) {
   const src = findItem(key); if (!src) return;
   pushUndo();
   S.items.push(Object.assign({}, src, {key: genKey(), updatedAt: Date.now()}));
   save(); renderAll(); notify(`${src.key} 복제 완료`);
-}
-function quickToggleDel(key) {
+}function quickToggleDel(key) {
   const it = findItem(key); if (!it) return;
   pushUndo();
   it.isDelete = it.isDelete === 'Y' ? 'N' : 'Y';
@@ -2381,8 +2372,7 @@ function quickToggleDel(key) {
 
 /* ── A - 우클릭 컨텍스트 메뉴 ── */
 let _ctxMenu = null;
-function closeCtxMenu() { _ctxMenu?.remove(); _ctxMenu = null; }
-function openCtxMenu(e, key) {
+function closeCtxMenu() { _ctxMenu?.remove(); _ctxMenu = null; }function openCtxMenu(e, key) {
   e.preventDefault(); e.stopPropagation();
   closeCtxMenu();
   const it = findItem(key); if (!it) return;
@@ -2406,8 +2396,7 @@ window.closeCtxMenu = closeCtxMenu;
 
 /* ── C - 빠른 상태 변경 ── */
 let _statusMenu = null;
-function closeStatusMenu() { _statusMenu?.remove(); _statusMenu = null; }
-function openStatusMenu(e, key) {
+function closeStatusMenu() { _statusMenu?.remove(); _statusMenu = null; }function openStatusMenu(e, key) {
   e.stopPropagation();
   closeStatusMenu(); closeCtxMenu();
   const it = findItem(key); if (!it) return;
@@ -2424,8 +2413,7 @@ function openStatusMenu(e, key) {
   _statusMenu = menu;
   setTimeout(() => document.addEventListener('click', closeStatusMenu, {once:true}), 0);
 }
-window.openStatusMenu = openStatusMenu;
-function setItemStatus(key, status) {
+window.openStatusMenu = openStatusMenu;function setItemStatus(key, status) {
   closeStatusMenu();
   const it = findItem(key); if (!it) return;
   pushUndo();
@@ -2434,8 +2422,7 @@ function setItemStatus(key, status) {
 }
 window.setItemStatus = setItemStatus;
 
-/* ── MD 파일 Import/Export ── */
-function impSingleMd(e) {
+/* ── MD 파일 Import/Export ── */function impSingleMd(e) {
   const file = e.target.files[0]; if (!file) return;
   const r = new FileReader();
   r.onload = ev => {
@@ -2444,8 +2431,7 @@ function impSingleMd(e) {
     switchMdView('preview');
   };
   r.readAsText(file, 'UTF-8'); e.target.value = '';
-}
-function expSingleMd() {
+}function expSingleMd() {
   const content = document.getElementById('fMdContent').value;
   if (!content.trim()) { notify('MD 내용이 없습니다.', true); return; }
   const key  = document.getElementById('fKey').value  || 'unknown';
@@ -2454,13 +2440,7 @@ function expSingleMd() {
   notify('MD 파일 저장됨.');
 }
 
-/* ── 드래그 & 드롭 ── */
-function onDS(e, key)  { S.isDragging=true; clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move'; setTimeout(()=>e.currentTarget.classList.add('dragging'),0); }
-function onDEnd(e)     { S.isDragging=false; e.currentTarget.classList.remove('dragging'); if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;} }
-function onDE(e)       { e.preventDefault(); if(S.dragCell&&S.dragCell!==e.currentTarget)S.dragCell.classList.remove('dov'); S.dragCell=e.currentTarget; e.currentTarget.classList.add('dov'); }
-function onDO(e)       { e.preventDefault(); e.dataTransfer.dropEffect='move'; }
-function onDL(e)       { const rel=e.relatedTarget; if(rel&&e.currentTarget.contains(rel))return; if(e.currentTarget===S.dragCell){e.currentTarget.classList.remove('dov');S.dragCell=null;} }
-function onDrop(e) {
+/* ── 드래그 & 드롭 ── */function onDS(e, key)  { S.isDragging=true; clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move'; setTimeout(()=>e.currentTarget.classList.add('dragging'),0); }function onDEnd(e)     { S.isDragging=false; e.currentTarget.classList.remove('dragging'); if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;} }function onDE(e)       { e.preventDefault(); if(S.dragCell&&S.dragCell!==e.currentTarget)S.dragCell.classList.remove('dov'); S.dragCell=e.currentTarget; e.currentTarget.classList.add('dov'); }function onDO(e)       { e.preventDefault(); e.dataTransfer.dropEffect='move'; }function onDL(e)       { const rel=e.relatedTarget; if(rel&&e.currentTarget.contains(rel))return; if(e.currentTarget===S.dragCell){e.currentTarget.classList.remove('dov');S.dragCell=null;} }function onDrop(e) {
   e.preventDefault();
   const cell = e.currentTarget;
   cell.classList.remove('dov'); S.dragCell=null;
@@ -2477,8 +2457,7 @@ function onDrop(e) {
   S.dragKey=null; save(); renderAll(); notify('이동 완료.');
 }
 
-/* ── 툴팁 ── */
-function startTT(e, key) {
+/* ── 툴팁 ── */function startTT(e, key) {
   if (S.isDragging) return; clearTT();
   const item = findItem(key);
   if (!item || (!item.desc && !item.mdContent)) return;
@@ -2493,9 +2472,7 @@ function startTT(e, key) {
     tt.style.top  = `${Math.min(my+14,window.innerHeight-150)}px`;
     tt.classList.add('on');
   }, 900);
-}
-function clearTT() { if(S.ttTimer){clearTimeout(S.ttTimer);S.ttTimer=null;} document.getElementById('ftt')?.classList.remove('on'); }
-function copyPath(p) { navigator.clipboard?.writeText(p).then(()=>notify('경로 복사됨.')).catch(()=>notify('복사 실패',true)); }
+}function clearTT() { if(S.ttTimer){clearTimeout(S.ttTimer);S.ttTimer=null;} document.getElementById('ftt')?.classList.remove('on'); }function copyPath(p) { navigator.clipboard?.writeText(p).then(()=>notify('경로 복사됨.')).catch(()=>notify('복사 실패',true)); }
 
 function sanitizeFilename(str) { return (str||'').replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,'_').slice(0,80); }
 function dlBlob(content, filename, type) {
@@ -2967,6 +2944,12 @@ function syncSettingsUI() {
   const subEl   = document.getElementById('sSub');
   if (titleEl) { titleEl.value = ss.title; titleEl.disabled = !admin; }
   if (subEl)   { subEl.value   = ss.subtitle; subEl.disabled = !admin; }
+  // 헤더 DOM도 즉시 반영
+  const dTitleEl = document.getElementById('dTitle');
+  const dSubEl   = document.getElementById('dSub');
+  if (dTitleEl) dTitleEl.textContent = ss.title || 'featureMATRIX';
+  if (dSubEl)   dSubEl.textContent   = ss.subtitle || '기능정의 툴';
+  document.title = ss.title || 'featureMATRIX';
   document.getElementById('dBaseFont').textContent  = ss.baseFont  + 'px';
   document.getElementById('dCardFont').textContent  = ss.cardFont  + 'px';
   document.getElementById('dRadius').textContent    = ss.cardRadius + 'px';
@@ -3133,13 +3116,11 @@ function impSettJSON(event) {
 
 /* ── 초기화 ── */
 function resetData() {
-  requireAdmin(() => {
-    if (!confirm('모든 데이터를 초기화하겠습니까?')) return;
-    S.items = JSON.parse(JSON.stringify(DEMO));
-    save(); renderAll();
-    document.getElementById('settingsModal')?.classList.remove('on');
-    notify('데이터가 초기화되었습니다.');
-  });
+  if (!confirm('모든 데이터를 초기화하겠습니까?')) return;
+  S.items = JSON.parse(JSON.stringify(DEMO));
+  save(); renderAll();
+  document.getElementById('settingsModal')?.classList.remove('on');
+  notify('데이터가 초기화되었습니다.');
 }
 function resetSettings() {
   if (!confirm('설정을 기본값으로 초기화하겠습니까?')) return;
@@ -3473,7 +3454,16 @@ window.openActivityLog = async () => {
       const headers = { 'X-API-Key': S.settings.apiKey || '', 'X-Admin-Token': sessionStorage.getItem('fmAdminToken') || '' };
       const res  = await fetch(apiUrl + '/api/log', { headers });
       const json = await res.json();
-      if (!json.ok) { body.innerHTML = `<div style="padding:20px;color:var(--danger)">${json.error}</div>`; return; }
+      if (!json.ok) {
+        if (res.status === 403) {
+          sessionStorage.removeItem('fmAdminToken');
+          updateAdminUI();
+          closeModal('activityLogModal');
+          requireAdmin(() => window.openActivityLog());
+          return;
+        }
+        body.innerHTML = `<div style="padding:20px;color:var(--danger)">${json.error}</div>`; return;
+      }
       if (!json.entries?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
       const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
       body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +

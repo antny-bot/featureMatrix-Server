@@ -302,13 +302,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <button class="stab" onclick="sstab(this,'sth')">테마</button>
       <button class="stab" onclick="sstab(this,'sdat')">데이터</button>
       <button class="stab" onclick="sstab(this,'ssrv')">서버</button>
+      <button class="stab" id="sadminTab" onclick="sstab(this,'sadmin')" style="display:none">🔑 관리자</button>
     </div>
     <div class="mbody" style="padding:14px 20px">
       <div class="spane on" id="sg">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브타이틀</div><input class="inp" id="sSub" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
-        </div>
         <div class="sec-ttl">폰트 &amp; 카드</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
           <div class="srow"><div><div class="slbl">기준 폰트</div></div><div class="stepper"><button class="stepbtn" onclick="adjFont(-1)">−</button><span id="dBaseFont">16px</span><button class="stepbtn" onclick="adjFont(1)">+</button></div></div>
@@ -379,27 +376,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <button class="btn btn-s btn-sm" onclick="expMdZip()">📦 MD ZIP</button>
         </div>
 
-        <div class="sec-ttl" style="margin-top:12px">
-          가져오기 <span style="font-size:.65rem;color:var(--warning);font-weight:700">🔒 관리자</span>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
-          <div>
-            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>openModal('importModal'))">📥 CSV/TSV 가져오기</button>
-            </div>
-          </div>
-        </div>
-        <div style="margin-bottom:4px">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}_{기능명}.md 파일을 key로 자동 매핑</div>
-          <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>document.getElementById('mdImpInp').click())">📂 MD ZIP 가져오기</button>
-          <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
-        </div>
-
-        <div class="sec-ttl" style="margin-top:12px">
-          초기화 <span style="font-size:.65rem;color:var(--danger);font-weight:700">🔒 관리자</span>
-        </div>
-        <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" data-admin onclick="resetData()">초기화</button></div>
+        <div class="sec-ttl" style="margin-top:12px">초기화</div>
         <div class="srow" style="margin-top:8px"><div><div class="slbl">설정 초기화</div></div><button class="btn btn-s btn-sm" onclick="resetSettings()">설정만 초기화</button></div>
 
         <div class="sec-ttl" style="margin-top:12px">설정 파일</div>
@@ -448,6 +425,27 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>{updateAdminUI();notify('관리자 인증 완료')})" title="관리자 인증">🔑 관리자 인증</button>
           <button class="btn btn-s btn-sm" id="showLogBtn" onclick="openActivityLog()" style="display:none">📋 활동 로그</button>
         </div>
+      </div>
+      <div class="spane" id="sadmin">
+        <div class="sec-ttl">헤더</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
+          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브타이틀</div><input class="inp" id="sSub" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">가져오기</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
+          <div>
+            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
+            <button class="btn btn-s btn-sm" onclick="openModal('importModal')">📥 CSV/TSV 가져오기</button>
+          </div>
+        </div>
+        <div style="margin-bottom:4px">
+          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}_{기능명}.md 파일을 key로 자동 매핑</div>
+          <button class="btn btn-s btn-sm" onclick="document.getElementById('mdImpInp').click()">📂 MD ZIP 가져오기</button>
+          <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">데이터 초기화</div>
+        <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" onclick="resetData()">초기화</button></div>
       </div>
     </div>
     <div class="mfoot"><button class="btn btn-p btn-sm" onclick="closeModal('settingsModal')">닫기</button></div>

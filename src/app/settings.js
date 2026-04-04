@@ -8,7 +8,7 @@ import { applyVars, applyBlurSetting, updateDesignContent, renderThemeGrid, rend
 import { renderAll, renderList, renderMatrix } from './render.js';
 import { dlBlob } from './io.js';
 import { DEMO } from './constants.js';
-import { isAdmin, updateAdminUI, requireAdmin } from './admin.js';
+import { isAdmin, updateAdminUI } from './admin.js';
 
 /* ── 설정 탭 전환 ── */
 export function sstab(btn, paneId) {
@@ -33,6 +33,12 @@ export function syncSettingsUI() {
   const subEl   = document.getElementById('sSub');
   if (titleEl) { titleEl.value = ss.title; titleEl.disabled = !admin; }
   if (subEl)   { subEl.value   = ss.subtitle; subEl.disabled = !admin; }
+  // 헤더 DOM도 즉시 반영
+  const dTitleEl = document.getElementById('dTitle');
+  const dSubEl   = document.getElementById('dSub');
+  if (dTitleEl) dTitleEl.textContent = ss.title || 'featureMATRIX';
+  if (dSubEl)   dSubEl.textContent   = ss.subtitle || '기능정의 툴';
+  document.title = ss.title || 'featureMATRIX';
   document.getElementById('dBaseFont').textContent  = ss.baseFont  + 'px';
   document.getElementById('dCardFont').textContent  = ss.cardFont  + 'px';
   document.getElementById('dRadius').textContent    = ss.cardRadius + 'px';
@@ -205,13 +211,11 @@ export function impSettJSON(event) {
 
 /* ── 초기화 ── */
 export function resetData() {
-  requireAdmin(() => {
-    if (!confirm('모든 데이터를 초기화하겠습니까?')) return;
-    S.items = JSON.parse(JSON.stringify(DEMO));
-    save(); renderAll();
-    document.getElementById('settingsModal')?.classList.remove('on');
-    notify('데이터가 초기화되었습니다.');
-  });
+  if (!confirm('모든 데이터를 초기화하겠습니까?')) return;
+  S.items = JSON.parse(JSON.stringify(DEMO));
+  save(); renderAll();
+  document.getElementById('settingsModal')?.classList.remove('on');
+  notify('데이터가 초기화되었습니다.');
 }
 
 export function resetSettings() {

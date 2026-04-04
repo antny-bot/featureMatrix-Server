@@ -106,6 +106,18 @@ export function updateAdminUI() {
   if (logoutBtn) {
     logoutBtn.style.display = admin && isServerMode() ? 'inline-flex' : 'none';
   }
+  // 관리자 탭 표시 여부
+  const sadminTab = document.getElementById('sadminTab');
+  if (sadminTab) {
+    sadminTab.style.display = admin ? '' : 'none';
+    // 관리자 탭 활성 상태에서 로그아웃 시 일반 탭으로 강제 전환
+    if (!admin && document.getElementById('sadmin')?.classList.contains('on')) {
+      document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
+      document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
+      document.querySelector('.stab:not(#sadminTab)')?.classList.add('on');
+      document.getElementById('sg')?.classList.add('on');
+    }
+  }
 }
 
 /* ── 관리자 전용 클릭 핸들러 ── */
