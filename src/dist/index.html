@@ -54,7 +54,7 @@ html{-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-
 body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고딕',sans-serif;font-size:1rem;font-weight:400;line-height:1.75;letter-spacing:-.01em;color:var(--text);background:var(--bg);min-height:100vh}
 
 /* ── 버튼 ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.8125rem;font-weight:500;letter-spacing:-.01em;padding:0 13px;height:33px;border-radius:7px;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all .18s;user-select:none;line-height:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.8125rem;font-weight:500;letter-spacing:-.01em;padding:0 13px;height:33px;border-radius:7px;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:background .18s,transform .18s,box-shadow .18s,color .18s,border-color .18s;user-select:none;line-height:1}
 .btn-p{background:var(--accent);color:var(--accent-text);box-shadow:var(--shadow-sm)}.btn-p:hover{background:var(--accent-h);transform:translateY(-1px)}
 .btn-s{background:var(--surface);color:var(--text);border-color:var(--border-2);box-shadow:var(--shadow-xs)}.btn-s:hover{background:var(--surface-2)}
 .btn-g{background:transparent;color:var(--text-2)}.btn-g:hover{background:var(--overlay);color:var(--text)}
@@ -100,7 +100,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 
 /* ── 설정 탭 ── */
 .stab-row{display:flex;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0;flex-wrap:wrap}
-.stab{padding:8px 14px;border:none;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.8rem;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .14s}
+.stab{padding:8px 14px;border:none;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.8rem;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .14s,border-color .14s}
 .stab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .spane{display:none}.spane.on{display:block}
 .srow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);gap:12px}
@@ -109,15 +109,18 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .ssub{font-size:.7rem;color:var(--text-3);margin-top:1px}
 .stepper{display:flex;align-items:center;gap:5px}
 .stepper span{font-size:.8125rem;font-weight:600;min-width:42px;text-align:center;color:var(--text)}
-.stepbtn{width:26px;height:26px;border:1px solid var(--border-2);border-radius:5px;background:var(--surface-2);cursor:pointer;color:var(--text-2);font-size:.875rem;line-height:1;transition:all .14s}
+.stepbtn{width:26px;height:26px;border:1px solid var(--border-2);border-radius:5px;background:var(--surface-2);cursor:pointer;color:var(--text-2);font-size:.875rem;line-height:1;transition:background .14s,color .14s}
 .stepbtn:hover{background:var(--surface-3)}
-.rbtn{height:27px;padding:0 11px;border:1px solid var(--border-2);border-radius:5px;background:var(--surface);color:var(--text-2);font-size:.77rem;font-weight:500;cursor:pointer;transition:all .14s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif}
+.rbtn{height:27px;padding:0 11px;border:1px solid var(--border-2);border-radius:5px;background:var(--surface);color:var(--text-2);font-size:.77rem;font-weight:500;cursor:pointer;transition:background .14s,color .14s,border-color .14s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif}
 .rbtn.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
 .sec-ttl{font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3);margin:13px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 .sec-ttl:first-child{margin-top:0}
 
 /* ── 헤더 ── */
 .hdr{position:sticky;top:0;z-index:200;height:50px;display:flex;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-xs)}
+/* ── 헤더 완료율 바 ── */
+.hdr-prog{position:absolute;bottom:0;left:0;right:0;height:2px;background:transparent;pointer-events:none}
+.hdr-prog-bar{height:100%;background:var(--success);transition:width .5s cubic-bezier(.4,0,.2,1);border-radius:0 1px 1px 0;min-width:0}
 .hdr-left{display:flex;align-items:center;height:100%;padding:0 8px 0 12px;gap:6px;border-right:1px solid var(--border);flex-shrink:0}
 .logo-kr{font-family:'Noto Serif KR','Georgia',serif;font-size:.88rem;font-weight:600;letter-spacing:.03em;color:var(--text);white-space:nowrap}
 .logo-sub{font-size:.58rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
@@ -129,7 +132,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .sv-t{color:var(--text)}.sv-h{color:var(--p-high,#C0312A)}.sv-m{color:var(--p-mid,#9A6200)}
 .sv-l{color:var(--text-3)}.sv-i{color:var(--accent)}.sv-n{color:var(--success)}
 .fbadge{display:none;font-size:.6rem;color:var(--accent);background:var(--accent-l);border-radius:3px;padding:1px 5px;margin-left:5px;font-weight:600;white-space:nowrap}
-.fbadge.on{display:inline;animation:pulse-badge 1.8s ease infinite}
+.fbadge.on{display:inline;animation:pulse-badge 1.8s ease 3}
 /* B - 필터 뱃지 */
 .filter-badge{display:none;position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--accent);border-radius:50%;border:1.5px solid var(--surface);pointer-events:none}
 .filter-badge.on{display:block}
@@ -148,19 +151,23 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* ── 레이아웃 ── */
 .layout{display:flex;height:calc(100vh - 50px);overflow:hidden}
 .layout.pr{flex-direction:row-reverse}
-.fpanel{width:204px;min-width:204px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;transition:width .22s,min-width .22s,border-width .22s}
-.fpanel.collapsed{width:0;min-width:0;border-width:0}
+.fpanel{width:204px;max-width:204px;background:var(--surface);border-right:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:max-width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
+.fpanel.collapsed{max-width:0;border-width:0}
 .layout.pr .fpanel{border-right:none;border-left:1px solid var(--border)}
 .layout.pr .fpanel.collapsed{border-left-width:0}
-.fpinner{padding:12px 11px;min-width:182px}
+.fpinner{padding:12px 11px;min-width:182px;overflow-y:auto;flex:1}
 .fsec{margin-bottom:12px}
-.fsec-ttl{font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+.fsec-ttl{font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.fsec-ttl::after{content:'⌄';font-size:.6rem;line-height:1;flex-shrink:0;transition:transform .18s;display:inline-block;opacity:.6}
+.fsec.sec-collapsed .fsec-ttl::after{transform:rotate(-90deg)}
+.fsec-body{overflow:hidden}
+.fsec.sec-collapsed .fsec-body{display:none}
 .fsep{height:1px;background:var(--border);margin:10px 0}
 .pchips{display:flex;gap:4px}
-.pchip{display:inline-flex;align-items:center;padding:4px 9px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;transition:all .14s;font-size:.75rem;font-weight:700}
+.pchip{display:inline-flex;align-items:center;padding:4px 9px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;transition:background .14s,color .14s,border-color .14s;font-size:.75rem;font-weight:700}
 .pchip input{position:absolute;opacity:0;width:0;height:0}
 .owner-chips{display:flex;flex-wrap:wrap;gap:4px}
-.owner-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;font-size:.73rem;transition:all .14s}
+.owner-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;font-size:.73rem;transition:background .14s,color .14s,border-color .14s}
 .owner-chip input{position:absolute;opacity:0;width:0;height:0}
 .owner-chip.chip-on{border-width:1.5px;font-weight:600}
 /* content: overflow-x hidden, overflow-y auto → sticky 정상 동작 */
@@ -266,13 +273,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .crow{display:flex;align-items:center;justify-content:space-between;padding:5px 0}
 .crow-lbl{font-size:.8rem;color:var(--text-2)}
 .theme-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px}
-.theme-card{cursor:pointer;border:2px solid var(--border);border-radius:9px;padding:7px 5px;text-align:center;transition:all .15s}
+.theme-card{cursor:pointer;border:2px solid var(--border);border-radius:9px;padding:7px 5px;text-align:center;transition:background .15s,border-color .15s}
 .theme-card:hover{background:var(--surface-2)}.theme-card.on{border-color:var(--accent);background:var(--accent-l)}
 .theme-swatches{display:flex;gap:2px;height:22px;border-radius:5px;overflow:hidden;margin-bottom:4px}
 .theme-swatch{flex:1}.theme-name{font-size:.62rem;font-weight:600;color:var(--text-2)}
 /* #4 - 카드스타일 compact */
 .preset-grid{display:flex;flex-wrap:wrap;gap:4px}
-.preset-btn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 5px;border-radius:5px;border:2px solid transparent;transition:all .14s}
+.preset-btn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 5px;border-radius:5px;border:2px solid transparent;transition:background .14s,border-color .14s}
 .preset-btn:hover{background:var(--surface-2)}.preset-btn.on{border-color:var(--accent);background:var(--accent-l)}
 .preset-prev{width:28px;height:14px;border-radius:3px}
 .preset-lbl{font-size:.55rem;font-weight:500;color:var(--text-3)}
@@ -403,16 +410,17 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     <button class="btn btn-p btn-sm" onclick="openAddModal()">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 추가
     </button>
-    <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">⚙ 설정</button>
-    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:5px">
+    <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)" style="width:27px;padding:0">⚙</button>
+    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:4px" title="저장 위치">
       <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
-      <span id="serverStatusLabel">🌐 서버</span>
+      <span id="serverStatusLabel">🌐</span>
     </span>
-    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">🔑 관리자</span>
-    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;font-size:.7rem">잠금</button>
+    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
+    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="관리자 잠금">🔒</button>
     <button class="btn btn-g btn-sm" onclick="openModal('shortcutsModal')" title="단축키 (?)">?</button>
     <button class="btn btn-g btn-sm" style="width:27px;padding:0" onclick="toggleTheme()" id="themeBtn">🌙</button>
   </div>
+  <div class="hdr-prog" id="hdrProg" title="완료율 0%"><div class="hdr-prog-bar" id="hdrProgBar" style="width:0%"></div></div>
 </header>
 
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
@@ -428,18 +436,21 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <span style="font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)">필터</span>
         <button class="btn btn-g btn-sm" onclick="resetFilters()" style="height:20px;padding:0 6px;font-size:.65rem">초기화</button>
       </div>
-      <div class="fsec"><div class="fsec-ttl">우선순위</div><div class="pchips" id="prioChips"></div></div>
+      <div class="fsec"><div class="fsec-ttl">우선순위</div><div class="fsec-body"><div class="pchips" id="prioChips"></div></div></div>
       <div class="fsep"></div>
       <div class="fsec">
         <div class="fsec-ttl">진행상태</div>
-        <div id="statusChips" style="display:flex;flex-wrap:wrap;gap:3px"></div>
+        <div class="fsec-body"><div id="statusChips" style="display:flex;flex-wrap:wrap;gap:3px"></div></div>
       </div>
       <div class="fsep"></div>
-      <div class="fsec"><div class="fsec-ttl">담당</div><div class="owner-chips" id="ownerChips"></div></div>
+      <div class="fsec">
+        <div class="fsec-ttl">담당</div>
+        <div class="fsec-body"><div class="owner-chips" id="ownerChips"></div></div>
+      </div>
       <div class="fsep"></div>
       <div class="fsec">
         <div class="fsec-ttl">표시 조건</div>
-        <div style="display:flex;flex-direction:column;gap:7px">
+        <div class="fsec-body" style="display:flex;flex-direction:column;gap:7px">
           <label class="tgl"><input type="checkbox" id="togDel" onchange="applyFilters()"><span class="tgl-track"></span><span class="tgl-lbl">삭제 포함</span></label>
           <label class="tgl"><input type="checkbox" id="togImp" onchange="applyFilters()"><span class="tgl-track"></span><span class="tgl-lbl">중요만 보기</span></label>
         </div>
@@ -447,7 +458,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <div class="fsep"></div>
       <div class="fsec">
         <div class="fsec-ttl">카드 표시</div>
-        <div style="display:flex;flex-direction:column;gap:3px">
+        <div class="fsec-body" style="display:flex;flex-direction:column;gap:3px">
           <div style="font-size:.62rem;font-weight:700;letter-spacing:.04em;color:var(--text-3);text-transform:uppercase;margin:4px 0 2px">식별</div>
           <label class="tgl"><input type="checkbox" id="togOwner" checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">담당</span></label>
           <label class="tgl"><input type="checkbox" id="togStar"  checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">★ 중요</span></label>
@@ -640,21 +651,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     <div class="mhd"><span class="mtitle">⚙ 환경 설정</span><button class="mclose" onclick="closeModal('settingsModal')">✕</button></div>
     <div class="stab-row">
       <button class="stab on" onclick="sstab(this,'sg')">일반</button>
-      <button class="stab" onclick="sstab(this,'scol')">리스트 컬럼</button>
-      <button class="stab" onclick="sstab(this,'saxis')">축 순서</button>
-      <button class="stab" onclick="sstab(this,'sanim')">애니메이션</button>
-      <button class="stab" onclick="sstab(this,'scs')">카드 스타일</button>
-      <button class="stab" onclick="sstab(this,'sd')">색상</button>
-      <button class="stab" onclick="sstab(this,'sth')">테마</button>
-      <button class="stab" onclick="sstab(this,'sdat')">데이터</button>
-      <button class="stab" onclick="sstab(this,'ssrv')">서버</button>
+      <button class="stab" onclick="sstab(this,'sdesign')">디자인</button>
+      <button class="stab" onclick="sstab(this,'scola')">컬럼·축</button>
+      <button class="stab" onclick="sstab(this,'sdat')">데이터·서버</button>
+      <button class="stab" id="sadminTab" onclick="sstab(this,'sadmin')" style="display:none">🔑 관리자</button>
     </div>
     <div class="mbody" style="padding:14px 20px">
       <div class="spane on" id="sg">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브타이틀</div><input class="inp" id="sSub" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
-        </div>
         <div class="sec-ttl">폰트 &amp; 카드</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
           <div class="srow"><div><div class="slbl">기준 폰트</div></div><div class="stepper"><button class="stepbtn" onclick="adjFont(-1)">−</button><span id="dBaseFont">16px</span><button class="stepbtn" onclick="adjFont(1)">+</button></div></div>
@@ -674,21 +677,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div class="srow" style="border-bottom:none"><div><div class="slbl">매트릭스 너비</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="mwF" onclick="setMW('fluid')">가변</button><button class="rbtn" id="mwX" onclick="setMW('fixed')">고정</button></div></div>
           <div class="srow" style="border-bottom:none"><div><div class="slbl">필터 패널 위치</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="ppL" onclick="setPPos('left')">← 왼쪽</button><button class="rbtn" id="ppR" onclick="setPPos('right')">오른쪽 →</button></div></div>
         </div>
-      </div>
-      <div class="spane" id="scol">
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">체크: 표시 여부 &nbsp;|&nbsp; ⠿ 드래그: 순서 변경</div>
-        <div class="col-editor" id="colEditor"></div>
-        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetListCols()">기본값 복원</button></div>
-      </div>
-      <div class="spane" id="saxis">
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">⠿ 드래그로 X축(그룹)·Y축(카테고리) 순서를 재정렬합니다.</div>
-        <div class="sec-ttl">그룹 (X축)</div>
-        <div class="col-editor" id="groupAxisList"></div>
-        <div class="sec-ttl" style="margin-top:12px">카테고리 (Y축)</div>
-        <div class="col-editor" id="catAxisList"></div>
-        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetAxisOrder()">자동 정렬 초기화</button></div>
-      </div>
-      <div class="spane" id="sanim">
+        <div class="sec-ttl" style="margin-top:12px">애니메이션</div>
         <div class="srow"><div><div class="slbl">애니메이션 전체</div><div class="ssub">모든 애니메이션 일괄 on/off</div></div><label class="tgl"><input type="checkbox" id="animEnabled" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">숫자 카운트업</div><div class="ssub">헤더 통계 숫자 증가 효과</div></div><label class="tgl"><input type="checkbox" id="animCountUp" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">카드 등장 효과</div><div class="ssub">카드 렌더 시 순서대로 fade-in</div></div><label class="tgl"><input type="checkbox" id="animCard" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
@@ -696,16 +685,32 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl">행 Hover Shimmer</div><div class="ssub">리스트 뷰 행 hover 광택 효과</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">모달 Backdrop Blur</div><div class="ssub">모달 배경 블러 처리</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
       </div>
-      <div class="spane" id="scs">
+      <!-- 디자인: 카드스타일 + 색상 + 테마 -->
+      <div class="spane" id="sdesign">
         <div id="prioStyleRows"></div>
         <div class="sec-ttl" style="margin-top:10px">카드 미리보기</div>
         <div class="preview-cards" id="previewCards"></div>
-      </div>
-      <div class="spane" id="sd"><div id="designContent"></div></div>
-      <div class="spane" id="sth">
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">테마 선택 시 색상 탭이 자동 업데이트됩니다.</div>
+        <div class="sec-ttl" style="margin-top:12px">색상</div>
+        <div id="designContent"></div>
+        <div class="sec-ttl" style="margin-top:12px">테마</div>
+        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">테마 선택 시 색상이 자동 업데이트됩니다.</div>
         <div class="theme-grid" id="themeGrid"></div>
       </div>
+      <!-- 컬럼·축: 리스트컬럼 + 축순서 -->
+      <div class="spane" id="scola">
+        <div class="sec-ttl">리스트 컬럼</div>
+        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">체크: 표시 여부 &nbsp;|&nbsp; ⠿ 드래그: 순서 변경</div>
+        <div class="col-editor" id="colEditor"></div>
+        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetListCols()">기본값 복원</button></div>
+        <div class="sec-ttl" style="margin-top:16px">축 순서</div>
+        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">⠿ 드래그로 X축(그룹)·Y축(카테고리) 순서를 재정렬합니다.</div>
+        <div class="sec-ttl" style="font-size:.62rem">그룹 (X축)</div>
+        <div class="col-editor" id="groupAxisList"></div>
+        <div class="sec-ttl" style="margin-top:12px;font-size:.62rem">카테고리 (Y축)</div>
+        <div class="col-editor" id="catAxisList"></div>
+        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetAxisOrder()">자동 정렬 초기화</button></div>
+      </div>
+      <!-- 데이터·서버 -->
       <div class="spane" id="sdat">
         <div class="sec-ttl">내보내기</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
@@ -724,36 +729,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">MD 내용이 작성된 항목만 포함됩니다.</div>
           <button class="btn btn-s btn-sm" onclick="expMdZip()">📦 MD ZIP</button>
         </div>
-
-        <div class="sec-ttl" style="margin-top:12px">
-          가져오기 <span style="font-size:.65rem;color:var(--warning);font-weight:700">🔒 관리자</span>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
-          <div>
-            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>openModal('importModal'))">📥 CSV/TSV 가져오기</button>
-            </div>
-          </div>
-        </div>
-        <div style="margin-bottom:4px">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}_{기능명}.md 파일을 key로 자동 매핑</div>
-          <button class="btn btn-s btn-sm" data-admin onclick="requireAdmin(()=>document.getElementById('mdImpInp').click())">📂 MD ZIP 가져오기</button>
-          <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
-        </div>
-
-        <div class="sec-ttl" style="margin-top:12px">
-          초기화 <span style="font-size:.65rem;color:var(--danger);font-weight:700">🔒 관리자</span>
-        </div>
-        <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" data-admin onclick="resetData()">초기화</button></div>
-        <div class="srow" style="margin-top:8px"><div><div class="slbl">설정 초기화</div></div><button class="btn btn-s btn-sm" onclick="resetSettings()">설정만 초기화</button></div>
-
-        <div class="sec-ttl" style="margin-top:12px">설정 파일</div>
+        <div class="sec-ttl" style="margin-top:12px">초기화 · 설정 파일</div>
+        <div class="srow"><div><div class="slbl">설정 초기화</div></div><button class="btn btn-s btn-sm" onclick="resetSettings()">설정만 초기화</button></div>
         <div class="srow"><div><div class="slbl">설정 JSON 저장</div></div><button class="btn btn-s btn-sm" onclick="expSettJSON()">⬇ 저장</button></div>
         <div class="srow"><div><div class="slbl">설정 JSON 불러오기</div></div><div><button class="btn btn-s btn-sm" onclick="document.getElementById('settFile').click()">↑ 불러오기</button><input type="file" id="settFile" accept=".json" style="display:none" onchange="impSettJSON(event)"></div></div>
-      </div>
-      <div class="spane" id="ssrv">
-        <div class="sec-ttl">데이터 저장 위치</div>
+        <div class="sec-ttl" style="margin-top:16px">서버</div>
         <div style="display:flex;gap:12px;margin-bottom:12px">
           <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer">
             <input type="radio" name="storageMode" id="modeServer" value="server" onchange="saveServerSettings()">
@@ -764,35 +744,60 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             💾 로컬 (개인)
           </label>
         </div>
-        <div class="sec-ttl">내 이름</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div class="slbl">사용자 이름</div>
-          <div class="ssub">저장 시 수정자로 표시됩니다.</div>
-          <input class="inp" id="sUserName" placeholder="홍길동" style="height:28px;font-size:.8rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px;grid-column:span 2">
+            <div class="slbl">사용자 이름</div>
+            <input class="inp" id="sUserName" placeholder="홍길동" style="height:28px;font-size:.8rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
+          </div>
+          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
+            <div class="slbl">서버 URL</div>
+            <div class="ssub">비워두면 현재 도메인 사용</div>
+            <input class="inp" id="sServerUrl" placeholder="http://서버IP:5000" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
+          </div>
+          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
+            <div class="slbl">API Key</div>
+            <div class="ssub">server.py의 config.json에서 확인</div>
+            <input class="inp" id="sApiKey" type="password" placeholder="API 키 입력" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
+          </div>
         </div>
-        <div class="sec-ttl" style="margin-top:12px">서버 연결</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div class="slbl">서버 URL</div>
-          <div class="ssub">비워두면 현재 도메인 사용 (서버와 같은 호스트)</div>
-          <input class="inp" id="sServerUrl" placeholder="http://서버IP:5000" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
-        </div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px;margin-top:8px">
-          <div class="slbl">API Key</div>
-          <div class="ssub">server.py 실행 시 생성되는 config.json에서 확인</div>
-          <input class="inp" id="sApiKey" type="password" placeholder="API 키 입력" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
-        </div>
-        <div class="sec-ttl" style="margin-top:12px">변경 감지 폴링</div>
-        <div class="srow">
-          <div><div class="slbl">확인 주기</div><div class="ssub">다른 사용자의 변경을 감지하는 간격</div></div>
+        <div class="srow" style="margin-top:4px">
+          <div><div class="slbl">변경 감지 주기</div><div class="ssub">다른 사용자의 변경을 감지하는 간격</div></div>
           <div style="display:flex;align-items:center;gap:6px">
             <input class="inp" id="sPollInterval" type="number" min="5" max="300" value="10" style="width:60px;height:28px;text-align:center;font-size:.82rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
             <span style="font-size:.78rem;color:var(--text-3)">초</span>
           </div>
         </div>
-        <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" onclick="saveServerSettings()">설정 저장</button>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-p btn-sm" onclick="saveServerSettings()">서버 설정 저장</button>
           <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>{updateAdminUI();notify('관리자 인증 완료')})" title="관리자 인증">🔑 관리자 인증</button>
-          <button class="btn btn-s btn-sm" id="showLogBtn" onclick="openActivityLog()" style="display:none">📋 활동 로그</button>
+        </div>
+      </div>
+      <div class="spane" id="sadmin">
+        <div class="sec-ttl">헤더</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
+          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브 타이틀</div><input class="inp" id="sSub" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">가져오기</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
+            <button class="btn btn-s btn-sm" onclick="openModal('importModal')">📥 CSV/TSV 가져오기</button>
+          </div>
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}.md 파일을 key로 자동 매핑</div>
+            <button class="btn btn-s btn-sm" onclick="document.getElementById('mdImpInp').click()">📂 MD ZIP 가져오기</button>
+            <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
+          </div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">데이터 초기화</div>
+        <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" onclick="resetData()">초기화</button></div>
+        <div class="sec-ttl" style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+          <span>활동 로그</span>
+          <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
+        </div>
+        <div id="inlineLogBody" style="height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:.78rem">
+          <div style="padding:16px;text-align:center;color:var(--text-3)">탭을 열면 자동으로 불러옵니다.</div>
         </div>
       </div>
     </div>
@@ -813,8 +818,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Z</span></div><span style="font-size:.8125rem;color:var(--text-2)">실행 취소</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">우클릭</span></div><span style="font-size:.8125rem;color:var(--text-2)">카드 컨텍스트 메뉴</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">상태뱃지 클릭</span></div><span style="font-size:.8125rem;color:var(--text-2)">빠른 상태 변경</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">I</span></div><span style="font-size:.8125rem;color:var(--text-2)">설정 &gt; 데이터 탭</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">E</span></div><span style="font-size:.8125rem;color:var(--text-2)">설정 &gt; 데이터 탭</span></div>
+      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">I</span></div><span style="font-size:.8125rem;color:var(--text-2)">CSV/TSV 가져오기</span></div>
+      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">E</span></div><span style="font-size:.8125rem;color:var(--text-2)">데이터 내보내기</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">,</span></div><span style="font-size:.8125rem;color:var(--text-2)">환경 설정</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Esc</span></div><span style="font-size:.8125rem;color:var(--text-2)">창 닫기</span></div>
     </div>
@@ -849,9 +854,10 @@ function __inlineNotify(msg, isErr) {
 /* ══════════════════════════════════════════
    constants.js — 상수 / 설정 기본값 / 데모 데이터
 ══════════════════════════════════════════ */
-const SK       = 'sobukMXv6';
-const UNDO_MAX = 20;
-const CELL_OV  = 5;
+const SK             = 'sobukMXv6';
+const UNDO_MAX       = 20;
+const CELL_OV        = 5;
+const ADMIN_TOKEN_KEY = 'fmAdminToken';
 const FIELDS = [
   'key','name','desc','path','group','subGroup','category','subCategory',
   'priority','status','owner','isDelete','isImportant','relSystem','memo','mdPath','mdContent'
@@ -937,7 +943,7 @@ const S = {
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },
     customColors: { light:{}, dark:{} },
     listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-    animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:true },
+    animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:false },
     groupOrder: [],
     catOrder: [],
     storageMode: 'server',
@@ -963,7 +969,7 @@ function apiBase() {
 }
 function apiHeaders() {
   const h = { 'Content-Type': 'application/json', 'X-API-Key': S.settings.apiKey || '' };
-  const token = sessionStorage.getItem('fmAdminToken');
+  const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
   if (token) h['X-Admin-Token'] = token;
   return h;
 }
@@ -1262,7 +1268,6 @@ async function unlockItem(key) {
 
 
 
-const ADMIN_TOKEN_KEY = 'fmAdminToken';
 
 /* ── 서버 모드 여부 ── */
 function isServerMode() {
@@ -1360,6 +1365,18 @@ function updateAdminUI() {
   const logoutBtn = document.getElementById('adminLogoutBtn');
   if (logoutBtn) {
     logoutBtn.style.display = admin && isServerMode() ? 'inline-flex' : 'none';
+  }
+  // 관리자 탭 표시 여부
+  const sadminTab = document.getElementById('sadminTab');
+  if (sadminTab) {
+    sadminTab.style.display = admin ? '' : 'none';
+    // 관리자 탭 활성 상태에서 로그아웃 시 일반 탭으로 강제 전환
+    if (!admin && document.getElementById('sadmin')?.classList.contains('on')) {
+      document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
+      document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
+      document.querySelector('.stab:not(#sadminTab)')?.classList.add('on');
+      document.getElementById('sg')?.classList.add('on');
+    }
   }
 }
 
@@ -1596,6 +1613,10 @@ function animOk(k) {
   return a.enabled && (k ? !!a[k] : true);
 }
 
+/* 카드 등장 애니메이션은 의도적 진입(초기 로드·항목 추가)에만 허용 */
+let _cardAnimEnabled = false;
+function scheduleCardAnim() { _cardAnimEnabled = true; }
+
 /* ── CountUp ── */
 const _cu = {};
 function countUp(id, target) {
@@ -1705,7 +1726,6 @@ function renderAll(withFade = false) {
     renderOwnerChips();
     renderPrioChips();
     renderStatusChips();
-    renderPrioStyleRows();
   };
   if (withFade && animOk('filter')) {
     const area = document.getElementById('contentArea');
@@ -1722,17 +1742,24 @@ function renderAll(withFade = false) {
 /* ── 통계 ── */
 function renderStats() {
   const items = getFiltered();
-  let h = 0, m = 0, l = 0, imp = 0, nw = 0;
+  let h = 0, m = 0, l = 0, imp = 0, nw = 0, done = 0;
   items.forEach(it => {
     if (it.priority === '상') h++; else if (it.priority === '중') m++; else l++;
     if (it.isImportant === 'Y') imp++;
     if (it.key?.charAt(0) === 'N') nw++;
+    if (it.status === '완료') done++;
   });
   countUp('stTotal', items.length);
   countUp('stHigh', h); countUp('stMid', m); countUp('stLow', l);
   countUp('stImp', imp); countUp('stNew', nw);
   const fb = document.getElementById('fbadge');
   if (fb) fb.className = 'fbadge' + (isFilterActive() ? ' on' : '');
+  /* 완료율 진행바 */
+  const pct = items.length > 0 ? Math.round(done / items.length * 100) : 0;
+  const bar = document.getElementById('hdrProgBar');
+  const prog = document.getElementById('hdrProg');
+  if (bar) bar.style.width = pct + '%';
+  if (prog) prog.title = `완료 ${done}/${items.length} (${pct}%)`;
 }
 
 /* ── 매트릭스 ── */
@@ -1803,10 +1830,11 @@ function renderMatrix() {
           const isExp = S.expandedCells.has(ck) || !!S.searchQ || fold === 0;
           const show  = isExp ? ci : ci.slice(0, fold);
           const hidden = ci.length - show.length;
-          h += `<td class="m-cell" style="background:var(--bg)"
+          const doCardAnim = animOk('card') && _cardAnimEnabled;
+          h += `<td class="m-cell${doCardAnim ? ' anim-card-entrance' : ''}" style="background:var(--bg)"
             data-g="${eattr(gn)}" data-sg="${eattr(sg)}" data-c="${eattr(cn)}" data-sc="${eattr(scn)}"
             ondragenter="onDE(event)" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onDrop(event)">`;
-          show.forEach((it, ii) => { h += renderCard(it, c, animOk('card') ? ii : -1); });
+          show.forEach((it, ii) => { h += renderCard(it, c, doCardAnim ? ii : -1); });
           if (hidden > 0)
             h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">▼ ${hidden}개 더보기</button>`;
           if (isExp && ci.length > fold && fold > 0)
@@ -1823,6 +1851,7 @@ function renderMatrix() {
   });
   h += '</tbody></table></div>';
   el.innerHTML = h;
+  _cardAnimEnabled = false;
 }
 function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    renderMatrix(); }
 function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); renderMatrix(); }
@@ -1921,7 +1950,7 @@ function renderList() {
   if (!items.length) { el.innerHTML = '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>'; bulkSel.keys.clear(); renderBulkBar(); return; }
   const vcols    = getVisibleCols();
   const sorted   = items.slice().sort((a,b) => { const va=a[S.sort.key]||'', vb=b[S.sort.key]||''; const r=va<vb?-1:va>vb?1:0; return S.sort.dir==='asc'?r:-r; });
-  const useShimmer = animOk('shimmer'), useRow = animOk('card');
+  const useShimmer = animOk('shimmer'), useRow = animOk('card') && _cardAnimEnabled;
   const allChecked = sorted.length > 0 && sorted.every(it => bulkSel.keys.has(it.key));
   let h = '<div class="ltbl-wrap"><div class="ltbl-scroll"><table class="ltbl"><thead><tr>';
   h += `<th style="width:32px;text-align:center"><input type="checkbox" ${allChecked?'checked':''} onchange="bulkToggleAll(this.checked)" title="전체 선택"></th>`;
@@ -1946,6 +1975,7 @@ function renderList() {
   });
   h += '</tbody></table></div></div>';
   el.innerHTML = h;
+  _cardAnimEnabled = false;
 }
 
 function renderListCell(it, key) {
@@ -2007,15 +2037,20 @@ function renderStatusChips() {
     '완료': { col:'#1D7A4F', bg:'#EAF5EF' },
     '보류': { col:'#6B7280', bg:'#F3F4F6' },
   };
+  const counts = {};
+  S.items.filter(it => it.isDelete !== 'Y').forEach(it => {
+    if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
+  });
   el.innerHTML = ['기획','개발중','완료','보류'].map(st => {
     const on  = (S.filters.statuses||[]).includes(st);
     const { col, bg } = STATUS_COLORS[st] || { col:'#888', bg:'#eee' };
     const style = on
       ? `color:${col};background:${bg};border-color:${col};`
       : `color:${col};border-color:var(--border-2);`;
+    const cnt = counts[st] || 0;
     return `<label class="pchip" style="${style}font-size:.7rem;cursor:pointer;margin-bottom:3px">
       <input type="checkbox" value="${st}" ${on?'checked':''} style="position:absolute;opacity:0;width:0;height:0" onchange="onStatusChipCb(this)">
-      ${st}
+      ${st}${cnt ? `<span style="font-size:.6rem;opacity:.7;margin-left:3px">${cnt}</span>` : ''}
     </label>`;
   }).join('');
 }
@@ -2053,18 +2088,15 @@ function updateDL() {
             + C 빠른 상태 변경
             + E MD 툴바
             + #5 표·수식 파서
-══════════════════════════════════════════ */
-function openModal(id) {
+══════════════════════════════════════════ */function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
   document.querySelectorAll('.ov.on').forEach(m => { m.style.zIndex = '1000'; });
   el.style.zIndex = '1010';
   el.classList.add('on');
-}
-const closeModal = id => document.getElementById(id)?.classList.remove('on');
+}const closeModal = id => document.getElementById(id)?.classList.remove('on');
 
-/* ── 편집 탭 전환 ── */
-function switchEditTab(tab) {
+/* ── 편집 탭 전환 ── */function switchEditTab(tab) {
   ['info','md'].forEach(t => {
     document.getElementById(`etab-${t}`)?.classList.toggle('on', t === tab);
     const pane = document.getElementById(`epane-${t}`);
@@ -2073,8 +2105,7 @@ function switchEditTab(tab) {
   if (tab === 'md') { updateMdStat(); syncMdPreview(); }
 }
 
-/* ── MD 뷰 모드 ── */
-function switchMdView(mode) {
+/* ── MD 뷰 모드 ── */function switchMdView(mode) {
   const ta = document.getElementById('fMdContent');
   const pv = document.getElementById('mdPreviewPane');
   const modeIdMap = { edit:'mdTabEdit', preview:'mdTabPrev', split:'mdTabSplit' };
@@ -2087,25 +2118,21 @@ function switchMdView(mode) {
   } else {
     ta.style.display=''; ta.style.flex='1'; pv.style.display=''; pv.style.flex='1'; syncMdPreview();
   }
-}
-function syncMdPreview() {
+}function syncMdPreview() {
   const pv = document.getElementById('mdPreviewPane');
   if (pv && pv.style.display !== 'none') {
     pv.innerHTML = parseMd(document.getElementById('fMdContent').value);
     /* KaTeX 렌더링 */
     if (window.katex) renderKatex(pv);
   }
-}
-function onMdInput() { updateMdStat(); syncMdPreview(); }
-function updateMdStat() {
+}function onMdInput() { updateMdStat(); syncMdPreview(); }function updateMdStat() {
   const v = document.getElementById('fMdContent').value;
   document.getElementById('mdStatChars').textContent = v.length + '자';
   document.getElementById('mdStatLines').textContent = (v ? v.split('\n').length : 0) + '줄';
   document.getElementById('mdStatWords').textContent = (v.trim() ? v.trim().split(/\s+/).length : 0) + '단어';
 }
 
-/* E - MD 툴바 삽입 헬퍼 */
-function mdInsert(before, after) {
+/* E - MD 툴바 삽입 헬퍼 */function mdInsert(before, after) {
   const ta = document.getElementById('fMdContent');
   const s = ta.selectionStart, e = ta.selectionEnd;
   const sel = ta.value.substring(s, e);
@@ -2115,8 +2142,7 @@ function mdInsert(before, after) {
   ta.selectionStart = s + before.length;
   ta.selectionEnd   = s + before.length + (sel||'텍스트').length;
   onMdInput();
-}
-function mdInsertLine(prefix) {
+}function mdInsertLine(prefix) {
   const ta = document.getElementById('fMdContent');
   const s = ta.selectionStart;
   const lineStart = ta.value.lastIndexOf('\n', s - 1) + 1;
@@ -2126,8 +2152,7 @@ function mdInsertLine(prefix) {
   onMdInput();
 }
 
-/* ── #5 MD 파서 (표 + 수식 + 헤딩 버그 수정) ── */
-function parseMd(md) {
+/* ── #5 MD 파서 (표 + 수식 + 헤딩 버그 수정) ── */function parseMd(md) {
   if (!md) return '';
   let h = esc(md);
 
@@ -2251,8 +2276,7 @@ function renderKatex(container) {
   });
 }
 
-/* ── 모달 열기: 편집 ── */
-function openEditModal(key) {
+/* ── 모달 열기: 편집 ── */function openEditModal(key) {
   S.editKey = key;
   const item = findItem(key);
   if (!item) return;
@@ -2276,8 +2300,7 @@ function openEditModal(key) {
     }
   });
   openModal('editModal');
-}
-function openAddModal() {
+}function openAddModal() {
   S.editKey = null;
   ['fName','fDesc','fPath','fGroup','fSubGroup','fCat','fSubCat','fOwner','fRel','fMemo','fMdContent']
     .forEach(id => { document.getElementById(id).value = ''; });
@@ -2290,28 +2313,24 @@ function openAddModal() {
   document.getElementById('btnHardDel').style.display = 'none';
   switchEditTab('info'); switchMdView('edit'); updateMdStat();
   openModal('editModal');
-}
-function openAddInCell(g, sg, c, sc) {
+}function openAddInCell(g, sg, c, sc) {
   openAddModal();
   document.getElementById('fGroup').value    = g;
   document.getElementById('fSubGroup').value = sg;
   document.getElementById('fCat').value      = c;
   document.getElementById('fSubCat').value   = sc;
-}
-function openEditOrMd(key) {
+}function openEditOrMd(key) {
   const it = findItem(key); if (!it) return;
   openEditModal(key);
   switchEditTab('info');
-}
-function openMdModal(key) {
+}function openMdModal(key) {
   const it = findItem(key); if (!it) return;
   openEditModal(key);
   switchEditTab('md');
   switchMdView('preview');
 }
 
-/* ── 저장 ── */
-function saveItem() {
+/* ── 저장 ── */function saveItem() {
   const name = document.getElementById('fName').value.trim();
   if (!name) { notify('기능명을 입력해주세요.', true); return; }
   const ni = {
@@ -2351,10 +2370,10 @@ function saveItem() {
     S.items.push(ni);
     logActivity('추가', `${ni.key} ${ni.name}`);
     notify('기능이 추가되었습니다.');
+    scheduleCardAnim();
   }
   closeModal('editModal'); unlockItem(S.editKey); save(); renderAll();
-}
-function hardDelete() {
+}function hardDelete() {
   if (!S.editKey) return;
   requireAdmin(() => {
     const it = findItem(S.editKey);
@@ -2364,14 +2383,12 @@ function hardDelete() {
     S.items = S.items.filter(it => it.key !== S.editKey);
     closeModal('editModal'); unlockItem(S.editKey); save(); renderAll(); notify('완전 삭제되었습니다.');
   });
-}
-function duplicateItem(key) {
+}function duplicateItem(key) {
   const src = findItem(key); if (!src) return;
   pushUndo();
   S.items.push(Object.assign({}, src, {key: genKey(), updatedAt: Date.now()}));
   save(); renderAll(); notify(`${src.key} 복제 완료`);
-}
-function quickToggleDel(key) {
+}function quickToggleDel(key) {
   const it = findItem(key); if (!it) return;
   pushUndo();
   it.isDelete = it.isDelete === 'Y' ? 'N' : 'Y';
@@ -2381,8 +2398,7 @@ function quickToggleDel(key) {
 
 /* ── A - 우클릭 컨텍스트 메뉴 ── */
 let _ctxMenu = null;
-function closeCtxMenu() { _ctxMenu?.remove(); _ctxMenu = null; }
-function openCtxMenu(e, key) {
+function closeCtxMenu() { _ctxMenu?.remove(); _ctxMenu = null; }function openCtxMenu(e, key) {
   e.preventDefault(); e.stopPropagation();
   closeCtxMenu();
   const it = findItem(key); if (!it) return;
@@ -2406,8 +2422,7 @@ window.closeCtxMenu = closeCtxMenu;
 
 /* ── C - 빠른 상태 변경 ── */
 let _statusMenu = null;
-function closeStatusMenu() { _statusMenu?.remove(); _statusMenu = null; }
-function openStatusMenu(e, key) {
+function closeStatusMenu() { _statusMenu?.remove(); _statusMenu = null; }function openStatusMenu(e, key) {
   e.stopPropagation();
   closeStatusMenu(); closeCtxMenu();
   const it = findItem(key); if (!it) return;
@@ -2424,8 +2439,7 @@ function openStatusMenu(e, key) {
   _statusMenu = menu;
   setTimeout(() => document.addEventListener('click', closeStatusMenu, {once:true}), 0);
 }
-window.openStatusMenu = openStatusMenu;
-function setItemStatus(key, status) {
+window.openStatusMenu = openStatusMenu;function setItemStatus(key, status) {
   closeStatusMenu();
   const it = findItem(key); if (!it) return;
   pushUndo();
@@ -2434,8 +2448,7 @@ function setItemStatus(key, status) {
 }
 window.setItemStatus = setItemStatus;
 
-/* ── MD 파일 Import/Export ── */
-function impSingleMd(e) {
+/* ── MD 파일 Import/Export ── */function impSingleMd(e) {
   const file = e.target.files[0]; if (!file) return;
   const r = new FileReader();
   r.onload = ev => {
@@ -2444,8 +2457,7 @@ function impSingleMd(e) {
     switchMdView('preview');
   };
   r.readAsText(file, 'UTF-8'); e.target.value = '';
-}
-function expSingleMd() {
+}function expSingleMd() {
   const content = document.getElementById('fMdContent').value;
   if (!content.trim()) { notify('MD 내용이 없습니다.', true); return; }
   const key  = document.getElementById('fKey').value  || 'unknown';
@@ -2454,13 +2466,7 @@ function expSingleMd() {
   notify('MD 파일 저장됨.');
 }
 
-/* ── 드래그 & 드롭 ── */
-function onDS(e, key)  { S.isDragging=true; clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move'; setTimeout(()=>e.currentTarget.classList.add('dragging'),0); }
-function onDEnd(e)     { S.isDragging=false; e.currentTarget.classList.remove('dragging'); if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;} }
-function onDE(e)       { e.preventDefault(); if(S.dragCell&&S.dragCell!==e.currentTarget)S.dragCell.classList.remove('dov'); S.dragCell=e.currentTarget; e.currentTarget.classList.add('dov'); }
-function onDO(e)       { e.preventDefault(); e.dataTransfer.dropEffect='move'; }
-function onDL(e)       { const rel=e.relatedTarget; if(rel&&e.currentTarget.contains(rel))return; if(e.currentTarget===S.dragCell){e.currentTarget.classList.remove('dov');S.dragCell=null;} }
-function onDrop(e) {
+/* ── 드래그 & 드롭 ── */function onDS(e, key)  { S.isDragging=true; clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move'; setTimeout(()=>e.currentTarget.classList.add('dragging'),0); }function onDEnd(e)     { S.isDragging=false; e.currentTarget.classList.remove('dragging'); if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;} }function onDE(e)       { e.preventDefault(); if(S.dragCell&&S.dragCell!==e.currentTarget)S.dragCell.classList.remove('dov'); S.dragCell=e.currentTarget; e.currentTarget.classList.add('dov'); }function onDO(e)       { e.preventDefault(); e.dataTransfer.dropEffect='move'; }function onDL(e)       { const rel=e.relatedTarget; if(rel&&e.currentTarget.contains(rel))return; if(e.currentTarget===S.dragCell){e.currentTarget.classList.remove('dov');S.dragCell=null;} }function onDrop(e) {
   e.preventDefault();
   const cell = e.currentTarget;
   cell.classList.remove('dov'); S.dragCell=null;
@@ -2477,8 +2483,7 @@ function onDrop(e) {
   S.dragKey=null; save(); renderAll(); notify('이동 완료.');
 }
 
-/* ── 툴팁 ── */
-function startTT(e, key) {
+/* ── 툴팁 ── */function startTT(e, key) {
   if (S.isDragging) return; clearTT();
   const item = findItem(key);
   if (!item || (!item.desc && !item.mdContent)) return;
@@ -2493,9 +2498,7 @@ function startTT(e, key) {
     tt.style.top  = `${Math.min(my+14,window.innerHeight-150)}px`;
     tt.classList.add('on');
   }, 900);
-}
-function clearTT() { if(S.ttTimer){clearTimeout(S.ttTimer);S.ttTimer=null;} document.getElementById('ftt')?.classList.remove('on'); }
-function copyPath(p) { navigator.clipboard?.writeText(p).then(()=>notify('경로 복사됨.')).catch(()=>notify('복사 실패',true)); }
+}function clearTT() { if(S.ttTimer){clearTimeout(S.ttTimer);S.ttTimer=null;} document.getElementById('ftt')?.classList.remove('on'); }function copyPath(p) { navigator.clipboard?.writeText(p).then(()=>notify('경로 복사됨.')).catch(()=>notify('복사 실패',true)); }
 
 function sanitizeFilename(str) { return (str||'').replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,'_').slice(0,80); }
 function dlBlob(content, filename, type) {
@@ -2950,13 +2953,11 @@ function sstab(btn, paneId) {
   document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById(paneId)?.classList.add('on');
-  if (paneId === 'sd')   updateDesignContent();
-  if (paneId === 'sth')  renderThemeGrid();
-  if (paneId === 'scol') renderColEditor();
-  if (paneId === 'saxis') renderAxisEditor();
-  if (paneId === 'sanim') syncAnimUI();
-  if (paneId === 'scs')  { renderPrioStyleRows(); renderPreviewCards(); }
-  if (paneId === 'ssrv') window.syncServerSettingsUI?.();
+  if (paneId === 'sg')      syncAnimUI();
+  if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); }
+  if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
+  if (paneId === 'sdat')    window.syncServerSettingsUI?.();
+  if (paneId === 'sadmin')  window.loadInlineActivityLog?.();
 }
 
 /* ── 설정 UI 전체 동기화 ── */
@@ -2967,6 +2968,12 @@ function syncSettingsUI() {
   const subEl   = document.getElementById('sSub');
   if (titleEl) { titleEl.value = ss.title; titleEl.disabled = !admin; }
   if (subEl)   { subEl.value   = ss.subtitle; subEl.disabled = !admin; }
+  // 헤더 DOM도 즉시 반영
+  const dTitleEl = document.getElementById('dTitle');
+  const dSubEl   = document.getElementById('dSub');
+  if (dTitleEl) dTitleEl.textContent = ss.title || 'featureMATRIX';
+  if (dSubEl)   dSubEl.textContent   = ss.subtitle || '기능정의 툴';
+  document.title = ss.title || 'featureMATRIX';
   document.getElementById('dBaseFont').textContent  = ss.baseFont  + 'px';
   document.getElementById('dCardFont').textContent  = ss.cardFont  + 'px';
   document.getElementById('dRadius').textContent    = ss.cardRadius + 'px';
@@ -3133,13 +3140,11 @@ function impSettJSON(event) {
 
 /* ── 초기화 ── */
 function resetData() {
-  requireAdmin(() => {
-    if (!confirm('모든 데이터를 초기화하겠습니까?')) return;
-    S.items = JSON.parse(JSON.stringify(DEMO));
-    save(); renderAll();
-    document.getElementById('settingsModal')?.classList.remove('on');
-    notify('데이터가 초기화되었습니다.');
-  });
+  if (!confirm('모든 데이터를 초기화하겠습니까?')) return;
+  S.items = JSON.parse(JSON.stringify(DEMO));
+  save(); renderAll();
+  document.getElementById('settingsModal')?.classList.remove('on');
+  notify('데이터가 초기화되었습니다.');
 }
 function resetSettings() {
   if (!confirm('설정을 기본값으로 초기화하겠습니까?')) return;
@@ -3150,7 +3155,7 @@ function resetSettings() {
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},
     listColumns:JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-    animations:{enabled:true,countUp:true,card:true,filter:true,shimmer:true,blur:true}
+    animations:{enabled:true,countUp:true,card:true,filter:true,shimmer:true,blur:false}
   });
   save(); applyVars(); applyBlurSetting(); syncSettingsUI(); renderAll();
   notify('설정이 초기화되었습니다.');
@@ -3324,8 +3329,8 @@ document.addEventListener('keydown', e => {
   if (isInput) return;
 
   if (e.ctrlKey || e.metaKey) {
-    if (e.key==='i'||e.key==='I') { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); sstab(document.querySelector('.stab[onclick*="sdat"]'), 'sdat'); return; }
-    if (e.key==='e'||e.key==='E') { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); sstab(document.querySelector('.stab[onclick*="sdat"]'), 'sdat'); return; }
+    if (e.key==='i'||e.key==='I') { e.preventDefault(); openModal('importModal'); return; }
+    if (e.key==='e'||e.key==='E') { e.preventDefault(); openModal('exportModal'); return; }
     if (e.key===',')              { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); return; }
     if (e.key==='s'||e.key==='S') { e.preventDefault(); expSettJSON(); return; }
     return;
@@ -3462,42 +3467,47 @@ window.saveUserNamePopup = (skip = false) => {
   document.getElementById('userNameModal').classList.remove('on');
 };
 
-window.openActivityLog = async () => {
-  requireAdmin(async () => {
-    openModal('activityLogModal');
-    const body = document.getElementById('activityLogBody');
-    if (!body) return;
-    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3)">불러오는 중...</div>';
-    try {
-      const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
-      const headers = { 'X-API-Key': S.settings.apiKey || '', 'X-Admin-Token': sessionStorage.getItem('fmAdminToken') || '' };
-      const res  = await fetch(apiUrl + '/api/log', { headers });
-      const json = await res.json();
-      if (!json.ok) { body.innerHTML = `<div style="padding:20px;color:var(--danger)">${json.error}</div>`; return; }
-      if (!json.entries?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
-      const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
-      body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
-        '<thead><tr>' +
-        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">시각</th>' +
-        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">사용자</th>' +
-        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">액션</th>' +
-        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">내용</th>' +
-        '</tr></thead><tbody>' +
-        json.entries.map(e => {
-          const d = new Date(e.ts);
-          const timeStr = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-          const col = actionColor[e.action] || 'var(--text)';
-          return `<tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:6px 12px;font-size:.72rem;color:var(--text-3);white-space:nowrap">${timeStr}</td>
-            <td style="padding:6px 12px;font-size:.78rem;font-weight:600">${e.user||'익명'}</td>
-            <td style="padding:6px 12px;font-size:.75rem;font-weight:700;color:${col};white-space:nowrap">${e.action}</td>
-            <td style="padding:6px 12px;font-size:.75rem;color:var(--text-2)">${e.detail||''}</td>
-          </tr>`;
-        }).join('') + '</tbody></table>';
-    } catch(err) {
-      body.innerHTML = '<div style="padding:20px;color:var(--danger)">서버에 연결할 수 없습니다.</div>';
+window.loadInlineActivityLog = async () => {
+  const body = document.getElementById('inlineLogBody');
+  if (!body) return;
+  body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">불러오는 중...</div>';
+  try {
+    const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
+    const headers = { 'X-API-Key': S.settings.apiKey || '', 'X-Admin-Token': sessionStorage.getItem('fmAdminToken') || '' };
+    const res  = await fetch(apiUrl + '/api/log', { headers });
+    const json = await res.json();
+    if (!json.ok) {
+      if (res.status === 403) {
+        sessionStorage.removeItem('fmAdminToken');
+        updateAdminUI();
+        body.innerHTML = '<div style="padding:16px;color:var(--danger)">세션이 만료됐습니다. 관리자 재인증이 필요합니다.</div>';
+        return;
+      }
+      body.innerHTML = `<div style="padding:16px;color:var(--danger)">${json.error}</div>`; return;
     }
-  });
+    if (!json.entries?.length) { body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
+    const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
+    body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
+      '<thead><tr style="position:sticky;top:0;background:var(--surface)">' +
+      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">시각</th>' +
+      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">사용자</th>' +
+      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">액션</th>' +
+      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">내용</th>' +
+      '</tr></thead><tbody>' +
+      json.entries.map(e => {
+        const d = new Date(e.ts);
+        const timeStr = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+        const col = actionColor[e.action] || 'var(--text)';
+        return `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:5px 10px;font-size:.7rem;color:var(--text-3);white-space:nowrap">${timeStr}</td>
+          <td style="padding:5px 10px;font-size:.75rem;font-weight:600">${e.user||'익명'}</td>
+          <td style="padding:5px 10px;font-size:.72rem;font-weight:700;color:${col};white-space:nowrap">${e.action}</td>
+          <td style="padding:5px 10px;font-size:.72rem;color:var(--text-2)">${e.detail||''}</td>
+        </tr>`;
+      }).join('') + '</tbody></table>';
+  } catch(err) {
+    body.innerHTML = '<div style="padding:16px;color:var(--danger)">서버에 연결할 수 없습니다.</div>';
+  }
 };
 function setServerStatus(status) {
   const dot   = document.getElementById('serverStatusDot');
@@ -3533,12 +3543,9 @@ function syncServerSettingsUI() {
   if (nameEl) nameEl.value = S.settings.userName    || '';
   const badge  = document.getElementById('storageModeBadge');
   const label  = document.getElementById('serverStatusLabel');
-  if (label) label.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
+  if (label) label.textContent = mode === 'server' ? '🌐' : '💾';
   if (badge) badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
   setServerStatus(mode === 'server' ? 'ok' : 'off');
-  // 활동 로그 버튼: 서버 모드 + 관리자일 때만 표시
-  const logBtn = document.getElementById('showLogBtn');
-  if (logBtn) logBtn.style.display = (mode === 'server' && isAdmin()) ? 'inline-flex' : 'none';
 }
 
 /* ── 초기화 ── */
@@ -3559,6 +3566,7 @@ async function init() {
   syncSettingsUI();
   syncServerSettingsUI();
   updateAdminUI();
+  scheduleCardAnim();
   renderAll();
   updateUndoFab();
   startPolling();
@@ -3568,6 +3576,11 @@ async function init() {
   if (S.settings.storageMode === 'server' && !S.settings.userName) {
     setTimeout(() => openModal('userNameModal'), 600);
   }
+
+  // 필터 패널 섹션 접기/펼치기
+  document.querySelectorAll('#fpanel .fsec-ttl').forEach(ttl => {
+    ttl.addEventListener('click', () => ttl.closest('.fsec').classList.toggle('sec-collapsed'));
+  });
 }
 init();
 
@@ -3621,23 +3634,7 @@ window.saveUserNamePopup = (skip = false) => {
   </div>
 </div>
 
-<!-- 활동 로그 모달 -->
-<div class="ov" id="activityLogModal">
-  <div class="mbox" style="width:640px">
-    <div class="mhd">
-      <span class="mtitle">📋 활동 로그</span>
-      <button class="mclose" onclick="closeModal('activityLogModal')">✕</button>
-    </div>
-    <div class="mbody" style="padding:0">
-      <div id="activityLogBody" style="font-size:.78rem;max-height:60vh;overflow-y:auto">
-        <div style="padding:20px;text-align:center;color:var(--text-3)">불러오는 중...</div>
-      </div>
-    </div>
-    <div class="mfoot">
-      <button class="btn btn-s btn-sm" onclick="closeModal('activityLogModal')">닫기</button>
-    </div>
-  </div>
-</div>
+
 <!-- Diff 뷰 모달 -->
 <div class="ov" id="diffModal">
   <div class="mbox" style="width:640px">

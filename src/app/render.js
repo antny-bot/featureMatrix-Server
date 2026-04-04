@@ -146,17 +146,24 @@ export function renderAll(withFade = false) {
 /* ── 통계 ── */
 export function renderStats() {
   const items = getFiltered();
-  let h = 0, m = 0, l = 0, imp = 0, nw = 0;
+  let h = 0, m = 0, l = 0, imp = 0, nw = 0, done = 0;
   items.forEach(it => {
     if (it.priority === '상') h++; else if (it.priority === '중') m++; else l++;
     if (it.isImportant === 'Y') imp++;
     if (it.key?.charAt(0) === 'N') nw++;
+    if (it.status === '완료') done++;
   });
   countUp('stTotal', items.length);
   countUp('stHigh', h); countUp('stMid', m); countUp('stLow', l);
   countUp('stImp', imp); countUp('stNew', nw);
   const fb = document.getElementById('fbadge');
   if (fb) fb.className = 'fbadge' + (isFilterActive() ? ' on' : '');
+  /* 완료율 진행바 */
+  const pct = items.length > 0 ? Math.round(done / items.length * 100) : 0;
+  const bar = document.getElementById('hdrProgBar');
+  const prog = document.getElementById('hdrProg');
+  if (bar) bar.style.width = pct + '%';
+  if (prog) prog.title = `완료 ${done}/${items.length} (${pct}%)`;
 }
 
 /* ── 매트릭스 ── */
@@ -439,15 +446,20 @@ export function renderStatusChips() {
     '완료': { col:'#1D7A4F', bg:'#EAF5EF' },
     '보류': { col:'#6B7280', bg:'#F3F4F6' },
   };
+  const counts = {};
+  S.items.filter(it => it.isDelete !== 'Y').forEach(it => {
+    if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
+  });
   el.innerHTML = ['기획','개발중','완료','보류'].map(st => {
     const on  = (S.filters.statuses||[]).includes(st);
     const { col, bg } = STATUS_COLORS[st] || { col:'#888', bg:'#eee' };
     const style = on
       ? `color:${col};background:${bg};border-color:${col};`
       : `color:${col};border-color:var(--border-2);`;
+    const cnt = counts[st] || 0;
     return `<label class="pchip" style="${style}font-size:.7rem;cursor:pointer;margin-bottom:3px">
       <input type="checkbox" value="${st}" ${on?'checked':''} style="position:absolute;opacity:0;width:0;height:0" onchange="onStatusChipCb(this)">
-      ${st}
+      ${st}${cnt ? `<span style="font-size:.6rem;opacity:.7;margin-left:3px">${cnt}</span>` : ''}
     </label>`;
   }).join('');
 }

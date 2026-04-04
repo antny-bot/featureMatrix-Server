@@ -118,6 +118,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 
 /* ── 헤더 ── */
 .hdr{position:sticky;top:0;z-index:200;height:50px;display:flex;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-xs)}
+/* ── 헤더 완료율 바 ── */
+.hdr-prog{position:absolute;bottom:0;left:0;right:0;height:2px;background:transparent;pointer-events:none}
+.hdr-prog-bar{height:100%;background:var(--success);transition:width .5s cubic-bezier(.4,0,.2,1);border-radius:0 1px 1px 0;min-width:0}
 .hdr-left{display:flex;align-items:center;height:100%;padding:0 8px 0 12px;gap:6px;border-right:1px solid var(--border);flex-shrink:0}
 .logo-kr{font-family:'Noto Serif KR','Georgia',serif;font-size:.88rem;font-weight:600;letter-spacing:.03em;color:var(--text);white-space:nowrap}
 .logo-sub{font-size:.58rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
@@ -154,7 +157,11 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .layout.pr .fpanel.collapsed{border-left-width:0}
 .fpinner{padding:12px 11px;min-width:182px;overflow-y:auto;flex:1}
 .fsec{margin-bottom:12px}
-.fsec-ttl{font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+.fsec-ttl{font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.fsec-ttl::after{content:'⌄';font-size:.6rem;line-height:1;flex-shrink:0;transition:transform .18s;display:inline-block;opacity:.6}
+.fsec.sec-collapsed .fsec-ttl::after{transform:rotate(-90deg)}
+.fsec-body{overflow:hidden}
+.fsec.sec-collapsed .fsec-body{display:none}
 .fsep{height:1px;background:var(--border);margin:10px 0}
 .pchips{display:flex;gap:4px}
 .pchip{display:inline-flex;align-items:center;padding:4px 9px;border-radius:6px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;user-select:none;transition:background .14s,color .14s,border-color .14s;font-size:.75rem;font-weight:700}
@@ -403,16 +410,17 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     <button class="btn btn-p btn-sm" onclick="openAddModal()">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 추가
     </button>
-    <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">⚙ 설정</button>
-    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:5px">
+    <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)" style="width:27px;padding:0">⚙</button>
+    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:4px" title="저장 위치">
       <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
-      <span id="serverStatusLabel">🌐 서버</span>
+      <span id="serverStatusLabel">🌐</span>
     </span>
-    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)">🔑 관리자</span>
-    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;font-size:.7rem">잠금</button>
+    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
+    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="관리자 잠금">🔒</button>
     <button class="btn btn-g btn-sm" onclick="openModal('shortcutsModal')" title="단축키 (?)">?</button>
     <button class="btn btn-g btn-sm" style="width:27px;padding:0" onclick="toggleTheme()" id="themeBtn">🌙</button>
   </div>
+  <div class="hdr-prog" id="hdrProg" title="완료율 0%"><div class="hdr-prog-bar" id="hdrProgBar" style="width:0%"></div></div>
 </header>
 
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
@@ -428,18 +436,21 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <span style="font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)">필터</span>
         <button class="btn btn-g btn-sm" onclick="resetFilters()" style="height:20px;padding:0 6px;font-size:.65rem">초기화</button>
       </div>
-      <div class="fsec"><div class="fsec-ttl">우선순위</div><div class="pchips" id="prioChips"></div></div>
+      <div class="fsec"><div class="fsec-ttl">우선순위</div><div class="fsec-body"><div class="pchips" id="prioChips"></div></div></div>
       <div class="fsep"></div>
       <div class="fsec">
         <div class="fsec-ttl">진행상태</div>
-        <div id="statusChips" style="display:flex;flex-wrap:wrap;gap:3px"></div>
+        <div class="fsec-body"><div id="statusChips" style="display:flex;flex-wrap:wrap;gap:3px"></div></div>
       </div>
       <div class="fsep"></div>
-      <div class="fsec"><div class="fsec-ttl">담당</div><div class="owner-chips" id="ownerChips"></div></div>
+      <div class="fsec">
+        <div class="fsec-ttl">담당</div>
+        <div class="fsec-body"><div class="owner-chips" id="ownerChips"></div></div>
+      </div>
       <div class="fsep"></div>
       <div class="fsec">
         <div class="fsec-ttl">표시 조건</div>
-        <div style="display:flex;flex-direction:column;gap:7px">
+        <div class="fsec-body" style="display:flex;flex-direction:column;gap:7px">
           <label class="tgl"><input type="checkbox" id="togDel" onchange="applyFilters()"><span class="tgl-track"></span><span class="tgl-lbl">삭제 포함</span></label>
           <label class="tgl"><input type="checkbox" id="togImp" onchange="applyFilters()"><span class="tgl-track"></span><span class="tgl-lbl">중요만 보기</span></label>
         </div>
@@ -447,7 +458,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <div class="fsep"></div>
       <div class="fsec">
         <div class="fsec-ttl">카드 표시</div>
-        <div style="display:flex;flex-direction:column;gap:3px">
+        <div class="fsec-body" style="display:flex;flex-direction:column;gap:3px">
           <div style="font-size:.62rem;font-weight:700;letter-spacing:.04em;color:var(--text-3);text-transform:uppercase;margin:4px 0 2px">식별</div>
           <label class="tgl"><input type="checkbox" id="togOwner" checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">담당</span></label>
           <label class="tgl"><input type="checkbox" id="togStar"  checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">★ 중요</span></label>
@@ -640,14 +651,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     <div class="mhd"><span class="mtitle">⚙ 환경 설정</span><button class="mclose" onclick="closeModal('settingsModal')">✕</button></div>
     <div class="stab-row">
       <button class="stab on" onclick="sstab(this,'sg')">일반</button>
-      <button class="stab" onclick="sstab(this,'scol')">리스트 컬럼</button>
-      <button class="stab" onclick="sstab(this,'saxis')">축 순서</button>
-      <button class="stab" onclick="sstab(this,'sanim')">애니메이션</button>
-      <button class="stab" onclick="sstab(this,'scs')">카드 스타일</button>
-      <button class="stab" onclick="sstab(this,'sd')">색상</button>
-      <button class="stab" onclick="sstab(this,'sth')">테마</button>
-      <button class="stab" onclick="sstab(this,'sdat')">데이터</button>
-      <button class="stab" onclick="sstab(this,'ssrv')">서버</button>
+      <button class="stab" onclick="sstab(this,'sdesign')">디자인</button>
+      <button class="stab" onclick="sstab(this,'scola')">컬럼·축</button>
+      <button class="stab" onclick="sstab(this,'sdat')">데이터·서버</button>
       <button class="stab" id="sadminTab" onclick="sstab(this,'sadmin')" style="display:none">🔑 관리자</button>
     </div>
     <div class="mbody" style="padding:14px 20px">
@@ -671,21 +677,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div class="srow" style="border-bottom:none"><div><div class="slbl">매트릭스 너비</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="mwF" onclick="setMW('fluid')">가변</button><button class="rbtn" id="mwX" onclick="setMW('fixed')">고정</button></div></div>
           <div class="srow" style="border-bottom:none"><div><div class="slbl">필터 패널 위치</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="ppL" onclick="setPPos('left')">← 왼쪽</button><button class="rbtn" id="ppR" onclick="setPPos('right')">오른쪽 →</button></div></div>
         </div>
-      </div>
-      <div class="spane" id="scol">
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">체크: 표시 여부 &nbsp;|&nbsp; ⠿ 드래그: 순서 변경</div>
-        <div class="col-editor" id="colEditor"></div>
-        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetListCols()">기본값 복원</button></div>
-      </div>
-      <div class="spane" id="saxis">
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">⠿ 드래그로 X축(그룹)·Y축(카테고리) 순서를 재정렬합니다.</div>
-        <div class="sec-ttl">그룹 (X축)</div>
-        <div class="col-editor" id="groupAxisList"></div>
-        <div class="sec-ttl" style="margin-top:12px">카테고리 (Y축)</div>
-        <div class="col-editor" id="catAxisList"></div>
-        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetAxisOrder()">자동 정렬 초기화</button></div>
-      </div>
-      <div class="spane" id="sanim">
+        <div class="sec-ttl" style="margin-top:12px">애니메이션</div>
         <div class="srow"><div><div class="slbl">애니메이션 전체</div><div class="ssub">모든 애니메이션 일괄 on/off</div></div><label class="tgl"><input type="checkbox" id="animEnabled" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">숫자 카운트업</div><div class="ssub">헤더 통계 숫자 증가 효과</div></div><label class="tgl"><input type="checkbox" id="animCountUp" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">카드 등장 효과</div><div class="ssub">카드 렌더 시 순서대로 fade-in</div></div><label class="tgl"><input type="checkbox" id="animCard" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
@@ -693,16 +685,32 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl">행 Hover Shimmer</div><div class="ssub">리스트 뷰 행 hover 광택 효과</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">모달 Backdrop Blur</div><div class="ssub">모달 배경 블러 처리</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
       </div>
-      <div class="spane" id="scs">
+      <!-- 디자인: 카드스타일 + 색상 + 테마 -->
+      <div class="spane" id="sdesign">
         <div id="prioStyleRows"></div>
         <div class="sec-ttl" style="margin-top:10px">카드 미리보기</div>
         <div class="preview-cards" id="previewCards"></div>
-      </div>
-      <div class="spane" id="sd"><div id="designContent"></div></div>
-      <div class="spane" id="sth">
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">테마 선택 시 색상 탭이 자동 업데이트됩니다.</div>
+        <div class="sec-ttl" style="margin-top:12px">색상</div>
+        <div id="designContent"></div>
+        <div class="sec-ttl" style="margin-top:12px">테마</div>
+        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">테마 선택 시 색상이 자동 업데이트됩니다.</div>
         <div class="theme-grid" id="themeGrid"></div>
       </div>
+      <!-- 컬럼·축: 리스트컬럼 + 축순서 -->
+      <div class="spane" id="scola">
+        <div class="sec-ttl">리스트 컬럼</div>
+        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">체크: 표시 여부 &nbsp;|&nbsp; ⠿ 드래그: 순서 변경</div>
+        <div class="col-editor" id="colEditor"></div>
+        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetListCols()">기본값 복원</button></div>
+        <div class="sec-ttl" style="margin-top:16px">축 순서</div>
+        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">⠿ 드래그로 X축(그룹)·Y축(카테고리) 순서를 재정렬합니다.</div>
+        <div class="sec-ttl" style="font-size:.62rem">그룹 (X축)</div>
+        <div class="col-editor" id="groupAxisList"></div>
+        <div class="sec-ttl" style="margin-top:12px;font-size:.62rem">카테고리 (Y축)</div>
+        <div class="col-editor" id="catAxisList"></div>
+        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetAxisOrder()">자동 정렬 초기화</button></div>
+      </div>
+      <!-- 데이터·서버 -->
       <div class="spane" id="sdat">
         <div class="sec-ttl">내보내기</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
@@ -721,16 +729,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">MD 내용이 작성된 항목만 포함됩니다.</div>
           <button class="btn btn-s btn-sm" onclick="expMdZip()">📦 MD ZIP</button>
         </div>
-
-        <div class="sec-ttl" style="margin-top:12px">초기화</div>
-        <div class="srow" style="margin-top:8px"><div><div class="slbl">설정 초기화</div></div><button class="btn btn-s btn-sm" onclick="resetSettings()">설정만 초기화</button></div>
-
-        <div class="sec-ttl" style="margin-top:12px">설정 파일</div>
+        <div class="sec-ttl" style="margin-top:12px">초기화 · 설정 파일</div>
+        <div class="srow"><div><div class="slbl">설정 초기화</div></div><button class="btn btn-s btn-sm" onclick="resetSettings()">설정만 초기화</button></div>
         <div class="srow"><div><div class="slbl">설정 JSON 저장</div></div><button class="btn btn-s btn-sm" onclick="expSettJSON()">⬇ 저장</button></div>
         <div class="srow"><div><div class="slbl">설정 JSON 불러오기</div></div><div><button class="btn btn-s btn-sm" onclick="document.getElementById('settFile').click()">↑ 불러오기</button><input type="file" id="settFile" accept=".json" style="display:none" onchange="impSettJSON(event)"></div></div>
-      </div>
-      <div class="spane" id="ssrv">
-        <div class="sec-ttl">데이터 저장 위치</div>
+        <div class="sec-ttl" style="margin-top:16px">서버</div>
         <div style="display:flex;gap:12px;margin-bottom:12px">
           <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer">
             <input type="radio" name="storageMode" id="modeServer" value="server" onchange="saveServerSettings()">
@@ -741,53 +744,51 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             💾 로컬 (개인)
           </label>
         </div>
-        <div class="sec-ttl">내 이름</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div class="slbl">사용자 이름</div>
-          <div class="ssub">저장 시 수정자로 표시됩니다.</div>
-          <input class="inp" id="sUserName" placeholder="홍길동" style="height:28px;font-size:.8rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px;grid-column:span 2">
+            <div class="slbl">사용자 이름</div>
+            <input class="inp" id="sUserName" placeholder="홍길동" style="height:28px;font-size:.8rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
+          </div>
+          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
+            <div class="slbl">서버 URL</div>
+            <div class="ssub">비워두면 현재 도메인 사용</div>
+            <input class="inp" id="sServerUrl" placeholder="http://서버IP:5000" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
+          </div>
+          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
+            <div class="slbl">API Key</div>
+            <div class="ssub">server.py의 config.json에서 확인</div>
+            <input class="inp" id="sApiKey" type="password" placeholder="API 키 입력" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
+          </div>
         </div>
-        <div class="sec-ttl" style="margin-top:12px">서버 연결</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div class="slbl">서버 URL</div>
-          <div class="ssub">비워두면 현재 도메인 사용 (서버와 같은 호스트)</div>
-          <input class="inp" id="sServerUrl" placeholder="http://서버IP:5000" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
-        </div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px;margin-top:8px">
-          <div class="slbl">API Key</div>
-          <div class="ssub">server.py 실행 시 생성되는 config.json에서 확인</div>
-          <input class="inp" id="sApiKey" type="password" placeholder="API 키 입력" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
-        </div>
-        <div class="sec-ttl" style="margin-top:12px">변경 감지 폴링</div>
-        <div class="srow">
-          <div><div class="slbl">확인 주기</div><div class="ssub">다른 사용자의 변경을 감지하는 간격</div></div>
+        <div class="srow" style="margin-top:4px">
+          <div><div class="slbl">변경 감지 주기</div><div class="ssub">다른 사용자의 변경을 감지하는 간격</div></div>
           <div style="display:flex;align-items:center;gap:6px">
             <input class="inp" id="sPollInterval" type="number" min="5" max="300" value="10" style="width:60px;height:28px;text-align:center;font-size:.82rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
             <span style="font-size:.78rem;color:var(--text-3)">초</span>
           </div>
         </div>
-        <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" onclick="saveServerSettings()">설정 저장</button>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-p btn-sm" onclick="saveServerSettings()">서버 설정 저장</button>
           <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>{updateAdminUI();notify('관리자 인증 완료')})" title="관리자 인증">🔑 관리자 인증</button>
         </div>
       </div>
       <div class="spane" id="sadmin">
         <div class="sec-ttl">헤더</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브타이틀</div><input class="inp" id="sSub" style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
+          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
+          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브 타이틀</div><input class="inp" id="sSub" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
         </div>
         <div class="sec-ttl" style="margin-top:12px">가져오기</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
-          <div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+          <div style="flex:1;min-width:160px">
             <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">CSV/TSV 파일 또는 붙여넣기</div>
             <button class="btn btn-s btn-sm" onclick="openModal('importModal')">📥 CSV/TSV 가져오기</button>
           </div>
-        </div>
-        <div style="margin-bottom:4px">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}_{기능명}.md 파일을 key로 자동 매핑</div>
-          <button class="btn btn-s btn-sm" onclick="document.getElementById('mdImpInp').click()">📂 MD ZIP 가져오기</button>
-          <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">{key}.md 파일을 key로 자동 매핑</div>
+            <button class="btn btn-s btn-sm" onclick="document.getElementById('mdImpInp').click()">📂 MD ZIP 가져오기</button>
+            <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
+          </div>
         </div>
         <div class="sec-ttl" style="margin-top:12px">데이터 초기화</div>
         <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" onclick="resetData()">초기화</button></div>
@@ -817,8 +818,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Z</span></div><span style="font-size:.8125rem;color:var(--text-2)">실행 취소</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">우클릭</span></div><span style="font-size:.8125rem;color:var(--text-2)">카드 컨텍스트 메뉴</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">상태뱃지 클릭</span></div><span style="font-size:.8125rem;color:var(--text-2)">빠른 상태 변경</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">I</span></div><span style="font-size:.8125rem;color:var(--text-2)">설정 &gt; 데이터 탭</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">E</span></div><span style="font-size:.8125rem;color:var(--text-2)">설정 &gt; 데이터 탭</span></div>
+      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">I</span></div><span style="font-size:.8125rem;color:var(--text-2)">CSV/TSV 가져오기</span></div>
+      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">E</span></div><span style="font-size:.8125rem;color:var(--text-2)">데이터 내보내기</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">,</span></div><span style="font-size:.8125rem;color:var(--text-2)">환경 설정</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Esc</span></div><span style="font-size:.8125rem;color:var(--text-2)">창 닫기</span></div>
     </div>
@@ -1741,17 +1742,24 @@ function renderAll(withFade = false) {
 /* ── 통계 ── */
 function renderStats() {
   const items = getFiltered();
-  let h = 0, m = 0, l = 0, imp = 0, nw = 0;
+  let h = 0, m = 0, l = 0, imp = 0, nw = 0, done = 0;
   items.forEach(it => {
     if (it.priority === '상') h++; else if (it.priority === '중') m++; else l++;
     if (it.isImportant === 'Y') imp++;
     if (it.key?.charAt(0) === 'N') nw++;
+    if (it.status === '완료') done++;
   });
   countUp('stTotal', items.length);
   countUp('stHigh', h); countUp('stMid', m); countUp('stLow', l);
   countUp('stImp', imp); countUp('stNew', nw);
   const fb = document.getElementById('fbadge');
   if (fb) fb.className = 'fbadge' + (isFilterActive() ? ' on' : '');
+  /* 완료율 진행바 */
+  const pct = items.length > 0 ? Math.round(done / items.length * 100) : 0;
+  const bar = document.getElementById('hdrProgBar');
+  const prog = document.getElementById('hdrProg');
+  if (bar) bar.style.width = pct + '%';
+  if (prog) prog.title = `완료 ${done}/${items.length} (${pct}%)`;
 }
 
 /* ── 매트릭스 ── */
@@ -2029,15 +2037,20 @@ function renderStatusChips() {
     '완료': { col:'#1D7A4F', bg:'#EAF5EF' },
     '보류': { col:'#6B7280', bg:'#F3F4F6' },
   };
+  const counts = {};
+  S.items.filter(it => it.isDelete !== 'Y').forEach(it => {
+    if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
+  });
   el.innerHTML = ['기획','개발중','완료','보류'].map(st => {
     const on  = (S.filters.statuses||[]).includes(st);
     const { col, bg } = STATUS_COLORS[st] || { col:'#888', bg:'#eee' };
     const style = on
       ? `color:${col};background:${bg};border-color:${col};`
       : `color:${col};border-color:var(--border-2);`;
+    const cnt = counts[st] || 0;
     return `<label class="pchip" style="${style}font-size:.7rem;cursor:pointer;margin-bottom:3px">
       <input type="checkbox" value="${st}" ${on?'checked':''} style="position:absolute;opacity:0;width:0;height:0" onchange="onStatusChipCb(this)">
-      ${st}
+      ${st}${cnt ? `<span style="font-size:.6rem;opacity:.7;margin-left:3px">${cnt}</span>` : ''}
     </label>`;
   }).join('');
 }
@@ -2940,14 +2953,11 @@ function sstab(btn, paneId) {
   document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById(paneId)?.classList.add('on');
-  if (paneId === 'sd')   updateDesignContent();
-  if (paneId === 'sth')  renderThemeGrid();
-  if (paneId === 'scol') renderColEditor();
-  if (paneId === 'saxis') renderAxisEditor();
-  if (paneId === 'sanim') syncAnimUI();
-  if (paneId === 'scs')  { renderPrioStyleRows(); renderPreviewCards(); }
-  if (paneId === 'ssrv')   window.syncServerSettingsUI?.();
-  if (paneId === 'sadmin') window.loadInlineActivityLog?.();
+  if (paneId === 'sg')      syncAnimUI();
+  if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); }
+  if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
+  if (paneId === 'sdat')    window.syncServerSettingsUI?.();
+  if (paneId === 'sadmin')  window.loadInlineActivityLog?.();
 }
 
 /* ── 설정 UI 전체 동기화 ── */
@@ -3319,8 +3329,8 @@ document.addEventListener('keydown', e => {
   if (isInput) return;
 
   if (e.ctrlKey || e.metaKey) {
-    if (e.key==='i'||e.key==='I') { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); sstab(document.querySelector('.stab[onclick*="sdat"]'), 'sdat'); return; }
-    if (e.key==='e'||e.key==='E') { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); sstab(document.querySelector('.stab[onclick*="sdat"]'), 'sdat'); return; }
+    if (e.key==='i'||e.key==='I') { e.preventDefault(); openModal('importModal'); return; }
+    if (e.key==='e'||e.key==='E') { e.preventDefault(); openModal('exportModal'); return; }
     if (e.key===',')              { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); return; }
     if (e.key==='s'||e.key==='S') { e.preventDefault(); expSettJSON(); return; }
     return;
@@ -3533,7 +3543,7 @@ function syncServerSettingsUI() {
   if (nameEl) nameEl.value = S.settings.userName    || '';
   const badge  = document.getElementById('storageModeBadge');
   const label  = document.getElementById('serverStatusLabel');
-  if (label) label.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
+  if (label) label.textContent = mode === 'server' ? '🌐' : '💾';
   if (badge) badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
   setServerStatus(mode === 'server' ? 'ok' : 'off');
 }
@@ -3566,6 +3576,11 @@ async function init() {
   if (S.settings.storageMode === 'server' && !S.settings.userName) {
     setTimeout(() => openModal('userNameModal'), 600);
   }
+
+  // 필터 패널 섹션 접기/펼치기
+  document.querySelectorAll('#fpanel .fsec-ttl').forEach(ttl => {
+    ttl.addEventListener('click', () => ttl.closest('.fsec').classList.toggle('sec-collapsed'));
+  });
 }
 init();
 

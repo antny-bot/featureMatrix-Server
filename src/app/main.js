@@ -217,8 +217,8 @@ document.addEventListener('keydown', e => {
   if (isInput) return;
 
   if (e.ctrlKey || e.metaKey) {
-    if (e.key==='i'||e.key==='I') { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); sstab(document.querySelector('.stab[onclick*="sdat"]'), 'sdat'); return; }
-    if (e.key==='e'||e.key==='E') { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); sstab(document.querySelector('.stab[onclick*="sdat"]'), 'sdat'); return; }
+    if (e.key==='i'||e.key==='I') { e.preventDefault(); openModal('importModal'); return; }
+    if (e.key==='e'||e.key==='E') { e.preventDefault(); openModal('exportModal'); return; }
     if (e.key===',')              { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); return; }
     if (e.key==='s'||e.key==='S') { e.preventDefault(); expSettJSON(); return; }
     return;
@@ -431,7 +431,7 @@ function syncServerSettingsUI() {
   if (nameEl) nameEl.value = S.settings.userName    || '';
   const badge  = document.getElementById('storageModeBadge');
   const label  = document.getElementById('serverStatusLabel');
-  if (label) label.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
+  if (label) label.textContent = mode === 'server' ? '🌐' : '💾';
   if (badge) badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
   setServerStatus(mode === 'server' ? 'ok' : 'off');
 }
@@ -464,6 +464,11 @@ async function init() {
   if (S.settings.storageMode === 'server' && !S.settings.userName) {
     setTimeout(() => openModal('userNameModal'), 600);
   }
+
+  // 필터 패널 섹션 접기/펼치기
+  document.querySelectorAll('#fpanel .fsec-ttl').forEach(ttl => {
+    ttl.addEventListener('click', () => ttl.closest('.fsec').classList.toggle('sec-collapsed'));
+  });
 }
 init();
 
