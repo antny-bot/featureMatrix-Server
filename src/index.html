@@ -28,44 +28,37 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
 
 <header class="hdr">
   <div class="hdr-left">
-    <button class="btn btn-g" style="width:32px;padding:0;position:relative" onclick="togglePanel()" title="패널 (F)">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
     <div><div class="logo-kr" id="dTitle">featureMATRIX</div><div class="logo-sub" id="dSub">기능정의 툴</div></div>
   </div>
-  <div class="hdr-stats">
-    <div class="stat"><span class="stat-lbl">전체</span><span class="stat-val sv-t" id="stTotal">0</span></div>
-    <div class="stat"><span class="stat-lbl">상</span><span class="stat-val sv-h" id="stHigh">0</span></div>
-    <div class="stat"><span class="stat-lbl">중</span><span class="stat-val sv-m" id="stMid">0</span></div>
-    <div class="stat"><span class="stat-lbl">하</span><span class="stat-val sv-l" id="stLow">0</span></div>
-    <div class="stat"><span class="stat-lbl">중요</span><span class="stat-val sv-i" id="stImp">0</span></div>
-    <div class="stat"><span class="stat-lbl">신규N</span><span class="stat-val sv-n" id="stNew">0</span></div>
-    <span class="fbadge" id="fbadge">필터 적용 중</span>
-  </div>
-  <div class="hdr-mid">
-    <div class="search-wrap">
-      <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
-      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
-    </div>
-  </div>
+  <!-- stats: 대시보드로 이동 (DOM id 유지 → countUp 호환) -->
+  <span id="stTotal" style="display:none">0</span>
+  <span id="stHigh"  style="display:none">0</span>
+  <span id="stMid"   style="display:none">0</span>
+  <span id="stLow"   style="display:none">0</span>
+  <span id="stImp"   style="display:none">0</span>
+  <span id="stNew"   style="display:none">0</span>
+  <div class="hdr-mid"></div>
   <div class="hdr-actions">
-    <div class="vtabs">
-      <button class="vtab on" id="tabM" onclick="switchView('matrix')">매트릭스</button>
-      <button class="vtab" id="tabL" onclick="switchView('list')">리스트</button>
-    </div>
-    <button class="btn btn-p btn-sm" onclick="openAddModal()">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 추가
+    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>설정</span>
     </button>
-    <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)" style="width:27px;padding:0">⚙</button>
-    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:4px" title="저장 위치">
+    <button class="btn btn-g btn-sm hdr-btn" id="serverStatusBtn" title="서버 상태">
       <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
-      <span id="serverStatusLabel">🌐</span>
-    </span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      <span id="serverStatusLabel">서버</span>
+    </button>
+    <span id="storageModeBadge" style="display:none"></span>
     <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
     <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="관리자 잠금">🔒</button>
-    <button class="btn btn-g btn-sm" onclick="openModal('shortcutsModal')" title="단축키 (?)">?</button>
-    <button class="btn btn-g btn-sm" style="width:27px;padding:0" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('shortcutsModal')" title="단축키 (?)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+      <span>단축키</span>
+    </button>
+    <button class="btn btn-g btn-sm hdr-btn" onclick="toggleTheme()" id="themeBtn" title="테마">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeBtnIcon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <span>테마</span>
+    </button>
   </div>
   <div class="hdr-prog" id="hdrProg" title="완료율 0%"><div class="hdr-prog-bar" id="hdrProgBar" style="width:0%"></div></div>
 </header>
@@ -77,7 +70,41 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
 </div>
 <style>#updateBanner.on{display:flex}</style>
 <div class="layout" id="layout">
+  <!-- 왼쪽 네비게이션 사이드바 -->
+  <nav class="nav-side" id="navSide">
+    <button class="nav-item" id="navD" onclick="switchView('dashboard')" title="대시보드">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>대시보드</span>
+    </button>
+    <button class="nav-item on" id="navM" onclick="switchView('matrix')" title="매트릭스">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+      <span>매트릭스</span>
+    </button>
+    <button class="nav-item" id="navL" onclick="switchView('list')" title="리스트">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>
+      <span>리스트</span>
+    </button>
+  </nav>
+  <main class="content" id="contentArea">
+    <!-- 검색바: 매트릭스·리스트에서만 표시 -->
+    <div class="content-search" id="contentSearch" style="display:none">
+      <div class="search-wrap">
+        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+      </div>
+    </div>
+    <div id="dashboardView" style="display:none"></div>
+    <div id="matrixView" class="mwrap fluid"></div>
+    <div id="bulkBar" class="bulk-bar" style="display:none"></div>
+    <div id="listView"   class="lwrap" style="display:none"></div>
+  </main>
+  <!-- 오른쪽 필터 패널 (매트릭스·리스트에서만 표시) -->
   <aside class="fpanel" id="fpanel">
+    <!-- 삼선 토글 버튼 (항상 표시) -->
+    <button class="fpanel-toggle" id="fpanelToggle" onclick="togglePanel()" title="필터 패널 (F)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="fpinner">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)">필터</span>
@@ -118,14 +145,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <label class="tgl"><input type="checkbox" id="togUpd"         onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">수정일</span></label>
         </div>
       </div>
-      <!-- #6 범례 삭제 -->
     </div>
   </aside>
-  <main class="content" id="contentArea">
-    <div id="matrixView" class="mwrap fluid"></div>
-    <div id="bulkBar" class="bulk-bar" style="display:none"></div>
-    <div id="listView"   class="lwrap" style="display:none"></div>
-  </main>
 </div>
 
 <!-- 편집 모달 -->
@@ -319,11 +340,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div class="srow"><div><div class="slbl">카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjCatW(-4)">−</button><span id="dCatW">24px</span><button class="stepbtn" onclick="adjCatW(4)">+</button></div></div>
           <div class="srow"><div><div class="slbl">서브카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjSubCatW(-4)">−</button><span id="dSubCatW">72px</span><button class="stepbtn" onclick="adjSubCatW(4)">+</button></div></div>
         </div>
-        <div class="sec-ttl">레이아웃</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-          <div class="srow" style="border-bottom:none"><div><div class="slbl">매트릭스 너비</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="mwF" onclick="setMW('fluid')">가변</button><button class="rbtn" id="mwX" onclick="setMW('fixed')">고정</button></div></div>
-          <div class="srow" style="border-bottom:none"><div><div class="slbl">필터 패널 위치</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="ppL" onclick="setPPos('left')">← 왼쪽</button><button class="rbtn" id="ppR" onclick="setPPos('right')">오른쪽 →</button></div></div>
-        </div>
+        <!-- 매트릭스 너비·필터 패널 위치: 고정값(fluid/right) — 숨김 처리, DOM id 유지 -->
+        <span id="mwF" style="display:none"></span><span id="mwX" style="display:none"></span>
+        <span id="ppL" style="display:none"></span><span id="ppR" style="display:none"></span>
         <div class="sec-ttl" style="margin-top:12px">애니메이션</div>
         <div class="srow"><div><div class="slbl">애니메이션 전체</div><div class="ssub">모든 애니메이션 일괄 on/off</div></div><label class="tgl"><input type="checkbox" id="animEnabled" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">숫자 카운트업</div><div class="ssub">헤더 통계 숫자 증가 효과</div></div><label class="tgl"><input type="checkbox" id="animCountUp" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
@@ -332,16 +351,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl">행 Hover Shimmer</div><div class="ssub">리스트 뷰 행 hover 광택 효과</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">모달 Backdrop Blur</div><div class="ssub">모달 배경 블러 처리</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
       </div>
-      <!-- 디자인: 카드스타일 + 색상 + 테마 -->
+      <!-- 디자인: 테마 최상단 → 카드스타일+색상 2열 → 미리보기 -->
       <div class="spane" id="sdesign">
-        <div id="prioStyleRows"></div>
-        <div class="sec-ttl" style="margin-top:10px">카드 미리보기</div>
-        <div class="preview-cards" id="previewCards"></div>
-        <div class="sec-ttl" style="margin-top:12px">색상</div>
-        <div id="designContent"></div>
-        <div class="sec-ttl" style="margin-top:12px">테마</div>
+        <div class="sec-ttl">테마</div>
         <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">테마 선택 시 색상이 자동 업데이트됩니다.</div>
         <div class="theme-grid" id="themeGrid"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:16px">
+          <div>
+            <div class="sec-ttl">카드 스타일</div>
+            <div id="prioStyleRows"></div>
+          </div>
+          <div>
+            <div class="sec-ttl">포인트·배경 색상</div>
+            <div id="designContent"></div>
+          </div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">카드 미리보기</div>
+        <div class="preview-cards" id="previewCards"></div>
       </div>
       <!-- 컬럼·축: 리스트컬럼 + 축순서 -->
       <div class="spane" id="scola">

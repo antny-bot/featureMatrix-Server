@@ -121,8 +121,6 @@ export function updateDesignContent() {
     h += `<div class="sec-ttl">${grp.ttl}</div>`;
     grp.items.forEach(item => { h += colorRow(item.id, item.lbl); });
   });
-  h += `<div class="sec-ttl" style="margin-top:10px">우선순위 색상</div>
-        <div style="font-size:.74rem;color:var(--text-3);padding:6px 0">우선순위 색상은 <b>카드 스타일</b> 탭에서 편집하세요.</div>`;
   el.innerHTML = h;
 }
 

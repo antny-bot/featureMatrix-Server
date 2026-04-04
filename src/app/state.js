@@ -14,7 +14,7 @@ export const S = {
   display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true },
   settings: {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:24, subCatW:72, cellFold:3,
+    colW:130, catW:24, subCatW:72, cellFold:0,
     matrixWidth:'fluid', panelPos:'left', panelVisible:true,
     title:'소복 매트릭스', subtitle:'Function Matrix', themeId:'sobuk',
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },

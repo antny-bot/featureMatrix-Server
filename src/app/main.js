@@ -3,6 +3,7 @@
 ══════════════════════════════════════════ */
 
 import { DEMO } from './constants.js';
+import { renderDashboard, setHmView } from './dashboard.js';
 import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
          pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
          loadFromServer, saveToServer, logActivity, notify,
@@ -36,6 +37,7 @@ import { sstab, syncSettingsUI, previewTitle, setMW, setPPos,
 
 /* ── window 바인딩 ── */
 Object.assign(window, {
+  renderDashboard, setHmView,
   doUndo,
   toggleTheme, applyTheme, setPreset, setCustomColor, onCP, onHex, onHexKey, adjBW,
   renderPrioStyleRows, renderPreviewCards, updateDesignContent, renderThemeGrid,

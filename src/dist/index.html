@@ -124,7 +124,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .hdr-left{display:flex;align-items:center;height:100%;padding:0 8px 0 12px;gap:6px;border-right:1px solid var(--border);flex-shrink:0}
 .logo-kr{font-family:'Noto Serif KR','Georgia',serif;font-size:.88rem;font-weight:600;letter-spacing:.03em;color:var(--text);white-space:nowrap}
 .logo-sub{font-size:.58rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
-.hdr-stats{display:flex;align-items:center;flex:1;overflow:hidden;padding:0 4px}
+.hdr-stats{display:none}
 .stat{display:flex;flex-direction:column;align-items:center;padding:0 9px;border-right:1px solid var(--border);flex-shrink:0}
 .stat-lbl{font-size:.57rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);line-height:1.2}
 .stat-val{font-size:.875rem;font-weight:700;line-height:1.3;font-variant-numeric:tabular-nums}
@@ -137,24 +137,34 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .filter-badge{display:none;position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--accent);border-radius:50%;border:1.5px solid var(--surface);pointer-events:none}
 .filter-badge.on{display:block}
 .hdr-mid{flex:1;display:flex;align-items:center;padding:0 8px;gap:8px;overflow:hidden}
-.search-wrap{position:relative;flex:1;max-width:260px}
+.search-wrap{position:relative;flex:1;max-width:380px}
 .search-inp{height:28px;padding:0 10px 0 28px;font-size:.78rem;border:1px solid var(--border);border-radius:6px;background:var(--surface-2);color:var(--text);outline:none;width:100%;transition:all .15s;font-family:'Noto Sans KR',sans-serif}
 .search-inp:focus{border-color:var(--border-focus);background:var(--surface);box-shadow:0 0 0 2px var(--accent-l)}
 .search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none}
 .search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:.8rem;display:none;line-height:1;padding:2px}
 .search-clear.on{display:block}
 .hdr-actions{display:flex;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
-.vtabs{display:flex;gap:2px;background:var(--surface-2);border-radius:7px;padding:2px}
+.hdr-btn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;height:auto!important;padding:5px 8px!important;font-size:.55rem!important;color:var(--text-3);font-weight:600;letter-spacing:.02em}
+.hdr-btn:hover{color:var(--text-2)}
+.vtabs{display:none}
 .vtab{height:25px;padding:0 10px;border:none;border-radius:5px;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.77rem;font-weight:500;color:var(--text-3);cursor:pointer;transition:all .14s}
 .vtab.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow-xs)}
 
 /* ── 레이아웃 ── */
 .layout{display:flex;height:calc(100vh - 50px);overflow:hidden}
-.layout.pr{flex-direction:row-reverse}
-.fpanel{width:204px;max-width:204px;background:var(--surface);border-right:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:max-width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
-.fpanel.collapsed{max-width:0;border-width:0}
-.layout.pr .fpanel{border-right:none;border-left:1px solid var(--border)}
-.layout.pr .fpanel.collapsed{border-left-width:0}
+/* 왼쪽 네비게이션 사이드바 */
+.nav-side{width:84px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:8px 0;overflow:hidden}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 6px;border:none;background:none;color:var(--text-3);font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.6rem;font-weight:600;letter-spacing:.02em;cursor:pointer;width:100%;transition:color .15s,background .15s;line-height:1.2}
+.nav-item:hover{background:var(--overlay);color:var(--text-2)}
+.nav-item.on{color:var(--accent);background:var(--accent-l)}
+.nav-item svg{flex-shrink:0;transition:color .15s}
+/* 오른쪽 필터 패널 */
+.fpanel{width:200px;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
+.fpanel.collapsed{width:36px}
+.fpanel.collapsed .fpinner{display:none}
+.fpanel.fp-hide{width:0!important;border-width:0!important;overflow:hidden}
+.fpanel-toggle{width:36px;height:36px;flex-shrink:0;border:none;background:none;color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s;align-self:flex-start;padding:0}
+.fpanel-toggle:hover{color:var(--text)}
 .fpinner{padding:12px 11px;min-width:182px;overflow-y:auto;flex:1}
 .fsec{margin-bottom:12px}
 .fsec-ttl{font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
@@ -172,6 +182,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .owner-chip.chip-on{border-width:1.5px;font-weight:600}
 /* content: overflow-x hidden, overflow-y auto → sticky 정상 동작 */
 .content{flex:1;overflow-x:hidden;overflow-y:auto;background:var(--bg);min-width:0}
+.content-search{padding:8px 14px 0;background:var(--bg)}
+.content-search .search-wrap{max-width:480px}
 .content.fading{opacity:0;transition:opacity .15s}
 .content.fading-in{opacity:1;transition:opacity .2s}
 
@@ -345,6 +357,115 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* #5 - KaTeX 수식 */
 .md-viewer .katex-display{margin:8px 0;overflow-x:auto}
 
+/* ══════════════════════════════════════════
+   대시보드 뷰
+══════════════════════════════════════════ */
+.db-wrap{padding:28px 32px;max-width:1400px;display:flex;flex-direction:column;gap:28px}
+
+/* 히어로 */
+.db-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.db-eyebrow{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.db-title{font-size:1.85rem;font-weight:800;letter-spacing:-.03em;color:var(--text);line-height:1.2}
+
+/* 통계 카드 그리드 */
+.db-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.db-cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.db-cards{grid-template-columns:1fr}}
+
+.db-card{background:var(--surface-2);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:8px;transition:background .18s}
+.db-card:hover{background:var(--surface-3)}
+.db-card--primary{border-left:4px solid var(--accent)}
+.db-card-label{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.db-card-value{font-size:2.2rem;font-weight:900;letter-spacing:-.03em;color:var(--text);line-height:1}
+.db-card-sub{font-size:.75rem;color:var(--text-3)}
+
+/* 우선순위 바 */
+.db-prio-bars{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.db-prio-row{display:flex;align-items:center;gap:8px}
+.db-prio-lbl{font-size:.72rem;font-weight:700;width:18px;flex-shrink:0}
+.db-prio-cnt{font-size:.72rem;color:var(--text-3);width:28px;text-align:right;flex-shrink:0}
+.db-bar-track{flex:1;height:6px;border-radius:3px;background:var(--surface-3);overflow:hidden;position:relative}
+.db-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.db-bar--high{background:var(--p-high,var(--danger))}
+.db-bar--mid{background:var(--p-mid,var(--accent))}
+.db-bar--low{background:var(--text-3)}
+.db-bar--done{background:var(--success)}
+
+/* 완료율 */
+.db-pct-wrap{display:flex;align-items:baseline;gap:6px}
+.db-pct-num{font-size:2.4rem;font-weight:900;letter-spacing:-.04em;color:var(--text);line-height:1}
+.db-pct-sign{font-size:1rem;color:var(--text-3);font-weight:600}
+.db-pct-sub{font-size:.75rem;color:var(--text-3)}
+
+/* 상태 그리드 */
+.db-status-grid{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.db-status-item{display:flex;align-items:center;gap:8px}
+.db-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.db-status-name{font-size:.8rem;color:var(--text-2);flex:1}
+.db-status-cnt{font-size:.8rem;font-weight:700;color:var(--text)}
+
+/* 중간 영역 (히트맵 + 타임라인) */
+.db-mid{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:stretch}
+@media(max-width:900px){.db-mid{grid-template-columns:1fr}}
+
+/* 공통 패널 */
+.db-panel{background:var(--surface-2);border-radius:16px;padding:22px 24px}
+.db-panel-hd{margin-bottom:18px}
+.db-panel-title{font-size:1rem;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.db-panel-sub{font-size:.72rem;color:var(--text-3);margin-top:3px}
+.db-empty{color:var(--text-3);font-size:.82rem;padding:24px 0;text-align:center}
+
+/* 히트맵 탭 */
+.db-hm-tabs{display:flex;gap:3px;background:var(--surface-3);border-radius:7px;padding:2px;flex-shrink:0}
+.db-hm-tab{height:24px;padding:0 9px;border:none;border-radius:5px;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.7rem;font-weight:600;color:var(--text-3);cursor:pointer;transition:all .14s;white-space:nowrap}
+.db-hm-tab:hover{color:var(--text-2)}
+.db-hm-tab.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow-xs)}
+/* 히트맵 */
+.db-heatmap-panel{overflow:hidden}
+.db-hm-wrap{overflow-x:auto}
+.db-hm-grid{display:grid;gap:4px;min-width:max-content}
+.db-hm-corner{width:80px}
+.db-hm-col-hd{font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);text-align:center;padding:0 2px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.db-hm-row-hd{font-size:.62rem;font-weight:600;color:var(--text-2);width:80px;text-align:right;padding-right:10px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--accent);opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:transparent;transition:opacity .2s,transform .15s}
+.db-hm-cell:hover{transform:scale(1.15);z-index:2;color:var(--text)}
+.db-hm-legend{display:flex;align-items:center;gap:8px;margin-top:14px}
+.db-hm-legend-lbl{font-size:.6rem;color:var(--text-3);letter-spacing:.04em}
+.db-hm-legend-bar{display:flex;gap:3px}
+.db-hm-legend-seg{width:18px;height:8px;border-radius:2px;background:var(--accent);opacity:var(--op,0.06)}
+
+/* 타임라인 */
+.db-timeline-panel{display:flex;flex-direction:column;height:100%}
+.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0}
+.db-tl-item{display:flex;gap:12px}
+.db-tl-line-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
+.db-tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.db-tl-line{width:1px;flex:1;background:var(--border-2);margin:4px 0;min-height:12px}
+.db-tl-body{padding-bottom:14px;flex:1;min-width:0}
+.db-tl-time{font-size:.62rem;font-weight:700;color:var(--text-3);letter-spacing:.03em;margin-bottom:2px}
+.db-tl-name{font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-tl-name:hover{color:var(--accent)}
+.db-tl-meta{display:flex;gap:8px;margin-top:3px}
+.db-tl-owner{font-size:.7rem;font-weight:600}
+.db-tl-status{font-size:.68rem;color:var(--text-3)}
+.db-more-btn{margin-top:14px;font-size:.72rem;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;text-align:left;letter-spacing:.02em}
+.db-more-btn:hover{text-decoration:underline}
+
+/* 담당별 분포 */
+.db-owners-panel{}
+.db-owners-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:700px){.db-owners-grid{grid-template-columns:1fr}}
+.db-owners-col-title{font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+.db-owners-list{display:flex;flex-direction:column;gap:12px}
+.db-owner-row{display:flex;align-items:center;gap:12px}
+.db-owner-info{display:flex;align-items:center;gap:7px;width:160px;flex-shrink:0}
+.db-owner-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.db-owner-name{font-size:.8rem;font-weight:600;color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.db-owner-total{font-size:.78rem;font-weight:700;color:var(--text);flex-shrink:0}
+.db-owner-bar-wrap{flex:1}
+.db-owner-seg{height:100%;display:inline-block;vertical-align:top}
+.db-bar-track .db-owner-seg+.db-owner-seg{border-left:1px solid var(--surface-2)}
+
 /* ── 인쇄 ── */
 @media print{
   .hdr,.fpanel,.undo-fab,.notif,.ftt,.ov,.hdr-actions,.vtabs,.search-inp,.search-wrap{display:none!important}
@@ -381,44 +502,37 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
 
 <header class="hdr">
   <div class="hdr-left">
-    <button class="btn btn-g" style="width:32px;padding:0;position:relative" onclick="togglePanel()" title="패널 (F)">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
     <div><div class="logo-kr" id="dTitle">featureMATRIX</div><div class="logo-sub" id="dSub">기능정의 툴</div></div>
   </div>
-  <div class="hdr-stats">
-    <div class="stat"><span class="stat-lbl">전체</span><span class="stat-val sv-t" id="stTotal">0</span></div>
-    <div class="stat"><span class="stat-lbl">상</span><span class="stat-val sv-h" id="stHigh">0</span></div>
-    <div class="stat"><span class="stat-lbl">중</span><span class="stat-val sv-m" id="stMid">0</span></div>
-    <div class="stat"><span class="stat-lbl">하</span><span class="stat-val sv-l" id="stLow">0</span></div>
-    <div class="stat"><span class="stat-lbl">중요</span><span class="stat-val sv-i" id="stImp">0</span></div>
-    <div class="stat"><span class="stat-lbl">신규N</span><span class="stat-val sv-n" id="stNew">0</span></div>
-    <span class="fbadge" id="fbadge">필터 적용 중</span>
-  </div>
-  <div class="hdr-mid">
-    <div class="search-wrap">
-      <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
-      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
-    </div>
-  </div>
+  <!-- stats: 대시보드로 이동 (DOM id 유지 → countUp 호환) -->
+  <span id="stTotal" style="display:none">0</span>
+  <span id="stHigh"  style="display:none">0</span>
+  <span id="stMid"   style="display:none">0</span>
+  <span id="stLow"   style="display:none">0</span>
+  <span id="stImp"   style="display:none">0</span>
+  <span id="stNew"   style="display:none">0</span>
+  <div class="hdr-mid"></div>
   <div class="hdr-actions">
-    <div class="vtabs">
-      <button class="vtab on" id="tabM" onclick="switchView('matrix')">매트릭스</button>
-      <button class="vtab" id="tabL" onclick="switchView('list')">리스트</button>
-    </div>
-    <button class="btn btn-p btn-sm" onclick="openAddModal()">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 추가
+    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>설정</span>
     </button>
-    <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)" style="width:27px;padding:0">⚙</button>
-    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:4px" title="저장 위치">
+    <button class="btn btn-g btn-sm hdr-btn" id="serverStatusBtn" title="서버 상태">
       <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
-      <span id="serverStatusLabel">🌐</span>
-    </span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      <span id="serverStatusLabel">서버</span>
+    </button>
+    <span id="storageModeBadge" style="display:none"></span>
     <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
     <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="관리자 잠금">🔒</button>
-    <button class="btn btn-g btn-sm" onclick="openModal('shortcutsModal')" title="단축키 (?)">?</button>
-    <button class="btn btn-g btn-sm" style="width:27px;padding:0" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('shortcutsModal')" title="단축키 (?)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+      <span>단축키</span>
+    </button>
+    <button class="btn btn-g btn-sm hdr-btn" onclick="toggleTheme()" id="themeBtn" title="테마">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeBtnIcon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <span>테마</span>
+    </button>
   </div>
   <div class="hdr-prog" id="hdrProg" title="완료율 0%"><div class="hdr-prog-bar" id="hdrProgBar" style="width:0%"></div></div>
 </header>
@@ -430,7 +544,41 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
 </div>
 <style>#updateBanner.on{display:flex}</style>
 <div class="layout" id="layout">
+  <!-- 왼쪽 네비게이션 사이드바 -->
+  <nav class="nav-side" id="navSide">
+    <button class="nav-item" id="navD" onclick="switchView('dashboard')" title="대시보드">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>대시보드</span>
+    </button>
+    <button class="nav-item on" id="navM" onclick="switchView('matrix')" title="매트릭스">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+      <span>매트릭스</span>
+    </button>
+    <button class="nav-item" id="navL" onclick="switchView('list')" title="리스트">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>
+      <span>리스트</span>
+    </button>
+  </nav>
+  <main class="content" id="contentArea">
+    <!-- 검색바: 매트릭스·리스트에서만 표시 -->
+    <div class="content-search" id="contentSearch" style="display:none">
+      <div class="search-wrap">
+        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+      </div>
+    </div>
+    <div id="dashboardView" style="display:none"></div>
+    <div id="matrixView" class="mwrap fluid"></div>
+    <div id="bulkBar" class="bulk-bar" style="display:none"></div>
+    <div id="listView"   class="lwrap" style="display:none"></div>
+  </main>
+  <!-- 오른쪽 필터 패널 (매트릭스·리스트에서만 표시) -->
   <aside class="fpanel" id="fpanel">
+    <!-- 삼선 토글 버튼 (항상 표시) -->
+    <button class="fpanel-toggle" id="fpanelToggle" onclick="togglePanel()" title="필터 패널 (F)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="fpinner">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)">필터</span>
@@ -471,14 +619,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <label class="tgl"><input type="checkbox" id="togUpd"         onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">수정일</span></label>
         </div>
       </div>
-      <!-- #6 범례 삭제 -->
     </div>
   </aside>
-  <main class="content" id="contentArea">
-    <div id="matrixView" class="mwrap fluid"></div>
-    <div id="bulkBar" class="bulk-bar" style="display:none"></div>
-    <div id="listView"   class="lwrap" style="display:none"></div>
-  </main>
 </div>
 
 <!-- 편집 모달 -->
@@ -672,11 +814,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div class="srow"><div><div class="slbl">카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjCatW(-4)">−</button><span id="dCatW">24px</span><button class="stepbtn" onclick="adjCatW(4)">+</button></div></div>
           <div class="srow"><div><div class="slbl">서브카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjSubCatW(-4)">−</button><span id="dSubCatW">72px</span><button class="stepbtn" onclick="adjSubCatW(4)">+</button></div></div>
         </div>
-        <div class="sec-ttl">레이아웃</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-          <div class="srow" style="border-bottom:none"><div><div class="slbl">매트릭스 너비</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="mwF" onclick="setMW('fluid')">가변</button><button class="rbtn" id="mwX" onclick="setMW('fixed')">고정</button></div></div>
-          <div class="srow" style="border-bottom:none"><div><div class="slbl">필터 패널 위치</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="ppL" onclick="setPPos('left')">← 왼쪽</button><button class="rbtn" id="ppR" onclick="setPPos('right')">오른쪽 →</button></div></div>
-        </div>
+        <!-- 매트릭스 너비·필터 패널 위치: 고정값(fluid/right) — 숨김 처리, DOM id 유지 -->
+        <span id="mwF" style="display:none"></span><span id="mwX" style="display:none"></span>
+        <span id="ppL" style="display:none"></span><span id="ppR" style="display:none"></span>
         <div class="sec-ttl" style="margin-top:12px">애니메이션</div>
         <div class="srow"><div><div class="slbl">애니메이션 전체</div><div class="ssub">모든 애니메이션 일괄 on/off</div></div><label class="tgl"><input type="checkbox" id="animEnabled" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">숫자 카운트업</div><div class="ssub">헤더 통계 숫자 증가 효과</div></div><label class="tgl"><input type="checkbox" id="animCountUp" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
@@ -685,16 +825,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl">행 Hover Shimmer</div><div class="ssub">리스트 뷰 행 hover 광택 효과</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">모달 Backdrop Blur</div><div class="ssub">모달 배경 블러 처리</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
       </div>
-      <!-- 디자인: 카드스타일 + 색상 + 테마 -->
+      <!-- 디자인: 테마 최상단 → 카드스타일+색상 2열 → 미리보기 -->
       <div class="spane" id="sdesign">
-        <div id="prioStyleRows"></div>
-        <div class="sec-ttl" style="margin-top:10px">카드 미리보기</div>
-        <div class="preview-cards" id="previewCards"></div>
-        <div class="sec-ttl" style="margin-top:12px">색상</div>
-        <div id="designContent"></div>
-        <div class="sec-ttl" style="margin-top:12px">테마</div>
+        <div class="sec-ttl">테마</div>
         <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">테마 선택 시 색상이 자동 업데이트됩니다.</div>
         <div class="theme-grid" id="themeGrid"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:16px">
+          <div>
+            <div class="sec-ttl">카드 스타일</div>
+            <div id="prioStyleRows"></div>
+          </div>
+          <div>
+            <div class="sec-ttl">포인트·배경 색상</div>
+            <div id="designContent"></div>
+          </div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">카드 미리보기</div>
+        <div class="preview-cards" id="previewCards"></div>
       </div>
       <!-- 컬럼·축: 리스트컬럼 + 축순서 -->
       <div class="spane" id="scola">
@@ -937,7 +1084,7 @@ const S = {
   display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true },
   settings: {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:24, subCatW:72, cellFold:3,
+    colW:130, catW:24, subCatW:72, cellFold:0,
     matrixWidth:'fluid', panelPos:'left', panelVisible:true,
     title:'소복 매트릭스', subtitle:'Function Matrix', themeId:'sobuk',
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },
@@ -1504,8 +1651,6 @@ function updateDesignContent() {
     h += `<div class="sec-ttl">${grp.ttl}</div>`;
     grp.items.forEach(item => { h += colorRow(item.id, item.lbl); });
   });
-  h += `<div class="sec-ttl" style="margin-top:10px">우선순위 색상</div>
-        <div style="font-size:.74rem;color:var(--text-3);padding:6px 0">우선순위 색상은 <b>카드 스타일</b> 탭에서 편집하세요.</div>`;
   el.innerHTML = h;
 }
 function getPresetCSS(pid, pHex, pBg) {
@@ -1717,11 +1862,32 @@ function buildStruct(items) {
   return { groups, gsubs, cats, csubs };
 }
 
+/* ── nav-side / fpanel 상태 동기화 ── */
+function syncLayout() {
+  const v = S.view;
+  const navMap = { dashboard: 'navD', matrix: 'navM', list: 'navL' };
+  ['navD', 'navM', 'navL'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'nav-item' + (navMap[v] === id ? ' on' : '');
+  });
+  ['dashboardView', 'matrixView', 'listView'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === v + 'View' ? '' : 'none';
+  });
+  const fp = document.getElementById('fpanel');
+  if (fp) fp.classList.toggle('fp-hide', v === 'dashboard');
+  const cs = document.getElementById('contentSearch');
+  if (cs) cs.style.display = v === 'dashboard' ? 'none' : '';
+}
+
 /* ── 전체 렌더 ── */
 function renderAll(withFade = false) {
+  syncLayout();
   const doRender = () => {
     renderStats();
-    if (S.view === 'matrix') renderMatrix(); else renderList();
+    if (S.view === 'matrix') renderMatrix();
+    else if (S.view === 'list') renderList();
+    else if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
     updateDL();
     renderOwnerChips();
     renderPrioChips();
@@ -2004,12 +2170,20 @@ function sortL(k) {
 }
 function switchView(v) {
   S.view = v;
-  document.getElementById('matrixView').style.display = v==='matrix' ? '' : 'none';
-  document.getElementById('listView').style.display   = v==='list'   ? '' : 'none';
-  document.getElementById('tabM').className = 'vtab' + (v==='matrix' ? ' on' : '');
-  document.getElementById('tabL').className = 'vtab' + (v==='list'   ? ' on' : '');
+  document.getElementById('dashboardView').style.display = v==='dashboard' ? '' : 'none';
+  document.getElementById('matrixView').style.display    = v==='matrix'    ? '' : 'none';
+  document.getElementById('listView').style.display      = v==='list'      ? '' : 'none';
+  /* 사이드바 nav 활성 상태 */
+  ['navD','navM','navL'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'nav-item' + (id === {dashboard:'navD',matrix:'navM',list:'navL'}[v] ? ' on' : '');
+  });
+  /* 오른쪽 필터 패널: 대시보드에서 숨김 */
+  const fp = document.getElementById('fpanel');
+  if (fp) fp.style.display = v === 'dashboard' ? 'none' : '';
   if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }
-  else renderList();
+  else if (v === 'list') renderList();
+  else { document.getElementById('bulkBar').style.display = 'none'; if (window.renderDashboard) window.renderDashboard(); }
 }
 
 /* ── 필터 UI ── */
@@ -3162,10 +3336,373 @@ function resetSettings() {
 }
 
 
+/* ── app/dashboard.js ── */
+/* ══════════════════════════════════════════
+   dashboard.js — 대시보드 뷰 렌더링
+══════════════════════════════════════════ */
+
+
+
+
+/* ── 시간 포매팅 ── */
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return '방금 전';
+  if (m < 60) return `${m}분 전`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}시간 전`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}일 전`;
+  return new Date(ts).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+}
+
+/* ── 상태 색상 ── */
+function statusColor(status) {
+  const map = { '기획': 'var(--text-3)', '개발중': 'var(--accent)', '완료': 'var(--success)', '보류': 'var(--warning)' };
+  return map[status] || 'var(--text-3)';
+}
+
+/* ── 히트맵 뷰 상태 (그룹×카테고리 | 그룹×상태) ── */
+let _hmView = 'cat';  // 'cat' | 'status'
+function setHmView(v) { _hmView = v; renderDashboard(); }
+
+/* ── 히트맵 HTML 생성 ── */
+function buildHeatmap(all, groups, cats) {
+  const STATUSES = ['기획', '개발중', '완료', '보류'];
+
+  if (_hmView === 'cat') {
+    if (groups.length === 0 || cats.length === 0)
+      return `<div class="db-empty">데이터가 없습니다</div>`;
+    const hmData = {};
+    let hmMax = 0;
+    all.forEach(it => {
+      if (!it.group || !it.category) return;
+      const k = `${it.group}||${it.category}`;
+      hmData[k] = (hmData[k] || 0) + 1;
+      if (hmData[k] > hmMax) hmMax = hmData[k];
+    });
+    return `<div class="db-hm-wrap">
+      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
+        <div class="db-hm-corner"></div>
+        ${groups.map(g => `<div class="db-hm-col-hd" title="${esc(g)}">${esc(g)}</div>`).join('')}
+        ${cats.map(cat => `
+          <div class="db-hm-row-hd" title="${esc(cat)}">${esc(cat)}</div>
+          ${groups.map(g => {
+            const cnt = hmData[`${g}||${cat}`] || 0;
+            const op  = hmMax > 0 ? (cnt === 0 ? 0.06 : 0.15 + cnt/hmMax * 0.85) : 0.06;
+            return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc(g)} × ${esc(cat)}: ${cnt}개">${cnt > 0 ? cnt : ''}</div>`;
+          }).join('')}
+        `).join('')}
+      </div>
+      <div class="db-hm-legend">
+        <span class="db-hm-legend-lbl">밀도:</span>
+        <div class="db-hm-legend-bar">
+          ${[0.06,0.30,0.55,0.80,1.00].map(op => `<div class="db-hm-legend-seg" style="--op:${op}"></div>`).join('')}
+        </div>
+        <span class="db-hm-legend-lbl">높음</span>
+      </div>
+    </div>`;
+  } else {
+    /* 그룹 × 상태 뷰 */
+    if (groups.length === 0)
+      return `<div class="db-empty">데이터가 없습니다</div>`;
+    const hmData = {};
+    let hmMax = 0;
+    all.forEach(it => {
+      if (!it.group || !it.status) return;
+      const k = `${it.group}||${it.status}`;
+      hmData[k] = (hmData[k] || 0) + 1;
+      if (hmData[k] > hmMax) hmMax = hmData[k];
+    });
+    return `<div class="db-hm-wrap">
+      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
+        <div class="db-hm-corner"></div>
+        ${groups.map(g => `<div class="db-hm-col-hd" title="${esc(g)}">${esc(g)}</div>`).join('')}
+        ${STATUSES.map(st => `
+          <div class="db-hm-row-hd" title="${esc(st)}" style="color:${statusColor(st)};font-weight:700">${esc(st)}</div>
+          ${groups.map(g => {
+            const cnt = hmData[`${g}||${st}`] || 0;
+            const op  = hmMax > 0 ? (cnt === 0 ? 0.06 : 0.15 + cnt/hmMax * 0.85) : 0.06;
+            return `<div class="db-hm-cell db-hm-cell--status-${st}" style="--op:${op.toFixed(2)}" title="${esc(g)} × ${esc(st)}: ${cnt}개">${cnt > 0 ? cnt : ''}</div>`;
+          }).join('')}
+        `).join('')}
+      </div>
+      <div class="db-hm-legend">
+        <span class="db-hm-legend-lbl">밀도:</span>
+        <div class="db-hm-legend-bar">
+          ${[0.06,0.30,0.55,0.80,1.00].map(op => `<div class="db-hm-legend-seg" style="--op:${op}"></div>`).join('')}
+        </div>
+        <span class="db-hm-legend-lbl">높음</span>
+      </div>
+    </div>`;
+  }
+}
+
+/* ── renderDashboard ── */
+function renderDashboard() {
+  const el = document.getElementById('dashboardView');
+  if (!el) return;
+
+  const all = S.items.filter(it => it.isDelete !== 'Y');
+  const total = all.length;
+
+  /* 통계 계산 */
+  let high = 0, mid = 0, low = 0, imp = 0, done = 0;
+  const statusCount = { '기획': 0, '개발중': 0, '완료': 0, '보류': 0 };
+  const ownerMap = {};
+
+  all.forEach(it => {
+    if (it.priority === '상') high++;
+    else if (it.priority === '중') mid++;
+    else low++;
+    if (it.isImportant === 'Y') imp++;
+    if (it.status === '완료') done++;
+    if (statusCount[it.status] !== undefined) statusCount[it.status]++;
+    const o = normOwner(it.owner);
+    if (!ownerMap[o]) ownerMap[o] = { total: 0, high: 0, mid: 0, low: 0, status: {} };
+    ownerMap[o].total++;
+    ownerMap[o][getPK(it.priority)]++;
+    if (it.status) ownerMap[o].status[it.status] = (ownerMap[o].status[it.status] || 0) + 1;
+  });
+
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+
+  /* 히트맵 데이터 */
+  /* groupOrder/catOrder 기준이되, 실제 데이터에 있는 항목은 항상 포함 */
+  const allGroups = [...new Set(all.map(it => it.group).filter(Boolean))];
+  const allCats   = [...new Set(all.map(it => it.category).filter(Boolean))];
+  const orderG    = S.settings.groupOrder.filter(g => allGroups.includes(g));
+  const extraG    = allGroups.filter(g => !orderG.includes(g));
+  const groups    = [...orderG, ...extraG];
+  const orderC    = S.settings.catOrder.filter(c => allCats.includes(c));
+  const extraC    = allCats.filter(c => !orderC.includes(c));
+  const cats      = [...orderC, ...extraC];
+
+  const hmData = {};
+  let hmMax = 0;
+  all.forEach(it => {
+    if (!it.group || !it.category) return;
+    const k = `${it.group}||${it.category}`;
+    hmData[k] = (hmData[k] || 0) + 1;
+    if (hmData[k] > hmMax) hmMax = hmData[k];
+  });
+
+  /* 최근 변경 (updatedAt 기준 top 8) */
+  const recent = [...all]
+    .filter(it => it.updatedAt)
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, 8);
+
+  /* 담당별 정렬 */
+  const owners = Object.entries(ownerMap)
+    .sort((a, b) => b[1].total - a[1].total)
+    .slice(0, 8);
+
+  /* ── HTML 구성 ── */
+  el.innerHTML = `
+<div class="db-wrap">
+
+  <!-- 헤더 -->
+  <div class="db-hero" data-anim-idx="0">
+    <div>
+      <div class="db-eyebrow">Mission Control</div>
+      <h2 class="db-title">프로젝트 현황</h2>
+    </div>
+  </div>
+
+  <!-- 요약 통계 카드 -->
+  <section class="db-cards" data-anim-idx="1">
+    <!-- 전체 기능 -->
+    <div class="db-card db-card--primary">
+      <div class="db-card-label">전체 기능</div>
+      <div class="db-card-value">${total.toLocaleString()}</div>
+      <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
+    </div>
+
+    <!-- 우선순위 분포 -->
+    <div class="db-card">
+      <div class="db-card-label">우선순위 분포</div>
+      <div class="db-prio-bars">
+        <div class="db-prio-row">
+          <span class="db-prio-lbl sv-h">상</span>
+          <div class="db-bar-track"><div class="db-bar-fill db-bar--high" style="width:${total > 0 ? Math.round(high/total*100) : 0}%"></div></div>
+          <span class="db-prio-cnt">${high}</span>
+        </div>
+        <div class="db-prio-row">
+          <span class="db-prio-lbl sv-m">중</span>
+          <div class="db-bar-track"><div class="db-bar-fill db-bar--mid" style="width:${total > 0 ? Math.round(mid/total*100) : 0}%"></div></div>
+          <span class="db-prio-cnt">${mid}</span>
+        </div>
+        <div class="db-prio-row">
+          <span class="db-prio-lbl sv-l">하</span>
+          <div class="db-bar-track"><div class="db-bar-fill db-bar--low" style="width:${total > 0 ? Math.round(low/total*100) : 0}%"></div></div>
+          <span class="db-prio-cnt">${low}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 완료율 -->
+    <div class="db-card">
+      <div class="db-card-label">완료율</div>
+      <div class="db-pct-wrap">
+        <div class="db-pct-num">${pct}<span class="db-pct-sign">%</span></div>
+        <div class="db-pct-sub">${done} / ${total} 완료</div>
+      </div>
+      <div class="db-bar-track" style="margin-top:12px">
+        <div class="db-bar-fill db-bar--done" style="width:${pct}%"></div>
+      </div>
+    </div>
+
+    <!-- 상태별 분포 -->
+    <div class="db-card">
+      <div class="db-card-label">진행 상태</div>
+      <div class="db-status-grid">
+        ${['기획','개발중','완료','보류'].map(s => `
+          <div class="db-status-item">
+            <div class="db-status-dot" style="background:${statusColor(s)}"></div>
+            <span class="db-status-name">${s}</span>
+            <span class="db-status-cnt">${statusCount[s]}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- 히트맵 + 타임라인 -->
+  <section class="db-mid" data-anim-idx="2">
+
+    <!-- 기능 분포 히트맵 -->
+    <div class="db-panel db-heatmap-panel">
+      <div class="db-panel-hd">
+        <div>
+          <div class="db-panel-title">기능 분포 히트맵</div>
+          <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+        </div>
+        <div class="db-hm-tabs">
+          <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
+          <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
+        </div>
+      </div>
+      ${buildHeatmap(all, groups, cats)}
+    </div>
+
+    <!-- 최근 변경 타임라인 -->
+    <div class="db-panel db-timeline-panel">
+      <div class="db-panel-hd">
+        <div class="db-panel-title">최근 변경</div>
+        <div class="db-panel-sub">수정일 기준</div>
+      </div>
+      ${recent.length === 0
+        ? `<div class="db-empty">변경 기록이 없습니다</div>`
+        : `<div class="db-timeline">
+            ${recent.map((it, i) => `
+              <div class="db-tl-item">
+                <div class="db-tl-line-wrap">
+                  <div class="db-tl-dot" style="background:${statusColor(it.status)}"></div>
+                  ${i < recent.length - 1 ? '<div class="db-tl-line"></div>' : ''}
+                </div>
+                <div class="db-tl-body">
+                  <div class="db-tl-time">${timeAgo(it.updatedAt)}</div>
+                  <div class="db-tl-name" onclick="openEditModal('${esc(it.key)}')">${esc(it.name || it.key)}</div>
+                  <div class="db-tl-meta">
+                    ${it.owner ? `<span class="db-tl-owner" style="color:${getOwnerColor(it.owner)}">${esc(it.owner)}</span>` : ''}
+                    ${it.status ? `<span class="db-tl-status">${esc(it.status)}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <button class="db-more-btn" onclick="switchView('list')">전체 목록 보기 →</button>`
+      }
+    </div>
+  </section>
+
+  <!-- 담당별 분포 -->
+  <section class="db-panel db-owners-panel" data-anim-idx="3">
+    <div class="db-panel-hd">
+      <div class="db-panel-title">담당별 기능 현황</div>
+    </div>
+    ${owners.length === 0
+      ? `<div class="db-empty">담당자 정보가 없습니다</div>`
+      : `<div class="db-owners-grid">
+          <!-- 좌: 담당자 × 우선순위 -->
+          <div>
+            <div class="db-owners-col-title">우선순위</div>
+            <div class="db-owners-list">
+              ${owners.map(([owner, cnt]) => `
+                <div class="db-owner-row">
+                  <div class="db-owner-info">
+                    <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
+                    <span class="db-owner-name">${esc(owner)}</span>
+                    <span class="db-owner-total">${cnt.total}</span>
+                  </div>
+                  <div class="db-owner-bar-wrap">
+                    <div class="db-bar-track">
+                      <div class="db-owner-seg db-bar--high" style="width:${cnt.total > 0 ? (cnt.high/cnt.total*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
+                      <div class="db-owner-seg db-bar--mid"  style="width:${cnt.total > 0 ? (cnt.mid/cnt.total*100).toFixed(1) : 0}%"  title="중 ${cnt.mid}"></div>
+                      <div class="db-owner-seg db-bar--low"  style="width:${cnt.total > 0 ? (cnt.low/cnt.total*100).toFixed(1) : 0}%"  title="하 ${cnt.low}"></div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          <!-- 우: 담당자 × 진행상태 -->
+          <div>
+            <div class="db-owners-col-title">진행상태</div>
+            <div class="db-owners-list">
+              ${owners.map(([owner, cnt]) => `
+                <div class="db-owner-row">
+                  <div class="db-owner-info">
+                    <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
+                    <span class="db-owner-name">${esc(owner)}</span>
+                    <span class="db-owner-total">${cnt.total}</span>
+                  </div>
+                  <div class="db-owner-bar-wrap">
+                    <div class="db-bar-track">
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['기획']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['개발중']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['완료']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['보류']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>`
+    }
+  </section>
+
+</div>
+`;
+
+  /* 섹션별 순차 fade-in */
+  if (animOk()) {
+    el.querySelectorAll('[data-anim-idx]').forEach(sec => {
+      const idx = parseInt(sec.dataset.animIdx, 10);
+      sec.style.opacity = '0';
+      sec.style.transform = 'translateY(12px)';
+      sec.style.transition = 'none';
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          sec.style.transition = 'opacity .32s ease, transform .32s ease';
+          sec.style.opacity = '1';
+          sec.style.transform = 'translateY(0)';
+        }, idx * 80);
+      });
+    });
+  }
+}
+
+
 /* ── app/main.js ── */
 /* ══════════════════════════════════════════
    main.js — 초기화, 키보드, 필터 이벤트, window 바인딩
 ══════════════════════════════════════════ */
+
 
 
 
