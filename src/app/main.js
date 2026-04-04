@@ -365,7 +365,16 @@ window.openActivityLog = async () => {
       const headers = { 'X-API-Key': S.settings.apiKey || '', 'X-Admin-Token': sessionStorage.getItem('fmAdminToken') || '' };
       const res  = await fetch(apiUrl + '/api/log', { headers });
       const json = await res.json();
-      if (!json.ok) { body.innerHTML = `<div style="padding:20px;color:var(--danger)">${json.error}</div>`; return; }
+      if (!json.ok) {
+        if (res.status === 403) {
+          sessionStorage.removeItem('fmAdminToken');
+          updateAdminUI();
+          closeModal('activityLogModal');
+          requireAdmin(() => window.openActivityLog());
+          return;
+        }
+        body.innerHTML = `<div style="padding:20px;color:var(--danger)">${json.error}</div>`; return;
+      }
       if (!json.entries?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
       const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
       body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
