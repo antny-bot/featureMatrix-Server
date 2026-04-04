@@ -221,12 +221,10 @@ def get_log():
     entries = read_activity()
     return jsonify({'ok': True, 'entries': list(reversed(entries))})
 
-# ── POST /api/log ─── 활동 로그 기록 (관리자 전용) ────────
+# ── POST /api/log ─── 활동 로그 기록 ─────────────────────
 @app.route('/api/log', methods=['POST'])
 def post_log():
     check_auth()
-    if not check_admin_token():
-        return jsonify({'ok': False, 'error': '관리자 권한이 필요합니다.'}), 403
     body = request.get_json(silent=True) or {}
     entry = {
         'action': body.get('action', ''),
