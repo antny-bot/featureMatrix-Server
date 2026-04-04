@@ -1,0 +1,456 @@
+/* ══════════════════════════════════════════
+   main.js — 초기화, 키보드, 필터 이벤트, window 바인딩
+══════════════════════════════════════════ */
+
+import { DEMO } from './constants.js';
+import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
+         pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
+         loadFromServer, saveToServer, logActivity,
+         lockItem, unlockItem, updateLocks, editLocks } from './state.js';
+import { isAdmin, requireAdmin, submitAdminAuth, closeAdminModal,
+         adminLogout, updateAdminUI, getAdminToken } from './admin.js';
+import { applyVars, applyBlurSetting, toggleTheme, applyTheme,
+         renderThemeGrid, renderPrioStyleRows, renderPreviewCards,
+         updateDesignContent, setPreset, setCustomColor,
+         onCP, onHex, onHexKey, adjBW } from './theme.js';
+import { renderAll, renderStats, renderMatrix, renderList,
+         renderOwnerChips, renderPrioChips, renderStatusChips,
+         switchView, sortL, expandCell, collapseCell,
+         bulkToggle, bulkToggleAll, bulkClear, renderBulkBar } from './render.js';
+import { openModal, closeModal, openEditModal, openAddModal, openAddInCell,
+         saveItem, hardDelete, duplicateItem, quickToggleDel,
+         openEditOrMd, openMdModal, copyPath,
+         switchEditTab, switchMdView, onMdInput, expSingleMd, impSingleMd,
+         startTT, clearTT, onDS, onDEnd, onDE, onDO, onDL, onDrop,
+         openCtxMenu, openStatusMenu, setItemStatus,
+         mdInsert, mdInsertLine } from './modal.js';
+import { expClip, expTSV, expXLS, expHTML, expMdZip, impMdFiles,
+         dzOver, dzLeave, dzDrop, csvFileSel, analyzeCSV, backToStep1, doImport } from './io.js';
+import { sstab, syncSettingsUI, previewTitle, setMW, setPPos,
+         adjFont, adjCardFont, adjRadius, adjGap, adjColW, adjCatW, adjSubCatW, adjCellFold,
+         onAnimTgl, syncAnimUI, renderColEditor, toggleColVisible,
+         colDragStart, colDragOver, colDragLeave, colDrop, colDragEnd, resetListCols,
+         renderAxisEditor, axisDragStart, axisDragOver, axisDragLeave, axisDrop, axisDragEnd, resetAxisOrder,
+         expSettJSON, impSettJSON, resetData, resetSettings } from './settings.js';
+
+/* ── window 바인딩 ── */
+Object.assign(window, {
+  doUndo,
+  toggleTheme, applyTheme, setPreset, setCustomColor, onCP, onHex, onHexKey, adjBW,
+  renderPrioStyleRows, renderPreviewCards, updateDesignContent, renderThemeGrid,
+  renderAll, switchView, sortL, expandCell, collapseCell,
+  bulkToggle, bulkToggleAll, bulkClear, renderBulkBar,
+  openModal, closeModal, openEditModal, openAddModal, openAddInCell,
+  saveItem, hardDelete, duplicateItem, quickToggleDel,
+  openEditOrMd, openMdModal, copyPath,
+  switchEditTab, switchMdView, onMdInput, expSingleMd, impSingleMd,
+  startTT, clearTT,
+  onDS, onDEnd, onDE, onDO, onDL, onDrop,
+  openCtxMenu, openStatusMenu, setItemStatus,
+  mdInsert, mdInsertLine,
+  expClip, expTSV, expXLS, expHTML, expMdZip, impMdFiles,
+  dzOver, dzLeave, dzDrop, csvFileSel, analyzeCSV, backToStep1, doImport,
+  sstab, syncSettingsUI, previewTitle, setMW, setPPos,
+  adjFont, adjCardFont, adjRadius, adjGap, adjColW, adjCatW, adjSubCatW, adjCellFold,
+  onAnimTgl, syncAnimUI, renderColEditor, toggleColVisible,
+  colDragStart, colDragOver, colDragLeave, colDrop, colDragEnd, resetListCols,
+  renderAxisEditor, axisDragStart, axisDragOver, axisDragLeave, axisDrop, axisDragEnd, resetAxisOrder,
+  expSettJSON, impSettJSON, resetData, resetSettings,
+  isAdmin, requireAdmin, submitAdminAuth, closeAdminModal, adminLogout, updateAdminUI,
+});
+
+/* ── notify 인라인 ── */
+window.__sobukRenderAll = () => renderAll();
+window.__sobukNotify = (msg, isErr=false) => {
+  const el = document.getElementById('notif');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.background = isErr ? 'var(--danger)' : 'var(--text)';
+  el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), 2400);
+};
+
+/* ── 검색 ── */
+window.onSearch = q => {
+  S.searchQ = q.trim();
+  document.getElementById('searchClear').className = 'search-clear' + (S.searchQ ? ' on' : '');
+  S.expandedCells = new Set();
+  renderAll(true);
+};
+window.clearSearch = () => { document.getElementById('searchInp').value = ''; window.onSearch(''); };
+
+/* ── 필터 이벤트 ── */
+window.onPrioChip = inp => {
+  const val = inp.value, idx = S.filters.priorities.indexOf(val);
+  if (inp.checked && idx === -1) S.filters.priorities.push(val);
+  else if (!inp.checked && idx !== -1) S.filters.priorities.splice(idx, 1);
+  save(); renderAll(true);
+};
+
+window.onStatusChipCb = inp => {
+  if (!S.filters.statuses) S.filters.statuses = [];
+  const val = inp.value, idx = S.filters.statuses.indexOf(val);
+  if (inp.checked && idx === -1) S.filters.statuses.push(val);
+  else if (!inp.checked && idx !== -1) S.filters.statuses.splice(idx, 1);
+  save(); renderAll(true);
+};
+
+window.onOwnerChip = inp => {
+  const val = inp.value, idx = S.filters.owners.indexOf(val);
+  if (inp.checked && idx === -1) S.filters.owners.push(val);
+  else if (!inp.checked && idx !== -1) S.filters.owners.splice(idx, 1);
+  save(); renderAll(true);
+};
+
+window.applyFilters = () => {
+  S.filters.showDeleted   = document.getElementById('togDel').checked;
+  S.filters.importantOnly = document.getElementById('togImp').checked;
+  save(); renderAll(true);
+};
+
+window.resetFilters = () => {
+  S.filters = {priorities:[], statuses:[], showDeleted:false, importantOnly:false, owners:[]};
+  document.getElementById('togDel').checked = false;
+  document.getElementById('togImp').checked = false;
+  save(); renderAll(true);
+};
+
+window.onDispTgl = () => {
+  S.display.showOwner     = document.getElementById('togOwner').checked;
+  S.display.showStar      = document.getElementById('togStar').checked;
+  S.display.showNewBadge  = document.getElementById('togNew').checked;
+  S.display.showCellCount = document.getElementById('togCnt').checked;
+  S.display.showUpdated   = document.getElementById('togUpd').checked;
+  S.display.showStatus    = document.getElementById('togStatus').checked;
+  S.display.showMdBadge   = document.getElementById('togMd').checked;
+  save(); renderAll();
+};
+
+window.bulkSetPrio = val => {
+  if (!bulkSel.keys.size) return;
+  requireAdmin(() => {
+    pushUndo();
+    const keys = [...bulkSel.keys];
+    keys.forEach(k => { const it = S.items.find(i => i.key === k); if (it) it.priority = val; });
+    logActivity('일괄변경', `우선순위→${val} (${keys.join(', ')})`);
+    save(); renderList(); renderBulkBar();
+  });
+};
+
+window.bulkSetOwner = () => {
+  const inp = document.getElementById('bulkOwnerInp');
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) return;
+  requireAdmin(() => {
+    const keys = [...bulkSel.keys];
+    keys.forEach(k => { const it = S.items.find(i => i.key === k); if (it) it.owner = val; });
+    logActivity('일괄변경', `담당→${val} (${keys.join(', ')})`);
+    save(); renderList(); renderBulkBar();
+  });
+};
+
+window.openDiffModal = () => {
+  const stack = getUndoHistory();
+  const el = document.getElementById('diffModal');
+  if (!el) return;
+  const body = document.getElementById('diffBody');
+  if (!stack.length) {
+    body.innerHTML = '<div style="color:var(--text-3);font-size:.85rem;text-align:center;padding:20px">변경 이력이 없습니다.</div>';
+    el.classList.add('on'); return;
+  }
+  const prev = JSON.parse(stack[stack.length - 1]);
+  const cur  = S.items;
+  const curMap  = {}; cur.forEach(i  => curMap[i.key]  = i);
+  const prevMap = {}; prev.forEach(i => prevMap[i.key] = i);
+  const rows = [];
+  cur.forEach(it => {
+    const old = prevMap[it.key];
+    if (!old) { rows.push(`<tr><td class="dk">${esc(it.key)}</td><td colspan="3" style="color:var(--success);font-size:.78rem">신규 추가</td></tr>`); return; }
+    const diffs = [];
+    ['name','priority','status','owner','group','category'].forEach(f => {
+      if ((old[f]||'') !== (it[f]||'')) diffs.push(`<span style="color:var(--text-3)">${f}:</span> <s style="color:var(--danger)">${esc(old[f]||'—')}</s> → <b style="color:var(--success)">${esc(it[f]||'—')}</b>`);
+    });
+    if (diffs.length) rows.push(`<tr><td class="dk" style="vertical-align:top">${esc(it.key)}</td><td style="font-size:.78rem;line-height:1.8">${diffs.join('<br>')}</td></tr>`);
+  });
+  prev.forEach(it => { if (!curMap[it.key]) rows.push(`<tr><td class="dk">${esc(it.key)}</td><td colspan="3" style="color:var(--danger);font-size:.78rem">삭제됨 (${esc(it.name)})</td></tr>`); });
+  body.innerHTML = rows.length
+    ? `<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:5px 8px;font-size:.72rem;color:var(--text-3);border-bottom:1px solid var(--border)">Key</th><th style="text-align:left;padding:5px 8px;font-size:.72rem;color:var(--text-3);border-bottom:1px solid var(--border)">변경 내용</th></tr></thead><tbody>${rows.join('')}</tbody></table>`
+    : '<div style="color:var(--text-3);font-size:.85rem;text-align:center;padding:20px">마지막 저장 이후 변경 없음</div>';
+  el.classList.add('on');
+};
+
+window.quickCellAdd = (g, sg, cat, sc, input) => {
+  const name = input.value.trim();
+  if (!name) { input.value = ''; return; }
+  pushUndo();
+  const newIt = {
+    key: genKey(), name, desc: '', path: '',
+    group: g, subGroup: sg, category: cat, subCategory: sc,
+    priority: '중', owner: '', isDelete: 'N', isImportant: 'N',
+    status: '', relSystem: '', memo: '', mdContent: '', mdPath: '', updatedAt: Date.now()
+  };
+  S.items.push(newIt);
+  save(); input.value = ''; renderMatrix();
+};
+
+window.togglePanel = () => {
+  S.settings.panelVisible = !S.settings.panelVisible;
+  document.getElementById('fpanel').classList.toggle('collapsed', !S.settings.panelVisible);
+  save();
+};
+
+/* ── 키보드 단축키 ── */
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName || '';
+  const isInput = ['INPUT','TEXTAREA','SELECT'].includes(tag);
+
+  if (e.key === 'Escape') {
+    if (document.getElementById('editModal')?.classList.contains('on')) {
+      unlockItem(S.editKey);
+    }
+    ['editModal','importModal','settingsModal','shortcutsModal','userNameModal','adminAuthModal','diffModal'].forEach(closeModal);
+    clearTT(); window.closeCtxMenu?.(); return;
+  }
+  if (e.key === '/' && !isInput) { e.preventDefault(); document.getElementById('searchInp').focus(); return; }
+  if (isInput) return;
+
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key==='i'||e.key==='I') { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); sstab(document.querySelector('.stab[onclick*="sdat"]'), 'sdat'); return; }
+    if (e.key==='e'||e.key==='E') { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); sstab(document.querySelector('.stab[onclick*="sdat"]'), 'sdat'); return; }
+    if (e.key===',')              { e.preventDefault(); openModal('settingsModal'); syncSettingsUI(); return; }
+    if (e.key==='s'||e.key==='S') { e.preventDefault(); expSettJSON(); return; }
+    return;
+  }
+  if (e.key==='n'||e.key==='N') openAddModal();
+  if (e.key==='f'||e.key==='F') window.togglePanel();
+  if (e.key==='m'||e.key==='M') switchView('matrix');
+  if (e.key==='l'||e.key==='L') switchView('list');
+  if (e.key==='z'||e.key==='Z') doUndo();
+  if (e.key==='?')              openModal('shortcutsModal');
+});
+
+document.querySelectorAll('.ov').forEach(ov => {
+  ov.addEventListener('click', e => {
+    if (e.target !== ov) return;
+    if (ov.id === 'editModal') {
+      // 편집 모달 외부 클릭 → 자동 저장
+      const name = document.getElementById('fName')?.value.trim();
+      if (name) {
+        saveItem(); // 기능명 있으면 저장 후 닫힘
+      } else {
+        unlockItem(S.editKey);
+        ov.classList.remove('on');
+      }
+    } else {
+      ov.classList.remove('on');
+    }
+  });
+});
+
+/* ── 폴링: 다른 사용자 변경 감지 ── */
+let _pollTimer = null;
+function startPolling() {
+  if (_pollTimer) clearInterval(_pollTimer);
+  const interval = (S.settings.pollInterval || 10) * 1000;
+  if (S.settings.storageMode !== 'server') return;
+  _pollTimer = setInterval(async () => {
+    const result = await pollServerTs();
+    if (result !== null) {
+      // locks 업데이트
+      if (result.locks) { updateLocks(result.locks); renderAll(); }
+      if (result.serverTs > lastServerTs) {
+        const banner = document.getElementById('updateBanner');
+        if (banner) {
+          const editor = result.lastEditor || '누군가';
+          const ago    = result.lastEditTime ? fmtAgo(result.lastEditTime) : '';
+          const msgEl  = document.getElementById('updateBannerMsg');
+          if (msgEl) msgEl.textContent = `⚠ ${editor}${ago ? ('이' === editor.slice(-1) ? '가' : '이') + ' ' + ago + '에' : '가'} 데이터를 변경했습니다.`;
+          banner.classList.add('on');
+        }
+      }
+    }
+  }, interval);
+}
+
+function fmtAgo(ts) {
+  if (!ts) return '';
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60)     return '방금';
+  if (diff < 3600)   return Math.floor(diff / 60) + '분 전';
+  if (diff < 86400)  return Math.floor(diff / 3600) + '시간 전';
+  return Math.floor(diff / 86400) + '일 전';
+}
+
+window.reloadFromServer = async () => {
+  await loadFromServer();
+  document.getElementById('updateBanner')?.classList.remove('on');
+  S.items.forEach(it => {
+    if (it.mdContent === undefined) it.mdContent = '';
+    if (it.status    === undefined) it.status    = '';
+    if (it.updatedAt === undefined) it.updatedAt = 0;
+  });
+  applyVars(); applyBlurSetting(); syncSettingsUI(); renderAll();
+};
+
+/* ── 서버 설정 저장 ── */
+window.saveServerSettings = async () => {
+  const mode = document.querySelector('input[name="storageMode"]:checked')?.value || 'local';
+  S.settings.storageMode  = mode;
+  S.settings.serverUrl    = document.getElementById('sServerUrl')?.value.trim() || '';
+  S.settings.apiKey       = document.getElementById('sApiKey')?.value.trim() || '';
+  S.settings.pollInterval = parseInt(document.getElementById('sPollInterval')?.value || '10', 10) || 10;
+  S.settings.userName     = document.getElementById('sUserName')?.value.trim() || '';
+
+  if (mode === 'server') {
+    notify('서버에 연결 중...');
+    // 서버에서 먼저 로드 — 빈 items로 덮어쓰기 방지
+    const ok = await loadFromServer();
+    if (ok) {
+      S.items.forEach(it => {
+        if (it.mdContent === undefined) it.mdContent = '';
+        if (it.status    === undefined) it.status    = '';
+        if (it.updatedAt === undefined) it.updatedAt = 0;
+      });
+      applyVars(); applyBlurSetting(); syncSettingsUI(); renderAll();
+      notify('서버에 연결됐습니다. 데이터를 불러왔습니다.');
+    } else {
+      // 연결 실패 시 개인 설정만 로컬 저장 (items 서버 전송 안 함)
+      notify('서버 연결 실패. API 키와 URL을 확인하세요.', true);
+    }
+  } else {
+    save(); // 로컬 모드 전환
+    notify('로컬 모드로 설정됐습니다.');
+  }
+
+  startPolling();
+  syncServerSettingsUI();
+};
+
+/* ── 사용자 이름 팝업 ── */
+function showUserNamePopup() {
+  if (S.settings.storageMode !== 'server') return;
+  if (S.settings.userName) return; // 이미 이름 있으면 생략
+  const modal = document.getElementById('userNameModal');
+  if (modal) {
+    document.getElementById('userNamePopupInp').value = '';
+    modal.classList.add('on');
+    setTimeout(() => document.getElementById('userNamePopupInp').focus(), 120);
+  }
+}
+
+window.saveUserNamePopup = (skip = false) => {
+  if (!skip) {
+    const name = document.getElementById('userNamePopupInp').value.trim();
+    if (name) {
+      S.settings.userName = name;
+      save();
+      syncServerSettingsUI();
+    }
+  }
+  document.getElementById('userNameModal').classList.remove('on');
+};
+
+window.openActivityLog = async () => {
+  requireAdmin(async () => {
+    openModal('activityLogModal');
+    const body = document.getElementById('activityLogBody');
+    if (!body) return;
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3)">불러오는 중...</div>';
+    try {
+      const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
+      const headers = { 'X-API-Key': S.settings.apiKey || '', 'X-Admin-Token': sessionStorage.getItem('fmAdminToken') || '' };
+      const res  = await fetch(apiUrl + '/api/log', { headers });
+      const json = await res.json();
+      if (!json.ok) { body.innerHTML = `<div style="padding:20px;color:var(--danger)">${json.error}</div>`; return; }
+      if (!json.entries?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
+      const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
+      body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
+        '<thead><tr>' +
+        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">시각</th>' +
+        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">사용자</th>' +
+        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">액션</th>' +
+        '<th style="padding:7px 12px;font-size:.7rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">내용</th>' +
+        '</tr></thead><tbody>' +
+        json.entries.map(e => {
+          const d = new Date(e.ts);
+          const timeStr = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+          const col = actionColor[e.action] || 'var(--text)';
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 12px;font-size:.72rem;color:var(--text-3);white-space:nowrap">${timeStr}</td>
+            <td style="padding:6px 12px;font-size:.78rem;font-weight:600">${e.user||'익명'}</td>
+            <td style="padding:6px 12px;font-size:.75rem;font-weight:700;color:${col};white-space:nowrap">${e.action}</td>
+            <td style="padding:6px 12px;font-size:.75rem;color:var(--text-2)">${e.detail||''}</td>
+          </tr>`;
+        }).join('') + '</tbody></table>';
+    } catch(err) {
+      body.innerHTML = '<div style="padding:20px;color:var(--danger)">서버에 연결할 수 없습니다.</div>';
+    }
+  });
+};
+function syncServerSettingsUI() {
+  const mode = S.settings.storageMode || 'server';
+  ['modeServer','modeLocal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = (id === 'modeServer') ? mode === 'server' : mode === 'local';
+  });
+  const urlEl  = document.getElementById('sServerUrl');
+  if (urlEl)  urlEl.value  = S.settings.serverUrl  || '';
+  const keyEl  = document.getElementById('sApiKey');
+  if (keyEl)  keyEl.value  = S.settings.apiKey      || '';
+  const pollEl = document.getElementById('sPollInterval');
+  if (pollEl) pollEl.value = S.settings.pollInterval || 10;
+  const nameEl = document.getElementById('sUserName');
+  if (nameEl) nameEl.value = S.settings.userName    || '';
+  const badge  = document.getElementById('storageModeBadge');
+  if (badge) {
+    badge.textContent = mode === 'server' ? '🌐 서버' : '💾 로컬';
+    badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
+  }
+  // 활동 로그 버튼: 서버 모드 + 관리자일 때만 표시
+  const logBtn = document.getElementById('showLogBtn');
+  if (logBtn) logBtn.style.display = (mode === 'server' && isAdmin()) ? 'inline-flex' : 'none';
+}
+
+/* ── 초기화 ── */
+async function init() {
+  await load();
+
+  if (!S.items.length && S.settings.storageMode !== 'server') {
+    S.items = JSON.parse(JSON.stringify(DEMO));
+  }
+
+  S.items.forEach(it => {
+    if (it.mdContent  === undefined) it.mdContent  = '';
+    if (it.status     === undefined) it.status     = '';
+    if (it.updatedAt  === undefined) it.updatedAt  = 0;
+  });
+  applyVars();
+  applyBlurSetting();
+  syncSettingsUI();
+  syncServerSettingsUI();
+  updateAdminUI();
+  renderAll();
+  updateUndoFab();
+  startPolling();
+  logActivity('접속', `${S.items.length}개 항목`);
+
+  // 서버 모드에서 이름 없으면 팝업
+  if (S.settings.storageMode === 'server' && !S.settings.userName) {
+    setTimeout(() => openModal('userNameModal'), 600);
+  }
+}
+init();
+
+/* ── 사용자 이름 팝업 저장 ── */
+window.saveUserNamePopup = (skip = false) => {
+  if (!skip) {
+    const name = document.getElementById('userNamePopupInp')?.value.trim();
+    if (name) {
+      S.settings.userName = name;
+      save();
+      syncServerSettingsUI();
+    }
+  }
+  closeModal('userNameModal');
+};

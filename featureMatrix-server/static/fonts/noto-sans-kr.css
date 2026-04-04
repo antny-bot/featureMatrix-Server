@@ -1,0 +1,95 @@
+/*
+ * Noto Sans KR — 로컬 폰트 정의
+ *
+ * 사용 방법:
+ *   1) 이 파일과 같은 폴더에 아래 woff2 파일들을 넣으세요:
+ *      NotoSansKR-Light.woff2    (weight 300)
+ *      NotoSansKR-Regular.woff2  (weight 400)
+ *      NotoSansKR-Medium.woff2   (weight 500)
+ *      NotoSansKR-SemiBold.woff2 (weight 600)
+ *      NotoSansKR-Bold.woff2     (weight 700)
+ *      NotoSerifKR-Regular.woff2 (weight 400, serif)
+ *      NotoSerifKR-SemiBold.woff2(weight 600, serif)
+ *
+ *   2) 폰트 파일이 없으면 아래 시스템 폰트로 자동 fallback됩니다:
+ *      Apple SD Gothic Neo (macOS/iOS)
+ *      Malgun Gothic (Windows)
+ *      나눔고딕 (일부 Linux)
+ *
+ *   3) 공식 다운로드:
+ *      https://fonts.google.com/noto/specimen/Noto+Sans+KR
+ *      → "Download family" 버튼 클릭 후 woff2 변환 도구 사용
+ *      (예: https://cloudconvert.com/ttf-to-woff2)
+ */
+
+/* ── Noto Sans KR ── */
+@font-face {
+  font-family: 'Noto Sans KR';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: local('Noto Sans KR Light'),
+       local('NotoSansKR-Light'),
+       url('NotoSansKR-Light.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans KR';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Noto Sans KR Regular'),
+       local('NotoSansKR-Regular'),
+       url('NotoSansKR-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans KR';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Noto Sans KR Medium'),
+       local('NotoSansKR-Medium'),
+       url('NotoSansKR-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans KR';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Noto Sans KR SemiBold'),
+       local('NotoSansKR-SemiBold'),
+       url('NotoSansKR-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans KR';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Noto Sans KR Bold'),
+       local('NotoSansKR-Bold'),
+       url('NotoSansKR-Bold.woff2') format('woff2');
+}
+
+/* ── Noto Serif KR ── */
+@font-face {
+  font-family: 'Noto Serif KR';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Noto Serif KR Regular'),
+       local('NotoSerifKR-Regular'),
+       url('NotoSerifKR-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Serif KR';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Noto Serif KR SemiBold'),
+       local('NotoSerifKR-SemiBold'),
+       url('NotoSerifKR-SemiBold.woff2') format('woff2');
+}
