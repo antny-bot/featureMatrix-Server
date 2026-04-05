@@ -150,6 +150,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .nav-item:hover{background:var(--overlay);color:var(--text-2)}
 .nav-item.on{color:var(--accent);background:var(--accent-l)}
 .nav-item svg{flex-shrink:0;transition:color .15s}
+.nav-spacer{flex:1}
+.nav-login{color:var(--text-3);border-top:1px solid var(--border);margin-top:4px}
+.nav-login--on{color:var(--accent)}
 /* 오른쪽 필터 패널 */
 .fpanel{width:200px;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
 .fpanel.collapsed{width:36px}
@@ -457,6 +460,15 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-owner-bar-wrap{flex:1}
 .db-owner-seg{height:100%;display:inline-block;vertical-align:top}
 .db-bar-track .db-owner-seg+.db-owner-seg{border-left:1px solid var(--surface-2)}
+/* 통합 단일 행 레이아웃 */
+.db-owners-unified{display:flex;flex-direction:column;gap:0}
+.db-owners-hdr{display:flex;align-items:center;padding:0 0 6px;border-bottom:1px solid var(--border)}
+.db-owners-hdr .db-owner-info{width:160px;flex-shrink:0}
+.db-owners-bar-hdr{flex:1;font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);text-align:center}
+.db-owner-row-unified{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.db-owner-row-unified:last-child{border-bottom:none}
+.db-owner-row-unified .db-owner-info{width:160px;flex-shrink:0}
+.db-owner-row-unified .db-owner-bar-wrap{flex:1}
 
 /* ── 인쇄 ── */
 @media print{

@@ -9,7 +9,7 @@
 import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, logActivity, lockItem, unlockItem } from './state.js';
 import { renderAll, scheduleCardAnim } from './render.js';
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS } from './constants.js';
-import { requireAdmin } from './admin.js';
+import { requireAdmin, requireEditor, isEditor } from './admin.js';
 
 export function openModal(id) {
   const el = document.getElementById(id);
@@ -239,6 +239,7 @@ export function openEditModal(key) {
 }
 
 export function openAddModal() {
+  if (!isEditor()) { requireEditor(openAddModal); return; }
   S.editKey = null;
   ['fName','fDesc','fPath','fGroup','fSubGroup','fCat','fSubCat','fOwner','fRel','fMemo','fMdContent']
     .forEach(id => { document.getElementById(id).value = ''; });
@@ -276,6 +277,7 @@ export function openMdModal(key) {
 
 /* ── 저장 ── */
 export function saveItem() {
+  if (!isEditor()) { requireEditor(saveItem); return; }
   const name = document.getElementById('fName').value.trim();
   if (!name) { notify('기능명을 입력해주세요.', true); return; }
   const ni = {
