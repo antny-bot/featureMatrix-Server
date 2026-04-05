@@ -16,7 +16,7 @@ export function applyVars() {
   const c  = getColors();
   const ss = S.settings;
   let css = `html{font-size:${ss.baseFont}px !important}\n`;
-  css += `:root{--p-high:${c.pHigh};--p-high-bg:${c.pHighBg};--p-mid:${c.pMid};--p-mid-bg:${c.pMidBg};--p-low:${c.pLow};--p-low-bg:${c.pLowBg}}\n`;
+  css += `:root{--p-high:${c.pHigh};--p-high-bg:${c.pHighBg};--p-mid:${c.pMid};--p-mid-bg:${c.pMidBg};--p-low:${c.pLow};--p-low-bg:${c.pLowBg};--db-theme-c:${c.mxGC};--db-theme-bg:${c.mxGBg}}\n`;
   css += `.mtable,.mtable th,.mtable td{border:${c.mxBW}px solid ${c.mxBorder}}\n`;
   /* X축 헤더: background를 dynStyle로 주입 → sticky 배경도 정확히 반영 */
   css += `.m-ghd{background:${c.mxGBg};color:${c.mxGC}}\n`;

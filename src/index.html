@@ -457,6 +457,18 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           </div>
           <div id="editorPwErr" style="color:var(--danger);font-size:.78rem;min-height:14px"></div>
         </div>
+        <div class="sec-ttl" style="margin-top:12px">대시보드</div>
+        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
+          <div class="slbl">히어로 제목</div>
+          <div class="ssub">대시보드 상단에 표시할 프로젝트명</div>
+          <input class="inp" id="dbHeroName" placeholder="프로젝트 현황" style="height:28px;font-size:.82rem"
+            oninput="saveDbSettings()">
+        </div>
+        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:8px;margin-top:4px">
+          <div class="slbl">섹션 표시 순서</div>
+          <div class="ssub">드래그하거나 ▲▼ 버튼으로 순서를 변경하세요</div>
+          <div id="dbSectionOrder" style="display:flex;flex-direction:column;gap:6px;width:100%"></div>
+        </div>
         <div class="sec-ttl" style="margin-top:12px">헤더</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
           <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
@@ -548,7 +560,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <div style="display:flex;flex-direction:column;gap:10px">
         <div>
           <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">역할</label>
-          <select class="inp" id="loginRoleSelect" style="height:32px;font-size:.82rem">
+          <select class="inp" id="loginRoleSelect" style="height:38px;font-size:.82rem;padding-top:0;padding-bottom:0">
             <option value="editor">편집자</option>
             <option value="admin">관리자</option>
           </select>

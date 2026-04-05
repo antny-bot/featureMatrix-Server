@@ -23,6 +23,8 @@ export const S = {
     animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:false },
     groupOrder: [],
     catOrder: [],
+    dbHeroName: '',
+    dbSections: ['stats', 'insight', 'heatmap'],
     storageMode: 'server',
     serverUrl:   '',
     pollInterval: 10,
@@ -68,6 +70,7 @@ function apiHeaders() {
 const SHARED_SETTINGS = [
   'title','subtitle',
   'groupOrder','catOrder',
+  'dbHeroName','dbSections',
   'priorityStyles','customColors',
   'matrixWidth','cellFold',
   'colW','catW','subCatW',
@@ -115,6 +118,7 @@ function applyServerPayload(d) {
       if (k === 'customColors')   { S.settings.customColors   = ss[k]; return; }
       if (k === 'groupOrder')     { S.settings.groupOrder     = ss[k]; return; }
       if (k === 'catOrder')       { S.settings.catOrder       = ss[k]; return; }
+      if (k === 'dbSections')     { S.settings.dbSections     = ss[k]; return; }
       S.settings[k] = ss[k];
     });
   }

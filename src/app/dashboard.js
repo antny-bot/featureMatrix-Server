@@ -1,5 +1,7 @@
 /* ══════════════════════════════════════════
-   dashboard.js — 대시보드 뷰 렌더링
+   dashboard.js — 대시보드 뷰 렌더링 (B 레이아웃)
+   상단: 히어로 + 섹션 순서 기반 렌더
+   섹션: stats / insight(그룹진척+담당자+타임라인) / heatmap
 ══════════════════════════════════════════ */
 
 import { S, esc, normOwner, getOwnerColor, getPK } from './state.js';
@@ -25,11 +27,11 @@ function statusColor(status) {
   return map[status] || 'var(--text-3)';
 }
 
-/* ── 히트맵 뷰 상태 (그룹×카테고리 | 그룹×상태) ── */
-let _hmView = 'cat';  // 'cat' | 'status'
+/* ── 히트맵 뷰 상태 ── */
+let _hmView = 'cat';
 export function setHmView(v) { _hmView = v; renderDashboard(); }
 
-/* ── 히트맵 HTML 생성 ── */
+/* ── 히트맵 HTML ── */
 function buildHeatmap(all, groups, cats) {
   const STATUSES = ['기획', '개발중', '완료', '보류'];
 
@@ -45,15 +47,15 @@ function buildHeatmap(all, groups, cats) {
       if (hmData[k] > hmMax) hmMax = hmData[k];
     });
     return `<div class="db-hm-wrap">
-      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
+      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${cats.length},1fr)">
         <div class="db-hm-corner"></div>
-        ${groups.map(g => `<div class="db-hm-col-hd" title="${esc(g)}">${esc(g)}</div>`).join('')}
-        ${cats.map(cat => `
-          <div class="db-hm-row-hd" title="${esc(cat)}">${esc(cat)}</div>
-          ${groups.map(g => {
-            const cnt = hmData[`${g}||${cat}`] || 0;
+        ${cats.map(c => `<div class="db-hm-col-hd" title="${esc(c)}">${esc(c)}</div>`).join('')}
+        ${groups.map(g => `
+          <div class="db-hm-row-hd" title="${esc(g)}">${esc(g)}</div>
+          ${cats.map(c => {
+            const cnt = hmData[`${g}||${c}`] || 0;
             const op  = hmMax > 0 ? (cnt === 0 ? 0.06 : 0.15 + cnt/hmMax * 0.85) : 0.06;
-            return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc(g)} × ${esc(cat)}: ${cnt}개">${cnt > 0 ? cnt : ''}</div>`;
+            return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc(g)} × ${esc(c)}: ${cnt}개">${cnt > 0 ? cnt : ''}</div>`;
           }).join('')}
         `).join('')}
       </div>
@@ -66,7 +68,6 @@ function buildHeatmap(all, groups, cats) {
       </div>
     </div>`;
   } else {
-    /* 그룹 × 상태 뷰 */
     if (groups.length === 0)
       return `<div class="db-empty">데이터가 없습니다</div>`;
     const hmData = {};
@@ -101,12 +102,54 @@ function buildHeatmap(all, groups, cats) {
   }
 }
 
+/* ── 그룹별 진척도 섹션 ── */
+function buildGroupProgress(all, groups) {
+  if (groups.length === 0) return `<div class="db-empty">그룹 데이터가 없습니다</div>`;
+
+  const STATUSES = ['기획', '개발중', '완료', '보류'];
+  const SC = { '기획': 'var(--text-3)', '개발중': 'var(--accent)', '완료': 'var(--success)', '보류': 'var(--warning)' };
+
+  return groups.map(g => {
+    const items = all.filter(it => it.group === g);
+    const total = items.length;
+    if (total === 0) return '';
+    const sc = { '기획': 0, '개발중': 0, '완료': 0, '보류': 0 };
+    items.forEach(it => { if (sc[it.status] !== undefined) sc[it.status]++; });
+    const doneCount = sc['완료'];
+    const donePct   = Math.round(doneCount / total * 100);
+
+    const segments = STATUSES.filter(s => sc[s] > 0).map(s =>
+      `<div class="db-gp-seg" style="width:${(sc[s]/total*100).toFixed(1)}%;background:${SC[s]}"
+        title="${s} ${sc[s]}개 (${Math.round(sc[s]/total*100)}%)"></div>`
+    ).join('');
+
+    const legend = STATUSES.filter(s => sc[s] > 0).map(s =>
+      `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC[s]}"></span>${s} ${sc[s]}</span>`
+    ).join('');
+
+    return `
+    <div class="db-gp-row">
+      <div class="db-gp-info">
+        <span class="db-gp-name" title="${esc(g)}">${esc(g)}</span>
+        <span class="db-gp-total">${total}개</span>
+      </div>
+      <div class="db-gp-bar-area">
+        <div class="db-gp-bar-wrap">
+          <div class="db-gp-track">${segments}</div>
+          <span class="db-gp-pct" style="color:${donePct >= 100 ? 'var(--success)' : 'var(--text-2)'}">${donePct}%</span>
+        </div>
+        <div class="db-gp-legend">${legend}</div>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+}
+
 /* ── renderDashboard ── */
 export function renderDashboard() {
   const el = document.getElementById('dashboardView');
   if (!el) return;
 
-  const all = S.items.filter(it => it.isDelete !== 'Y');
+  const all   = S.items.filter(it => it.isDelete !== 'Y');
   const total = all.length;
 
   /* 통계 계산 */
@@ -130,8 +173,7 @@ export function renderDashboard() {
 
   const pct = total > 0 ? Math.round(done / total * 100) : 0;
 
-  /* 히트맵 데이터 */
-  /* groupOrder/catOrder 기준이되, 실제 데이터에 있는 항목은 항상 포함 */
+  /* 그룹·카테고리 목록 */
   const allGroups = [...new Set(all.map(it => it.group).filter(Boolean))];
   const allCats   = [...new Set(all.map(it => it.category).filter(Boolean))];
   const orderG    = S.settings.groupOrder.filter(g => allGroups.includes(g));
@@ -141,48 +183,32 @@ export function renderDashboard() {
   const extraC    = allCats.filter(c => !orderC.includes(c));
   const cats      = [...orderC, ...extraC];
 
-  const hmData = {};
-  let hmMax = 0;
-  all.forEach(it => {
-    if (!it.group || !it.category) return;
-    const k = `${it.group}||${it.category}`;
-    hmData[k] = (hmData[k] || 0) + 1;
-    if (hmData[k] > hmMax) hmMax = hmData[k];
-  });
-
-  /* 최근 변경 (updatedAt 기준 top 8) */
+  /* 최근 변경 */
   const recent = [...all]
     .filter(it => it.updatedAt)
     .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, 8);
+    .slice(0, 10);
 
   /* 담당별 정렬 */
   const owners = Object.entries(ownerMap)
     .sort((a, b) => b[1].total - a[1].total)
-    .slice(0, 8);
+    .slice(0, 10);
 
-  /* ── HTML 구성 ── */
-  el.innerHTML = `
-<div class="db-wrap">
+  /* 섹션 순서 */
+  const sections = (S.settings.dbSections || ['stats', 'insight', 'heatmap'])
+    .filter(s => ['stats','insight','heatmap'].includes(s));
 
-  <!-- 헤더 -->
-  <div class="db-hero" data-anim-idx="0">
-    <div>
-      <div class="db-eyebrow">Mission Control</div>
-      <h2 class="db-title">프로젝트 현황</h2>
-    </div>
-  </div>
+  /* ── 히어로 섹션 ── */
+  const heroName = S.settings.dbHeroName || '프로젝트 현황';
 
-  <!-- 요약 통계 카드 -->
+  /* ── 스탯 카드 섹션 ── */
+  const statsSection = `
   <section class="db-cards" data-anim-idx="1">
-    <!-- 전체 기능 -->
-    <div class="db-card db-card--primary">
+    <div class="db-card db-card--theme">
       <div class="db-card-label">전체 기능</div>
       <div class="db-card-value">${total.toLocaleString()}</div>
       <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
     </div>
-
-    <!-- 우선순위 분포 -->
     <div class="db-card">
       <div class="db-card-label">우선순위 분포</div>
       <div class="db-prio-bars">
@@ -203,8 +229,6 @@ export function renderDashboard() {
         </div>
       </div>
     </div>
-
-    <!-- 완료율 -->
     <div class="db-card">
       <div class="db-card-label">완료율</div>
       <div class="db-pct-wrap">
@@ -215,8 +239,6 @@ export function renderDashboard() {
         <div class="db-bar-fill db-bar--done" style="width:${pct}%"></div>
       </div>
     </div>
-
-    <!-- 상태별 분포 -->
     <div class="db-card">
       <div class="db-card-label">진행 상태</div>
       <div class="db-status-grid">
@@ -225,31 +247,69 @@ export function renderDashboard() {
             <div class="db-status-dot" style="background:${statusColor(s)}"></div>
             <span class="db-status-name">${s}</span>
             <span class="db-status-cnt">${statusCount[s]}</span>
-          </div>
-        `).join('')}
+          </div>`).join('')}
       </div>
     </div>
-  </section>
+  </section>`;
 
-  <!-- 히트맵 + 타임라인 -->
-  <section class="db-mid" data-anim-idx="2">
+  /* ── 인사이트 섹션 (B 레이아웃: 좌측 그룹진척+담당자 / 우측 타임라인) ── */
+  const insightSection = `
+  <section class="db-insight" data-anim-idx="2">
+    <!-- 좌측: 그룹별 진척도 + 담당자 workload -->
+    <div class="db-insight-left">
 
-    <!-- 기능 분포 히트맵 -->
-    <div class="db-panel db-heatmap-panel">
-      <div class="db-panel-hd">
-        <div>
-          <div class="db-panel-title">기능 분포 히트맵</div>
-          <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+      <!-- 그룹별 진척도 -->
+      <div class="db-panel">
+        <div class="db-panel-hd">
+          <div class="db-panel-title">그룹별 진척도</div>
+          <div class="db-panel-sub">기획 · 개발중 · 완료 · 보류 비율</div>
         </div>
-        <div class="db-hm-tabs">
-          <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
-          <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
-        </div>
+        <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
       </div>
-      ${buildHeatmap(all, groups, cats)}
+
+      <!-- 담당자 workload -->
+      <div class="db-panel">
+        <div class="db-panel-hd">
+          <div class="db-panel-title">담당별 기능 현황</div>
+        </div>
+        ${owners.length === 0
+          ? `<div class="db-empty">담당자 정보가 없습니다</div>`
+          : `<div class="db-owners-unified">
+              <div class="db-owners-hdr">
+                <div class="db-owner-info"></div>
+                <div class="db-owners-bar-hdr">우선순위</div>
+                <div class="db-owners-bar-hdr">진행상태</div>
+              </div>
+              ${owners.map(([owner, cnt]) => `
+                <div class="db-owner-row-unified">
+                  <div class="db-owner-info">
+                    <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
+                    <span class="db-owner-name">${esc(owner)}</span>
+                    <span class="db-owner-total">${cnt.total}</span>
+                  </div>
+                  <div class="db-owner-bar-wrap">
+                    <div class="db-bar-track">
+                      <div class="db-owner-seg db-bar--high" style="width:${cnt.total > 0 ? (cnt.high/cnt.total*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
+                      <div class="db-owner-seg db-bar--mid"  style="width:${cnt.total > 0 ? (cnt.mid/cnt.total*100).toFixed(1) : 0}%"  title="중 ${cnt.mid}"></div>
+                      <div class="db-owner-seg db-bar--low"  style="width:${cnt.total > 0 ? (cnt.low/cnt.total*100).toFixed(1) : 0}%"  title="하 ${cnt.low}"></div>
+                    </div>
+                  </div>
+                  <div class="db-owner-bar-wrap">
+                    <div class="db-bar-track">
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['기획']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['개발중']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['완료']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['보류']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>`
+        }
+      </div>
     </div>
 
-    <!-- 최근 변경 타임라인 -->
+    <!-- 우측: 타임라인 -->
     <div class="db-panel db-timeline-panel">
       <div class="db-panel-hd">
         <div class="db-panel-title">최근 변경</div>
@@ -272,68 +332,41 @@ export function renderDashboard() {
                     ${it.status ? `<span class="db-tl-status">${esc(it.status)}</span>` : ''}
                   </div>
                 </div>
-              </div>
-            `).join('')}
+              </div>`).join('')}
           </div>
           <button class="db-more-btn" onclick="switchView('list')">전체 목록 보기 →</button>`
       }
     </div>
-  </section>
+  </section>`;
 
-  <!-- 담당별 분포 -->
-  <section class="db-panel db-owners-panel" data-anim-idx="3">
+  /* ── 히트맵 섹션 ── */
+  const heatmapSection = `
+  <section class="db-panel db-heatmap-panel" data-anim-idx="3">
     <div class="db-panel-hd">
-      <div class="db-panel-title">담당별 기능 현황</div>
+      <div>
+        <div class="db-panel-title">기능 분포 히트맵</div>
+        <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+      </div>
+      <div class="db-hm-tabs">
+        <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
+        <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
+      </div>
     </div>
-    ${owners.length === 0
-      ? `<div class="db-empty">담당자 정보가 없습니다</div>`
-      : `<div class="db-owners-grid">
-          <!-- 좌: 담당자 × 우선순위 -->
-          <div>
-            <div class="db-owners-col-title">우선순위</div>
-            <div class="db-owners-list">
-              ${owners.map(([owner, cnt]) => `
-                <div class="db-owner-row">
-                  <div class="db-owner-info">
-                    <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
-                    <span class="db-owner-name">${esc(owner)}</span>
-                    <span class="db-owner-total">${cnt.total}</span>
-                  </div>
-                  <div class="db-owner-bar-wrap">
-                    <div class="db-bar-track">
-                      <div class="db-owner-seg db-bar--high" style="width:${cnt.total > 0 ? (cnt.high/cnt.total*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
-                      <div class="db-owner-seg db-bar--mid"  style="width:${cnt.total > 0 ? (cnt.mid/cnt.total*100).toFixed(1) : 0}%"  title="중 ${cnt.mid}"></div>
-                      <div class="db-owner-seg db-bar--low"  style="width:${cnt.total > 0 ? (cnt.low/cnt.total*100).toFixed(1) : 0}%"  title="하 ${cnt.low}"></div>
-                    </div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          <!-- 우: 담당자 × 진행상태 (이름은 좌측과 중복이므로 생략) -->
-          <div>
-            <div class="db-owners-col-title">진행상태</div>
-            <div class="db-owners-list">
-              ${owners.map(([owner, cnt]) => `
-                <div class="db-owner-row">
-                  <div class="db-owner-bar-wrap" style="flex:1">
-                    <div class="db-bar-track">
-                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['기획']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
-                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['개발중']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
-                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['완료']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
-                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['보류']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
-                    </div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>`
-    }
-  </section>
+    ${buildHeatmap(all, groups, cats)}
+  </section>`;
 
-</div>
-`;
+  const sectionMap = { stats: statsSection, insight: insightSection, heatmap: heatmapSection };
+
+  el.innerHTML = `
+<div class="db-wrap">
+  <div class="db-hero" data-anim-idx="0">
+    <div>
+      <div class="db-eyebrow">Mission Control</div>
+      <h2 class="db-title">${esc(heroName)}</h2>
+    </div>
+  </div>
+  ${sections.map(s => sectionMap[s] || '').join('')}
+</div>`;
 
   /* 섹션별 순차 fade-in */
   if (animOk()) {

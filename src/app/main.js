@@ -440,6 +440,40 @@ function syncServerSettingsUI() {
   setServerStatus(mode === 'server' ? 'ok' : 'off');
 }
 
+/* ── 대시보드 설정 저장/UI 동기화 ── */
+const DB_SECTION_LABELS = { stats: '스탯 카드 4개', insight: '그룹 진척도 · 담당자 · 타임라인', heatmap: '히트맵' };
+
+window.saveDbSettings = () => {
+  S.settings.dbHeroName = document.getElementById('dbHeroName')?.value || '';
+  save();
+  if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
+};
+
+window.dbSectionMove = (idx, dir) => {
+  const secs = [...(S.settings.dbSections || ['stats', 'insight', 'heatmap'])];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= secs.length) return;
+  [secs[idx], secs[newIdx]] = [secs[newIdx], secs[idx]];
+  S.settings.dbSections = secs;
+  renderDbSectionOrder();
+  save();
+  if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
+};
+
+function renderDbSectionOrder() {
+  const el = document.getElementById('dbSectionOrder');
+  if (!el) return;
+  const secs = S.settings.dbSections || ['stats', 'insight', 'heatmap'];
+  el.innerHTML = secs.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface-2);border-radius:7px;border:1px solid var(--border)">
+      <span style="font-size:.75rem;color:var(--text-3);font-weight:700;width:16px">${i + 1}</span>
+      <span style="flex:1;font-size:.8rem;font-weight:600;color:var(--text)">${DB_SECTION_LABELS[s] || s}</span>
+      <button class="btn btn-g btn-sm" style="width:24px;height:24px;padding:0;font-size:.7rem" onclick="dbSectionMove(${i}, -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+      <button class="btn btn-g btn-sm" style="width:24px;height:24px;padding:0;font-size:.7rem" onclick="dbSectionMove(${i}, 1)" ${i === secs.length - 1 ? 'disabled' : ''}>▼</button>
+    </div>`).join('');
+}
+window.renderDbSectionOrder = renderDbSectionOrder;
+
 /* ── 초기화 ── */
 async function init() {
   await load();

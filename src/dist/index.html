@@ -165,7 +165,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .fpanel{width:200px;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
 .fpanel.collapsed{width:36px}
 .fpanel.collapsed .fpinner{display:none}
-.fpanel.fp-hide{width:0!important;border-width:0!important;overflow:hidden}
+.fpanel.fp-hide{width:0!important;min-width:0!important;border-width:0!important;overflow:hidden}
 .fpanel-toggle{width:36px;height:36px;flex-shrink:0;border:none;background:none;color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s;align-self:flex-start;padding:0}
 .fpanel-toggle:hover{color:var(--text)}
 .fpinner{padding:12px 11px;min-width:182px;overflow-y:auto;flex:1}
@@ -378,6 +378,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-card{background:var(--surface-2);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:8px;transition:background .18s}
 .db-card:hover{background:var(--surface-3)}
 .db-card--primary{border-left:4px solid var(--accent)}
+.db-card--theme{background:var(--db-theme-bg,var(--accent-l));border-left:4px solid var(--db-theme-c,var(--accent))}
 .db-card-label{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
 .db-card-value{font-size:2.2rem;font-weight:900;letter-spacing:-.03em;color:var(--text);line-height:1}
 .db-card-sub{font-size:.75rem;color:var(--text-3)}
@@ -410,6 +411,24 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* 중간 영역 (히트맵 + 타임라인) */
 .db-mid{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:stretch}
 @media(max-width:900px){.db-mid{grid-template-columns:1fr}}
+/* B 레이아웃: insight 섹션 */
+.db-insight{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+@media(max-width:960px){.db-insight{grid-template-columns:1fr}}
+.db-insight-left{display:flex;flex-direction:column;gap:16px}
+/* 그룹별 진척도 */
+.db-gp-list{display:flex;flex-direction:column;gap:14px}
+.db-gp-row{display:flex;flex-direction:column;gap:5px}
+.db-gp-info{display:flex;align-items:baseline;gap:6px;margin-bottom:2px}
+.db-gp-name{font-size:.82rem;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.db-gp-total{font-size:.72rem;color:var(--text-3);flex-shrink:0}
+.db-gp-bar-area{display:flex;flex-direction:column;gap:4px}
+.db-gp-bar-wrap{display:flex;align-items:center;gap:8px}
+.db-gp-track{flex:1;height:10px;border-radius:5px;background:var(--surface-3);overflow:hidden;display:flex}
+.db-gp-seg{height:100%;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.db-gp-pct{font-size:.72rem;font-weight:700;width:36px;text-align:right;flex-shrink:0}
+.db-gp-legend{display:flex;flex-wrap:wrap;gap:4px 10px}
+.db-gp-leg-item{font-size:.65rem;color:var(--text-3);display:flex;align-items:center;gap:3px}
+.db-gp-leg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 
 /* 공통 패널 */
 .db-panel{background:var(--surface-2);border-radius:16px;padding:22px 24px}
@@ -430,12 +449,12 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-hm-corner{width:80px}
 .db-hm-col-hd{font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);text-align:center;padding:0 2px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .db-hm-row-hd{font-size:.62rem;font-weight:600;color:var(--text-2);width:80px;text-align:right;padding-right:10px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--accent);opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:transparent;transition:opacity .2s,transform .15s}
+.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:transparent;transition:opacity .2s,transform .15s}
 .db-hm-cell:hover{transform:scale(1.15);z-index:2;color:var(--text)}
 .db-hm-legend{display:flex;align-items:center;gap:8px;margin-top:14px}
 .db-hm-legend-lbl{font-size:.6rem;color:var(--text-3);letter-spacing:.04em}
 .db-hm-legend-bar{display:flex;gap:3px}
-.db-hm-legend-seg{width:18px;height:8px;border-radius:2px;background:var(--accent);opacity:var(--op,0.06)}
+.db-hm-legend-seg{width:18px;height:8px;border-radius:2px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06)}
 
 /* 타임라인 */
 .db-timeline-panel{display:flex;flex-direction:column;height:100%}
@@ -943,6 +962,18 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           </div>
           <div id="editorPwErr" style="color:var(--danger);font-size:.78rem;min-height:14px"></div>
         </div>
+        <div class="sec-ttl" style="margin-top:12px">대시보드</div>
+        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
+          <div class="slbl">히어로 제목</div>
+          <div class="ssub">대시보드 상단에 표시할 프로젝트명</div>
+          <input class="inp" id="dbHeroName" placeholder="프로젝트 현황" style="height:28px;font-size:.82rem"
+            oninput="saveDbSettings()">
+        </div>
+        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:8px;margin-top:4px">
+          <div class="slbl">섹션 표시 순서</div>
+          <div class="ssub">드래그하거나 ▲▼ 버튼으로 순서를 변경하세요</div>
+          <div id="dbSectionOrder" style="display:flex;flex-direction:column;gap:6px;width:100%"></div>
+        </div>
         <div class="sec-ttl" style="margin-top:12px">헤더</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
           <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
@@ -1117,6 +1148,8 @@ const S = {
     animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:false },
     groupOrder: [],
     catOrder: [],
+    dbHeroName: '',
+    dbSections: ['stats', 'insight', 'heatmap'],
     storageMode: 'server',
     serverUrl:   '',
     pollInterval: 10,
@@ -1161,6 +1194,7 @@ function apiHeaders() {
 const SHARED_SETTINGS = [
   'title','subtitle',
   'groupOrder','catOrder',
+  'dbHeroName','dbSections',
   'priorityStyles','customColors',
   'matrixWidth','cellFold',
   'colW','catW','subCatW',
@@ -1208,6 +1242,7 @@ function applyServerPayload(d) {
       if (k === 'customColors')   { S.settings.customColors   = ss[k]; return; }
       if (k === 'groupOrder')     { S.settings.groupOrder     = ss[k]; return; }
       if (k === 'catOrder')       { S.settings.catOrder       = ss[k]; return; }
+      if (k === 'dbSections')     { S.settings.dbSections     = ss[k]; return; }
       S.settings[k] = ss[k];
     });
   }
@@ -1664,7 +1699,7 @@ function applyVars() {
   const c  = getColors();
   const ss = S.settings;
   let css = `html{font-size:${ss.baseFont}px !important}\n`;
-  css += `:root{--p-high:${c.pHigh};--p-high-bg:${c.pHighBg};--p-mid:${c.pMid};--p-mid-bg:${c.pMidBg};--p-low:${c.pLow};--p-low-bg:${c.pLowBg}}\n`;
+  css += `:root{--p-high:${c.pHigh};--p-high-bg:${c.pHighBg};--p-mid:${c.pMid};--p-mid-bg:${c.pMidBg};--p-low:${c.pLow};--p-low-bg:${c.pLowBg};--db-theme-c:${c.mxGC};--db-theme-bg:${c.mxGBg}}\n`;
   css += `.mtable,.mtable th,.mtable td{border:${c.mxBW}px solid ${c.mxBorder}}\n`;
   /* X축 헤더: background를 dynStyle로 주입 → sticky 배경도 정확히 반영 */
   css += `.m-ghd{background:${c.mxGBg};color:${c.mxGC}}\n`;
@@ -3236,7 +3271,7 @@ function sstab(btn, paneId) {
   if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); }
   if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
   if (paneId === 'sdat')    window.syncServerSettingsUI?.();
-  if (paneId === 'sadmin')  window.loadInlineActivityLog?.();
+  if (paneId === 'sadmin')  { window.loadInlineActivityLog?.(); window.renderDbSectionOrder?.(); }
 }
 
 /* ── 설정 UI 전체 동기화 ── */
@@ -3247,6 +3282,8 @@ function syncSettingsUI() {
   const subEl   = document.getElementById('sSub');
   if (titleEl) { titleEl.value = ss.title; titleEl.disabled = !admin; }
   if (subEl)   { subEl.value   = ss.subtitle; subEl.disabled = !admin; }
+  const dbHeroEl = document.getElementById('dbHeroName');
+  if (dbHeroEl) dbHeroEl.value = ss.dbHeroName || '';
   // 헤더 DOM도 즉시 반영
   const dTitleEl = document.getElementById('dTitle');
   const dSubEl   = document.getElementById('dSub');
@@ -3443,7 +3480,9 @@ function resetSettings() {
 
 /* ── app/dashboard.js ── */
 /* ══════════════════════════════════════════
-   dashboard.js — 대시보드 뷰 렌더링
+   dashboard.js — 대시보드 뷰 렌더링 (B 레이아웃)
+   상단: 히어로 + 섹션 순서 기반 렌더
+   섹션: stats / insight(그룹진척+담당자+타임라인) / heatmap
 ══════════════════════════════════════════ */
 
 
@@ -3469,11 +3508,11 @@ function statusColor(status) {
   return map[status] || 'var(--text-3)';
 }
 
-/* ── 히트맵 뷰 상태 (그룹×카테고리 | 그룹×상태) ── */
-let _hmView = 'cat';  // 'cat' | 'status'
+/* ── 히트맵 뷰 상태 ── */
+let _hmView = 'cat';
 function setHmView(v) { _hmView = v; renderDashboard(); }
 
-/* ── 히트맵 HTML 생성 ── */
+/* ── 히트맵 HTML ── */
 function buildHeatmap(all, groups, cats) {
   const STATUSES = ['기획', '개발중', '완료', '보류'];
 
@@ -3489,15 +3528,15 @@ function buildHeatmap(all, groups, cats) {
       if (hmData[k] > hmMax) hmMax = hmData[k];
     });
     return `<div class="db-hm-wrap">
-      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
+      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${cats.length},1fr)">
         <div class="db-hm-corner"></div>
-        ${groups.map(g => `<div class="db-hm-col-hd" title="${esc(g)}">${esc(g)}</div>`).join('')}
-        ${cats.map(cat => `
-          <div class="db-hm-row-hd" title="${esc(cat)}">${esc(cat)}</div>
-          ${groups.map(g => {
-            const cnt = hmData[`${g}||${cat}`] || 0;
+        ${cats.map(c => `<div class="db-hm-col-hd" title="${esc(c)}">${esc(c)}</div>`).join('')}
+        ${groups.map(g => `
+          <div class="db-hm-row-hd" title="${esc(g)}">${esc(g)}</div>
+          ${cats.map(c => {
+            const cnt = hmData[`${g}||${c}`] || 0;
             const op  = hmMax > 0 ? (cnt === 0 ? 0.06 : 0.15 + cnt/hmMax * 0.85) : 0.06;
-            return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc(g)} × ${esc(cat)}: ${cnt}개">${cnt > 0 ? cnt : ''}</div>`;
+            return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc(g)} × ${esc(c)}: ${cnt}개">${cnt > 0 ? cnt : ''}</div>`;
           }).join('')}
         `).join('')}
       </div>
@@ -3510,7 +3549,6 @@ function buildHeatmap(all, groups, cats) {
       </div>
     </div>`;
   } else {
-    /* 그룹 × 상태 뷰 */
     if (groups.length === 0)
       return `<div class="db-empty">데이터가 없습니다</div>`;
     const hmData = {};
@@ -3545,12 +3583,54 @@ function buildHeatmap(all, groups, cats) {
   }
 }
 
+/* ── 그룹별 진척도 섹션 ── */
+function buildGroupProgress(all, groups) {
+  if (groups.length === 0) return `<div class="db-empty">그룹 데이터가 없습니다</div>`;
+
+  const STATUSES = ['기획', '개발중', '완료', '보류'];
+  const SC = { '기획': 'var(--text-3)', '개발중': 'var(--accent)', '완료': 'var(--success)', '보류': 'var(--warning)' };
+
+  return groups.map(g => {
+    const items = all.filter(it => it.group === g);
+    const total = items.length;
+    if (total === 0) return '';
+    const sc = { '기획': 0, '개발중': 0, '완료': 0, '보류': 0 };
+    items.forEach(it => { if (sc[it.status] !== undefined) sc[it.status]++; });
+    const doneCount = sc['완료'];
+    const donePct   = Math.round(doneCount / total * 100);
+
+    const segments = STATUSES.filter(s => sc[s] > 0).map(s =>
+      `<div class="db-gp-seg" style="width:${(sc[s]/total*100).toFixed(1)}%;background:${SC[s]}"
+        title="${s} ${sc[s]}개 (${Math.round(sc[s]/total*100)}%)"></div>`
+    ).join('');
+
+    const legend = STATUSES.filter(s => sc[s] > 0).map(s =>
+      `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC[s]}"></span>${s} ${sc[s]}</span>`
+    ).join('');
+
+    return `
+    <div class="db-gp-row">
+      <div class="db-gp-info">
+        <span class="db-gp-name" title="${esc(g)}">${esc(g)}</span>
+        <span class="db-gp-total">${total}개</span>
+      </div>
+      <div class="db-gp-bar-area">
+        <div class="db-gp-bar-wrap">
+          <div class="db-gp-track">${segments}</div>
+          <span class="db-gp-pct" style="color:${donePct >= 100 ? 'var(--success)' : 'var(--text-2)'}">${donePct}%</span>
+        </div>
+        <div class="db-gp-legend">${legend}</div>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+}
+
 /* ── renderDashboard ── */
 function renderDashboard() {
   const el = document.getElementById('dashboardView');
   if (!el) return;
 
-  const all = S.items.filter(it => it.isDelete !== 'Y');
+  const all   = S.items.filter(it => it.isDelete !== 'Y');
   const total = all.length;
 
   /* 통계 계산 */
@@ -3574,8 +3654,7 @@ function renderDashboard() {
 
   const pct = total > 0 ? Math.round(done / total * 100) : 0;
 
-  /* 히트맵 데이터 */
-  /* groupOrder/catOrder 기준이되, 실제 데이터에 있는 항목은 항상 포함 */
+  /* 그룹·카테고리 목록 */
   const allGroups = [...new Set(all.map(it => it.group).filter(Boolean))];
   const allCats   = [...new Set(all.map(it => it.category).filter(Boolean))];
   const orderG    = S.settings.groupOrder.filter(g => allGroups.includes(g));
@@ -3585,48 +3664,32 @@ function renderDashboard() {
   const extraC    = allCats.filter(c => !orderC.includes(c));
   const cats      = [...orderC, ...extraC];
 
-  const hmData = {};
-  let hmMax = 0;
-  all.forEach(it => {
-    if (!it.group || !it.category) return;
-    const k = `${it.group}||${it.category}`;
-    hmData[k] = (hmData[k] || 0) + 1;
-    if (hmData[k] > hmMax) hmMax = hmData[k];
-  });
-
-  /* 최근 변경 (updatedAt 기준 top 8) */
+  /* 최근 변경 */
   const recent = [...all]
     .filter(it => it.updatedAt)
     .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, 8);
+    .slice(0, 10);
 
   /* 담당별 정렬 */
   const owners = Object.entries(ownerMap)
     .sort((a, b) => b[1].total - a[1].total)
-    .slice(0, 8);
+    .slice(0, 10);
 
-  /* ── HTML 구성 ── */
-  el.innerHTML = `
-<div class="db-wrap">
+  /* 섹션 순서 */
+  const sections = (S.settings.dbSections || ['stats', 'insight', 'heatmap'])
+    .filter(s => ['stats','insight','heatmap'].includes(s));
 
-  <!-- 헤더 -->
-  <div class="db-hero" data-anim-idx="0">
-    <div>
-      <div class="db-eyebrow">Mission Control</div>
-      <h2 class="db-title">프로젝트 현황</h2>
-    </div>
-  </div>
+  /* ── 히어로 섹션 ── */
+  const heroName = S.settings.dbHeroName || '프로젝트 현황';
 
-  <!-- 요약 통계 카드 -->
+  /* ── 스탯 카드 섹션 ── */
+  const statsSection = `
   <section class="db-cards" data-anim-idx="1">
-    <!-- 전체 기능 -->
-    <div class="db-card db-card--primary">
+    <div class="db-card db-card--theme">
       <div class="db-card-label">전체 기능</div>
       <div class="db-card-value">${total.toLocaleString()}</div>
       <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
     </div>
-
-    <!-- 우선순위 분포 -->
     <div class="db-card">
       <div class="db-card-label">우선순위 분포</div>
       <div class="db-prio-bars">
@@ -3647,8 +3710,6 @@ function renderDashboard() {
         </div>
       </div>
     </div>
-
-    <!-- 완료율 -->
     <div class="db-card">
       <div class="db-card-label">완료율</div>
       <div class="db-pct-wrap">
@@ -3659,8 +3720,6 @@ function renderDashboard() {
         <div class="db-bar-fill db-bar--done" style="width:${pct}%"></div>
       </div>
     </div>
-
-    <!-- 상태별 분포 -->
     <div class="db-card">
       <div class="db-card-label">진행 상태</div>
       <div class="db-status-grid">
@@ -3669,31 +3728,69 @@ function renderDashboard() {
             <div class="db-status-dot" style="background:${statusColor(s)}"></div>
             <span class="db-status-name">${s}</span>
             <span class="db-status-cnt">${statusCount[s]}</span>
-          </div>
-        `).join('')}
+          </div>`).join('')}
       </div>
     </div>
-  </section>
+  </section>`;
 
-  <!-- 히트맵 + 타임라인 -->
-  <section class="db-mid" data-anim-idx="2">
+  /* ── 인사이트 섹션 (B 레이아웃: 좌측 그룹진척+담당자 / 우측 타임라인) ── */
+  const insightSection = `
+  <section class="db-insight" data-anim-idx="2">
+    <!-- 좌측: 그룹별 진척도 + 담당자 workload -->
+    <div class="db-insight-left">
 
-    <!-- 기능 분포 히트맵 -->
-    <div class="db-panel db-heatmap-panel">
-      <div class="db-panel-hd">
-        <div>
-          <div class="db-panel-title">기능 분포 히트맵</div>
-          <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+      <!-- 그룹별 진척도 -->
+      <div class="db-panel">
+        <div class="db-panel-hd">
+          <div class="db-panel-title">그룹별 진척도</div>
+          <div class="db-panel-sub">기획 · 개발중 · 완료 · 보류 비율</div>
         </div>
-        <div class="db-hm-tabs">
-          <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
-          <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
-        </div>
+        <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
       </div>
-      ${buildHeatmap(all, groups, cats)}
+
+      <!-- 담당자 workload -->
+      <div class="db-panel">
+        <div class="db-panel-hd">
+          <div class="db-panel-title">담당별 기능 현황</div>
+        </div>
+        ${owners.length === 0
+          ? `<div class="db-empty">담당자 정보가 없습니다</div>`
+          : `<div class="db-owners-unified">
+              <div class="db-owners-hdr">
+                <div class="db-owner-info"></div>
+                <div class="db-owners-bar-hdr">우선순위</div>
+                <div class="db-owners-bar-hdr">진행상태</div>
+              </div>
+              ${owners.map(([owner, cnt]) => `
+                <div class="db-owner-row-unified">
+                  <div class="db-owner-info">
+                    <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
+                    <span class="db-owner-name">${esc(owner)}</span>
+                    <span class="db-owner-total">${cnt.total}</span>
+                  </div>
+                  <div class="db-owner-bar-wrap">
+                    <div class="db-bar-track">
+                      <div class="db-owner-seg db-bar--high" style="width:${cnt.total > 0 ? (cnt.high/cnt.total*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
+                      <div class="db-owner-seg db-bar--mid"  style="width:${cnt.total > 0 ? (cnt.mid/cnt.total*100).toFixed(1) : 0}%"  title="중 ${cnt.mid}"></div>
+                      <div class="db-owner-seg db-bar--low"  style="width:${cnt.total > 0 ? (cnt.low/cnt.total*100).toFixed(1) : 0}%"  title="하 ${cnt.low}"></div>
+                    </div>
+                  </div>
+                  <div class="db-owner-bar-wrap">
+                    <div class="db-bar-track">
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['기획']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['개발중']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['완료']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
+                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['보류']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>`
+        }
+      </div>
     </div>
 
-    <!-- 최근 변경 타임라인 -->
+    <!-- 우측: 타임라인 -->
     <div class="db-panel db-timeline-panel">
       <div class="db-panel-hd">
         <div class="db-panel-title">최근 변경</div>
@@ -3716,59 +3813,41 @@ function renderDashboard() {
                     ${it.status ? `<span class="db-tl-status">${esc(it.status)}</span>` : ''}
                   </div>
                 </div>
-              </div>
-            `).join('')}
+              </div>`).join('')}
           </div>
           <button class="db-more-btn" onclick="switchView('list')">전체 목록 보기 →</button>`
       }
     </div>
-  </section>
+  </section>`;
 
-  <!-- 담당별 분포 -->
-  <section class="db-panel db-owners-panel" data-anim-idx="3">
+  /* ── 히트맵 섹션 ── */
+  const heatmapSection = `
+  <section class="db-panel db-heatmap-panel" data-anim-idx="3">
     <div class="db-panel-hd">
-      <div class="db-panel-title">담당별 기능 현황</div>
+      <div>
+        <div class="db-panel-title">기능 분포 히트맵</div>
+        <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+      </div>
+      <div class="db-hm-tabs">
+        <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
+        <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
+      </div>
     </div>
-    ${owners.length === 0
-      ? `<div class="db-empty">담당자 정보가 없습니다</div>`
-      : `<div class="db-owners-unified">
-          <!-- 헤더 -->
-          <div class="db-owners-hdr">
-            <div class="db-owner-info"></div>
-            <div class="db-owners-bar-hdr">우선순위</div>
-            <div class="db-owners-bar-hdr">진행상태</div>
-          </div>
-          <!-- 행: [dot + 이름 + 숫자] [우선순위 바] [진행상태 바] -->
-          ${owners.map(([owner, cnt]) => `
-            <div class="db-owner-row-unified">
-              <div class="db-owner-info">
-                <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
-                <span class="db-owner-name">${esc(owner)}</span>
-                <span class="db-owner-total">${cnt.total}</span>
-              </div>
-              <div class="db-owner-bar-wrap">
-                <div class="db-bar-track">
-                  <div class="db-owner-seg db-bar--high" style="width:${cnt.total > 0 ? (cnt.high/cnt.total*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
-                  <div class="db-owner-seg db-bar--mid"  style="width:${cnt.total > 0 ? (cnt.mid/cnt.total*100).toFixed(1) : 0}%"  title="중 ${cnt.mid}"></div>
-                  <div class="db-owner-seg db-bar--low"  style="width:${cnt.total > 0 ? (cnt.low/cnt.total*100).toFixed(1) : 0}%"  title="하 ${cnt.low}"></div>
-                </div>
-              </div>
-              <div class="db-owner-bar-wrap">
-                <div class="db-bar-track">
-                  <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['기획']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
-                  <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['개발중']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
-                  <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['완료']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
-                  <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['보류']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>`
-    }
-  </section>
+    ${buildHeatmap(all, groups, cats)}
+  </section>`;
 
-</div>
-`;
+  const sectionMap = { stats: statsSection, insight: insightSection, heatmap: heatmapSection };
+
+  el.innerHTML = `
+<div class="db-wrap">
+  <div class="db-hero" data-anim-idx="0">
+    <div>
+      <div class="db-eyebrow">Mission Control</div>
+      <h2 class="db-title">${esc(heroName)}</h2>
+    </div>
+  </div>
+  ${sections.map(s => sectionMap[s] || '').join('')}
+</div>`;
 
   /* 섹션별 순차 fade-in */
   if (animOk()) {
@@ -4173,6 +4252,40 @@ function syncServerSettingsUI() {
   setServerStatus(mode === 'server' ? 'ok' : 'off');
 }
 
+/* ── 대시보드 설정 저장/UI 동기화 ── */
+const DB_SECTION_LABELS = { stats: '스탯 카드 4개', insight: '그룹 진척도 · 담당자 · 타임라인', heatmap: '히트맵' };
+
+window.saveDbSettings = () => {
+  S.settings.dbHeroName = document.getElementById('dbHeroName')?.value || '';
+  save();
+  if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
+};
+
+window.dbSectionMove = (idx, dir) => {
+  const secs = [...(S.settings.dbSections || ['stats', 'insight', 'heatmap'])];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= secs.length) return;
+  [secs[idx], secs[newIdx]] = [secs[newIdx], secs[idx]];
+  S.settings.dbSections = secs;
+  renderDbSectionOrder();
+  save();
+  if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
+};
+
+function renderDbSectionOrder() {
+  const el = document.getElementById('dbSectionOrder');
+  if (!el) return;
+  const secs = S.settings.dbSections || ['stats', 'insight', 'heatmap'];
+  el.innerHTML = secs.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface-2);border-radius:7px;border:1px solid var(--border)">
+      <span style="font-size:.75rem;color:var(--text-3);font-weight:700;width:16px">${i + 1}</span>
+      <span style="flex:1;font-size:.8rem;font-weight:600;color:var(--text)">${DB_SECTION_LABELS[s] || s}</span>
+      <button class="btn btn-g btn-sm" style="width:24px;height:24px;padding:0;font-size:.7rem" onclick="dbSectionMove(${i}, -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+      <button class="btn btn-g btn-sm" style="width:24px;height:24px;padding:0;font-size:.7rem" onclick="dbSectionMove(${i}, 1)" ${i === secs.length - 1 ? 'disabled' : ''}>▼</button>
+    </div>`).join('');
+}
+window.renderDbSectionOrder = renderDbSectionOrder;
+
 /* ── 초기화 ── */
 async function init() {
   await load();
@@ -4250,7 +4363,7 @@ window.saveUserNamePopup = (skip = false) => {
       <div style="display:flex;flex-direction:column;gap:10px">
         <div>
           <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">역할</label>
-          <select class="inp" id="loginRoleSelect" style="height:32px;font-size:.82rem">
+          <select class="inp" id="loginRoleSelect" style="height:38px;font-size:.82rem;padding-top:0;padding-bottom:0">
             <option value="editor">편집자</option>
             <option value="admin">관리자</option>
           </select>

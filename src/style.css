@@ -157,7 +157,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .fpanel{width:200px;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
 .fpanel.collapsed{width:36px}
 .fpanel.collapsed .fpinner{display:none}
-.fpanel.fp-hide{width:0!important;border-width:0!important;overflow:hidden}
+.fpanel.fp-hide{width:0!important;min-width:0!important;border-width:0!important;overflow:hidden}
 .fpanel-toggle{width:36px;height:36px;flex-shrink:0;border:none;background:none;color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s;align-self:flex-start;padding:0}
 .fpanel-toggle:hover{color:var(--text)}
 .fpinner{padding:12px 11px;min-width:182px;overflow-y:auto;flex:1}
@@ -370,6 +370,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-card{background:var(--surface-2);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:8px;transition:background .18s}
 .db-card:hover{background:var(--surface-3)}
 .db-card--primary{border-left:4px solid var(--accent)}
+.db-card--theme{background:var(--db-theme-bg,var(--accent-l));border-left:4px solid var(--db-theme-c,var(--accent))}
 .db-card-label{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
 .db-card-value{font-size:2.2rem;font-weight:900;letter-spacing:-.03em;color:var(--text);line-height:1}
 .db-card-sub{font-size:.75rem;color:var(--text-3)}
@@ -402,6 +403,24 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* 중간 영역 (히트맵 + 타임라인) */
 .db-mid{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:stretch}
 @media(max-width:900px){.db-mid{grid-template-columns:1fr}}
+/* B 레이아웃: insight 섹션 */
+.db-insight{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+@media(max-width:960px){.db-insight{grid-template-columns:1fr}}
+.db-insight-left{display:flex;flex-direction:column;gap:16px}
+/* 그룹별 진척도 */
+.db-gp-list{display:flex;flex-direction:column;gap:14px}
+.db-gp-row{display:flex;flex-direction:column;gap:5px}
+.db-gp-info{display:flex;align-items:baseline;gap:6px;margin-bottom:2px}
+.db-gp-name{font-size:.82rem;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.db-gp-total{font-size:.72rem;color:var(--text-3);flex-shrink:0}
+.db-gp-bar-area{display:flex;flex-direction:column;gap:4px}
+.db-gp-bar-wrap{display:flex;align-items:center;gap:8px}
+.db-gp-track{flex:1;height:10px;border-radius:5px;background:var(--surface-3);overflow:hidden;display:flex}
+.db-gp-seg{height:100%;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.db-gp-pct{font-size:.72rem;font-weight:700;width:36px;text-align:right;flex-shrink:0}
+.db-gp-legend{display:flex;flex-wrap:wrap;gap:4px 10px}
+.db-gp-leg-item{font-size:.65rem;color:var(--text-3);display:flex;align-items:center;gap:3px}
+.db-gp-leg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 
 /* 공통 패널 */
 .db-panel{background:var(--surface-2);border-radius:16px;padding:22px 24px}
@@ -422,12 +441,12 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-hm-corner{width:80px}
 .db-hm-col-hd{font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);text-align:center;padding:0 2px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .db-hm-row-hd{font-size:.62rem;font-weight:600;color:var(--text-2);width:80px;text-align:right;padding-right:10px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--accent);opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:transparent;transition:opacity .2s,transform .15s}
+.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:transparent;transition:opacity .2s,transform .15s}
 .db-hm-cell:hover{transform:scale(1.15);z-index:2;color:var(--text)}
 .db-hm-legend{display:flex;align-items:center;gap:8px;margin-top:14px}
 .db-hm-legend-lbl{font-size:.6rem;color:var(--text-3);letter-spacing:.04em}
 .db-hm-legend-bar{display:flex;gap:3px}
-.db-hm-legend-seg{width:18px;height:8px;border-radius:2px;background:var(--accent);opacity:var(--op,0.06)}
+.db-hm-legend-seg{width:18px;height:8px;border-radius:2px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06)}
 
 /* 타임라인 */
 .db-timeline-panel{display:flex;flex-direction:column;height:100%}
