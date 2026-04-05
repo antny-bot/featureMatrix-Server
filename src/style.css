@@ -315,8 +315,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .notif{position:fixed;bottom:18px;right:18px;z-index:3000;background:var(--text);color:var(--bg);padding:8px 15px;border-radius:8px;font-size:.79rem;font-weight:500;box-shadow:var(--shadow-lg);transform:translateY(8px);opacity:0;transition:all .22s;pointer-events:none}
 .notif.on{transform:translateY(0);opacity:1}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:56px 16px;color:var(--text-3)}
-.undo-fab{position:fixed;bottom:18px;left:18px;z-index:2500;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}
-.undo-fab.on{opacity:1;visibility:visible;animation:bounceIn .4s cubic-bezier(.34,1.56,.64,1)}
+.undo-fab{display:none}
+.undo-fab.on{display:block}
 
 /* ── 컬럼 편집기 ── */
 .col-editor{display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto}
