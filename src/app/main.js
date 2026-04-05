@@ -493,6 +493,7 @@ async function init() {
   syncServerSettingsUI();
   updateAdminUI();
   scheduleCardAnim();
+  S.view = 'dashboard';
   renderAll();
   updateUndoFab();
   startPolling();
