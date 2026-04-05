@@ -355,7 +355,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* ══════════════════════════════════════════
    대시보드 뷰
 ══════════════════════════════════════════ */
-.db-wrap{padding:28px 32px;max-width:1400px;display:flex;flex-direction:column;gap:28px}
+.db-wrap{width:100%;box-sizing:border-box;padding:28px 32px;max-width:1400px;display:flex;flex-direction:column;gap:28px}
 
 /* 히어로 */
 .db-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
@@ -403,10 +403,18 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* 중간 영역 (히트맵 + 타임라인) */
 .db-mid{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:stretch}
 @media(max-width:900px){.db-mid{grid-template-columns:1fr}}
-/* B 레이아웃: insight 섹션 */
+/* B 레이아웃: insight 섹션 (레거시) */
 .db-insight{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:stretch}
 @media(max-width:960px){.db-insight{grid-template-columns:1fr}}
 .db-insight-left{display:flex;flex-direction:column;gap:16px}
+/* 통합 2열 본문 레이아웃 */
+.db-body{display:grid;grid-template-columns:1fr 300px;gap:16px}
+@media(max-width:960px){.db-body{grid-template-columns:1fr}}
+.db-body-left{display:flex;flex-direction:column;gap:16px}
+.db-body-right{display:flex;flex-direction:column;gap:16px}
+/* 3열 카드 (좌측 열 안) */
+.db-cards-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:700px){.db-cards-3{grid-template-columns:1fr}}
 /* 그룹별 진척도 */
 .db-gp-list{display:flex;flex-direction:column;gap:14px}
 .db-gp-row{display:flex;flex-direction:column;gap:5px}
@@ -449,7 +457,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-hm-legend-seg{width:18px;height:8px;border-radius:2px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06)}
 
 /* 타임라인 */
-.db-timeline-panel{display:flex;flex-direction:column;height:100%;box-sizing:border-box}
+.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box}
+.db-body-right .db-timeline-panel{flex:1;min-height:0}
 .db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0}
 .db-tl-item{display:flex;gap:12px}
 .db-tl-line-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
