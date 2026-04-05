@@ -121,11 +121,32 @@ function buildStruct(items) {
   return { groups, gsubs, cats, csubs };
 }
 
+/* ── nav-side / fpanel 상태 동기화 ── */
+function syncLayout() {
+  const v = S.view;
+  const navMap = { dashboard: 'navD', matrix: 'navM', list: 'navL' };
+  ['navD', 'navM', 'navL'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'nav-item' + (navMap[v] === id ? ' on' : '');
+  });
+  ['dashboardView', 'matrixView', 'listView'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === v + 'View' ? '' : 'none';
+  });
+  const fp = document.getElementById('fpanel');
+  if (fp) fp.classList.toggle('fp-hide', v === 'dashboard');
+  const cs = document.getElementById('contentSearch');
+  if (cs) cs.style.display = v === 'dashboard' ? 'none' : '';
+}
+
 /* ── 전체 렌더 ── */
 export function renderAll(withFade = false) {
+  syncLayout();
   const doRender = () => {
     renderStats();
-    if (S.view === 'matrix') renderMatrix(); else renderList();
+    if (S.view === 'matrix') renderMatrix();
+    else if (S.view === 'list') renderList();
+    else if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
     updateDL();
     renderOwnerChips();
     renderPrioChips();
@@ -412,12 +433,10 @@ export function sortL(k) {
 
 export function switchView(v) {
   S.view = v;
-  document.getElementById('matrixView').style.display = v==='matrix' ? '' : 'none';
-  document.getElementById('listView').style.display   = v==='list'   ? '' : 'none';
-  document.getElementById('tabM').className = 'vtab' + (v==='matrix' ? ' on' : '');
-  document.getElementById('tabL').className = 'vtab' + (v==='list'   ? ' on' : '');
+  syncLayout();
   if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }
-  else renderList();
+  else if (v === 'list') renderList();
+  else { document.getElementById('bulkBar').style.display = 'none'; if (window.renderDashboard) window.renderDashboard(); }
 }
 
 /* ── 필터 UI ── */

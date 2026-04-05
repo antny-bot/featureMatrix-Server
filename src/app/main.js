@@ -3,12 +3,15 @@
 ══════════════════════════════════════════ */
 
 import { DEMO } from './constants.js';
+import { renderDashboard, setHmView } from './dashboard.js';
 import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
          pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
          loadFromServer, saveToServer, logActivity, notify,
          lockItem, unlockItem, updateLocks, editLocks } from './state.js';
-import { isAdmin, requireAdmin, submitAdminAuth, closeAdminModal,
-         adminLogout, updateAdminUI, getAdminToken } from './admin.js';
+import { isAdmin, isEditor, requireAdmin, requireEditor,
+         openLoginModal, closeLoginModal, submitLogin,
+         adminLogout, logout, updateAdminUI, getAdminToken, getEditorToken,
+         setEditorPassword } from './admin.js';
 import { applyVars, applyBlurSetting, toggleTheme, applyTheme,
          renderThemeGrid, renderPrioStyleRows, renderPreviewCards,
          updateDesignContent, setPreset, setCustomColor,
@@ -36,6 +39,7 @@ import { sstab, syncSettingsUI, previewTitle, setMW, setPPos,
 
 /* ── window 바인딩 ── */
 Object.assign(window, {
+  renderDashboard, setHmView,
   doUndo,
   toggleTheme, applyTheme, setPreset, setCustomColor, onCP, onHex, onHexKey, adjBW,
   renderPrioStyleRows, renderPreviewCards, updateDesignContent, renderThemeGrid,
@@ -57,7 +61,10 @@ Object.assign(window, {
   colDragStart, colDragOver, colDragLeave, colDrop, colDragEnd, resetListCols,
   renderAxisEditor, axisDragStart, axisDragOver, axisDragLeave, axisDrop, axisDragEnd, resetAxisOrder,
   expSettJSON, impSettJSON, resetData, resetSettings,
-  isAdmin, requireAdmin, submitAdminAuth, closeAdminModal, adminLogout, updateAdminUI,
+  isAdmin, isEditor, requireAdmin, requireEditor,
+  openLoginModal, closeLoginModal, submitLogin,
+  adminLogout, logout, updateAdminUI, getAdminToken, getEditorToken,
+  setEditorPassword,
 });
 
 /* ── notify 인라인 ── */
@@ -302,7 +309,6 @@ window.saveServerSettings = async () => {
   const mode = document.querySelector('input[name="storageMode"]:checked')?.value || 'local';
   S.settings.storageMode  = mode;
   S.settings.serverUrl    = document.getElementById('sServerUrl')?.value.trim() || '';
-  S.settings.apiKey       = document.getElementById('sApiKey')?.value.trim() || '';
   S.settings.pollInterval = parseInt(document.getElementById('sPollInterval')?.value || '10', 10) || 10;
   S.settings.userName     = document.getElementById('sUserName')?.value.trim() || '';
 
@@ -320,7 +326,7 @@ window.saveServerSettings = async () => {
       notify('서버에 연결됐습니다. 데이터를 불러왔습니다.');
     } else {
       // 연결 실패 시 개인 설정만 로컬 저장 (items 서버 전송 안 함)
-      notify('서버 연결 실패. API 키와 URL을 확인하세요.', true);
+      notify('서버 연결 실패. URL을 확인하세요.', true);
     }
   } else {
     save(); // 로컬 모드 전환
@@ -361,12 +367,12 @@ window.loadInlineActivityLog = async () => {
   body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">불러오는 중...</div>';
   try {
     const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
-    const headers = { 'X-API-Key': S.settings.apiKey || '', 'X-Admin-Token': sessionStorage.getItem('fmAdminToken') || '' };
+    const headers = { 'X-Admin-Token': getAdminToken() };
     const res  = await fetch(apiUrl + '/api/log', { headers });
     const json = await res.json();
     if (!json.ok) {
       if (res.status === 403) {
-        sessionStorage.removeItem('fmAdminToken');
+        sessionStorage.removeItem('fmAdminToken'); // 세션 만료 시 토큰 제거
         updateAdminUI();
         body.innerHTML = '<div style="padding:16px;color:var(--danger)">세션이 만료됐습니다. 관리자 재인증이 필요합니다.</div>';
         return;
@@ -423,8 +429,6 @@ function syncServerSettingsUI() {
   });
   const urlEl  = document.getElementById('sServerUrl');
   if (urlEl)  urlEl.value  = S.settings.serverUrl  || '';
-  const keyEl  = document.getElementById('sApiKey');
-  if (keyEl)  keyEl.value  = S.settings.apiKey      || '';
   const pollEl = document.getElementById('sPollInterval');
   if (pollEl) pollEl.value = S.settings.pollInterval || 10;
   const nameEl = document.getElementById('sUserName');
@@ -435,6 +439,40 @@ function syncServerSettingsUI() {
   if (badge) badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
   setServerStatus(mode === 'server' ? 'ok' : 'off');
 }
+
+/* ── 대시보드 설정 저장/UI 동기화 ── */
+const DB_SECTION_LABELS = { stats: '스탯 카드 4개', insight: '그룹 진척도 · 담당자 · 타임라인', heatmap: '히트맵' };
+
+window.saveDbSettings = () => {
+  S.settings.dbHeroName = document.getElementById('dbHeroName')?.value || '';
+  save();
+  if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
+};
+
+window.dbSectionMove = (idx, dir) => {
+  const secs = [...(S.settings.dbSections || ['stats', 'insight', 'heatmap'])];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= secs.length) return;
+  [secs[idx], secs[newIdx]] = [secs[newIdx], secs[idx]];
+  S.settings.dbSections = secs;
+  renderDbSectionOrder();
+  save();
+  if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
+};
+
+function renderDbSectionOrder() {
+  const el = document.getElementById('dbSectionOrder');
+  if (!el) return;
+  const secs = S.settings.dbSections || ['stats', 'insight', 'heatmap'];
+  el.innerHTML = secs.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface-2);border-radius:7px;border:1px solid var(--border)">
+      <span style="font-size:.75rem;color:var(--text-3);font-weight:700;width:16px">${i + 1}</span>
+      <span style="flex:1;font-size:.8rem;font-weight:600;color:var(--text)">${DB_SECTION_LABELS[s] || s}</span>
+      <button class="btn btn-g btn-sm" style="width:24px;height:24px;padding:0;font-size:.7rem" onclick="dbSectionMove(${i}, -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+      <button class="btn btn-g btn-sm" style="width:24px;height:24px;padding:0;font-size:.7rem" onclick="dbSectionMove(${i}, 1)" ${i === secs.length - 1 ? 'disabled' : ''}>▼</button>
+    </div>`).join('');
+}
+window.renderDbSectionOrder = renderDbSectionOrder;
 
 /* ── 초기화 ── */
 async function init() {
@@ -455,6 +493,7 @@ async function init() {
   syncServerSettingsUI();
   updateAdminUI();
   scheduleCardAnim();
+  S.view = 'dashboard';
   renderAll();
   updateUndoFab();
   startPolling();

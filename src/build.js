@@ -21,6 +21,7 @@ const JS_ORDER = [
   'app/modal.js',
   'app/io.js',
   'app/settings.js',
+  'app/dashboard.js',
   'app/main.js',
 ];
 

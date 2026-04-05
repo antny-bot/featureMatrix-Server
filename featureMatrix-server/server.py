@@ -2,7 +2,7 @@
 """
 featureMatrix-server
 Flask 기반 공유 데이터 서버
-실행: python server.py [--port 5000] [--host 0.0.0.0] [--admin-password 1234]
+실행: python server.py [--port 5000] [--host 0.0.0.0] [--admin-password 1234] [--editor-password 5678]
 """
 
 import json, os, time, argparse, secrets
@@ -20,18 +20,18 @@ TOKEN_TTL_MS   = 24 * 60 * 60 * 1000  # 24시간
 
 app = Flask(__name__, static_folder=str(STATIC_DIR))
 
-# ── 런타임 설정 (argparse 결과 저장) ──────────────────────
-RUNTIME = {'admin_password': None}
+# ── 런타임 설정 ───────────────────────────────────────────
+RUNTIME = {'admin_password': None, 'editor_password': None}
 
-# ── 세션 토큰 저장소 { token: expire_ts } ────────────────
-admin_tokens: dict = {}
+# ── 세션 토큰 저장소 ──────────────────────────────────────
+admin_tokens: dict  = {}   # { token: expire_ts }
+editor_tokens: dict = {}   # { token: expire_ts }
 
 # ── 편집 락 저장소 (메모리) ───────────────────────────────
 edit_locks = {}  # { key: { user, ts } }
 
-# ── 토큰 파일 저장/로드 ───────────────────────────────────
+# ── 토큰 파일 저장/로드 (관리자 토큰만 영속) ──────────────
 def load_tokens():
-    """서버 시작 시 토큰 파일을 읽어 만료되지 않은 토큰만 복원."""
     global admin_tokens
     if not TOKENS_FILE.exists():
         return
@@ -44,7 +44,6 @@ def load_tokens():
         admin_tokens = {}
 
 def save_tokens():
-    """현재 유효 토큰을 파일에 저장."""
     try:
         with open(TOKENS_FILE, 'w', encoding='utf-8') as f:
             json.dump(admin_tokens, f, separators=(',', ':'))
@@ -52,33 +51,40 @@ def save_tokens():
         pass
 
 def purge_expired_tokens():
-    """만료 토큰 정리."""
     now = int(time.time() * 1000)
-    expired = [t for t, exp in admin_tokens.items() if exp <= now]
-    for t in expired:
-        del admin_tokens[t]
+    for store in (admin_tokens, editor_tokens):
+        expired = [t for t, exp in store.items() if exp <= now]
+        for t in expired:
+            del store[t]
 
 # ── config.json 로드 ──────────────────────────────────────
 def load_config():
     if CONFIG_FILE.exists():
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             cfg = json.load(f)
-        # 구버전 config에 allowed_origins 없으면 추가
+        changed = False
         if 'allowed_origins' not in cfg:
             cfg['allowed_origins'] = []
+            changed = True
+        if 'editor_password' not in cfg:
+            cfg['editor_password'] = ''
+            changed = True
+        if changed:
             with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
                 json.dump(cfg, f, indent=2, ensure_ascii=False)
         return cfg
-    cfg = {'api_key': secrets.token_hex(16), 'allowed_origins': []}
+    cfg = {'allowed_origins': [], 'editor_password': ''}
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(cfg, f, indent=2, ensure_ascii=False)
-    print(f'\n✅ config.json 생성됨')
-    print(f'   API Key: {cfg["api_key"]}')
-    print(f'   이 키를 클라이언트 설정에 입력하세요.\n')
+    print(f'\n✅ config.json 생성됨\n')
     return cfg
 
 CONFIG = load_config()
 load_tokens()
+
+# editor_password: CLI 우선, 없으면 config.json
+def get_editor_password():
+    return RUNTIME['editor_password'] or CONFIG.get('editor_password', '')
 
 # ── 데이터 파일 ───────────────────────────────────────────
 def read_data():
@@ -86,7 +92,6 @@ def read_data():
         return {'serverTs': 0, 'payload': None, 'lastEditor': '', 'lastEditTime': 0}
     with open(DATA_FILE, 'r', encoding='utf-8') as f:
         d = json.load(f)
-    # 구버전 호환
     d.setdefault('lastEditor', '')
     d.setdefault('lastEditTime', 0)
     return d
@@ -107,13 +112,9 @@ def write_activity(entries):
     with open(ACTIVITY_FILE, 'w', encoding='utf-8') as f:
         json.dump(entries, f, ensure_ascii=False, separators=(',', ':'))
 
-# ── 인증 ──────────────────────────────────────────────────
-def check_auth():
-    key = request.headers.get('X-API-Key', '')
-    if key != CONFIG['api_key']:
-        abort(401, description='Invalid API key')
-
+# ── 인증 헬퍼 ─────────────────────────────────────────────
 def check_admin_token():
+    """관리자 토큰 유효성 확인"""
     token = request.headers.get('X-Admin-Token', '')
     if not token:
         return False
@@ -126,6 +127,19 @@ def check_admin_token():
         return False
     return True
 
+def check_editor_token():
+    """편집자 또는 관리자 토큰 유효성 확인"""
+    now = int(time.time() * 1000)
+    # 관리자 토큰도 편집 권한 포함
+    admin_token = request.headers.get('X-Admin-Token', '')
+    if admin_token and admin_tokens.get(admin_token, 0) > now:
+        return True
+    # 편집자 토큰
+    editor_token = request.headers.get('X-Editor-Token', '')
+    if editor_token and editor_tokens.get(editor_token, 0) > now:
+        return True
+    return False
+
 # ── CORS ──────────────────────────────────────────────────
 @app.after_request
 def add_cors(response):
@@ -135,11 +149,9 @@ def add_cors(response):
         if origin in allowed_origins:
             response.headers['Access-Control-Allow-Origin'] = origin
             response.headers['Vary'] = 'Origin'
-        # 허용 목록에 없는 Origin은 헤더 미포함 → 브라우저가 차단
     else:
-        # allowed_origins 미설정 시 제한 없음 (하위 호환)
         response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-API-Key, X-Admin-Token'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Admin-Token, X-Editor-Token'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
 
@@ -148,45 +160,49 @@ def add_cors(response):
 @app.route('/api/log', methods=['OPTIONS'])
 @app.route('/api/lock', methods=['OPTIONS'])
 @app.route('/api/unlock', methods=['OPTIONS'])
+@app.route('/api/set-editor-password', methods=['OPTIONS'])
 def options_handler():
     return '', 204
 
-# ── POST /api/auth ─── 관리자 인증 ───────────────────────
+# ── POST /api/auth ─── 로그인 (편집자/관리자) ─────────────
 @app.route('/api/auth', methods=['POST'])
 def auth():
-    check_auth()
-    body = request.get_json(silent=True) or {}
+    body     = request.get_json(silent=True) or {}
     password = body.get('password', '')
-    admin_pw = RUNTIME['admin_password']
+    role     = body.get('role', 'admin')  # 'editor' | 'admin'
 
-    # 서버에 admin_password 미설정 시 → 인증 없이 허용
-    if not admin_pw:
-        purge_expired_tokens()
-        token = secrets.token_hex(16)
-        admin_tokens[token] = int(time.time() * 1000) + TOKEN_TTL_MS
-        save_tokens()
-        return jsonify({'ok': True, 'token': token, 'noPassword': True})
+    purge_expired_tokens()
 
-    if password == admin_pw:
-        purge_expired_tokens()
-        token = secrets.token_hex(16)
-        admin_tokens[token] = int(time.time() * 1000) + TOKEN_TTL_MS
-        save_tokens()
-        return jsonify({'ok': True, 'token': token})
-    return jsonify({'ok': False, 'error': '비밀번호가 올바르지 않습니다.'}), 401
+    if role == 'editor':
+        editor_pw = get_editor_password()
+        # 편집자 비번 미설정 시 → 비번 없이 허용
+        if not editor_pw or password == editor_pw:
+            token = secrets.token_hex(16)
+            editor_tokens[token] = int(time.time() * 1000) + TOKEN_TTL_MS
+            return jsonify({'ok': True, 'token': token, 'role': 'editor'})
+        return jsonify({'ok': False, 'error': '비밀번호가 올바르지 않습니다.'}), 401
 
-# ── GET /api/data ─────────────────────────────────────────
+    else:  # admin
+        admin_pw = RUNTIME['admin_password']
+        if not admin_pw or password == admin_pw:
+            token = secrets.token_hex(16)
+            admin_tokens[token] = int(time.time() * 1000) + TOKEN_TTL_MS
+            save_tokens()
+            return jsonify({'ok': True, 'token': token, 'role': 'admin'})
+        return jsonify({'ok': False, 'error': '비밀번호가 올바르지 않습니다.'}), 401
+
+# ── GET /api/data ─── 인증 없이 읽기 허용 ────────────────
 @app.route('/api/data', methods=['GET'])
 def get_data():
-    check_auth()
     store = read_data()
     return jsonify({'ok': True, 'serverTs': store['serverTs'],
                     'payload': store['payload']})
 
-# ── POST /api/data ─── Last-Write-Wins ───────────────────
+# ── POST /api/data ─── 편집자/관리자 토큰 필요 ───────────
 @app.route('/api/data', methods=['POST'])
 def post_data():
-    check_auth()
+    if not check_editor_token():
+        return jsonify({'ok': False, 'error': '편집 권한이 없습니다. 로그인 후 이용하세요.'}), 403
     body = request.get_json(silent=True)
     if not body:
         return jsonify({'ok': False, 'error': 'Invalid JSON'}), 400
@@ -198,10 +214,9 @@ def post_data():
     write_data(payload, new_ts, editor)
     return jsonify({'ok': True, 'serverTs': new_ts})
 
-# ── GET /api/ping ─── 폴링 (lastEditor, locks 포함) ──────
+# ── GET /api/ping ─── 인증 없이 폴링 허용 ────────────────
 @app.route('/api/ping', methods=['GET'])
 def ping():
-    check_auth()
     store = read_data()
     now   = int(time.time() * 1000)
     stale = [k for k, v in edit_locks.items() if now - v['ts'] > 60000]
@@ -215,16 +230,16 @@ def ping():
 # ── GET /api/log ─── 활동 로그 조회 (관리자 전용) ─────────
 @app.route('/api/log', methods=['GET'])
 def get_log():
-    check_auth()
     if not check_admin_token():
         return jsonify({'ok': False, 'error': '관리자 권한이 필요합니다.'}), 403
     entries = read_activity()
     return jsonify({'ok': True, 'entries': list(reversed(entries))})
 
-# ── POST /api/log ─── 활동 로그 기록 ─────────────────────
+# ── POST /api/log ─── 활동 로그 기록 (편집자 이상) ────────
 @app.route('/api/log', methods=['POST'])
 def post_log():
-    check_auth()
+    if not check_editor_token():
+        return jsonify({'ok': False, 'error': '편집 권한이 없습니다.'}), 403
     body = request.get_json(silent=True) or {}
     entry = {
         'action': body.get('action', ''),
@@ -239,10 +254,11 @@ def post_log():
     write_activity(entries)
     return jsonify({'ok': True})
 
-# ── POST /api/lock ─── 편집 락 등록 ───────────────────────
+# ── POST /api/lock ─── 편집 락 (편집자 이상) ──────────────
 @app.route('/api/lock', methods=['POST'])
 def lock_item():
-    check_auth()
+    if not check_editor_token():
+        return jsonify({'ok': True, 'locks': edit_locks})  # 비인증 시 락 무시
     body = request.get_json(silent=True) or {}
     key  = body.get('key', '')
     user = body.get('user', '익명')
@@ -258,13 +274,26 @@ def lock_item():
 # ── POST /api/unlock ─── 편집 락 해제 ─────────────────────
 @app.route('/api/unlock', methods=['POST'])
 def unlock_item():
-    check_auth()
     body = request.get_json(silent=True) or {}
     key  = body.get('key', '')
     user = body.get('user', '익명')
     if key in edit_locks and edit_locks[key]['user'] == user:
         del edit_locks[key]
     return jsonify({'ok': True, 'locks': edit_locks})
+
+# ── POST /api/set-editor-password ─── 편집자 비번 변경 (관리자 전용) ──
+@app.route('/api/set-editor-password', methods=['POST'])
+def set_editor_password():
+    if not check_admin_token():
+        return jsonify({'ok': False, 'error': '관리자 권한이 필요합니다.'}), 403
+    body   = request.get_json(silent=True) or {}
+    new_pw = body.get('password', '')
+    CONFIG['editor_password'] = new_pw
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(CONFIG, f, indent=2, ensure_ascii=False)
+    # 기존 편집자 토큰 무효화
+    editor_tokens.clear()
+    return jsonify({'ok': True})
 
 # ── 정적 파일 서빙 ────────────────────────────────────────
 @app.route('/', defaults={'path': ''})
@@ -292,15 +321,17 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=int, default=5000)
     parser.add_argument('--host', default='0.0.0.0')
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--admin-password', default='', help='관리자 비밀번호')
+    parser.add_argument('--admin-password',  default='', help='관리자 비밀번호')
+    parser.add_argument('--editor-password', default='', help='편집자 비밀번호 (미설정 시 비번 없음)')
     args = parser.parse_args()
 
-    RUNTIME['admin_password'] = args.admin_password
+    RUNTIME['admin_password']  = args.admin_password
+    RUNTIME['editor_password'] = args.editor_password
 
     print(f'🚀 featureMatrix-server')
     print(f'   http://{args.host}:{args.port}')
-    print(f'   API Key: {CONFIG["api_key"]}')
     print(f'   관리자: {"비밀번호 설정됨" if args.admin_password else "미설정 (모든 사용자 관리자)"}')
+    print(f'   편집자: {"비밀번호 설정됨" if get_editor_password() else "미설정 (로그인 없이 편집 가능)"}')
     print(f'   데이터: {DATA_FILE}')
     print(f'   정적파일: {STATIC_DIR}\n')
 

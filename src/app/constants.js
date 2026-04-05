@@ -5,7 +5,8 @@
 export const SK             = 'sobukMXv6';
 export const UNDO_MAX       = 20;
 export const CELL_OV        = 5;
-export const ADMIN_TOKEN_KEY = 'fmAdminToken';
+export const ADMIN_TOKEN_KEY  = 'fmAdminToken';
+export const EDITOR_TOKEN_KEY = 'fmEditorToken';
 
 export const FIELDS = [
   'key','name','desc','path','group','subGroup','category','subCategory',

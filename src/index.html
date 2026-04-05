@@ -28,44 +28,37 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
 
 <header class="hdr">
   <div class="hdr-left">
-    <button class="btn btn-g" style="width:32px;padding:0;position:relative" onclick="togglePanel()" title="패널 (F)">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
     <div><div class="logo-kr" id="dTitle">featureMATRIX</div><div class="logo-sub" id="dSub">기능정의 툴</div></div>
   </div>
-  <div class="hdr-stats">
-    <div class="stat"><span class="stat-lbl">전체</span><span class="stat-val sv-t" id="stTotal">0</span></div>
-    <div class="stat"><span class="stat-lbl">상</span><span class="stat-val sv-h" id="stHigh">0</span></div>
-    <div class="stat"><span class="stat-lbl">중</span><span class="stat-val sv-m" id="stMid">0</span></div>
-    <div class="stat"><span class="stat-lbl">하</span><span class="stat-val sv-l" id="stLow">0</span></div>
-    <div class="stat"><span class="stat-lbl">중요</span><span class="stat-val sv-i" id="stImp">0</span></div>
-    <div class="stat"><span class="stat-lbl">신규N</span><span class="stat-val sv-n" id="stNew">0</span></div>
-    <span class="fbadge" id="fbadge">필터 적용 중</span>
-  </div>
-  <div class="hdr-mid">
-    <div class="search-wrap">
-      <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
-      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
-    </div>
-  </div>
+  <!-- stats: 대시보드로 이동 (DOM id 유지 → countUp 호환) -->
+  <span id="stTotal" style="display:none">0</span>
+  <span id="stHigh"  style="display:none">0</span>
+  <span id="stMid"   style="display:none">0</span>
+  <span id="stLow"   style="display:none">0</span>
+  <span id="stImp"   style="display:none">0</span>
+  <span id="stNew"   style="display:none">0</span>
+  <div class="hdr-mid"></div>
   <div class="hdr-actions">
-    <div class="vtabs">
-      <button class="vtab on" id="tabM" onclick="switchView('matrix')">매트릭스</button>
-      <button class="vtab" id="tabL" onclick="switchView('list')">리스트</button>
-    </div>
-    <button class="btn btn-p btn-sm" onclick="openAddModal()">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 추가
+    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>설정</span>
     </button>
-    <button class="btn btn-s btn-sm" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)" style="width:27px;padding:0">⚙</button>
-    <span id="storageModeBadge" style="font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);cursor:default;display:inline-flex;align-items:center;gap:4px" title="저장 위치">
+    <button class="btn btn-g btn-sm hdr-btn" id="serverStatusBtn" title="서버 상태">
       <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
-      <span id="serverStatusLabel">🌐</span>
-    </span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      <span id="serverStatusLabel">서버</span>
+    </button>
+    <span id="storageModeBadge" style="display:none"></span>
     <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
-    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="adminLogout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="관리자 잠금">🔒</button>
-    <button class="btn btn-g btn-sm" onclick="openModal('shortcutsModal')" title="단축키 (?)">?</button>
-    <button class="btn btn-g btn-sm" style="width:27px;padding:0" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="logout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="로그아웃">🔒</button>
+    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('shortcutsModal')" title="단축키 (?)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+      <span>단축키</span>
+    </button>
+    <button class="btn btn-g btn-sm hdr-btn" onclick="toggleTheme()" id="themeBtn" title="테마">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeBtnIcon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <span>테마</span>
+    </button>
   </div>
   <div class="hdr-prog" id="hdrProg" title="완료율 0%"><div class="hdr-prog-bar" id="hdrProgBar" style="width:0%"></div></div>
 </header>
@@ -77,7 +70,46 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
 </div>
 <style>#updateBanner.on{display:flex}</style>
 <div class="layout" id="layout">
+  <!-- 왼쪽 네비게이션 사이드바 -->
+  <nav class="nav-side" id="navSide">
+    <button class="nav-item" id="navD" onclick="switchView('dashboard')" title="대시보드">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>대시보드</span>
+    </button>
+    <button class="nav-item on" id="navM" onclick="switchView('matrix')" title="매트릭스">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+      <span>매트릭스</span>
+    </button>
+    <button class="nav-item" id="navL" onclick="switchView('list')" title="리스트">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>
+      <span>리스트</span>
+    </button>
+    <div class="nav-spacer"></div>
+    <button class="nav-item nav-login" id="navLogin" onclick="openLoginModal()" title="로그인" style="display:none">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>로그인</span>
+    </button>
+  </nav>
+  <main class="content" id="contentArea">
+    <!-- 검색바: 매트릭스·리스트에서만 표시 -->
+    <div class="content-search" id="contentSearch" style="display:none">
+      <div class="search-wrap">
+        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+      </div>
+    </div>
+    <div id="dashboardView" style="display:none"></div>
+    <div id="matrixView" class="mwrap fluid"></div>
+    <div id="bulkBar" class="bulk-bar" style="display:none"></div>
+    <div id="listView"   class="lwrap" style="display:none"></div>
+  </main>
+  <!-- 오른쪽 필터 패널 (매트릭스·리스트에서만 표시) -->
   <aside class="fpanel" id="fpanel">
+    <!-- 삼선 토글 버튼 (항상 표시) -->
+    <button class="fpanel-toggle" id="fpanelToggle" onclick="togglePanel()" title="필터 패널 (F)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="fpinner">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)">필터</span>
@@ -118,14 +150,15 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <label class="tgl"><input type="checkbox" id="togUpd"         onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">수정일</span></label>
         </div>
       </div>
-      <!-- #6 범례 삭제 -->
+      <div class="fsep"></div>
+      <div class="undo-fab" id="undoFab">
+        <button class="btn btn-s" onclick="doUndo()" title="실행 취소 (Z)" style="gap:6px;width:100%">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+          되돌리기
+        </button>
+      </div>
     </div>
   </aside>
-  <main class="content" id="contentArea">
-    <div id="matrixView" class="mwrap fluid"></div>
-    <div id="bulkBar" class="bulk-bar" style="display:none"></div>
-    <div id="listView"   class="lwrap" style="display:none"></div>
-  </main>
 </div>
 
 <!-- 편집 모달 -->
@@ -319,11 +352,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div class="srow"><div><div class="slbl">카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjCatW(-4)">−</button><span id="dCatW">24px</span><button class="stepbtn" onclick="adjCatW(4)">+</button></div></div>
           <div class="srow"><div><div class="slbl">서브카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjSubCatW(-4)">−</button><span id="dSubCatW">72px</span><button class="stepbtn" onclick="adjSubCatW(4)">+</button></div></div>
         </div>
-        <div class="sec-ttl">레이아웃</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-          <div class="srow" style="border-bottom:none"><div><div class="slbl">매트릭스 너비</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="mwF" onclick="setMW('fluid')">가변</button><button class="rbtn" id="mwX" onclick="setMW('fixed')">고정</button></div></div>
-          <div class="srow" style="border-bottom:none"><div><div class="slbl">필터 패널 위치</div></div><div style="display:flex;gap:5px"><button class="rbtn on" id="ppL" onclick="setPPos('left')">← 왼쪽</button><button class="rbtn" id="ppR" onclick="setPPos('right')">오른쪽 →</button></div></div>
-        </div>
+        <!-- 매트릭스 너비·필터 패널 위치: 고정값(fluid/right) — 숨김 처리, DOM id 유지 -->
+        <span id="mwF" style="display:none"></span><span id="mwX" style="display:none"></span>
+        <span id="ppL" style="display:none"></span><span id="ppR" style="display:none"></span>
         <div class="sec-ttl" style="margin-top:12px">애니메이션</div>
         <div class="srow"><div><div class="slbl">애니메이션 전체</div><div class="ssub">모든 애니메이션 일괄 on/off</div></div><label class="tgl"><input type="checkbox" id="animEnabled" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">숫자 카운트업</div><div class="ssub">헤더 통계 숫자 증가 효과</div></div><label class="tgl"><input type="checkbox" id="animCountUp" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
@@ -332,16 +363,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl">행 Hover Shimmer</div><div class="ssub">리스트 뷰 행 hover 광택 효과</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">모달 Backdrop Blur</div><div class="ssub">모달 배경 블러 처리</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
       </div>
-      <!-- 디자인: 카드스타일 + 색상 + 테마 -->
+      <!-- 디자인: 테마 최상단 → 카드스타일+색상 2열 → 미리보기 -->
       <div class="spane" id="sdesign">
-        <div id="prioStyleRows"></div>
-        <div class="sec-ttl" style="margin-top:10px">카드 미리보기</div>
-        <div class="preview-cards" id="previewCards"></div>
-        <div class="sec-ttl" style="margin-top:12px">색상</div>
-        <div id="designContent"></div>
-        <div class="sec-ttl" style="margin-top:12px">테마</div>
+        <div class="sec-ttl">테마</div>
         <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">테마 선택 시 색상이 자동 업데이트됩니다.</div>
         <div class="theme-grid" id="themeGrid"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:16px">
+          <div>
+            <div class="sec-ttl">카드 스타일</div>
+            <div id="prioStyleRows"></div>
+          </div>
+          <div>
+            <div class="sec-ttl">포인트·배경 색상</div>
+            <div id="designContent"></div>
+          </div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">카드 미리보기</div>
+        <div class="preview-cards" id="previewCards"></div>
       </div>
       <!-- 컬럼·축: 리스트컬럼 + 축순서 -->
       <div class="spane" id="scola">
@@ -391,8 +429,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             💾 로컬 (개인)
           </label>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px;grid-column:span 2">
+        <div style="display:flex;flex-direction:column;gap:0">
+          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
             <div class="slbl">사용자 이름</div>
             <input class="inp" id="sUserName" placeholder="홍길동" style="height:28px;font-size:.8rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
           </div>
@@ -400,11 +438,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             <div class="slbl">서버 URL</div>
             <div class="ssub">비워두면 현재 도메인 사용</div>
             <input class="inp" id="sServerUrl" placeholder="http://서버IP:5000" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
-          </div>
-          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-            <div class="slbl">API Key</div>
-            <div class="ssub">server.py의 config.json에서 확인</div>
-            <input class="inp" id="sApiKey" type="password" placeholder="API 키 입력" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
           </div>
         </div>
         <div class="srow" style="margin-top:4px">
@@ -416,11 +449,34 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         </div>
         <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-p btn-sm" onclick="saveServerSettings()">서버 설정 저장</button>
-          <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>{updateAdminUI();notify('관리자 인증 완료')})" title="관리자 인증">🔑 관리자 인증</button>
+          <button class="btn btn-s btn-sm" onclick="openLoginModal()" title="로그인">🔑 로그인</button>
         </div>
       </div>
       <div class="spane" id="sadmin">
-        <div class="sec-ttl">헤더</div>
+        <div class="sec-ttl">편집자 비밀번호</div>
+        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <div class="ssub">편집자 로그인 시 사용할 비밀번호. 비워두면 비번 없이 편집 가능.</div>
+          <div style="display:flex;gap:8px;width:100%">
+            <input class="inp" id="editorPwInp" type="password" placeholder="새 비밀번호 (비우면 제거)"
+              style="flex:1;height:28px;font-size:.82rem"
+              onkeydown="if(event.key==='Enter')setEditorPassword()">
+            <button class="btn btn-s btn-sm" onclick="setEditorPassword()">변경</button>
+          </div>
+          <div id="editorPwErr" style="color:var(--danger);font-size:.78rem;min-height:14px"></div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">대시보드</div>
+        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
+          <div class="slbl">히어로 제목</div>
+          <div class="ssub">대시보드 상단에 표시할 프로젝트명</div>
+          <input class="inp" id="dbHeroName" placeholder="프로젝트 현황" style="height:28px;font-size:.82rem"
+            oninput="saveDbSettings()">
+        </div>
+        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:8px;margin-top:4px">
+          <div class="slbl">섹션 표시 순서</div>
+          <div class="ssub">드래그하거나 ▲▼ 버튼으로 순서를 변경하세요</div>
+          <div id="dbSectionOrder" style="display:flex;flex-direction:column;gap:6px;width:100%"></div>
+        </div>
+        <div class="sec-ttl" style="margin-top:12px">헤더</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
           <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
           <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">서브 타이틀</div><input class="inp" id="sSub" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
@@ -474,12 +530,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   </div>
 </div>
 
-<div class="undo-fab" id="undoFab">
-  <button class="btn btn-s" onclick="doUndo()" title="실행 취소 (Z)" style="gap:6px">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-    되돌리기
-  </button>
-</div>
 <div class="ftt" id="ftt"></div>
 <div class="notif" id="notif"></div>
 
@@ -503,22 +553,42 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   </div>
 </div>
 
-<!-- 관리자 인증 모달 -->
-<div class="ov" id="adminAuthModal">
+<!-- 로그인 모달 -->
+<div class="ov" id="loginModal">
   <div class="mbox" style="width:360px">
-    <div class="mhd"><span class="mtitle">🔑 관리자 인증</span><button class="mclose" onclick="closeAdminModal()">✕</button></div>
+    <div class="mhd"><span class="mtitle">🔑 로그인</span><button class="mclose" onclick="closeLoginModal()">✕</button></div>
     <div class="mbody">
-      <p style="font-size:.82rem;color:var(--text-2);margin-bottom:12px">관리자 비밀번호를 입력하세요.</p>
-      <input class="inp" id="adminPwInp" type="password" placeholder="비밀번호"
-        onkeydown="if(event.key==='Enter')submitAdminAuth()">
-      <div id="adminAuthErr" style="color:var(--danger);font-size:.78rem;margin-top:6px;min-height:18px"></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">역할</label>
+          <select class="inp" id="loginRoleSelect" style="height:38px;font-size:.82rem;padding-top:0;padding-bottom:0">
+            <option value="editor">편집자</option>
+            <option value="admin">관리자</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">이름</label>
+          <input class="inp" id="loginNameInp" placeholder="홍길동" style="height:32px;font-size:.82rem"
+            onkeydown="if(event.key==='Enter')document.getElementById('loginPwInp').focus()">
+        </div>
+        <div>
+          <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">비밀번호</label>
+          <input class="inp" id="loginPwInp" type="password" placeholder="비밀번호 (미설정 시 비워두세요)"
+            style="height:32px;font-size:.82rem"
+            onkeydown="if(event.key==='Enter')submitLogin()">
+        </div>
+        <div id="loginErr" style="color:var(--danger);font-size:.78rem;min-height:16px"></div>
+      </div>
     </div>
     <div class="mfoot">
-      <button class="btn btn-g btn-sm" onclick="closeAdminModal()">취소</button>
-      <button class="btn btn-p btn-sm" onclick="submitAdminAuth()">확인</button>
+      <button class="btn btn-g btn-sm" onclick="closeLoginModal()">취소</button>
+      <button class="btn btn-p btn-sm" onclick="submitLogin()">로그인</button>
     </div>
   </div>
 </div>
+
+<!-- 관리자 인증 모달 (하위 호환 — loginModal로 대체됨, DOM 유지) -->
+<div class="ov" id="adminAuthModal" style="display:none!important"></div>
 
 
 <!-- Diff 뷰 모달 -->

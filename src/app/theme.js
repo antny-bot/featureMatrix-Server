@@ -16,7 +16,7 @@ export function applyVars() {
   const c  = getColors();
   const ss = S.settings;
   let css = `html{font-size:${ss.baseFont}px !important}\n`;
-  css += `:root{--p-high:${c.pHigh};--p-high-bg:${c.pHighBg};--p-mid:${c.pMid};--p-mid-bg:${c.pMidBg};--p-low:${c.pLow};--p-low-bg:${c.pLowBg}}\n`;
+  css += `:root{--p-high:${c.pHigh};--p-high-bg:${c.pHighBg};--p-mid:${c.pMid};--p-mid-bg:${c.pMidBg};--p-low:${c.pLow};--p-low-bg:${c.pLowBg};--db-theme-c:${c.mxGC};--db-theme-bg:${c.mxGBg}}\n`;
   css += `.mtable,.mtable th,.mtable td{border:${c.mxBW}px solid ${c.mxBorder}}\n`;
   /* X축 헤더: background를 dynStyle로 주입 → sticky 배경도 정확히 반영 */
   css += `.m-ghd{background:${c.mxGBg};color:${c.mxGC}}\n`;
@@ -121,8 +121,6 @@ export function updateDesignContent() {
     h += `<div class="sec-ttl">${grp.ttl}</div>`;
     grp.items.forEach(item => { h += colorRow(item.id, item.lbl); });
   });
-  h += `<div class="sec-ttl" style="margin-top:10px">우선순위 색상</div>
-        <div style="font-size:.74rem;color:var(--text-3);padding:6px 0">우선순위 색상은 <b>카드 스타일</b> 탭에서 편집하세요.</div>`;
   el.innerHTML = h;
 }
 

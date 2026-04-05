@@ -2,7 +2,7 @@
    state.js — 전역 상태(S), 저장/로드 (서버/로컬), Undo
 ══════════════════════════════════════════ */
 
-import { SK, UNDO_MAX, DEFAULT_LIST_COLS, ADMIN_TOKEN_KEY } from './constants.js';
+import { SK, UNDO_MAX, DEFAULT_LIST_COLS, ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY } from './constants.js';
 
 /** 전역 상태 — 앱 전체에서 import해서 사용 */
 export const S = {
@@ -14,7 +14,7 @@ export const S = {
   display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true },
   settings: {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:24, subCatW:72, cellFold:3,
+    colW:130, catW:24, subCatW:72, cellFold:0,
     matrixWidth:'fluid', panelPos:'left', panelVisible:true,
     title:'소복 매트릭스', subtitle:'Function Matrix', themeId:'sobuk',
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },
@@ -23,9 +23,10 @@ export const S = {
     animations: { enabled:true, countUp:true, card:true, filter:true, shimmer:true, blur:false },
     groupOrder: [],
     catOrder: [],
+    dbHeroName: '',
+    dbSections: ['stats', 'insight', 'heatmap'],
     storageMode: 'server',
     serverUrl:   '',
-    apiKey:      '',
     pollInterval: 10,
     userName:    '',       // 수정자 표시용 이름
   },
@@ -46,9 +47,11 @@ function apiBase() {
   return url || window.location.origin;
 }
 function apiHeaders() {
-  const h = { 'Content-Type': 'application/json', 'X-API-Key': S.settings.apiKey || '' };
-  const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
-  if (token) h['X-Admin-Token'] = token;
+  const h = { 'Content-Type': 'application/json' };
+  const adminToken  = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+  const editorToken = sessionStorage.getItem(EDITOR_TOKEN_KEY);
+  if (adminToken)  h['X-Admin-Token']  = adminToken;
+  if (editorToken) h['X-Editor-Token'] = editorToken;
   return h;
 }
 
@@ -67,6 +70,7 @@ function apiHeaders() {
 const SHARED_SETTINGS = [
   'title','subtitle',
   'groupOrder','catOrder',
+  'dbHeroName','dbSections',
   'priorityStyles','customColors',
   'matrixWidth','cellFold',
   'colW','catW','subCatW',
@@ -96,7 +100,6 @@ function buildLocalPayload() {
       listColumns:  S.settings.listColumns,
       storageMode:  S.settings.storageMode,
       serverUrl:    S.settings.serverUrl,
-      apiKey:       S.settings.apiKey,
       pollInterval: S.settings.pollInterval,
       userName:     S.settings.userName,
     }
@@ -115,6 +118,7 @@ function applyServerPayload(d) {
       if (k === 'customColors')   { S.settings.customColors   = ss[k]; return; }
       if (k === 'groupOrder')     { S.settings.groupOrder     = ss[k]; return; }
       if (k === 'catOrder')       { S.settings.catOrder       = ss[k]; return; }
+      if (k === 'dbSections')     { S.settings.dbSections     = ss[k]; return; }
       S.settings[k] = ss[k];
     });
   }
@@ -129,7 +133,7 @@ function applyLocalPayload(d) {
   if (d.local) {
     const l = d.local;
     ['baseFont','cardFont','themeId','panelPos','panelVisible',
-     'storageMode','serverUrl','apiKey','pollInterval','userName']
+     'storageMode','serverUrl','pollInterval','userName']
       .forEach(k => { if (l[k] !== undefined) S.settings[k] = l[k]; });
     if (l.animations)  Object.assign(S.settings.animations, l.animations);
     if (l.listColumns) S.settings.listColumns = l.listColumns;
@@ -137,7 +141,7 @@ function applyLocalPayload(d) {
   // 구버전 로컬 포맷 호환 (settings 플랫 구조)
   if (d.settings && !d.local) {
     const ss = d.settings;
-    ['baseFont','cardFont','themeId','panelPos','storageMode','serverUrl','apiKey','pollInterval','userName']
+    ['baseFont','cardFont','themeId','panelPos','storageMode','serverUrl','pollInterval','userName']
       .forEach(k => { if (ss[k] !== undefined) S.settings[k] = ss[k]; });
     if (ss.panelVisible !== undefined) S.settings.panelVisible = ss.panelVisible;
     if (ss.animations)  Object.assign(S.settings.animations, ss.animations);
@@ -181,7 +185,7 @@ export async function loadFromServer() {
   try {
     const res = await fetch(apiBase() + '/api/data', { headers: apiHeaders() });
     if (!res.ok) {
-      if (res.status === 401) notify('API 키가 올바르지 않습니다.', true);
+      if (res.status === 403) notify('편집 권한이 없습니다. 로그인하세요.', true);
       throw new Error(res.status);
     }
     const json = await res.json();

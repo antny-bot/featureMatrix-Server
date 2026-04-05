@@ -20,7 +20,7 @@ export function sstab(btn, paneId) {
   if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); }
   if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
   if (paneId === 'sdat')    window.syncServerSettingsUI?.();
-  if (paneId === 'sadmin')  window.loadInlineActivityLog?.();
+  if (paneId === 'sadmin')  { window.loadInlineActivityLog?.(); window.renderDbSectionOrder?.(); }
 }
 
 /* ── 설정 UI 전체 동기화 ── */
@@ -31,6 +31,8 @@ export function syncSettingsUI() {
   const subEl   = document.getElementById('sSub');
   if (titleEl) { titleEl.value = ss.title; titleEl.disabled = !admin; }
   if (subEl)   { subEl.value   = ss.subtitle; subEl.disabled = !admin; }
+  const dbHeroEl = document.getElementById('dbHeroName');
+  if (dbHeroEl) dbHeroEl.value = ss.dbHeroName || '';
   // 헤더 DOM도 즉시 반영
   const dTitleEl = document.getElementById('dTitle');
   const dSubEl   = document.getElementById('dSub');
