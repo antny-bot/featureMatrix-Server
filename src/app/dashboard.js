@@ -308,24 +308,35 @@ export function renderDashboard() {
             </div>`
         }
       </div>
+
+      ${sections.includes('heatmap') ? `
+      <div class="db-panel db-heatmap-panel">
+        <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="db-panel-title">기능 분포 히트맵</div>
+            <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+          </div>
+          <div class="db-hm-tabs">
+            <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
+            <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
+          </div>
+        </div>
+        ${buildHeatmap(all, groups, cats)}
+      </div>` : ''}
     </div>
 
     <div class="db-body-right">
-      <div class="db-card">
-        <div class="db-card-label">진행 상태</div>
-        <div class="db-status-grid">
-          ${['기획','개발중','완료','보류'].map(s => `
-            <div class="db-status-item">
-              <div class="db-status-dot" style="background:${statusColor(s)}"></div>
-              <span class="db-status-name">${s}</span>
-              <span class="db-status-cnt">${statusCount[s]}</span>
-            </div>`).join('')}
-        </div>
-      </div>
       <div class="db-panel db-timeline-panel">
-        <div class="db-panel-hd">
-          <div class="db-panel-title">최근 변경</div>
-          <div class="db-panel-sub">수정일 기준</div>
+        <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div class="db-panel-title">최근 변경</div>
+            <div class="db-panel-sub">수정일 기준</div>
+          </div>
+          <div class="db-st-badges">
+            ${['기획','개발중','완료','보류'].filter(s => statusCount[s] > 0).map(s =>
+              `<span class="db-st-badge" style="color:${statusColor(s)}">${s} ${statusCount[s]}</span>`
+            ).join('')}
+          </div>
         </div>
         ${recent.length === 0
           ? `<div class="db-empty">변경 기록이 없습니다</div>`
@@ -352,24 +363,6 @@ export function renderDashboard() {
     </div>
   </div>`;
 
-  /* ── 히트맵 섹션 ── */
-  const heatmapSection = `
-  <section class="db-panel db-heatmap-panel" data-anim-idx="3">
-    <div class="db-panel-hd">
-      <div>
-        <div class="db-panel-title">기능 분포 히트맵</div>
-        <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
-      </div>
-      <div class="db-hm-tabs">
-        <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
-        <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
-      </div>
-    </div>
-    ${buildHeatmap(all, groups, cats)}
-  </section>`;
-
-  const showHeatmap = sections.includes('heatmap');
-
   el.innerHTML = `
 <div class="db-wrap">
   <div class="db-hero" data-anim-idx="0">
@@ -379,7 +372,6 @@ export function renderDashboard() {
     </div>
   </div>
   ${bodySection}
-  ${showHeatmap ? heatmapSection : ''}
 </div>`;
 
   /* 섹션별 순차 fade-in */
