@@ -189,9 +189,13 @@ export function renderDashboard() {
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 10);
 
-  /* 담당별 정렬 */
+  /* 담당별 정렬: 총개수 → 상 우선순위 → 완료 순 */
   const owners = Object.entries(ownerMap)
-    .sort((a, b) => b[1].total - a[1].total)
+    .sort((a, b) => {
+      if (b[1].total !== a[1].total) return b[1].total - a[1].total;
+      if (b[1].high  !== a[1].high)  return b[1].high  - a[1].high;
+      return (b[1].status['완료']||0) - (a[1].status['완료']||0);
+    })
     .slice(0, 10);
 
   /* 섹션 순서 */
@@ -280,30 +284,46 @@ export function renderDashboard() {
                 <div class="db-owners-bar-hdr">우선순위</div>
                 <div class="db-owners-bar-hdr">진행상태</div>
               </div>
-              ${owners.map(([owner, cnt]) => `
+              ${owners.map(([owner, cnt]) => {
+                const t = cnt.total;
+                /* 우선순위 범례: 값 있는 것만 */
+                const prioLeg = [
+                  cnt.high > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--p-high,var(--danger))"></span>상 ${cnt.high}</span>` : '',
+                  cnt.mid  > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--p-mid,var(--accent))"></span>중 ${cnt.mid}</span>` : '',
+                  cnt.low  > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--text-3)"></span>하 ${cnt.low}</span>` : '',
+                ].filter(Boolean).join('');
+                /* 진행상태 범례 */
+                const SC = { '기획':'var(--text-3)', '개발중':'var(--accent)', '완료':'var(--success)', '보류':'var(--warning)' };
+                const stLeg = ['기획','개발중','완료','보류']
+                  .filter(s => cnt.status[s] > 0)
+                  .map(s => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC[s]}"></span>${s} ${cnt.status[s]}</span>`)
+                  .join('');
+                return `
                 <div class="db-owner-row-unified">
                   <div class="db-owner-info">
                     <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
                     <span class="db-owner-name">${esc(owner)}</span>
-                    <span class="db-owner-total">${cnt.total}</span>
+                    <span class="db-owner-total">${t}</span>
                   </div>
                   <div class="db-owner-bar-wrap">
                     <div class="db-bar-track">
-                      <div class="db-owner-seg db-bar--high" style="width:${cnt.total > 0 ? (cnt.high/cnt.total*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
-                      <div class="db-owner-seg db-bar--mid"  style="width:${cnt.total > 0 ? (cnt.mid/cnt.total*100).toFixed(1) : 0}%"  title="중 ${cnt.mid}"></div>
-                      <div class="db-owner-seg db-bar--low"  style="width:${cnt.total > 0 ? (cnt.low/cnt.total*100).toFixed(1) : 0}%"  title="하 ${cnt.low}"></div>
+                      <div class="db-owner-seg db-bar--high" style="width:${t > 0 ? (cnt.high/t*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
+                      <div class="db-owner-seg db-bar--mid"  style="width:${t > 0 ? (cnt.mid/t*100).toFixed(1)  : 0}%" title="중 ${cnt.mid}"></div>
+                      <div class="db-owner-seg db-bar--low"  style="width:${t > 0 ? (cnt.low/t*100).toFixed(1)  : 0}%" title="하 ${cnt.low}"></div>
                     </div>
+                    ${prioLeg ? `<div class="db-gp-legend db-owner-legend">${prioLeg}</div>` : ''}
                   </div>
                   <div class="db-owner-bar-wrap">
                     <div class="db-bar-track">
-                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['기획']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
-                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['개발중']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
-                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['완료']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
-                      <div class="db-owner-seg" style="width:${cnt.total > 0 ? ((cnt.status['보류']||0)/cnt.total*100).toFixed(1) : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
+                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['기획']||0)/t*100).toFixed(1)  : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
+                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['개발중']||0)/t*100).toFixed(1): 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
+                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['완료']||0)/t*100).toFixed(1)  : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
+                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['보류']||0)/t*100).toFixed(1)  : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
                     </div>
+                    ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ''}
                   </div>
-                </div>
-              `).join('')}
+                </div>`;
+              }).join('')}
             </div>`
         }
       </div>

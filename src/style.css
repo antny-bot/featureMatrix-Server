@@ -404,7 +404,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-mid{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:stretch}
 @media(max-width:900px){.db-mid{grid-template-columns:1fr}}
 /* B 레이아웃: insight 섹션 */
-.db-insight{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+.db-insight{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:stretch}
 @media(max-width:960px){.db-insight{grid-template-columns:1fr}}
 .db-insight-left{display:flex;flex-direction:column;gap:16px}
 /* 그룹별 진척도 */
@@ -449,7 +449,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-hm-legend-seg{width:18px;height:8px;border-radius:2px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06)}
 
 /* 타임라인 */
-.db-timeline-panel{display:flex;flex-direction:column;height:100%}
+.db-timeline-panel{display:flex;flex-direction:column;height:100%;box-sizing:border-box}
 .db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0}
 .db-tl-item{display:flex;gap:12px}
 .db-tl-line-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
