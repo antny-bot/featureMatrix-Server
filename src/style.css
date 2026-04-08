@@ -466,9 +466,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-st-badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex-shrink:0}
 .db-st-badge{font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--surface-3)}
 /* 타임라인 */
-.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box;max-height:400px}
+.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box;max-height:320px}
 .db-body-right .db-timeline-panel{flex:1;min-height:0;max-height:none}
-.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0;max-height:320px}
+.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0;max-height:240px}
 .db-body-right .db-timeline{max-height:none}
 .db-tl-item{display:flex;gap:12px}
 .db-tl-line-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
@@ -478,6 +478,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-tl-time{font-size:.62rem;font-weight:700;color:var(--text-3);letter-spacing:.03em;margin-bottom:2px}
 .db-tl-name{font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .db-tl-name:hover{color:var(--accent)}
+.db-tl-name--del{cursor:default;color:var(--text-3);text-decoration:line-through}
+.db-tl-name--del:hover{color:var(--text-3)}
+.db-tl-action{font-size:.65rem;font-weight:700}
 .db-tl-meta{display:flex;gap:8px;margin-top:3px}
 .db-tl-owner{font-size:.7rem;font-weight:600}
 .db-tl-status{font-size:.68rem;color:var(--text-3)}

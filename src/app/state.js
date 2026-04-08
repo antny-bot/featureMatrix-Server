@@ -7,6 +7,7 @@ import { SK, UNDO_MAX, DEFAULT_LIST_COLS, ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY, DAT
 /** 전역 상태 — 앱 전체에서 import해서 사용 */
 export const S = {
   items: [],
+  changeLog: [],           // 변경 이력 (추가/수정/삭제 등)
   view: 'matrix',
   searchQ: '',
   expandedCells: new Set(),
@@ -25,6 +26,7 @@ export const S = {
     catOrder: [],
     dbHeroName: '',
     dbSections: ['stats', 'insight', 'heatmap'],
+    changeLogMax: 50,      // 최근 변경 이력 최대 보관 개수
     storageMode: 'server',
     serverUrl:   '',
     pollInterval: 10,
@@ -107,19 +109,21 @@ const SHARED_SETTINGS = [
   'matrixWidth','cellFold',
   'colW','catW','subCatW',
   'cardRadius','cardGap',
+  'changeLogMax',
 ];
 
 /* 서버 전송 payload */
 function buildServerPayload() {
   const shared = {};
   SHARED_SETTINGS.forEach(k => { shared[k] = S.settings[k]; });
-  return { items: S.items, settings: shared, dataVersion: DATA_VERSION };
+  return { items: S.items, changeLog: S.changeLog, settings: shared, dataVersion: DATA_VERSION };
 }
 
 /* 로컬 전용 payload (서버 연결 정보 포함) */
 function buildLocalPayload() {
   return {
-    items:    S.items,          // 오프라인 캐시용
+    items:     S.items,         // 오프라인 캐시용
+    changeLog: S.changeLog,
     display:  S.display,
     filters:  S.filters,
     local: {  // 개인 설정만 묶음
@@ -142,6 +146,7 @@ function buildLocalPayload() {
 function applyServerPayload(d) {
   if (!d) return;
   if (d.items) S.items = migrateItems(d.items, d.dataVersion || 1);
+  if (Array.isArray(d.changeLog)) S.changeLog = d.changeLog;
   if (d.settings) {
     const ss = d.settings;
     SHARED_SETTINGS.forEach(k => {
@@ -160,6 +165,7 @@ function applyServerPayload(d) {
 function applyLocalPayload(d) {
   if (!d) return;
   if (d.items) S.items = migrateItems(d.items, d.dataVersion || 1); // 캐시 복원 + 마이그레이션
+  if (Array.isArray(d.changeLog)) S.changeLog = d.changeLog;
   if (d.display) Object.keys(d.display).forEach(k => { if (k in S.display) S.display[k] = d.display[k]; });
   if (d.filters) Object.keys(d.filters).forEach(k => { if (k in S.filters) S.filters[k] = d.filters[k]; });
   if (d.local) {
@@ -354,6 +360,19 @@ export async function logActivity(action, detail = '') {
       body: JSON.stringify({ action, detail, user: S.settings.userName || '익명', ts: Date.now() })
     });
   } catch(e) {}
+}
+
+/**
+ * 클라이언트 변경 이력 기록 — 서버/로컬 모드 모두 동작
+ * @param {'추가'|'수정'|'삭제처리'|'삭제복원'|'완전삭제'|'상태변경'} action
+ * @param {string} key
+ * @param {string} name
+ * @param {object} [extra]  - { status, owner } 등 추가 정보
+ */
+export function pushChangeLog(action, key, name, extra = {}) {
+  const max = S.settings.changeLogMax || 50;
+  S.changeLog.unshift({ action, key, name, ts: Date.now(), user: S.settings.userName || '', ...extra });
+  if (S.changeLog.length > max) S.changeLog.length = max;
 }
 
 /* ── 편집 중 락 ── */

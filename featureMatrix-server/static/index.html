@@ -474,9 +474,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-st-badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex-shrink:0}
 .db-st-badge{font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--surface-3)}
 /* 타임라인 */
-.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box;max-height:400px}
+.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box;max-height:320px}
 .db-body-right .db-timeline-panel{flex:1;min-height:0;max-height:none}
-.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0;max-height:320px}
+.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0;max-height:240px}
 .db-body-right .db-timeline{max-height:none}
 .db-tl-item{display:flex;gap:12px}
 .db-tl-line-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
@@ -486,6 +486,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-tl-time{font-size:.62rem;font-weight:700;color:var(--text-3);letter-spacing:.03em;margin-bottom:2px}
 .db-tl-name{font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .db-tl-name:hover{color:var(--accent)}
+.db-tl-name--del{cursor:default;color:var(--text-3);text-decoration:line-through}
+.db-tl-name--del:hover{color:var(--text-3)}
+.db-tl-action{font-size:.65rem;font-weight:700}
 .db-tl-meta{display:flex;gap:8px;margin-top:3px}
 .db-tl-owner{font-size:.7rem;font-weight:600}
 .db-tl-status{font-size:.68rem;color:var(--text-3)}
@@ -999,6 +1002,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <div class="ssub">드래그하거나 ▲▼ 버튼으로 순서를 변경하세요</div>
           <div id="dbSectionOrder" style="display:flex;flex-direction:column;gap:6px;width:100%"></div>
         </div>
+        <div class="srow" style="margin-top:4px"><div><div class="slbl">최근 변경 이력 보관 수</div><div class="ssub">10~500개, 초과분은 자동 삭제</div></div><div class="stepper"><button class="stepbtn" onclick="adjChangeLogMax(-10)">−</button><span id="dChangeLogMax">50</span><button class="stepbtn" onclick="adjChangeLogMax(10)">+</button></div></div>
         <div class="sec-ttl" style="margin-top:12px">헤더</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
           <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px"><div class="slbl">헤더 타이틀</div><input class="inp" id="sTitle" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()"></div>
@@ -1206,6 +1210,8 @@ function __inlineNotify(msg, type) {
   // app/state.js
   var S = {
     items: [],
+    changeLog: [],
+    // 변경 이력 (추가/수정/삭제 등)
     view: "matrix",
     searchQ: "",
     expandedCells: /* @__PURE__ */ new Set(),
@@ -1234,6 +1240,8 @@ function __inlineNotify(msg, type) {
       catOrder: [],
       dbHeroName: "",
       dbSections: ["stats", "insight", "heatmap"],
+      changeLogMax: 50,
+      // 최근 변경 이력 최대 보관 개수
       storageMode: "server",
       serverUrl: "",
       pollInterval: 10,
@@ -1296,19 +1304,21 @@ function __inlineNotify(msg, type) {
     "catW",
     "subCatW",
     "cardRadius",
-    "cardGap"
+    "cardGap",
+    "changeLogMax"
   ];
   function buildServerPayload() {
     const shared = {};
     SHARED_SETTINGS.forEach((k) => {
       shared[k] = S.settings[k];
     });
-    return { items: S.items, settings: shared, dataVersion: DATA_VERSION };
+    return { items: S.items, changeLog: S.changeLog, settings: shared, dataVersion: DATA_VERSION };
   }
   function buildLocalPayload() {
     return {
       items: S.items,
       // 오프라인 캐시용
+      changeLog: S.changeLog,
       display: S.display,
       filters: S.filters,
       local: {
@@ -1330,6 +1340,7 @@ function __inlineNotify(msg, type) {
   function applyServerPayload(d) {
     if (!d) return;
     if (d.items) S.items = migrateItems(d.items, d.dataVersion || 1);
+    if (Array.isArray(d.changeLog)) S.changeLog = d.changeLog;
     if (d.settings) {
       const ss = d.settings;
       SHARED_SETTINGS.forEach((k) => {
@@ -1361,6 +1372,7 @@ function __inlineNotify(msg, type) {
   function applyLocalPayload(d) {
     if (!d) return;
     if (d.items) S.items = migrateItems(d.items, d.dataVersion || 1);
+    if (Array.isArray(d.changeLog)) S.changeLog = d.changeLog;
     if (d.display) Object.keys(d.display).forEach((k) => {
       if (k in S.display) S.display[k] = d.display[k];
     });
@@ -1540,6 +1552,11 @@ function __inlineNotify(msg, type) {
       });
     } catch (e) {
     }
+  }
+  function pushChangeLog(action, key, name, extra = {}) {
+    const max = S.settings.changeLogMax || 50;
+    S.changeLog.unshift({ action, key, name, ts: Date.now(), user: S.settings.userName || "", ...extra });
+    if (S.changeLog.length > max) S.changeLog.length = max;
   }
   var editLocks = {};
   function updateLocks(locks) {
@@ -2697,7 +2714,8 @@ function __inlineNotify(msg, type) {
     const orderC = S.settings.catOrder.filter((c) => allCats.includes(c));
     const extraC = allCats.filter((c) => !orderC.includes(c));
     const cats = [...orderC, ...extraC];
-    const recent = [...all].filter((it) => it.updatedAt).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 10);
+    const recentMax = S.settings.changeLogMax || 50;
+    const recent = (S.changeLog || []).slice(0, recentMax);
     const owners = Object.entries(ownerMap).sort((a, b) => {
       if (b[1].total !== a[1].total) return b[1].total - a[1].total;
       if (b[1].high !== a[1].high) return b[1].high - a[1].high;
@@ -2799,33 +2817,31 @@ function __inlineNotify(msg, type) {
 
     <div class="db-body-right">
       <div class="db-panel db-timeline-panel">
-        <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div>
-            <div class="db-panel-title">\uCD5C\uADFC \uBCC0\uACBD</div>
-            <div class="db-panel-sub">\uC218\uC815\uC77C \uAE30\uC900</div>
-          </div>
-          <div class="db-st-badges">
-            ${["\uAE30\uD68D", "\uAC1C\uBC1C\uC911", "\uC644\uB8CC", "\uBCF4\uB958"].filter((s) => statusCount[s] > 0).map(
-      (s) => `<span class="db-st-badge" style="color:${statusColor(s)}">${s} ${statusCount[s]}</span>`
-    ).join("")}
-          </div>
+        <div class="db-panel-hd">
+          <div class="db-panel-title">\uCD5C\uADFC \uBCC0\uACBD</div>
+          <div class="db-panel-sub">\uCD94\uAC00\xB7\uC218\uC815\xB7\uC0AD\uC81C \uAE30\uC900</div>
         </div>
         ${recent.length === 0 ? `<div class="db-empty">\uBCC0\uACBD \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>` : `<div class="db-timeline">
-              ${recent.map((it, i) => `
+              ${recent.map((it, i) => {
+      const actionColor = { "\uCD94\uAC00": "var(--success)", "\uC218\uC815": "var(--accent)", "\uC0AD\uC81C\uCC98\uB9AC": "var(--warning)", "\uC0AD\uC81C\uBCF5\uC6D0": "var(--text-3)", "\uC644\uC804\uC0AD\uC81C": "var(--danger)", "\uC0C1\uD0DC\uBCC0\uACBD": "var(--accent)" }[it.action] || "var(--text-3)";
+      const isDeleted = it.action === "\uC644\uC804\uC0AD\uC81C" || it.action === "\uC0AD\uC81C\uCC98\uB9AC";
+      return `
                 <div class="db-tl-item">
                   <div class="db-tl-line-wrap">
-                    <div class="db-tl-dot" style="background:${statusColor(it.status)}"></div>
+                    <div class="db-tl-dot" style="background:${actionColor}"></div>
                     ${i < recent.length - 1 ? '<div class="db-tl-line"></div>' : ""}
                   </div>
                   <div class="db-tl-body">
-                    <div class="db-tl-time">${timeAgo(it.updatedAt)}</div>
-                    <div class="db-tl-name" onclick="openEditModal('${esc2(it.key)}')">${esc2(it.name || it.key)}</div>
+                    <div class="db-tl-time">${timeAgo(it.ts)}</div>
+                    <div class="db-tl-name${isDeleted ? " db-tl-name--del" : ""}" ${isDeleted ? "" : `onclick="openEditModal('${esc2(it.key)}')"`}>${esc2(it.name || it.key)}</div>
                     <div class="db-tl-meta">
+                      <span class="db-tl-action" style="color:${actionColor}">${esc2(it.action)}</span>
                       ${it.owner ? `<span class="db-tl-owner" style="color:${getOwnerColor2(it.owner)}">${esc2(it.owner)}</span>` : ""}
-                      ${it.status ? `<span class="db-tl-status">${esc2(it.status)}</span>` : ""}
+                      ${it.user ? `<span class="db-tl-status">${esc2(it.user)}</span>` : ""}
                     </div>
                   </div>
-                </div>`).join("")}
+                </div>`;
+    }).join("")}
             </div>
             <button class="db-more-btn" onclick="switchView('list')">\uC804\uCCB4 \uBAA9\uB85D \uBCF4\uAE30 \u2192</button>`}
       </div>
@@ -3183,11 +3199,13 @@ function __inlineNotify(msg, type) {
         const changed = ["name", "priority", "status", "owner", "group", "subGroup", "category", "subCategory"].filter((k) => old[k] !== ni[k]).map((k) => `${k}: ${old[k] || "\u2014"}\u2192${ni[k] || "\u2014"}`);
         S.items[idx] = ni;
         logActivity("\uC218\uC815", `${ni.key} ${ni.name}${changed.length ? " [" + changed.join(", ") + "]" : ""}`);
+        pushChangeLog("\uC218\uC815", ni.key, ni.name, { status: ni.status, owner: ni.owner });
       }
       notify("\uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
     } else {
       S.items.push(ni);
       logActivity("\uCD94\uAC00", `${ni.key} ${ni.name}`);
+      pushChangeLog("\uCD94\uAC00", ni.key, ni.name, { status: ni.status, owner: ni.owner });
       notify("\uAE30\uB2A5\uC774 \uCD94\uAC00\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
       scheduleCardAnim();
     }
@@ -3203,6 +3221,7 @@ function __inlineNotify(msg, type) {
       if (!confirm(`${S.editKey} \uD56D\uBAA9\uC744 \uC644\uC804\uD788 \uC0AD\uC81C\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?`)) return;
       pushUndo();
       logActivity("\uC644\uC804\uC0AD\uC81C", `${S.editKey} ${it?.name || ""}`);
+      pushChangeLog("\uC644\uC804\uC0AD\uC81C", S.editKey, it?.name || S.editKey);
       S.items = S.items.filter((it2) => it2.key !== S.editKey);
       closeModal("editModal");
       unlockItem(S.editKey);
@@ -3226,6 +3245,8 @@ function __inlineNotify(msg, type) {
     pushUndo();
     it.isDelete = it.isDelete === "Y" ? "N" : "Y";
     it.updatedAt = Date.now();
+    const action = it.isDelete === "Y" ? "\uC0AD\uC81C\uCC98\uB9AC" : "\uC0AD\uC81C\uBCF5\uC6D0";
+    pushChangeLog(action, it.key, it.name, { status: it.status, owner: it.owner });
     save();
     renderAll();
     notify(it.isDelete === "Y" ? "\uC0AD\uC81C \uCC98\uB9AC\uB428." : "\uC0AD\uC81C \uBCF5\uC6D0\uB428.");
@@ -3292,6 +3313,7 @@ function __inlineNotify(msg, type) {
     pushUndo();
     it.status = status;
     it.updatedAt = Date.now();
+    pushChangeLog("\uC0C1\uD0DC\uBCC0\uACBD", it.key, it.name, { status, owner: it.owner });
     save();
     renderAll();
     notify("\uC9C4\uD589\uC0C1\uD0DC \uBCC0\uACBD\uB428.");
@@ -4040,6 +4062,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     document.getElementById("dCatW").textContent = ss.catW + "px";
     document.getElementById("dSubCatW").textContent = ss.subCatW + "px";
     document.getElementById("dCellFold").textContent = ss.cellFold === 0 ? "\u221E" : ss.cellFold;
+    const dCLMax = document.getElementById("dChangeLogMax");
+    if (dCLMax) dCLMax.textContent = ss.changeLogMax ?? 50;
     document.getElementById("mwF").className = "rbtn" + (ss.matrixWidth === "fluid" ? " on" : "");
     document.getElementById("mwX").className = "rbtn" + (ss.matrixWidth === "fixed" ? " on" : "");
     document.getElementById("ppL").className = "rbtn" + (ss.panelPos === "left" ? " on" : "");

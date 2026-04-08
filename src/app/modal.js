@@ -6,7 +6,7 @@
             + #5 표·수식 파서
 ══════════════════════════════════════════ */
 
-import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, logActivity, lockItem, unlockItem } from './state.js';
+import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, logActivity, pushChangeLog, lockItem, unlockItem } from './state.js';
 import { renderAll, scheduleCardAnim } from './render.js';
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS } from './constants.js';
 import { requireAdmin, requireEditor, isEditor } from './admin.js';
@@ -315,11 +315,13 @@ export function saveItem() {
         .map(k => `${k}: ${old[k]||'—'}→${ni[k]||'—'}`);
       S.items[idx] = ni;
       logActivity('수정', `${ni.key} ${ni.name}${changed.length ? ' ['+changed.join(', ')+']' : ''}`);
+      pushChangeLog('수정', ni.key, ni.name, { status: ni.status, owner: ni.owner });
     }
     notify('저장되었습니다.');
   } else {
     S.items.push(ni);
     logActivity('추가', `${ni.key} ${ni.name}`);
+    pushChangeLog('추가', ni.key, ni.name, { status: ni.status, owner: ni.owner });
     notify('기능이 추가되었습니다.');
     scheduleCardAnim();
   }
@@ -333,6 +335,7 @@ export function hardDelete() {
     if (!confirm(`${S.editKey} 항목을 완전히 삭제하시겠습니까?`)) return;
     pushUndo();
     logActivity('완전삭제', `${S.editKey} ${it?.name||''}`);
+    pushChangeLog('완전삭제', S.editKey, it?.name || S.editKey);
     S.items = S.items.filter(it => it.key !== S.editKey);
     closeModal('editModal'); unlockItem(S.editKey); save(); renderAll(); notify('완전 삭제되었습니다.');
   });
@@ -350,6 +353,8 @@ export function quickToggleDel(key) {
   pushUndo();
   it.isDelete = it.isDelete === 'Y' ? 'N' : 'Y';
   it.updatedAt = Date.now();
+  const action = it.isDelete === 'Y' ? '삭제처리' : '삭제복원';
+  pushChangeLog(action, it.key, it.name, { status: it.status, owner: it.owner });
   save(); renderAll(); notify(it.isDelete === 'Y' ? '삭제 처리됨.' : '삭제 복원됨.');
 }
 
@@ -407,6 +412,7 @@ export function setItemStatus(key, status) {
   const it = findItem(key); if (!it) return;
   pushUndo();
   it.status = status; it.updatedAt = Date.now();
+  pushChangeLog('상태변경', it.key, it.name, { status, owner: it.owner });
   save(); renderAll(); notify('진행상태 변경됨.');
 }
 window.setItemStatus = setItemStatus;

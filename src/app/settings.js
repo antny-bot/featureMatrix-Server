@@ -47,6 +47,8 @@ export function syncSettingsUI() {
   document.getElementById('dCatW').textContent      = ss.catW      + 'px';
   document.getElementById('dSubCatW').textContent   = ss.subCatW   + 'px';
   document.getElementById('dCellFold').textContent  = ss.cellFold  === 0 ? '∞' : ss.cellFold;
+  const dCLMax = document.getElementById('dChangeLogMax');
+  if (dCLMax) dCLMax.textContent = ss.changeLogMax ?? 50;
   document.getElementById('mwF').className = 'rbtn' + (ss.matrixWidth === 'fluid' ? ' on' : '');
   document.getElementById('mwX').className = 'rbtn' + (ss.matrixWidth === 'fixed'  ? ' on' : '');
   document.getElementById('ppL').className = 'rbtn' + (ss.panelPos   === 'left'  ? ' on' : '');
@@ -91,7 +93,8 @@ export function adjGap(d)      { S.settings.cardGap     = Math.max(0, Math.min(2
 export function adjColW(d)     { S.settings.colW        = Math.max(80,Math.min(300,S.settings.colW+d));       document.getElementById('dColW').textContent     =S.settings.colW+'px';       save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
 export function adjCatW(d)     { S.settings.catW        = Math.max(16,Math.min(80,S.settings.catW+d));        document.getElementById('dCatW').textContent     =S.settings.catW+'px';        save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
 export function adjSubCatW(d)  { S.settings.subCatW     = Math.max(40,Math.min(200,S.settings.subCatW+d));    document.getElementById('dSubCatW').textContent  =S.settings.subCatW+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-export function adjCellFold(d) { S.settings.cellFold    = Math.max(0, Math.min(20,S.settings.cellFold+d));    document.getElementById('dCellFold').textContent =S.settings.cellFold===0?'∞':S.settings.cellFold; save(); S.expandedCells=new Set(); if(S.view==='matrix')renderMatrix(); }
+export function adjCellFold(d)      { S.settings.cellFold      = Math.max(0,  Math.min(20,  S.settings.cellFold+d));      document.getElementById('dCellFold').textContent      = S.settings.cellFold===0?'∞':S.settings.cellFold; save(); S.expandedCells=new Set(); if(S.view==='matrix')renderMatrix(); }
+export function adjChangeLogMax(d)  { S.settings.changeLogMax  = Math.max(10, Math.min(500, S.settings.changeLogMax+d));  document.getElementById('dChangeLogMax').textContent  = S.settings.changeLogMax; save(); }
 
 /* ── 애니메이션 ── */
 export function onAnimTgl() {

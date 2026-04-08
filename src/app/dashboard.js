@@ -185,11 +185,9 @@ export function renderDashboard() {
   const extraC    = allCats.filter(c => !orderC.includes(c));
   const cats      = [...orderC, ...extraC];
 
-  /* 최근 변경 */
-  const recent = [...all]
-    .filter(it => it.updatedAt)
-    .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, 10);
+  /* 최근 변경 — S.changeLog 기반 (삭제된 항목 포함) */
+  const recentMax = S.settings.changeLogMax || 50;
+  const recent = (S.changeLog || []).slice(0, recentMax);
 
   /* 담당별 정렬: 총개수 → 상 우선순위 → 완료 순 */
   const owners = Object.entries(ownerMap)
@@ -313,35 +311,33 @@ export function renderDashboard() {
 
     <div class="db-body-right">
       <div class="db-panel db-timeline-panel">
-        <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div>
-            <div class="db-panel-title">최근 변경</div>
-            <div class="db-panel-sub">수정일 기준</div>
-          </div>
-          <div class="db-st-badges">
-            ${['기획','개발중','완료','보류'].filter(s => statusCount[s] > 0).map(s =>
-              `<span class="db-st-badge" style="color:${statusColor(s)}">${s} ${statusCount[s]}</span>`
-            ).join('')}
-          </div>
+        <div class="db-panel-hd">
+          <div class="db-panel-title">최근 변경</div>
+          <div class="db-panel-sub">추가·수정·삭제 기준</div>
         </div>
         ${recent.length === 0
           ? `<div class="db-empty">변경 기록이 없습니다</div>`
           : `<div class="db-timeline">
-              ${recent.map((it, i) => `
+              ${recent.map((it, i) => {
+                const actionColor = { '추가':'var(--success)', '수정':'var(--accent)', '삭제처리':'var(--warning)', '삭제복원':'var(--text-3)', '완전삭제':'var(--danger)', '상태변경':'var(--accent)' }[it.action] || 'var(--text-3)';
+                const isDeleted = it.action === '완전삭제' || it.action === '삭제처리';
+                return `
                 <div class="db-tl-item">
                   <div class="db-tl-line-wrap">
-                    <div class="db-tl-dot" style="background:${statusColor(it.status)}"></div>
+                    <div class="db-tl-dot" style="background:${actionColor}"></div>
                     ${i < recent.length - 1 ? '<div class="db-tl-line"></div>' : ''}
                   </div>
                   <div class="db-tl-body">
-                    <div class="db-tl-time">${timeAgo(it.updatedAt)}</div>
-                    <div class="db-tl-name" onclick="openEditModal('${esc(it.key)}')">${esc(it.name || it.key)}</div>
+                    <div class="db-tl-time">${timeAgo(it.ts)}</div>
+                    <div class="db-tl-name${isDeleted ? ' db-tl-name--del' : ''}" ${isDeleted ? '' : `onclick="openEditModal('${esc(it.key)}')"`}>${esc(it.name || it.key)}</div>
                     <div class="db-tl-meta">
+                      <span class="db-tl-action" style="color:${actionColor}">${esc(it.action)}</span>
                       ${it.owner ? `<span class="db-tl-owner" style="color:${getOwnerColor(it.owner)}">${esc(it.owner)}</span>` : ''}
-                      ${it.status ? `<span class="db-tl-status">${esc(it.status)}</span>` : ''}
+                      ${it.user ? `<span class="db-tl-status">${esc(it.user)}</span>` : ''}
                     </div>
                   </div>
-                </div>`).join('')}
+                </div>`;
+              }).join('')}
             </div>
             <button class="db-more-btn" onclick="switchView('list')">전체 목록 보기 →</button>`
         }
