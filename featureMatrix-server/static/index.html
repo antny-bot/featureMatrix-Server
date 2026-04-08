@@ -212,16 +212,19 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .cell-cnt{position:absolute;top:3px;right:3px;font-size:.55rem;font-weight:700;border-radius:10px;padding:1px 5px;line-height:1.5;pointer-events:none}
 .cell-more-btn{width:100%;border:none;border-radius:4px;background:var(--surface-2);color:var(--text-3);font-size:.68rem;padding:4px;cursor:pointer;text-align:center;transition:all .14s;display:block;margin-top:3px;font-family:'Noto Sans KR',sans-serif;border:1px solid var(--border)}
 .cell-more-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
+.cell-quick-add-btn{width:100%;border:1px dashed var(--border-2);border-radius:4px;background:transparent;color:var(--text-3);font-size:.68rem;padding:4px;cursor:pointer;text-align:center;transition:all .14s;display:block;margin-top:3px;font-family:'Noto Sans KR',sans-serif}
+.cell-quick-add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
 
 /* X축 헤더 sticky 제거 (mscroll overflow-x:auto 중첩으로 무력화) */
 .mx-thead-sticky .m-corner{background:var(--surface-2)}
 
 /* ── 카드 ── */
-.mitem{background:var(--surface);border-radius:6px;padding:5px 7px;cursor:pointer;position:relative;transition:box-shadow .15s,transform .15s}
+.mitem{background:var(--surface);border-radius:6px;padding:5px 7px;cursor:pointer;position:relative;transition:box-shadow .15s,transform .15s;min-width:60px}
 .mitem:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);z-index:2}
 .mitem:hover .card-actions{opacity:1;pointer-events:auto}
 .mitem.dragging{opacity:.3}
 .mitem.item-locked{outline:2px dashed var(--warning);outline-offset:-2px}
+[data-theme="dark"] .mitem{border:1px solid var(--border)}
 .card-actions{position:absolute;top:3px;right:3px;display:flex;gap:2px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:3}
 .card-act-btn{width:20px;height:20px;border:none;border-radius:4px;background:var(--surface-2);color:var(--text-3);font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;line-height:1}
 .card-act-btn:hover{background:var(--accent-l);color:var(--accent)}
@@ -276,7 +279,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .ltbl tbody tr{transition:background .12s}
 .ltbl tbody tr:hover td{background:var(--surface-2)}
 .ltbl tr.rdel td{opacity:.5}.ltbl tr.rdel .cn{text-decoration:line-through}
-.ck{font-family:monospace;font-size:.7rem;font-weight:700;color:var(--text-3)}
+.ck{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.7rem;font-weight:700;color:var(--text-3)}
 .cn{font-weight:600;color:var(--text);word-break:keep-all}
 .pp{display:inline-block;font-size:.67rem;font-weight:700;padding:2px 6px;border-radius:4px;line-height:1.4}
 .pp.h{background:var(--danger-bg);color:var(--p-high,#C0312A)}
@@ -452,13 +455,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-hm-tab.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow-xs)}
 /* 히트맵 */
 .db-heatmap-panel{overflow:hidden}
-.db-hm-wrap{overflow-x:auto}
+.db-hm-wrap{overflow-x:auto;padding-right:16px}
 .db-hm-grid{display:grid;gap:4px;min-width:max-content}
 .db-hm-corner{width:80px}
 .db-hm-col-hd{font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);text-align:center;padding:0 2px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .db-hm-row-hd{font-size:.62rem;font-weight:600;color:var(--text-2);width:80px;text-align:right;padding-right:10px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:transparent;transition:opacity .2s,transform .15s}
-.db-hm-cell:hover{transform:scale(1.15);z-index:2;color:var(--text)}
+.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--text);transition:opacity .2s,transform .15s}
+.db-hm-cell:hover{transform:scale(1.1);z-index:2}
 .db-hm-legend{display:flex;align-items:center;gap:8px;margin-top:14px}
 .db-hm-legend-lbl{font-size:.6rem;color:var(--text-3);letter-spacing:.04em}
 .db-hm-legend-bar{display:flex;gap:3px}
@@ -468,9 +471,10 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-st-badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex-shrink:0}
 .db-st-badge{font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--surface-3)}
 /* 타임라인 */
-.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box}
-.db-body-right .db-timeline-panel{flex:1;min-height:0}
-.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0}
+.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box;max-height:400px}
+.db-body-right .db-timeline-panel{flex:1;min-height:0;max-height:none}
+.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0;max-height:320px}
+.db-body-right .db-timeline{max-height:none}
 .db-tl-item{display:flex;gap:12px}
 .db-tl-line-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
 .db-tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
@@ -663,8 +667,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <label class="tgl"><input type="checkbox" id="togStatus" checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">진행상태 뱃지</span></label>
           <label class="tgl"><input type="checkbox" id="togMd"     checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">MD 뱃지</span></label>
           <div style="font-size:.62rem;font-weight:700;letter-spacing:.04em;color:var(--text-3);text-transform:uppercase;margin:6px 0 2px">보조</div>
-          <label class="tgl"><input type="checkbox" id="togCnt"   checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">셀 카운터</span></label>
-          <label class="tgl"><input type="checkbox" id="togUpd"         onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">수정일</span></label>
+          <label class="tgl"><input type="checkbox" id="togCnt"      checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">셀 카운터</span></label>
+          <label class="tgl"><input type="checkbox" id="togUpd"            onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">수정일</span></label>
+          <label class="tgl"><input type="checkbox" id="togQuickAdd"       onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">빠른 추가 버튼</span></label>
         </div>
       </div>
       <div class="fsep"></div>
@@ -687,7 +692,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     </div>
     <div class="stab-row" style="padding:0 20px">
       <button class="stab on" id="etab-info" onclick="switchEditTab('info')">📋 기본 정보</button>
-      <button class="stab"    id="etab-md"   onclick="switchEditTab('md')">📝 마크다운</button>
+      <button class="stab"    id="etab-md"   onclick="switchEditTab('md')">📝 기능정의요구서</button>
     </div>
     <div class="mbody" id="epane-info" style="padding:16px 20px">
       <div class="mg">
@@ -743,8 +748,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <!-- 2행: 뷰 전환 + 파일 -->
         <div style="display:flex;align-items:center;gap:5px">
           <div style="display:flex;gap:2px;background:var(--surface-2);border-radius:6px;padding:2px">
-            <button class="vtab on" id="mdTabEdit"  onclick="switchMdView('edit')"    style="height:22px;padding:0 9px;font-size:.7rem">✏ 편집</button>
-            <button class="vtab"    id="mdTabPrev"  onclick="switchMdView('preview')" style="height:22px;padding:0 9px;font-size:.7rem">👁 보기</button>
+            <button class="vtab on" id="mdTabPrev"  onclick="switchMdView('preview')" style="height:22px;padding:0 9px;font-size:.7rem">👁 보기</button>
+            <button class="vtab"    id="mdTabEdit"  onclick="switchMdView('edit')"    style="height:22px;padding:0 9px;font-size:.7rem">✏ 편집</button>
             <button class="vtab"    id="mdTabSplit" onclick="switchMdView('split')"   style="height:22px;padding:0 9px;font-size:.7rem">⬜ 분할</button>
           </div>
           <div style="width:1px;height:16px;background:var(--border);flex-shrink:0"></div>
@@ -879,6 +884,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl">필터 전환 페이드</div><div class="ssub">필터 변경 시 콘텐츠 fade 전환</div></div><label class="tgl"><input type="checkbox" id="animFilter" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">행 Hover Shimmer</div><div class="ssub">리스트 뷰 행 hover 광택 효과</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">모달 Backdrop Blur</div><div class="ssub">모달 배경 블러 처리</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
+        <div class="sec-ttl" style="margin-top:12px">빌드 정보</div>
+        <div class="srow"><div><div class="slbl">빌드 넘버</div></div><span id="buildNumberDisplay" style="font-size:.82rem;font-weight:600;color:var(--text-2);font-family:monospace">-</span></div>
       </div>
       <!-- 디자인: 테마 최상단 → 카드스타일+색상 2열 → 미리보기 -->
       <div class="spane" id="sdesign">
@@ -920,15 +927,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <button class="btn btn-s btn-sm" onclick="expTSV()">⬇ TSV</button>
           <button class="btn btn-s btn-sm" onclick="expXLS()">📊 Excel</button>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;align-items:center">
           <div style="display:flex;align-items:center;gap:8px">
             <label style="font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="htmlW" value="fluid" checked> 가변폭</label>
             <label style="font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="htmlW" value="fixed"> 고정폭</label>
           </div>
           <button class="btn btn-s btn-sm" onclick="expHTML()">🌐 HTML</button>
-        </div>
-        <div style="margin-bottom:4px">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">MD 내용이 작성된 항목만 포함됩니다.</div>
           <button class="btn btn-s btn-sm" onclick="expMdZip()">📦 MD ZIP</button>
         </div>
         <div class="sec-ttl" style="margin-top:12px">초기화 · 설정 파일</div>
@@ -966,7 +970,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         </div>
         <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-p btn-sm" onclick="saveServerSettings()">서버 설정 저장</button>
-          <button class="btn btn-s btn-sm" onclick="openLoginModal()" title="로그인">🔑 로그인</button>
         </div>
       </div>
       <div class="spane" id="sadmin">
@@ -1014,7 +1017,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" onclick="resetData()">초기화</button></div>
         <div class="sec-ttl" style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
           <span>활동 로그</span>
-          <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:.7rem;color:var(--text-3)">최근</span>
+            <input type="number" id="logLimitInp" value="100" min="10" max="1000"
+              style="width:50px;height:22px;font-size:.72rem;text-align:center;padding:0 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--text)">
+            <span style="font-size:.7rem;color:var(--text-3)">개</span>
+            <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
+          </div>
         </div>
         <div id="inlineLogBody" style="height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:.78rem">
           <div style="padding:16px;text-align:center;color:var(--text-3)">탭을 열면 자동으로 불러옵니다.</div>
@@ -1067,39 +1076,26 @@ function __inlineNotify(msg, isErr) {
 /* ── app/constants.js ── */
 /* ══════════════════════════════════════════
    constants.js — 상수 / 설정 기본값 / 데모 데이터
-══════════════════════════════════════════ */
-const SK             = 'sobukMXv6';
-const UNDO_MAX       = 20;
-const CELL_OV        = 5;
-const ADMIN_TOKEN_KEY  = 'fmAdminToken';
-const EDITOR_TOKEN_KEY = 'fmEditorToken';
-const FIELDS = [
+══════════════════════════════════════════ */const SK             = 'sobukMXv6';const UNDO_MAX       = 20;const CELL_OV        = 5;const ADMIN_TOKEN_KEY  = 'fmAdminToken';const EDITOR_TOKEN_KEY = 'fmEditorToken';const FIELDS = [
   'key','name','desc','path','group','subGroup','category','subCategory',
   'priority','status','owner','isDelete','isImportant','relSystem','memo','mdPath','mdContent'
-];
-const FLABELS = {
+];const FLABELS = {
   key:'Key', name:'기능명', desc:'설명', path:'경로',
   group:'그룹', subGroup:'서브그룹', category:'카테고리', subCategory:'서브카테고리',
   priority:'우선순위', status:'진행상태', owner:'담당',
   isDelete:'삭제여부', isImportant:'중요여부', relSystem:'연관시스템', memo:'메모',
   mdPath:'MD경로', mdContent:'MD내용'
-};
-const STATUS_OPTS = ['기획','개발중','완료','보류'];
-const STATUS_CLS  = { 기획:'status-plan', 개발중:'status-dev', 완료:'status-done', 보류:'status-hold' };
-const STATUS_LBL  = { 기획:'기획', 개발중:'개발', 완료:'완료', 보류:'보류' };
-const DEFAULT_LIST_COLS = [
+};const STATUS_OPTS = ['기획','개발중','완료','보류'];const STATUS_CLS  = { 기획:'status-plan', 개발중:'status-dev', 완료:'status-done', 보류:'status-hold' };const STATUS_LBL  = { 기획:'기획', 개발중:'개발', 완료:'완료', 보류:'보류' };const DEFAULT_LIST_COLS = [
   {key:'key',visible:true}, {key:'name',visible:true}, {key:'group',visible:true},
   {key:'subGroup',visible:true}, {key:'category',visible:true}, {key:'subCategory',visible:false},
   {key:'priority',visible:true}, {key:'status',visible:true}, {key:'owner',visible:true},
   {key:'isImportant',visible:true}, {key:'isDelete',visible:false},
   {key:'desc',visible:false}, {key:'relSystem',visible:false}, {key:'memo',visible:false}
-];
-const PRESETS = [
+];const PRESETS = [
   {id:'left-thick',label:'좌측②'}, {id:'left-thin',label:'좌측①'},
   {id:'all-thin',label:'전체①'},   {id:'all-thick',label:'전체②'},
   {id:'dashed',label:'점선'},       {id:'bg-fill',label:'배경색'}, {id:'none',label:'없음'}
-];
-const THEMES = {
+];const THEMES = {
   sobuk: { name:'소복청',
     light: {pHigh:'#C0312A',pHighBg:'#FDECEA',pMid:'#9A6200',pMidBg:'#FDF4E1',pLow:'#D0CEC9',pLowBg:'#F2F1EE',mxGBg:'#EBF2FB',mxGC:'#2563A8',mxSgBg:'#F2F1EE',mxSgC:'#5C5752',mxCBg:'#F2F1EE',mxCC:'#5C5752',mxBorder:'#E4E2DE',mxBW:1},
     dark:  {pHigh:'#E05A52',pHighBg:'#200C0C',pMid:'#E0A030',pMidBg:'#1E1608',pLow:'#3D3B38',pLowBg:'#272523',mxGBg:'#162438',mxGC:'#5B96D8',mxSgBg:'#272523',mxSgC:'#A09B94',mxCBg:'#272523',mxCC:'#A09B94',mxBorder:'#2E2D2A',mxBW:1}},
@@ -1115,8 +1111,7 @@ const THEMES = {
   amber: { name:'앰버',
     light: {pHigh:'#B45309',pHighBg:'#FFFBEB',pMid:'#7C2D12',pMidBg:'#FFF7ED',pLow:'#78716C',pLowBg:'#FAFAF9',mxGBg:'#FFFBEB',mxGC:'#92400E',mxSgBg:'#FFF7ED',mxSgC:'#78716C',mxCBg:'#FEFCE8',mxCC:'#78716C',mxBorder:'#FDE68A',mxBW:1},
     dark:  {pHigh:'#FBBF24',pHighBg:'#1C1200',pMid:'#FB923C',pMidBg:'#1C0A00',pLow:'#78716C',pLowBg:'#1C1917',mxGBg:'#1C1200',mxGC:'#FBBF24',mxSgBg:'#1C1917',mxSgC:'#78716C',mxCBg:'#1C1200',mxCC:'#78716C',mxBorder:'#78350F',mxBW:1}}
-};
-const DEMO = [
+};const DEMO = [
   {key:'N0001',name:'회원 가입',desc:'신규 회원 등록.\n이메일 및 소셜 로그인 지원.',path:'/auth/register',group:'인증/보안',subGroup:'계정',category:'프론트엔드',subCategory:'폼/입력',priority:'상',owner:'홍길동',isDelete:'N',isImportant:'Y',relSystem:'Auth',memo:'',mdPath:'',mdContent:''},
   {key:'N0002',name:'로그인',desc:'이메일·비밀번호 또는 소셜 계정으로 로그인.',path:'/auth/login',group:'인증/보안',subGroup:'계정',category:'프론트엔드',subCategory:'폼/입력',priority:'상',owner:'홍길동',isDelete:'N',isImportant:'Y',relSystem:'Auth',memo:'',mdPath:'',mdContent:''},
   {key:'N0003',name:'비밀번호 재설정',desc:'이메일로 재설정 링크 전송.\n만료시간 30분.',path:'/auth/reset',group:'인증/보안',subGroup:'계정',category:'프론트엔드',subCategory:'폼/입력',priority:'중',owner:'홍길동',isDelete:'N',isImportant:'N',relSystem:'',memo:'',mdPath:'',mdContent:''},
@@ -1142,17 +1137,16 @@ const DEMO = [
 
 
 
-/** 전역 상태 — 앱 전체에서 import해서 사용 */
-const S = {
+/** 전역 상태 — 앱 전체에서 import해서 사용 */const S = {
   items: [],
   view: 'matrix',
   searchQ: '',
   expandedCells: new Set(),
   filters: { priorities:[], statuses:[], showDeleted:false, importantOnly:false, owners:[] },
-  display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true },
+  display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true, showQuickAdd:false },
   settings: {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:24, subCatW:72, cellFold:0,
+    colW:130, catW:12, subCatW:100, cellFold:0,
     matrixWidth:'fluid', panelPos:'left', panelVisible:true,
     title:'소복 매트릭스', subtitle:'Function Matrix', themeId:'sobuk',
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },
@@ -1175,9 +1169,7 @@ const S = {
   dragCell: null,
   ttTimer: null,
   importData: { headers:[], rows:[] },
-};
-let lastServerTs = 0;
-function setLastServerTs(ts) { lastServerTs = ts; }
+};let lastServerTs = 0;function setLastServerTs(ts) { lastServerTs = ts; }
 
 function apiBase() {
   const url = (S.settings.serverUrl || '').trim();
@@ -1295,8 +1287,7 @@ function loadLocal() {
     const raw = localStorage.getItem(SK);
     if (raw) applyLocalPayload(JSON.parse(raw));
   } catch(e) {}
-}
-async function saveToServer() {
+}async function saveToServer() {
   try {
     const res = await fetch(apiBase() + '/api/data', {
       method: 'POST',
@@ -1315,8 +1306,7 @@ async function saveToServer() {
     saveLocal();
     return false;
   }
-}
-async function loadFromServer() {
+}async function loadFromServer() {
   try {
     const res = await fetch(apiBase() + '/api/data', { headers: apiHeaders() });
     if (!res.ok) {
@@ -1338,33 +1328,28 @@ async function loadFromServer() {
     notify('서버 연결 실패 — 로컬 캐시를 불러옵니다.', true);
     return false;
   }
-}
-async function pollServerTs() {
+}async function pollServerTs() {
   try {
     const res = await fetch(apiBase() + '/api/ping', { headers: apiHeaders() });
     if (!res.ok) return null;
     const json = await res.json();
-    return { serverTs: json.serverTs, lastEditor: json.lastEditor || '', lastEditTime: json.lastEditTime || 0 };
+    return { serverTs: json.serverTs, lastEditor: json.lastEditor || '', lastEditTime: json.lastEditTime || 0, hasEditorPw: json.hasEditorPw ?? false };
   } catch(e) { return null; }
-}
-function save() {
+}function save() {
   if (S.settings.storageMode === 'server') {
     saveToServer();
   } else {
     saveLocal();
   }
-}
-async function load() {
+}async function load() {
   loadLocal(); // ① 개인 설정(storageMode, apiKey, 테마 등) 먼저 복원
   if (S.settings.storageMode === 'server') {
     await loadFromServer(); // ② 서버에서 공유 데이터 덮어쓰기
   }
-}
-function resolveConflictKeepMine() {
+}function resolveConflictKeepMine() {
   lastServerTs = 0; // baseTs=0 → 서버가 무조건 허용
   saveToServer();
-}
-function resolveConflictUseServer(serverData) {
+}function resolveConflictUseServer(serverData) {
   applyServerPayload(serverData.payload || serverData);
   lastServerTs = serverData.serverTs || lastServerTs;
   saveLocal();
@@ -1372,13 +1357,11 @@ function resolveConflictUseServer(serverData) {
   notify('서버 데이터로 업데이트됐습니다.');
 }
 
-const undoStack = [];
-function pushUndo() {
+const undoStack = [];function pushUndo() {
   undoStack.push(JSON.stringify(S.items));
   if (undoStack.length > UNDO_MAX) undoStack.shift();
   updateUndoFab();
-}
-function doUndo() {
+}function doUndo() {
   if (!undoStack.length) return;
   S.items = JSON.parse(undoStack.pop());
   save();
@@ -1386,15 +1369,10 @@ function doUndo() {
   updateUndoFab();
   logActivity('되돌리기', `${S.items.length}개 항목으로 복원`);
   notify('되돌렸습니다.');
-}
-function getUndoHistory() { return undoStack.slice(); }
-function updateUndoFab() {
+}function getUndoHistory() { return undoStack.slice(); }function updateUndoFab() {
   const f = document.getElementById('undoFab');
   if (f) f.className = 'undo-fab' + (undoStack.length ? ' on' : '');
-}
-const esc   = s => s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const eattr = s => String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-function genKey() {
+}const esc   = s => s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');const eattr = s => String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');function genKey() {
   let max = 0;
   S.items.forEach(({key=''}) => {
     if (key.charAt(0) === 'N') {
@@ -1403,14 +1381,10 @@ function genKey() {
     }
   });
   return 'N' + String(max + 1).padStart(4, '0');
-}
-const findItem  = key => S.items.find(it => it.key === key) || null;
-const getPK     = pv  => pv === '상' ? 'high' : pv === '중' ? 'mid' : 'low';
-const normOwner = v   => (v||'').trim() || '(미분류)';
+}const findItem  = key => S.items.find(it => it.key === key) || null;const getPK     = pv  => pv === '상' ? 'high' : pv === '중' ? 'mid' : 'low';const normOwner = v   => (v||'').trim() || '(미분류)';
 
 const OWNER_COLORS = ['#2563A8','#16A34A','#D97706','#9333EA','#0891B2','#BE185D','#059669','#DC2626','#7C3AED','#C2410C'];
-const _ownerColorMap = {};
-function getOwnerColor(owner) {
+const _ownerColorMap = {};function getOwnerColor(owner) {
   const k = normOwner(owner);
   if (k === '(미분류)') return 'var(--text-3)';
   if (!_ownerColorMap[k]) {
@@ -1418,8 +1392,7 @@ function getOwnerColor(owner) {
     _ownerColorMap[k] = OWNER_COLORS[idx];
   }
   return _ownerColorMap[k];
-}
-function fmtDate(ts) {
+}function fmtDate(ts) {
   if (!ts) return '';
   const d    = new Date(ts);
   const diff = Math.floor((Date.now() - d) / 1000);
@@ -1428,14 +1401,11 @@ function fmtDate(ts) {
   if (diff < 86400)  return Math.floor(diff / 3600) + '시간 전';
   if (diff < 604800) return Math.floor(diff / 86400) + '일 전';
   return d.toLocaleDateString('ko-KR', {month:'short', day:'numeric'});
-}
-const today = () => new Date().toISOString().slice(0, 10);
-const notify = (msg, isErr=false) => __inlineNotify(msg, isErr);
+}const today = () => new Date().toISOString().slice(0, 10);const notify = (msg, isErr=false) => __inlineNotify(msg, isErr);
 
 /* ══════════════════════════════════════════
    활동 로그
-══════════════════════════════════════════ */
-async function logActivity(action, detail = '') {
+══════════════════════════════════════════ */async function logActivity(action, detail = '') {
   if (S.settings.storageMode !== 'server') return;
   try {
     await fetch(apiBase() + '/api/log', {
@@ -1451,13 +1421,10 @@ async function logActivity(action, detail = '') {
   } catch(e) {}
 }
 
-/* ── 편집 중 락 ── */
-const editLocks = {};  // { key: { user, ts } }
-function updateLocks(locks) {
+/* ── 편집 중 락 ── */const editLocks = {};  // { key: { user, ts } }function updateLocks(locks) {
   Object.keys(editLocks).forEach(k => delete editLocks[k]);
   if (locks) Object.assign(editLocks, locks);
-}
-async function lockItem(key) {
+}async function lockItem(key) {
   if (S.settings.storageMode !== 'server' || !key) return null;
   try {
     const res = await fetch(apiBase() + '/api/lock', {
@@ -1466,8 +1433,7 @@ async function lockItem(key) {
     });
     return await res.json();
   } catch(e) { return null; }
-}
-async function unlockItem(key) {
+}async function unlockItem(key) {
   if (S.settings.storageMode !== 'server' || !key) return;
   try {
     await fetch(apiBase() + '/api/unlock', {
@@ -1496,35 +1462,28 @@ function apiBase() {
   return (S.settings.serverUrl || '').trim() || window.location.origin;
 }
 
-/* ── 역할 확인 ── */
-function isAdmin() {
+/* ── 역할 확인 ── */function isAdmin() {
   if (!isServerMode()) return true;
   return !!sessionStorage.getItem(ADMIN_TOKEN_KEY);
-}
-function isEditor() {
+}function isEditor() {
   if (!isServerMode()) return true;
   return !!(sessionStorage.getItem(EDITOR_TOKEN_KEY) || sessionStorage.getItem(ADMIN_TOKEN_KEY));
-}
-function getAdminToken() {
+}function getAdminToken() {
   return sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
-}
-function getEditorToken() {
+}function getEditorToken() {
   return sessionStorage.getItem(EDITOR_TOKEN_KEY) || sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
 }
 
-/* ── 권한 요구 (콜백 패턴) ── */
-function requireAdmin(callback) {
+/* ── 권한 요구 (콜백 패턴) ── */function requireAdmin(callback) {
   if (isAdmin()) { callback(); return; }
   openLoginModal('admin', callback);
-}
-function requireEditor(callback) {
+}function requireEditor(callback) {
   if (isEditor()) { callback(); return; }
   openLoginModal('editor', callback);
 }
 
 /* ── 로그인 모달 ── */
-let _loginCallback = null;
-function openLoginModal(role = 'editor', callback = null) {
+let _loginCallback = null;function openLoginModal(role = 'editor', callback = null) {
   _loginCallback = callback;
   const modal = document.getElementById('loginModal');
   if (!modal) { if (callback) callback(); return; }
@@ -1540,12 +1499,10 @@ function openLoginModal(role = 'editor', callback = null) {
   modal.style.zIndex = '1010';
   modal.classList.add('on');
   setTimeout(() => pwInp?.focus(), 100);
-}
-function closeLoginModal() {
+}function closeLoginModal() {
   document.getElementById('loginModal')?.classList.remove('on');
   _loginCallback = null;
-}
-async function submitLogin() {
+}async function submitLogin() {
   const name   = document.getElementById('loginNameInp')?.value.trim() || '';
   const pw     = document.getElementById('loginPwInp')?.value || '';
   const role   = document.getElementById('loginRoleSelect')?.value || 'editor';
@@ -1580,19 +1537,16 @@ async function submitLogin() {
   }
 }
 
-/* ── 로그아웃 ── */
-function logout() {
+/* ── 로그아웃 ── */function logout() {
   sessionStorage.removeItem(ADMIN_TOKEN_KEY);
   sessionStorage.removeItem(EDITOR_TOKEN_KEY);
   updateAdminUI();
   notify('로그아웃됐습니다.');
 }
 
-/* ── 하위 호환: adminLogout → logout ── */
-function adminLogout() { logout(); }
+/* ── 하위 호환: adminLogout → logout ── */function adminLogout() { logout(); }
 
-/* ── 편집자 비밀번호 변경 (관리자 전용) ── */
-async function setEditorPassword() {
+/* ── 편집자 비밀번호 변경 (관리자 전용) ── */async function setEditorPassword() {
   const inp  = document.getElementById('editorPwInp');
   const errEl = document.getElementById('editorPwErr');
   if (!inp) return;
@@ -1616,8 +1570,7 @@ async function setEditorPassword() {
   }
 }
 
-/* ── UI 상태 동기화 ── */
-function updateAdminUI() {
+/* ── UI 상태 동기화 ── */function updateAdminUI() {
   const admin      = isAdmin();
   const editor     = isEditor();
   const serverMode = isServerMode();
@@ -1689,8 +1642,7 @@ function _updateNavLogin(admin, editor, serverMode) {
   }
 }
 
-/* ── 잠긴 요소 클릭 핸들러 ── */
-function handleLockedClick(e, callback) {
+/* ── 잠긴 요소 클릭 핸들러 ── */function handleLockedClick(e, callback) {
   if (!isAdmin()) {
     e.stopPropagation();
     requireAdmin(callback);
@@ -1701,14 +1653,12 @@ function handleLockedClick(e, callback) {
 /* ── app/theme.js ── */
 /* ══════════════════════════════════════════
    theme.js — 색상 계산, CSS 변수 주입, 테마 전환
-══════════════════════════════════════════ */
-function getColors() {
+══════════════════════════════════════════ */function getColors() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const base   = (THEMES[S.settings.themeId] || THEMES.sobuk)[isDark ? 'dark' : 'light'];
   const custom = S.settings.customColors[isDark ? 'dark' : 'light'] || {};
   return Object.assign({}, base, ...Object.entries(custom).filter(([,v]) => v).map(([k,v]) => ({[k]:v})));
-}
-function applyVars() {
+}function applyVars() {
   const c  = getColors();
   const ss = S.settings;
   let css = `html{font-size:${ss.baseFont}px !important}\n`;
@@ -1726,16 +1676,14 @@ function applyVars() {
   css += `.mitem{margin-bottom:${ss.cardGap}px;border-radius:${ss.cardRadius}px}\n`;
   css += `.item-name{font-size:${ss.cardFont}px}\n`;
   document.getElementById('dynStyle').textContent = css;
-}
-function toggleTheme() {
+}function toggleTheme() {
   const html   = document.documentElement;
   const isDark = html.getAttribute('data-theme') === 'dark';
   html.setAttribute('data-theme', isDark ? 'light' : 'dark');
   document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
   applyVars();
   renderAll();
-}
-function applyTheme(tid) {
+}function applyTheme(tid) {
   if (!THEMES[tid]) return;
   S.settings.themeId = tid;
   S.settings.customColors = { light:{}, dark:{} };
@@ -1745,8 +1693,7 @@ function applyTheme(tid) {
   renderThemeGrid();
   updateDesignContent();
   notify(`테마 적용: ${THEMES[tid].name}`);
-}
-function renderThemeGrid() {
+}function renderThemeGrid() {
   const el   = document.getElementById('themeGrid');
   if (!el) return;
   const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -1761,8 +1708,7 @@ function renderThemeGrid() {
       <div class="theme-name">${th.name}</div>
     </div>`;
   }).join('');
-}
-function setCustomColor(k, v) {
+}function setCustomColor(k, v) {
   const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   if (!S.settings.customColors[mode]) S.settings.customColors[mode] = {};
   S.settings.customColors[mode][k] = v;
@@ -1773,8 +1719,7 @@ function setCustomColor(k, v) {
     renderPrioStyleRows();
     renderPreviewCards();
   }
-}
-function updateDesignContent() {
+}function updateDesignContent() {
   const el = document.getElementById('designContent');
   if (!el) return;
   const c = getColors();
@@ -1813,20 +1758,18 @@ function updateDesignContent() {
     grp.items.forEach(item => { h += colorRow(item.id, item.lbl); });
   });
   el.innerHTML = h;
-}
-function getPresetCSS(pid, pHex, pBg) {
+}function getPresetCSS(pid, pHex, pBg) {
   switch(pid) {
-    case 'left-thin':  return `border:1px solid #E4E2DE;border-left:2px solid ${pHex};background:var(--surface)`;
-    case 'left-thick': return `border:1px solid #E4E2DE;border-left:4px solid ${pHex};background:var(--surface)`;
+    case 'left-thin':  return `border:1px solid var(--border);border-left:2px solid ${pHex};background:var(--surface)`;
+    case 'left-thick': return `border:1px solid var(--border);border-left:4px solid ${pHex};background:var(--surface)`;
     case 'all-thin':   return `border:1.5px solid ${pHex};background:var(--surface)`;
     case 'all-thick':  return `border:2.5px solid ${pHex};background:var(--surface)`;
     case 'dashed':     return `border:1.5px dashed ${pHex};background:var(--surface)`;
     case 'bg-fill':    return `border:1px solid ${pHex};background:${pBg}`;
-    case 'none':       return `border:1px solid #E4E2DE;background:var(--surface)`;
-    default:           return `border:1px solid #E4E2DE;border-left:4px solid ${pHex};background:var(--surface)`;
+    case 'none':       return `border:1px solid var(--border);background:var(--surface)`;
+    default:           return `border:1px solid var(--border);border-left:4px solid ${pHex};background:var(--surface)`;
   }
-}
-function renderPrioStyleRows() {
+}function renderPrioStyleRows() {
   const el = document.getElementById('prioStyleRows');
   if (!el) return;
   const c     = getColors();
@@ -1863,8 +1806,7 @@ function renderPrioStyleRows() {
       </div>
     </div>`;
   }).join('');
-}
-function renderPreviewCards() {
+}function renderPreviewCards() {
   const el = document.getElementById('previewCards');
   if (!el) return;
   const c     = getColors();
@@ -1880,19 +1822,13 @@ function renderPreviewCards() {
       <div style="font-size:.66rem;color:var(--text-3)">홍길동</div>
     </div>`;
   }).join('');
-}
-function setPreset(pk, pid) {
+}function setPreset(pk, pid) {
   S.settings.priorityStyles[pk] = pid;
   save();
   renderAll();
   renderPrioStyleRows();
   renderPreviewCards();
-}
-function onCP(inp, ckey)    { inp.parentNode.querySelector('.hexinp').value = inp.value; setCustomColor(ckey, inp.value); }
-function onHex(inp, ckey)   { const v = inp.value.trim(); if (!/^#[0-9A-Fa-f]{6}$/.test(v)) return; inp.parentNode.querySelector('.cpick').value = v; setCustomColor(ckey, v); }
-function onHexKey(inp, ckey){ if (/^#[0-9A-Fa-f]{6}$/.test(inp.value.trim())) onHex(inp, ckey); }
-function adjBW(d)           { const c = getColors(); const next = Math.max(1, Math.min(4, (c.mxBW||1) + d)); setCustomColor('mxBW', next); const el = document.getElementById('dBW'); if (el) el.textContent = `${next}px`; }
-function applyBlurSetting() {
+}function onCP(inp, ckey)    { inp.parentNode.querySelector('.hexinp').value = inp.value; setCustomColor(ckey, inp.value); }function onHex(inp, ckey)   { const v = inp.value.trim(); if (!/^#[0-9A-Fa-f]{6}$/.test(v)) return; inp.parentNode.querySelector('.cpick').value = v; setCustomColor(ckey, v); }function onHexKey(inp, ckey){ if (/^#[0-9A-Fa-f]{6}$/.test(inp.value.trim())) onHex(inp, ckey); }function adjBW(d)           { const c = getColors(); const next = Math.max(1, Math.min(4, (c.mxBW||1) + d)); setCustomColor('mxBW', next); const el = document.getElementById('dBW'); if (el) el.textContent = `${next}px`; }function applyBlurSetting() {
   const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;
   document.querySelectorAll('.ov').forEach(el => {
     if (!prefersReduced && S.settings.animations?.blur) el.classList.add('blur-bg');
@@ -1912,20 +1848,17 @@ function applyBlurSetting() {
 
 
 /* ── 애니메이션 유틸 ── */
-const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;
-function animOk(k) {
+const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;function animOk(k) {
   if (prefersReduced) return false;
   const a = S.settings.animations;
   return a.enabled && (k ? !!a[k] : true);
 }
 
 /* 카드 등장 애니메이션은 의도적 진입(초기 로드·항목 추가)에만 허용 */
-let _cardAnimEnabled = false;
-function scheduleCardAnim() { _cardAnimEnabled = true; }
+let _cardAnimEnabled = false;function scheduleCardAnim() { _cardAnimEnabled = true; }
 
 /* ── CountUp ── */
-const _cu = {};
-function countUp(id, target) {
+const _cu = {};function countUp(id, target) {
   const el = document.getElementById(id);
   if (!el) return;
   if (!animOk('countUp')) { el.textContent = target; return; }
@@ -1942,8 +1875,7 @@ function countUp(id, target) {
   _cu[id] = requestAnimationFrame(step);
 }
 
-/* ── 필터링 ── */
-function getFiltered() {
+/* ── 필터링 ── */function getFiltered() {
   const { priorities, statuses, showDeleted, importantOnly, owners } = S.filters;
   return S.items.filter(it => {
     if (!showDeleted && it.isDelete === 'Y')                                               return false;
@@ -1954,15 +1886,13 @@ function getFiltered() {
     if (S.searchQ && !matchesSearch(it, S.searchQ))                                       return false;
     return true;
   });
-}
-const isFilterActive = () => {
+}const isFilterActive = () => {
   const f = S.filters;
   return f.priorities.length > 0 || (f.statuses && f.statuses.length > 0) ||
          f.importantOnly || f.owners.length > 0 || f.showDeleted || !!S.searchQ;
 };
 
-/* 벌크 선택 상태 */
-const bulkSel = { active: false, keys: new Set() };
+/* 벌크 선택 상태 */const bulkSel = { active: false, keys: new Set() };
 
 function matchesSearch(it, q) {
   const lq = q.toLowerCase();
@@ -1984,8 +1914,7 @@ function sortCell(arr) {
     if (a.isDelete !== b.isDelete) return a.isDelete === 'Y' ? 1 : -1;
     return 0;
   });
-}
-function getUniqSorted(field, items) {
+}function getUniqSorted(field, items) {
   const seen = new Set(), res = [];
   items.forEach(it => {
     const v = field === 'owner' ? normOwner(it[field]) : (it[field] || '(미분류)');
@@ -2041,8 +1970,7 @@ function syncLayout() {
   if (cs) cs.style.display = v === 'dashboard' ? 'none' : '';
 }
 
-/* ── 전체 렌더 ── */
-function renderAll(withFade = false) {
+/* ── 전체 렌더 ── */function renderAll(withFade = false) {
   syncLayout();
   const doRender = () => {
     renderStats();
@@ -2066,8 +1994,7 @@ function renderAll(withFade = false) {
   } else { doRender(); }
 }
 
-/* ── 통계 ── */
-function renderStats() {
+/* ── 통계 ── */function renderStats() {
   const items = getFiltered();
   let h = 0, m = 0, l = 0, imp = 0, nw = 0, done = 0;
   items.forEach(it => {
@@ -2089,14 +2016,13 @@ function renderStats() {
   if (prog) prog.title = `완료 ${done}/${items.length} (${pct}%)`;
 }
 
-/* ── 매트릭스 ── */
-function renderMatrix() {
+/* ── 매트릭스 ── */function renderMatrix() {
   const items = getFiltered();
   const el    = document.getElementById('matrixView');
   el.className = 'mwrap' + (S.settings.matrixWidth === 'fluid' ? ' fluid' : '');
   if (!items.length) {
     const emptyMsg = S.settings.storageMode === 'server'
-      ? '<div class="empty"><div style="font-size:2rem;opacity:.3">🌐</div><div style="font-size:.875rem;text-align:center">서버에 데이터가 없거나 연결을 확인해주세요.<br><span style="font-size:.75rem;color:var(--text-3)">설정 → 서버 탭에서 API 키를 확인하세요.</span></div></div>'
+      ? '<div class="empty"><div style="font-size:2rem;opacity:.3">🌐</div><div style="font-size:.875rem;text-align:center">서버에 데이터가 없거나 연결을 확인해주세요.<br><span style="font-size:.75rem;color:var(--text-3)">관리자에게 문의하거나 로그인 후 다시 시도하세요.</span></div></div>'
       : '<div class="empty"><div style="font-size:2rem;opacity:.3">📋</div><div style="font-size:.875rem;text-align:center">표시할 기능이 없습니다.</div></div>';
     el.innerHTML = emptyMsg;
     return;
@@ -2167,9 +2093,9 @@ function renderMatrix() {
           if (isExp && ci.length > fold && fold > 0)
             h += `<button class="cell-more-btn" onclick="collapseCell(event,'${eattr(ck)}')">▲ 접기</button>`;
           
-          h += `<div class="cell-quick-wrap"><input class="cell-quick-inp" placeholder="기능명 입력 후 Enter…"
-            onkeydown="if(event.key==='Enter'){quickCellAdd('${eattr(gn)}','${eattr(sg)}','${eattr(cn)}','${eattr(scn)}',this)}else if(event.key==='Escape'){this.value='';this.blur()}"
-            onclick="event.stopPropagation()"></div>`;
+          if (isEditor() && S.display.showQuickAdd) {
+            h += `<button class="cell-quick-add-btn" onclick="event.stopPropagation();openAddInCell('${eattr(gn)}','${eattr(sg)}','${eattr(cn)}','${eattr(scn)}')">+ 추가</button>`;
+          }
           h += '</td>';
         });
       });
@@ -2179,12 +2105,9 @@ function renderMatrix() {
   h += '</tbody></table></div>';
   el.innerHTML = h;
   _cardAnimEnabled = false;
-}
-function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    renderMatrix(); }
-function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); renderMatrix(); }
+}function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    renderMatrix(); }function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); renderMatrix(); }
 
-/* ── 카드 HTML ── */
-function renderCard(item, c, si = -1) {
+/* ── 카드 HTML ── */function renderCard(item, c, si = -1) {
   const pk    = getPK(item.priority), pkC = pk[0].toUpperCase() + pk.slice(1);
   const pHex  = c[`p${pkC}`]   || '#888';
   const pBg   = c[`p${pkC}Bg`] || '#eee';
@@ -2234,23 +2157,19 @@ function renderCard(item, c, si = -1) {
 </div>`;
 }
 
-/* ── 리스트 뷰 ── */
-function getVisibleCols() { return S.settings.listColumns.filter(c => c.visible); }
+/* ── 리스트 뷰 ── */function getVisibleCols() { return S.settings.listColumns.filter(c => c.visible); }
 
-/* 벌크 선택 토글 */
-function bulkToggle(key) {
+/* 벌크 선택 토글 */function bulkToggle(key) {
   if (bulkSel.keys.has(key)) bulkSel.keys.delete(key);
   else bulkSel.keys.add(key);
   renderBulkBar();
-}
-function bulkToggleAll(checked) {
+}function bulkToggleAll(checked) {
   const items = getFiltered();
   if (checked) items.forEach(it => bulkSel.keys.add(it.key));
   else bulkSel.keys.clear();
   renderBulkBar();
   renderList();
-}
-function renderBulkBar() {
+}function renderBulkBar() {
   const bar = document.getElementById('bulkBar');
   if (!bar) return;
   const n = bulkSel.keys.size;
@@ -2270,9 +2189,7 @@ function renderBulkBar() {
       <button class="rbtn" onclick="bulkSetOwner()"${lockTip}>일괄변경</button>
     </div>
     <button class="rbtn" style="margin-left:8px;color:var(--danger)" onclick="bulkClear()">선택 해제</button>`;
-}
-function bulkClear() { bulkSel.keys.clear(); renderBulkBar(); renderList(); }
-function renderList() {
+}function bulkClear() { bulkSel.keys.clear(); renderBulkBar(); renderList(); }function renderList() {
   const items = getFiltered(), el = document.getElementById('listView');
   if (!items.length) { el.innerHTML = '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>'; bulkSel.keys.clear(); renderBulkBar(); return; }
   const vcols    = getVisibleCols();
@@ -2323,13 +2240,11 @@ function renderListCell(it, key) {
     }
     default: return `<td>${q ? hlSearch(it[key]||'', q) : esc(it[key]||'')}</td>`;
   }
-}
-function sortL(k) {
+}function sortL(k) {
   if (S.sort.key === k) S.sort.dir = S.sort.dir === 'asc' ? 'desc' : 'asc';
   else { S.sort.key = k; S.sort.dir = 'asc'; }
   renderList();
-}
-function switchView(v) {
+}function switchView(v) {
   S.view = v;
   syncLayout();
   if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }
@@ -2337,8 +2252,7 @@ function switchView(v) {
   else { document.getElementById('bulkBar').style.display = 'none'; if (window.renderDashboard) window.renderDashboard(); }
 }
 
-/* ── 필터 UI ── */
-function renderPrioChips() {
+/* ── 필터 UI ── */function renderPrioChips() {
   const el = document.getElementById('prioChips');
   if (!el) return;
   const c = getColors();
@@ -2352,8 +2266,7 @@ function renderPrioChips() {
       : `color:var(--text-2);background:var(--surface-2);border-color:var(--border-2);`;
     return `<label class="pchip" style="${style}"><input type="checkbox" value="${pd.val}" ${ck?'checked':''} onchange="onPrioChip(this)">${pd.val}</label>`;
   }).join('');
-}
-function renderStatusChips() {
+}function renderStatusChips() {
   const el = document.getElementById('statusChips');
   if (!el) return;
   const STATUS_COLORS = {
@@ -2378,8 +2291,7 @@ function renderStatusChips() {
       ${st}${cnt ? `<span style="font-size:.6rem;opacity:.7;margin-left:3px">${cnt}</span>` : ''}
     </label>`;
   }).join('');
-}
-function renderOwnerChips() {
+}function renderOwnerChips() {
   const el = document.getElementById('ownerChips');
   if (!el) return;
   el.innerHTML = getUniqSorted('owner', S.items).map(o => {
@@ -2391,8 +2303,7 @@ function renderOwnerChips() {
       : '';
     return `<label class="owner-chip${on?' chip-on':''}" style="${chipStyle}"><input type="checkbox" value="${eattr(o)}" ${on?'checked':''} onchange="onOwnerChip(this)"><span style="${dotStyle}"></span>${esc(o)}</label>`;
   }).join('');
-}
-function updateDL() {
+}function updateDL() {
   const setDL = (id, vals) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -2427,7 +2338,7 @@ function updateDL() {
     const pane = document.getElementById(`epane-${t}`);
     if (pane) pane.style.display = t === tab ? '' : 'none';
   });
-  if (tab === 'md') { updateMdStat(); syncMdPreview(); }
+  if (tab === 'md') { updateMdStat(); syncMdPreview(); switchMdView('preview'); }
 }
 
 /* ── MD 뷰 모드 ── */function switchMdView(mode) {
@@ -2653,7 +2564,11 @@ function renderKatex(container) {
   const it = findItem(key); if (!it) return;
   openEditModal(key);
   switchEditTab('md');
-  switchMdView('preview');
+  if (it.mdContent && it.mdContent.trim()) {
+    switchMdView('preview');
+  } else {
+    switchMdView('edit');
+  }
 }
 
 /* ── 저장 ── */function saveItem() {
@@ -3274,8 +3189,7 @@ function buildZip(files) {
 
 
 
-/* ── 설정 탭 전환 ── */
-function sstab(btn, paneId) {
+/* ── 설정 탭 전환 ── */function sstab(btn, paneId) {
   document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
   document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
   btn.classList.add('on');
@@ -3284,11 +3198,10 @@ function sstab(btn, paneId) {
   if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); }
   if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
   if (paneId === 'sdat')    window.syncServerSettingsUI?.();
-  if (paneId === 'sadmin')  { window.loadInlineActivityLog?.(); window.renderDbSectionOrder?.(); }
+  if (paneId === 'sadmin')  { window.loadInlineActivityLog?.(); window.renderDbSectionOrder?.(); window.syncEditorPwStatus?.(); }
 }
 
-/* ── 설정 UI 전체 동기화 ── */
-function syncSettingsUI() {
+/* ── 설정 UI 전체 동기화 ── */function syncSettingsUI() {
   const ss = S.settings;
   const admin = isAdmin();
   const titleEl = document.getElementById('sTitle');
@@ -3325,14 +3238,15 @@ function syncSettingsUI() {
   document.getElementById('togUpd').checked    = !!di.showUpdated;
   document.getElementById('togStatus').checked = di.showStatus !== false;
   document.getElementById('togMd').checked     = di.showMdBadge !== false;
+  const togQA = document.getElementById('togQuickAdd');
+  if (togQA) togQA.checked = !!di.showQuickAdd;
   document.getElementById('togDel').checked    = S.filters.showDeleted;
   document.getElementById('togImp').checked    = S.filters.importantOnly;
   syncAnimUI();
   updateAdminUI();
 }
 
-/* ── 타이틀 미리보기 ── */
-function previewTitle() {
+/* ── 타이틀 미리보기 ── */function previewTitle() {
   S.settings.title    = document.getElementById('sTitle').value;
   S.settings.subtitle = document.getElementById('sSub').value;
   document.getElementById('dTitle').textContent = S.settings.title;
@@ -3341,22 +3255,11 @@ function previewTitle() {
   save();
 }
 
-/* ── 레이아웃 ── */
-function setMW(v)   { S.settings.matrixWidth=v; document.getElementById('mwF').className='rbtn'+(v==='fluid'?' on':''); document.getElementById('mwX').className='rbtn'+(v==='fixed'?' on':''); save(); if(S.view==='matrix')renderMatrix(); }
-function setPPos(v) { S.settings.panelPos=v; document.getElementById('layout').classList.toggle('pr',v==='right'); document.getElementById('ppL').className='rbtn'+(v==='left'?' on':''); document.getElementById('ppR').className='rbtn'+(v==='right'?' on':''); save(); }
+/* ── 레이아웃 ── */function setMW(v)   { S.settings.matrixWidth=v; document.getElementById('mwF').className='rbtn'+(v==='fluid'?' on':''); document.getElementById('mwX').className='rbtn'+(v==='fixed'?' on':''); save(); if(S.view==='matrix')renderMatrix(); }function setPPos(v) { S.settings.panelPos=v; document.getElementById('layout').classList.toggle('pr',v==='right'); document.getElementById('ppL').className='rbtn'+(v==='left'?' on':''); document.getElementById('ppR').className='rbtn'+(v==='right'?' on':''); save(); }
 
-/* ── Stepper 설정값 조절 ── */
-function adjFont(d)     { S.settings.baseFont    = Math.max(12,Math.min(22,S.settings.baseFont+d));    document.getElementById('dBaseFont').textContent =S.settings.baseFont+'px';    save(); applyVars(); }
-function adjCardFont(d) { S.settings.cardFont    = Math.max(9, Math.min(18,S.settings.cardFont+d));    document.getElementById('dCardFont').textContent =S.settings.cardFont+'px';    save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-function adjRadius(d)   { S.settings.cardRadius  = Math.max(0, Math.min(14,S.settings.cardRadius+d));  document.getElementById('dRadius').textContent   =S.settings.cardRadius+'px';  save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-function adjGap(d)      { S.settings.cardGap     = Math.max(0, Math.min(20,S.settings.cardGap+d));     document.getElementById('dGap').textContent      =S.settings.cardGap+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-function adjColW(d)     { S.settings.colW        = Math.max(80,Math.min(300,S.settings.colW+d));       document.getElementById('dColW').textContent     =S.settings.colW+'px';       save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-function adjCatW(d)     { S.settings.catW        = Math.max(16,Math.min(80,S.settings.catW+d));        document.getElementById('dCatW').textContent     =S.settings.catW+'px';        save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-function adjSubCatW(d)  { S.settings.subCatW     = Math.max(40,Math.min(200,S.settings.subCatW+d));    document.getElementById('dSubCatW').textContent  =S.settings.subCatW+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-function adjCellFold(d) { S.settings.cellFold    = Math.max(0, Math.min(20,S.settings.cellFold+d));    document.getElementById('dCellFold').textContent =S.settings.cellFold===0?'∞':S.settings.cellFold; save(); S.expandedCells=new Set(); if(S.view==='matrix')renderMatrix(); }
+/* ── Stepper 설정값 조절 ── */function adjFont(d)     { S.settings.baseFont    = Math.max(12,Math.min(22,S.settings.baseFont+d));    document.getElementById('dBaseFont').textContent =S.settings.baseFont+'px';    save(); applyVars(); }function adjCardFont(d) { S.settings.cardFont    = Math.max(9, Math.min(18,S.settings.cardFont+d));    document.getElementById('dCardFont').textContent =S.settings.cardFont+'px';    save(); applyVars(); if(S.view==='matrix')renderMatrix(); }function adjRadius(d)   { S.settings.cardRadius  = Math.max(0, Math.min(14,S.settings.cardRadius+d));  document.getElementById('dRadius').textContent   =S.settings.cardRadius+'px';  save(); applyVars(); if(S.view==='matrix')renderMatrix(); }function adjGap(d)      { S.settings.cardGap     = Math.max(0, Math.min(20,S.settings.cardGap+d));     document.getElementById('dGap').textContent      =S.settings.cardGap+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }function adjColW(d)     { S.settings.colW        = Math.max(80,Math.min(300,S.settings.colW+d));       document.getElementById('dColW').textContent     =S.settings.colW+'px';       save(); applyVars(); if(S.view==='matrix')renderMatrix(); }function adjCatW(d)     { S.settings.catW        = Math.max(16,Math.min(80,S.settings.catW+d));        document.getElementById('dCatW').textContent     =S.settings.catW+'px';        save(); applyVars(); if(S.view==='matrix')renderMatrix(); }function adjSubCatW(d)  { S.settings.subCatW     = Math.max(40,Math.min(200,S.settings.subCatW+d));    document.getElementById('dSubCatW').textContent  =S.settings.subCatW+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }function adjCellFold(d) { S.settings.cellFold    = Math.max(0, Math.min(20,S.settings.cellFold+d));    document.getElementById('dCellFold').textContent =S.settings.cellFold===0?'∞':S.settings.cellFold; save(); S.expandedCells=new Set(); if(S.view==='matrix')renderMatrix(); }
 
-/* ── 애니메이션 ── */
-function onAnimTgl() {
+/* ── 애니메이션 ── */function onAnimTgl() {
   const a = S.settings.animations;
   a.enabled  = document.getElementById('animEnabled').checked;
   a.countUp  = document.getElementById('animCountUp').checked;
@@ -3365,8 +3268,7 @@ function onAnimTgl() {
   a.shimmer  = document.getElementById('animShimmer').checked;
   a.blur     = document.getElementById('animBlur').checked;
   save(); applyBlurSetting(); renderAll();
-}
-function syncAnimUI() {
+}function syncAnimUI() {
   const a = S.settings.animations;
   document.getElementById('animEnabled').checked = a.enabled;
   document.getElementById('animCountUp').checked = a.countUp;
@@ -3377,8 +3279,7 @@ function syncAnimUI() {
 }
 
 /* ── 리스트 컬럼 편집기 ── */
-let _colDragIdx = null;
-function renderColEditor() {
+let _colDragIdx = null;function renderColEditor() {
   const el = document.getElementById('colEditor');
   if (!el) return;
   const FLABELS_LOCAL = {key:'Key',name:'기능명',desc:'설명',path:'경로',group:'그룹',subGroup:'서브그룹',category:'카테고리',subCategory:'서브카테고리',priority:'우선순위',status:'진행상태',owner:'담당',isDelete:'삭제여부',isImportant:'중요여부',relSystem:'연관시스템',memo:'메모',mdPath:'MD경로',mdContent:'MD내용'};
@@ -3394,18 +3295,10 @@ function renderColEditor() {
       <span class="col-name">${FLABELS_LOCAL[col.key]||col.key}</span>
     </div>`
   ).join('');
-}
-function toggleColVisible(idx, checked) { S.settings.listColumns[idx].visible = checked; save(); if (S.view==='list') renderList(); }
-function colDragStart(e, idx)  { _colDragIdx=idx; e.currentTarget.classList.add('dragging-col'); e.dataTransfer.effectAllowed='move'; }
-function colDragOver(e, idx)   { e.preventDefault(); if(idx===_colDragIdx)return; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('drag-over-col')); e.currentTarget.classList.add('drag-over-col'); }
-function colDragLeave(e)       { e.currentTarget.classList.remove('drag-over-col'); }
-function colDrop(e, toIdx)     { e.preventDefault(); if(_colDragIdx===null||_colDragIdx===toIdx)return; const cols=[...S.settings.listColumns]; const[moved]=cols.splice(_colDragIdx,1); cols.splice(toIdx,0,moved); S.settings.listColumns=cols; save(); renderColEditor(); if(S.view==='list')renderList(); }
-function colDragEnd()          { _colDragIdx=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }
-function resetListCols()       { S.settings.listColumns=JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)); save(); renderColEditor(); if(S.view==='list')renderList(); notify('리스트 컬럼을 기본값으로 복원했습니다.'); }
+}function toggleColVisible(idx, checked) { S.settings.listColumns[idx].visible = checked; save(); if (S.view==='list') renderList(); }function colDragStart(e, idx)  { _colDragIdx=idx; e.currentTarget.classList.add('dragging-col'); e.dataTransfer.effectAllowed='move'; }function colDragOver(e, idx)   { e.preventDefault(); if(idx===_colDragIdx)return; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('drag-over-col')); e.currentTarget.classList.add('drag-over-col'); }function colDragLeave(e)       { e.currentTarget.classList.remove('drag-over-col'); }function colDrop(e, toIdx)     { e.preventDefault(); if(_colDragIdx===null||_colDragIdx===toIdx)return; const cols=[...S.settings.listColumns]; const[moved]=cols.splice(_colDragIdx,1); cols.splice(toIdx,0,moved); S.settings.listColumns=cols; save(); renderColEditor(); if(S.view==='list')renderList(); }function colDragEnd()          { _colDragIdx=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }function resetListCols()       { S.settings.listColumns=JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)); save(); renderColEditor(); if(S.view==='list')renderList(); notify('리스트 컬럼을 기본값으로 복원했습니다.'); }
 
 /* ── 그룹/카테고리 순서 관리 ── */
-let _axisDragIdx = null, _axisField = null;
-function renderAxisEditor() {
+let _axisDragIdx = null, _axisField = null;function renderAxisEditor() {
   renderSingleAxis('groupOrder', 'group',    'groupAxisList', '그룹 (X축)');
   renderSingleAxis('catOrder',   'category', 'catAxisList',   '카테고리 (Y축)');
 }
@@ -3427,11 +3320,7 @@ function renderSingleAxis(orderKey, field, listId, label) {
     </div>`).join('');
   // 순서 저장
   S.settings[orderKey] = merged;
-}
-function axisDragStart(e, field, idx) { _axisDragIdx=idx; _axisField=field; e.currentTarget.classList.add('dragging-col'); e.dataTransfer.effectAllowed='move'; }
-function axisDragOver(e, idx)  { e.preventDefault(); document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('drag-over-col')); e.currentTarget.classList.add('drag-over-col'); }
-function axisDragLeave(e)      { e.currentTarget.classList.remove('drag-over-col'); }
-function axisDrop(e, field, toIdx) {
+}function axisDragStart(e, field, idx) { _axisDragIdx=idx; _axisField=field; e.currentTarget.classList.add('dragging-col'); e.dataTransfer.effectAllowed='move'; }function axisDragOver(e, idx)  { e.preventDefault(); document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('drag-over-col')); e.currentTarget.classList.add('drag-over-col'); }function axisDragLeave(e)      { e.currentTarget.classList.remove('drag-over-col'); }function axisDrop(e, field, toIdx) {
   e.preventDefault();
   if (_axisDragIdx === null || _axisDragIdx === toIdx) return;
   const orderKey = field === 'group' ? 'groupOrder' : 'catOrder';
@@ -3443,16 +3332,12 @@ function axisDrop(e, field, toIdx) {
   save();
   renderAxisEditor();
   if (S.view === 'matrix') renderMatrix();
-}
-function axisDragEnd() { _axisDragIdx=null; _axisField=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }
-function resetAxisOrder() { S.settings.groupOrder=[]; S.settings.catOrder=[]; save(); renderAxisEditor(); if(S.view==='matrix')renderMatrix(); notify('축 순서를 자동 정렬로 초기화했습니다.'); }
+}function axisDragEnd() { _axisDragIdx=null; _axisField=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }function resetAxisOrder() { S.settings.groupOrder=[]; S.settings.catOrder=[]; save(); renderAxisEditor(); if(S.view==='matrix')renderMatrix(); notify('축 순서를 자동 정렬로 초기화했습니다.'); }
 
-/* ── 설정 JSON Import / Export ── */
-function expSettJSON() {
+/* ── 설정 JSON Import / Export ── */function expSettJSON() {
   dlBlob(JSON.stringify({settings:S.settings, display:S.display},null,2), `sobuk-settings-${today()}.json`, 'application/json');
   notify('설정이 JSON 파일로 저장되었습니다.');
-}
-function impSettJSON(event) {
+}function impSettJSON(event) {
   const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
@@ -3467,19 +3352,17 @@ function impSettJSON(event) {
   reader.readAsText(file); event.target.value = '';
 }
 
-/* ── 초기화 ── */
-function resetData() {
+/* ── 초기화 ── */function resetData() {
   if (!confirm('모든 데이터를 초기화하겠습니까?')) return;
   S.items = JSON.parse(JSON.stringify(DEMO));
   save(); renderAll();
   document.getElementById('settingsModal')?.classList.remove('on');
   notify('데이터가 초기화되었습니다.');
-}
-function resetSettings() {
+}function resetSettings() {
   if (!confirm('설정을 기본값으로 초기화하겠습니까?')) return;
   Object.assign(S.settings, {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:24, subCatW:72, cellFold:3,
+    colW:130, catW:12, subCatW:100, cellFold:3,
     matrixWidth:'fluid', panelPos:'left', themeId:'sobuk',
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},
@@ -3522,8 +3405,7 @@ function statusColor(status) {
 }
 
 /* ── 히트맵 뷰 상태 ── */
-let _hmView = 'cat';
-function setHmView(v) { _hmView = v; renderDashboard(); }
+let _hmView = 'cat';function setHmView(v) { _hmView = v; renderDashboard(); }
 
 /* ── 히트맵 HTML ── */
 function buildHeatmap(all, groups, cats) {
@@ -3541,12 +3423,12 @@ function buildHeatmap(all, groups, cats) {
       if (hmData[k] > hmMax) hmMax = hmData[k];
     });
     return `<div class="db-hm-wrap">
-      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${cats.length},1fr)">
+      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
         <div class="db-hm-corner"></div>
-        ${cats.map(c => `<div class="db-hm-col-hd" title="${esc(c)}">${esc(c)}</div>`).join('')}
-        ${groups.map(g => `
-          <div class="db-hm-row-hd" title="${esc(g)}">${esc(g)}</div>
-          ${cats.map(c => {
+        ${groups.map(g => `<div class="db-hm-col-hd" title="${esc(g)}">${esc(g)}</div>`).join('')}
+        ${cats.map(c => `
+          <div class="db-hm-row-hd" title="${esc(c)}">${esc(c)}</div>
+          ${groups.map(g => {
             const cnt = hmData[`${g}||${c}`] || 0;
             const op  = hmMax > 0 ? (cnt === 0 ? 0.06 : 0.15 + cnt/hmMax * 0.85) : 0.06;
             return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc(g)} × ${esc(c)}: ${cnt}개">${cnt > 0 ? cnt : ''}</div>`;
@@ -3638,8 +3520,7 @@ function buildGroupProgress(all, groups) {
   }).filter(Boolean).join('');
 }
 
-/* ── renderDashboard ── */
-function renderDashboard() {
+/* ── renderDashboard ── */function renderDashboard() {
   const el = document.getElementById('dashboardView');
   if (!el) return;
 
@@ -3699,124 +3580,108 @@ function renderDashboard() {
   /* ── 히어로 섹션 ── */
   const heroName = S.settings.dbHeroName || '프로젝트 현황';
 
-  /* ── 통합 2열 본문 (스탯카드 1~3 + 그룹진척 + 담당자 / 스탯카드4 + 타임라인) ── */
+  /* ── 섹션 HTML 빌더 ── */
   const SC_OW = { '기획':'var(--text-3)', '개발중':'var(--accent)', '완료':'var(--success)', '보류':'var(--warning)' };
+
+  const buildStatsSection = () => `
+    <div class="db-cards">
+      <div class="db-card db-card--theme">
+        <div class="db-card-label">전체 기능</div>
+        <div class="db-card-value">${total.toLocaleString()}</div>
+        <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
+      </div>
+      <div class="db-card">
+        <div class="db-card-label">기획</div>
+        <div class="db-card-value" style="color:var(--text-3)">${statusCount['기획']}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['기획']/total*100) : 0}%</div>
+      </div>
+      <div class="db-card">
+        <div class="db-card-label">개발중</div>
+        <div class="db-card-value" style="color:var(--accent)">${statusCount['개발중']}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['개발중']/total*100) : 0}%</div>
+      </div>
+      <div class="db-card">
+        <div class="db-card-label">완료</div>
+        <div class="db-card-value" style="color:var(--success)">${statusCount['완료']}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['완료']/total*100) : 0}%</div>
+      </div>
+    </div>`;
+
+  const buildInsightSection = () => `
+    <div class="db-panel">
+      <div class="db-panel-hd">
+        <div class="db-panel-title">그룹별 진척도</div>
+        <div class="db-panel-sub">기획 · 개발중 · 완료 · 보류 비율</div>
+      </div>
+      <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
+    </div>
+    <div class="db-panel">
+      <div class="db-panel-hd">
+        <div class="db-panel-title">담당별 기능 현황</div>
+      </div>
+      ${owners.length === 0
+        ? `<div class="db-empty">담당자 정보가 없습니다</div>`
+        : `<div class="db-owners-unified">
+            <div class="db-owners-hdr">
+              <div class="db-owner-info"></div>
+              <div class="db-owners-bar-hdr" style="flex:1">진행상태</div>
+              <div class="db-owners-bar-hdr" style="text-align:right;min-width:100px">우선순위</div>
+            </div>
+            ${owners.map(([owner, cnt]) => {
+              const t = cnt.total;
+              const stLeg = ['기획','개발중','완료','보류']
+                .filter(s => cnt.status[s] > 0)
+                .map(s => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC_OW[s]}"></span>${s} ${cnt.status[s]}</span>`)
+                .join('');
+              const prioText = [
+                cnt.high > 0 ? `<span style="color:var(--p-high,var(--danger));font-weight:700">상 ${cnt.high}</span>` : '',
+                cnt.mid  > 0 ? `<span style="color:var(--p-mid,var(--accent))">중 ${cnt.mid}</span>` : '',
+                cnt.low  > 0 ? `<span style="color:var(--text-3)">하 ${cnt.low}</span>` : '',
+              ].filter(Boolean).join('<span style="color:var(--border-2);margin:0 2px">|</span>');
+              return `
+              <div class="db-owner-row-unified">
+                <div class="db-owner-info">
+                  <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
+                  <span class="db-owner-name">${esc(owner)}</span>
+                  <span class="db-owner-total">${t}</span>
+                </div>
+                <div class="db-owner-bar-wrap" style="flex:1">
+                  <div class="db-bar-track">
+                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['기획']||0)/t*100).toFixed(1)  : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
+                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['개발중']||0)/t*100).toFixed(1): 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
+                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['완료']||0)/t*100).toFixed(1)  : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
+                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['보류']||0)/t*100).toFixed(1)  : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
+                  </div>
+                  ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ''}
+                </div>
+                <div style="min-width:100px;text-align:right;font-size:.7rem;display:flex;align-items:center;justify-content:flex-end;gap:3px;flex-shrink:0">${prioText || '<span style="color:var(--text-3)">-</span>'}</div>
+              </div>`;
+            }).join('')}
+          </div>`
+      }
+    </div>`;
+
+  const buildHeatmapSection = () => `
+    <div class="db-panel db-heatmap-panel">
+      <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="db-panel-title">기능 분포 히트맵</div>
+          <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+        </div>
+        <div class="db-hm-tabs">
+          <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
+          <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
+        </div>
+      </div>
+      ${buildHeatmap(all, groups, cats)}
+    </div>`;
+
+  const sectionBuilders = { stats: buildStatsSection, insight: buildInsightSection, heatmap: buildHeatmapSection };
+
   const bodySection = `
   <div class="db-body" data-anim-idx="1">
     <div class="db-body-left">
-      <div class="db-cards-3">
-        <div class="db-card db-card--theme">
-          <div class="db-card-label">전체 기능</div>
-          <div class="db-card-value">${total.toLocaleString()}</div>
-          <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
-        </div>
-        <div class="db-card">
-          <div class="db-card-label">우선순위 분포</div>
-          <div class="db-prio-bars">
-            <div class="db-prio-row">
-              <span class="db-prio-lbl sv-h">상</span>
-              <div class="db-bar-track"><div class="db-bar-fill db-bar--high" style="width:${total > 0 ? Math.round(high/total*100) : 0}%"></div></div>
-              <span class="db-prio-cnt">${high}</span>
-            </div>
-            <div class="db-prio-row">
-              <span class="db-prio-lbl sv-m">중</span>
-              <div class="db-bar-track"><div class="db-bar-fill db-bar--mid" style="width:${total > 0 ? Math.round(mid/total*100) : 0}%"></div></div>
-              <span class="db-prio-cnt">${mid}</span>
-            </div>
-            <div class="db-prio-row">
-              <span class="db-prio-lbl sv-l">하</span>
-              <div class="db-bar-track"><div class="db-bar-fill db-bar--low" style="width:${total > 0 ? Math.round(low/total*100) : 0}%"></div></div>
-              <span class="db-prio-cnt">${low}</span>
-            </div>
-          </div>
-        </div>
-        <div class="db-card">
-          <div class="db-card-label">완료율</div>
-          <div class="db-pct-wrap">
-            <div class="db-pct-num">${pct}<span class="db-pct-sign">%</span></div>
-            <div class="db-pct-sub">${done} / ${total} 완료</div>
-          </div>
-          <div class="db-bar-track" style="margin-top:12px">
-            <div class="db-bar-fill db-bar--done" style="width:${pct}%"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="db-panel">
-        <div class="db-panel-hd">
-          <div class="db-panel-title">그룹별 진척도</div>
-          <div class="db-panel-sub">기획 · 개발중 · 완료 · 보류 비율</div>
-        </div>
-        <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
-      </div>
-
-      <div class="db-panel">
-        <div class="db-panel-hd">
-          <div class="db-panel-title">담당별 기능 현황</div>
-        </div>
-        ${owners.length === 0
-          ? `<div class="db-empty">담당자 정보가 없습니다</div>`
-          : `<div class="db-owners-unified">
-              <div class="db-owners-hdr">
-                <div class="db-owner-info"></div>
-                <div class="db-owners-bar-hdr">우선순위</div>
-                <div class="db-owners-bar-hdr">진행상태</div>
-              </div>
-              ${owners.map(([owner, cnt]) => {
-                const t = cnt.total;
-                const prioLeg = [
-                  cnt.high > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--p-high,var(--danger))"></span>상 ${cnt.high}</span>` : '',
-                  cnt.mid  > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--p-mid,var(--accent))"></span>중 ${cnt.mid}</span>` : '',
-                  cnt.low  > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--text-3)"></span>하 ${cnt.low}</span>` : '',
-                ].filter(Boolean).join('');
-                const stLeg = ['기획','개발중','완료','보류']
-                  .filter(s => cnt.status[s] > 0)
-                  .map(s => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC_OW[s]}"></span>${s} ${cnt.status[s]}</span>`)
-                  .join('');
-                return `
-                <div class="db-owner-row-unified">
-                  <div class="db-owner-info">
-                    <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
-                    <span class="db-owner-name">${esc(owner)}</span>
-                    <span class="db-owner-total">${t}</span>
-                  </div>
-                  <div class="db-owner-bar-wrap">
-                    <div class="db-bar-track">
-                      <div class="db-owner-seg db-bar--high" style="width:${t > 0 ? (cnt.high/t*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
-                      <div class="db-owner-seg db-bar--mid"  style="width:${t > 0 ? (cnt.mid/t*100).toFixed(1)  : 0}%" title="중 ${cnt.mid}"></div>
-                      <div class="db-owner-seg db-bar--low"  style="width:${t > 0 ? (cnt.low/t*100).toFixed(1)  : 0}%" title="하 ${cnt.low}"></div>
-                    </div>
-                    ${prioLeg ? `<div class="db-gp-legend db-owner-legend">${prioLeg}</div>` : ''}
-                  </div>
-                  <div class="db-owner-bar-wrap">
-                    <div class="db-bar-track">
-                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['기획']||0)/t*100).toFixed(1)  : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
-                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['개발중']||0)/t*100).toFixed(1): 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
-                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['완료']||0)/t*100).toFixed(1)  : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
-                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['보류']||0)/t*100).toFixed(1)  : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
-                    </div>
-                    ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ''}
-                  </div>
-                </div>`;
-              }).join('')}
-            </div>`
-        }
-      </div>
-
-      ${sections.includes('heatmap') ? `
-      <div class="db-panel db-heatmap-panel">
-        <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="db-panel-title">기능 분포 히트맵</div>
-            <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
-          </div>
-          <div class="db-hm-tabs">
-            <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
-            <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
-          </div>
-        </div>
-        ${buildHeatmap(all, groups, cats)}
-      </div>` : ''}
+      ${sections.map(s => sectionBuilders[s] ? sectionBuilders[s]() : '').join('')}
     </div>
 
     <div class="db-body-right">
@@ -3962,6 +3827,7 @@ window.onDispTgl = () => {
   S.display.showUpdated   = document.getElementById('togUpd').checked;
   S.display.showStatus    = document.getElementById('togStatus').checked;
   S.display.showMdBadge   = document.getElementById('togMd').checked;
+  S.display.showQuickAdd  = document.getElementById('togQuickAdd')?.checked ?? false;
   save(); renderAll();
 };
 
@@ -4192,6 +4058,19 @@ window.saveUserNamePopup = (skip = false) => {
   document.getElementById('userNameModal').classList.remove('on');
 };
 
+window.syncEditorPwStatus = async () => {
+  const inp = document.getElementById('editorPwInp');
+  if (!inp || S.settings.storageMode !== 'server') return;
+  try {
+    const result = await pollServerTs();
+    if (result && result.hasEditorPw) {
+      inp.placeholder = '새 비밀번호 (비워두면 제거) — 현재 설정됨 ****';
+    } else {
+      inp.placeholder = '새 비밀번호 (비워두면 비번 없이 편집 가능)';
+    }
+  } catch(e) {}
+};
+
 window.loadInlineActivityLog = async () => {
   const body = document.getElementById('inlineLogBody');
   if (!body) return;
@@ -4199,7 +4078,8 @@ window.loadInlineActivityLog = async () => {
   try {
     const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
     const headers = { 'X-Admin-Token': getAdminToken() };
-    const res  = await fetch(apiUrl + '/api/log', { headers });
+    const limit = parseInt(document.getElementById('logLimitInp')?.value || '100', 10) || 100;
+    const res  = await fetch(`${apiUrl}/api/log?limit=${limit}`, { headers });
     const json = await res.json();
     if (!json.ok) {
       if (res.status === 403) {
@@ -4324,6 +4204,18 @@ async function init() {
   syncServerSettingsUI();
   updateAdminUI();
   scheduleCardAnim();
+  // 빌드 넘버 표시
+  (() => {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ver = S.settings.version || '1.0.0';
+    const el = document.getElementById('buildNumberDisplay');
+    if (el) el.textContent = `${ver}-build${yy}${MM}${dd}${hh}${mm}`;
+  })();
   S.view = 'dashboard';
   renderAll();
   updateUndoFab();

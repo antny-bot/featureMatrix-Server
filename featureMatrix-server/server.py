@@ -225,7 +225,8 @@ def ping():
     return jsonify({'ok': True, 'serverTs': store['serverTs'],
                     'lastEditor': store['lastEditor'],
                     'lastEditTime': store['lastEditTime'],
-                    'locks': edit_locks})
+                    'locks': edit_locks,
+                    'hasEditorPw': bool(get_editor_password())})
 
 # ── GET /api/log ─── 활동 로그 조회 (관리자 전용) ─────────
 @app.route('/api/log', methods=['GET'])
@@ -233,7 +234,12 @@ def get_log():
     if not check_admin_token():
         return jsonify({'ok': False, 'error': '관리자 권한이 필요합니다.'}), 403
     entries = read_activity()
-    return jsonify({'ok': True, 'entries': list(reversed(entries))})
+    try:
+        limit = int(request.args.get('limit', 100))
+        limit = max(10, min(1000, limit))
+    except (ValueError, TypeError):
+        limit = 100
+    return jsonify({'ok': True, 'entries': list(reversed(entries))[:limit]})
 
 # ── POST /api/log ─── 활동 로그 기록 (편집자 이상) ────────
 @app.route('/api/log', methods=['POST'])

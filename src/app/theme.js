@@ -126,14 +126,14 @@ export function updateDesignContent() {
 
 export function getPresetCSS(pid, pHex, pBg) {
   switch(pid) {
-    case 'left-thin':  return `border:1px solid #E4E2DE;border-left:2px solid ${pHex};background:var(--surface)`;
-    case 'left-thick': return `border:1px solid #E4E2DE;border-left:4px solid ${pHex};background:var(--surface)`;
+    case 'left-thin':  return `border:1px solid var(--border);border-left:2px solid ${pHex};background:var(--surface)`;
+    case 'left-thick': return `border:1px solid var(--border);border-left:4px solid ${pHex};background:var(--surface)`;
     case 'all-thin':   return `border:1.5px solid ${pHex};background:var(--surface)`;
     case 'all-thick':  return `border:2.5px solid ${pHex};background:var(--surface)`;
     case 'dashed':     return `border:1.5px dashed ${pHex};background:var(--surface)`;
     case 'bg-fill':    return `border:1px solid ${pHex};background:${pBg}`;
-    case 'none':       return `border:1px solid #E4E2DE;background:var(--surface)`;
-    default:           return `border:1px solid #E4E2DE;border-left:4px solid ${pHex};background:var(--surface)`;
+    case 'none':       return `border:1px solid var(--border);background:var(--surface)`;
+    default:           return `border:1px solid var(--border);border-left:4px solid ${pHex};background:var(--surface)`;
   }
 }
 

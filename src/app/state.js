@@ -11,10 +11,10 @@ export const S = {
   searchQ: '',
   expandedCells: new Set(),
   filters: { priorities:[], statuses:[], showDeleted:false, importantOnly:false, owners:[] },
-  display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true },
+  display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true, showQuickAdd:false },
   settings: {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:24, subCatW:72, cellFold:0,
+    colW:130, catW:12, subCatW:100, cellFold:0,
     matrixWidth:'fluid', panelPos:'left', panelVisible:true,
     title:'소복 매트릭스', subtitle:'Function Matrix', themeId:'sobuk',
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },
@@ -210,7 +210,7 @@ export async function pollServerTs() {
     const res = await fetch(apiBase() + '/api/ping', { headers: apiHeaders() });
     if (!res.ok) return null;
     const json = await res.json();
-    return { serverTs: json.serverTs, lastEditor: json.lastEditor || '', lastEditTime: json.lastEditTime || 0 };
+    return { serverTs: json.serverTs, lastEditor: json.lastEditor || '', lastEditTime: json.lastEditTime || 0, hasEditorPw: json.hasEditorPw ?? false };
   } catch(e) { return null; }
 }
 

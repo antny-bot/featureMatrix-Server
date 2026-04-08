@@ -20,7 +20,7 @@ export function sstab(btn, paneId) {
   if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); }
   if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
   if (paneId === 'sdat')    window.syncServerSettingsUI?.();
-  if (paneId === 'sadmin')  { window.loadInlineActivityLog?.(); window.renderDbSectionOrder?.(); }
+  if (paneId === 'sadmin')  { window.loadInlineActivityLog?.(); window.renderDbSectionOrder?.(); window.syncEditorPwStatus?.(); }
 }
 
 /* ── 설정 UI 전체 동기화 ── */
@@ -61,6 +61,8 @@ export function syncSettingsUI() {
   document.getElementById('togUpd').checked    = !!di.showUpdated;
   document.getElementById('togStatus').checked = di.showStatus !== false;
   document.getElementById('togMd').checked     = di.showMdBadge !== false;
+  const togQA = document.getElementById('togQuickAdd');
+  if (togQA) togQA.checked = !!di.showQuickAdd;
   document.getElementById('togDel').checked    = S.filters.showDeleted;
   document.getElementById('togImp').checked    = S.filters.importantOnly;
   syncAnimUI();
@@ -222,7 +224,7 @@ export function resetSettings() {
   if (!confirm('설정을 기본값으로 초기화하겠습니까?')) return;
   Object.assign(S.settings, {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:24, subCatW:72, cellFold:3,
+    colW:130, catW:12, subCatW:100, cellFold:3,
     matrixWidth:'fluid', panelPos:'left', themeId:'sobuk',
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},
