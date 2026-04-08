@@ -483,12 +483,22 @@ window.dbSectionMove = (idx, dir) => {
   if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
 };
 
+/* ── 섹션 순서 드래그 상태 ── */
+let _dbDragIdx = null;
+
 function renderDbSectionOrder() {
   const el = document.getElementById('dbSectionOrder');
   if (!el) return;
   const secs = S.settings.dbSections || ['stats', 'insight', 'heatmap'];
   el.innerHTML = secs.map((s, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface-2);border-radius:7px;border:1px solid var(--border)">
+    <div class="db-sec-row" draggable="true" data-idx="${i}"
+      style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface-2);border-radius:7px;border:1px solid var(--border);cursor:grab;transition:opacity .15s,box-shadow .15s"
+      ondragstart="dbSecDragStart(event,${i})"
+      ondragover="dbSecDragOver(event,${i})"
+      ondragleave="dbSecDragLeave(event)"
+      ondrop="dbSecDrop(event,${i})"
+      ondragend="dbSecDragEnd()">
+      <span style="font-size:.85rem;color:var(--text-3);cursor:grab;padding:0 2px" title="드래그로 순서 변경">⠿</span>
       <span style="font-size:.75rem;color:var(--text-3);font-weight:700;width:16px">${i + 1}</span>
       <span style="flex:1;font-size:.8rem;font-weight:600;color:var(--text)">${DB_SECTION_LABELS[s] || s}</span>
       <button class="btn btn-g btn-sm" style="width:24px;height:24px;padding:0;font-size:.7rem" onclick="dbSectionMove(${i}, -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
@@ -496,6 +506,38 @@ function renderDbSectionOrder() {
     </div>`).join('');
 }
 window.renderDbSectionOrder = renderDbSectionOrder;
+
+window.dbSecDragStart = (e, idx) => {
+  _dbDragIdx = idx;
+  e.currentTarget.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+};
+window.dbSecDragOver = (e, idx) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (idx === _dbDragIdx) return;
+  e.currentTarget.style.boxShadow = _dbDragIdx < idx
+    ? '0 3px 0 var(--accent)' : '0 -3px 0 var(--accent)';
+};
+window.dbSecDragLeave = e => { e.currentTarget.style.boxShadow = ''; };
+window.dbSecDrop = (e, toIdx) => {
+  e.preventDefault();
+  if (_dbDragIdx === null || _dbDragIdx === toIdx) return;
+  const secs = [...(S.settings.dbSections || ['stats', 'insight', 'heatmap'])];
+  const [moved] = secs.splice(_dbDragIdx, 1);
+  secs.splice(toIdx, 0, moved);
+  S.settings.dbSections = secs;
+  save();
+  if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
+  renderDbSectionOrder();
+};
+window.dbSecDragEnd = () => {
+  _dbDragIdx = null;
+  document.querySelectorAll('.db-sec-row').forEach(r => {
+    r.style.opacity = '';
+    r.style.boxShadow = '';
+  });
+};
 
 /* ── 초기화 ── */
 async function init() {

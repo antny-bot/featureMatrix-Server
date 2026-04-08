@@ -227,6 +227,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .status-dev {background:#FDF4E1;color:#9A6200}
 .status-done{background:#EAF5EF;color:#1D7A4F}
 .status-hold{background:var(--surface-3);color:var(--text-3)}
+[data-theme="dark"] .status-plan{background:#162438;color:#5B96D8}
+[data-theme="dark"] .status-dev {background:#1E1608;color:#E0A030}
+[data-theme="dark"] .status-done{background:#0A1F0F;color:#4ADE80}
 .owner-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px;flex-shrink:0;vertical-align:middle}
 .md-badge{font-size:.52rem;font-weight:700;background:var(--accent-l);color:var(--accent);border-radius:3px;padding:1px 3px;letter-spacing:.02em;line-height:1.4;margin-left:2px}
 .item-updated{font-size:.58rem;color:var(--text-3);margin-top:1px}
