@@ -3,7 +3,7 @@
 ══════════════════════════════════════════ */
 
 import { FIELDS, FLABELS } from './constants.js';
-import { S, save, pushUndo, findItem, esc, eattr, normOwner, getPK, today, notify } from './state.js';
+import { S, save, pushUndo, findItem, esc, eattr, normOwner, getPK, today, notify, apiFetch } from './state.js';
 import { getColors, getPresetCSS } from './theme.js';
 import { getFiltered } from './render.js';
 import { closeModal } from './modal.js';
@@ -230,6 +230,44 @@ export function expHTML() {
 }
 
 /* ═══════════════════════════════
+   전체 백업 JSON Import / Export
+═══════════════════════════════ */
+export function expFullJSON() {
+  const backup = {
+    _version: 1,
+    _exportedAt: new Date().toISOString(),
+    items: S.items,
+    settings: S.settings,
+    display: S.display,
+  };
+  dlBlob(JSON.stringify(backup, null, 2), `sobuk-backup-${today()}.json`, 'application/json');
+  notify('전체 백업이 JSON 파일로 저장되었습니다.');
+}
+
+export function impFullJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!confirm('현재 데이터와 설정을 백업 파일로 교체하겠습니까?')) { event.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (!d.items || !Array.isArray(d.items)) { notify('올바른 백업 파일이 아닙니다.', true); return; }
+      pushUndo();
+      S.items = d.items;
+      if (d.settings) Object.keys(d.settings).forEach(k => { if (k in S.settings) S.settings[k] = d.settings[k]; });
+      if (d.display)  Object.keys(d.display).forEach(k  => { if (k in S.display)  S.display[k]  = d.display[k]; });
+      save();
+      window.__sobukRenderAll?.();
+      const exportedAt = d._exportedAt ? ` (${new Date(d._exportedAt).toLocaleString('ko-KR')})` : '';
+      notify(`백업 복원 완료${exportedAt} — ${d.items.length}개 항목`);
+    } catch { notify('JSON 파일 파싱 오류입니다.', true); }
+  };
+  reader.readAsText(file, 'UTF-8');
+  event.target.value = '';
+}
+
+/* ═══════════════════════════════
    MD ZIP
 ═══════════════════════════════ */
 export function expMdZip() {
@@ -299,6 +337,9 @@ export function analyzeCSV() {
   showImportStep2();
 }
 
+/* 임포트에서 필수 필드 */
+const IMPORT_REQUIRED = ['key', 'name'];
+
 function showImportStep2() {
   document.getElementById('impStep1').style.display = 'none';
   document.getElementById('impStep2').style.display = '';
@@ -308,12 +349,14 @@ function showImportStep2() {
     const ai = hdrs.findIndex(h => h.trim().toLowerCase()===fld.toLowerCase() || (FLABELS[fld] && h.trim()===FLABELS[fld]));
     const preview = ai !== -1 && rows.length > 0 ? (rows[0][ai]||'').replace(/\n/g,'↵').slice(0,40) : '';
     const opts = hdrs.map((h,i) => `<option value="${i}"${ai===i?' selected':''}>${esc(h)}</option>`).join('');
+    const required = IMPORT_REQUIRED.includes(fld);
+    const label = (FLABELS[fld]||fld) + (required ? ' *' : '');
     return `<div class="map-row">
-      <span class="map-lbl">${esc(FLABELS[fld]||fld)}</span>
+      <span class="map-lbl" style="${required ? 'font-weight:700;color:var(--text)' : ''}">${esc(label)}</span>
       <select id="mp_${fld}" class="map-sel"><option value="-1">(매핑 안 함)</option>${opts}</select>
       <span class="map-prev">${esc(preview)}</span>
     </div>`;
-  }).join('');
+  }).join('') + '<div style="font-size:.7rem;color:var(--text-3);margin-top:6px">* 필수 필드</div>';
 }
 
 export function backToStep1() {
@@ -325,6 +368,16 @@ export function doImport(append) {
   requireAdmin(() => _doImport(append));
 }
 function _doImport(append) {
+  /* 필수 필드 매핑 검증 */
+  const unmapped = IMPORT_REQUIRED.filter(fld => {
+    const sel = document.getElementById(`mp_${fld}`);
+    return !sel || parseInt(sel.value, 10) < 0;
+  });
+  if (unmapped.length) {
+    notify(`필수 필드 매핑이 없습니다: ${unmapped.map(f => FLABELS[f]||f).join(', ')}`, 'error');
+    return;
+  }
+
   const rows  = S.importData.rows;
   const items = rows.map(row => {
     const obj = {};
@@ -334,7 +387,7 @@ function _doImport(append) {
       obj[fld]  = ci >= 0 && ci < row.length ? (row[ci]||'') : '';
     });
     return obj;
-  }).filter(o => o.key);
+  }).filter(o => o.key && o.name); // key와 name 모두 있는 항목만
 
   if (!items.length) { notify('가져올 데이터가 없습니다.', true); return; }
   const exK  = new Set(S.items.map(it => it.key));

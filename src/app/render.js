@@ -61,10 +61,35 @@ export const isFilterActive = () => {
 /* 벌크 선택 상태 */
 export const bulkSel = { active: false, keys: new Set() };
 
+/* 필드 별칭 → 아이템 키 매핑 */
+const SEARCH_FIELD_MAP = {
+  owner: 'owner', 담당: 'owner',
+  status: 'status', 상태: 'status',
+  group: 'group', 그룹: 'group',
+  category: 'category', cat: 'category', 카테고리: 'category',
+  priority: 'priority', 우선순위: 'priority',
+  key: 'key',
+};
+
+/**
+ * 검색어 매칭. `field:value` 문법 지원.
+ * 예: "owner:홍길동", "status:완료 group:인증"
+ */
 function matchesSearch(it, q) {
-  const lq = q.toLowerCase();
-  return [it.key, it.name, it.owner, it.path, it.desc, it.group, it.subGroup, it.category, it.subCategory]
-    .some(v => (v||'').toLowerCase().includes(lq));
+  const tokens = q.trim().split(/\s+/);
+  return tokens.every(tok => {
+    const colon = tok.indexOf(':');
+    if (colon > 0) {
+      const alias = tok.slice(0, colon).toLowerCase();
+      const val   = tok.slice(colon + 1).toLowerCase();
+      const field = SEARCH_FIELD_MAP[alias];
+      if (field) return (it[field] || '').toLowerCase().includes(val);
+    }
+    // 일반 전문 검색
+    const lq = tok.toLowerCase();
+    return [it.key, it.name, it.owner, it.path, it.desc, it.group, it.subGroup, it.category, it.subCategory]
+      .some(v => (v||'').toLowerCase().includes(lq));
+  });
 }
 
 function hlSearch(text, q) {

@@ -4,15 +4,12 @@
    - 로컬 단독 모드: 항상 editor = admin = true
 ══════════════════════════════════════════ */
 
-import { S, notify } from './state.js';
+import { S, notify, apiFetch } from './state.js';
 import { ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY } from './constants.js';
 
 /* ── 서버 모드 여부 ── */
 function isServerMode() {
   return S.settings.storageMode === 'server';
-}
-function apiBase() {
-  return (S.settings.serverUrl || '').trim() || window.location.origin;
 }
 
 /* ── 역할 확인 ── */
@@ -75,12 +72,10 @@ export async function submitLogin() {
   if (errEl) errEl.textContent = '';
 
   try {
-    const res  = await fetch(apiBase() + '/api/auth', {
+    const json = await apiFetch('/api/auth', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pw, role, name })
     });
-    const json = await res.json();
     if (json.ok) {
       if (role === 'admin') {
         sessionStorage.setItem(ADMIN_TOKEN_KEY, json.token);
@@ -121,12 +116,10 @@ export async function setEditorPassword() {
   const newPw = inp.value;
   if (errEl) errEl.textContent = '';
   try {
-    const res  = await fetch(apiBase() + '/api/set-editor-password', {
+    const json = await apiFetch('/api/set-editor-password', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': getAdminToken() },
       body: JSON.stringify({ password: newPw })
     });
-    const json = await res.json();
     if (json.ok) {
       inp.value = '';
       notify(newPw ? '편집자 비밀번호가 변경됐습니다.' : '편집자 비밀번호가 제거됐습니다.');

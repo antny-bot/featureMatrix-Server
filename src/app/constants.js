@@ -8,6 +8,25 @@ export const CELL_OV        = 5;
 export const ADMIN_TOKEN_KEY  = 'fmAdminToken';
 export const EDITOR_TOKEN_KEY = 'fmEditorToken';
 
+/**
+ * 데이터 스키마 버전 — 아이템 필드 구조가 변경될 때마다 올린다.
+ * MIGRATIONS 에 이전 버전 → 현재 버전 변환 함수를 추가한다.
+ */
+export const DATA_VERSION = 2;
+
+/**
+ * 마이그레이션 맵: { [fromVersion]: (item) => migratedItem }
+ * v1 → v2: mdContent, status, updatedAt 기본값 보장
+ */
+export const MIGRATIONS = {
+  1: item => ({
+    ...item,
+    mdContent: item.mdContent ?? '',
+    status:    item.status    ?? '',
+    updatedAt: item.updatedAt ?? 0,
+  }),
+};
+
 export const FIELDS = [
   'key','name','desc','path','group','subGroup','category','subCategory',
   'priority','status','owner','isDelete','isImportant','relSystem','memo','mdPath','mdContent'

@@ -14,19 +14,22 @@ featureMatrix-ServerAdmin/
 |-- src/
 |   |-- index.html
 |   |-- style.css
-|   |-- build.js
+|   |-- build.js            # 레거시 번들러 (정규식 기반)
+|   |-- build-esbuild.js    # esbuild 기반 번들러 (권장)
+|   |-- package.json
 |   |-- app/
-|   |   |-- constants.js
-|   |   |-- state.js
-|   |   |-- admin.js
-|   |   |-- theme.js
-|   |   |-- render.js
-|   |   |-- modal.js
-|   |   |-- io.js
-|   |   |-- settings.js
-|   |   `-- main.js
+|   |   |-- constants.js    # 상수, DATA_VERSION, 마이그레이션 정의
+|   |   |-- state.js        # 전역 상태, 저장/로드, apiFetch 유틸
+|   |   |-- admin.js        # 인증 (관리자/편집자)
+|   |   |-- theme.js        # 테마/색상
+|   |   |-- render.js       # 매트릭스·리스트 렌더, 고급 검색
+|   |   |-- modal.js        # 편집 모달
+|   |   |-- io.js           # Import/Export (TSV·XLS·HTML·MD·ZIP·JSON 백업)
+|   |   |-- settings.js     # 설정 UI
+|   |   |-- dashboard.js    # 대시보드 뷰
+|   |   `-- main.js         # 초기화, 이벤트, 폴링
 |   `-- dist/
-|       `-- index.html
+|       `-- index.html      # 빌드 결과물
 |-- featureMatrix-server/
 |   |-- server.py
 |   |-- config.json
@@ -43,8 +46,7 @@ featureMatrix-ServerAdmin/
 ## 주요 동작
 
 - `src/app/*.js`는 ES module 형태의 프런트엔드 코드입니다.
-- `node src/build.js`를 실행하면 단일 파일 번들인 `src/dist/index.html`이 생성됩니다.
-- 빌드가 끝나면 결과물이 `featureMatrix-server/static/index.html`로 자동 복사됩니다.
+- 빌드하면 단일 파일 번들인 `src/dist/index.html`이 생성되고 `featureMatrix-server/static/`으로 자동 복사됩니다.
 - `featureMatrix-server/server.py`는 정적 HTML을 서빙하고, 공유 데이터용 API를 제공합니다.
 - 서버 데이터는 `featureMatrix-server/data.json`에 저장되고, 활동 로그는 `featureMatrix-server/activity.json`에 저장됩니다.
 
@@ -53,16 +55,20 @@ featureMatrix-ServerAdmin/
 ### 1. Python 의존성 설치
 
 ```bash
-pip install -r requirements.txt
-```
-
-또는 서버 폴더 기준으로:
-
-```bash
 pip install -r featureMatrix-server/requirements.txt
 ```
 
 ### 2. 프런트엔드 빌드
+
+**권장 — esbuild 번들러** (ES Module을 올바르게 처리, tree-shaking 지원):
+
+```bash
+cd src
+npm install
+npm run build
+```
+
+**레거시 — 정규식 기반 번들러** (Node.js 외 추가 의존성 없음):
 
 ```bash
 node src/build.js
@@ -88,77 +94,111 @@ python featureMatrix-server/server.py --host 0.0.0.0 --port 5000 --admin-passwor
 
 첫 실행 시 `featureMatrix-server/config.json`이 생성되며 API 키가 발급됩니다.
 
-## 서버 API
+## 주요 기능
 
-모든 API 요청에는 `X-API-Key` 헤더가 필요합니다.
+### 데이터 관리
+- 기능 항목 CRUD (Key·이름·그룹·카테고리·우선순위·상태·담당자 등)
+- Undo / 변경 이력 조회
+- 전체 백업 JSON 내보내기 / 가져오기 (`expFullJSON` / `impFullJSON`)
+- TSV·XLS·HTML·MD ZIP 내보내기 및 CSV 가져오기
+- CSV/TSV 가져오기 시 필수 필드(`key`, `name`) 매핑 검증
+
+### 검색 / 필터
+- 일반 텍스트 전문 검색
+- 필드 지정 검색 문법: `owner:홍길동`, `status:완료`, `group:인증`, `priority:상` 등
+- 우선순위·상태·담당자·중요 여부 필터 패널
+- 필터 상태가 대시보드에도 반영됨
+
+### 협업 (서버 모드)
+- 다른 사용자 변경 감지 폴링 (간격 설정 가능)
+- 항목별 편집 락 (5분 TTL — 편집창 비정상 종료 시 자동 해제)
+- 활동 로그 (관리자 전용)
+
+### UI / 알림
+- 알림 타입: 기본·`success`·`warning`·`error` (색상 구분)
+- 대시보드: 히트맵, 그룹별 진척도, 담당자 현황, 최근 변경 타임라인
+
+### 데이터 안전성
+- `localStorage` 용량 초과 시 `warning` 알림
+- 스키마 버전(`DATA_VERSION`) 관리 — 로드 시 마이그레이션 자동 적용
+
+## 서버 API
 
 ### 인증
 
-- `POST /api/auth`
-  - 관리자 비밀번호를 사용해 관리자 토큰을 발급받습니다.
-  - 서버가 `--admin-password` 없이 실행된 경우, 인증 없이 관리자 토큰이 발급됩니다.
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `POST` | `/api/auth` | 역할별 토큰 발급 (`role: "admin"` 또는 `"editor"`) |
 
 요청 예시:
 
 ```json
-{
-  "password": "1234"
-}
+{ "password": "1234", "role": "admin", "name": "홍길동" }
 ```
 
 ### 데이터
 
-- `GET /api/data`
-  - 현재 저장된 공유 데이터를 반환합니다.
-- `POST /api/data`
-  - 공유 데이터를 저장합니다.
-  - 현재 서버 구현은 `serverTs` 충돌 검사를 하지 않고 마지막 저장값으로 덮어쓰는 방식입니다.
-
-요청 예시:
-
-```json
-{
-  "payload": {},
-  "editor": "heedo"
-}
-```
-
-### 상태 확인
-
-- `GET /api/ping`
-  - 현재 `serverTs`, 마지막 수정자, 마지막 수정 시각, 편집 잠금 정보를 반환합니다.
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `GET`  | `/api/data` | 공유 데이터 조회 |
+| `POST` | `/api/data` | 공유 데이터 저장 (`payload`, `editor`, `dataVersion` 포함) |
+| `GET`  | `/api/ping` | `serverTs`, 마지막 수정자, 편집 락 목록 반환 |
 
 ### 활동 로그
 
-- `GET /api/log`
-  - 관리자 토큰이 있어야 조회할 수 있습니다.
-- `POST /api/log`
-  - 활동 로그를 기록합니다.
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `GET`  | `/api/log?limit=N` | 로그 조회 (관리자 토큰 필요) |
+| `POST` | `/api/log` | 로그 기록 |
 
-### 편집 잠금
+### 편집 락
 
-- `POST /api/lock`
-  - 특정 항목의 편집 잠금을 요청합니다.
-- `POST /api/unlock`
-  - 본인이 잡은 잠금을 해제합니다.
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `POST` | `/api/lock`   | 항목 락 요청 |
+| `POST` | `/api/unlock` | 락 해제 |
+
+> 클라이언트는 락 후 5분이 지나면 자동으로 언락을 요청합니다.
+
+### 관리자 설정
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `POST` | `/api/set-editor-password` | 편집자 비밀번호 변경 (관리자 전용) |
 
 ## 작업 흐름
 
 프런트엔드 기능을 수정할 때는 보통 아래 순서로 작업하면 됩니다.
 
 1. `src/app/` 안에서 관련 모듈 수정
-2. `node src/build.js` 실행
+2. `cd src && npm run build` (또는 `node src/build.js`)
 3. `featureMatrix-server/static/index.html` 반영 확인
 4. `python featureMatrix-server/server.py`로 로컬 서버 실행
 5. 브라우저에서 동작 확인
 
+## 스키마 마이그레이션
+
+아이템 필드가 추가·변경될 때는 `src/app/constants.js`를 수정합니다.
+
+```js
+// 버전 번호 올리기
+export const DATA_VERSION = 3;
+
+// 이전 버전 → 다음 버전 변환 함수 추가
+export const MIGRATIONS = {
+  1: item => ({ ...item, status: item.status ?? '', updatedAt: item.updatedAt ?? 0 }),
+  2: item => ({ ...item, newField: item.newField ?? '기본값' }),
+};
+```
+
+로드 시 저장된 버전부터 `DATA_VERSION`까지 마이그레이션이 자동 적용됩니다.
+
 ## 참고 문서
 
-- [implementation.md](/e:/apps/featureMatrix-ServerAdmin/implementation.md): 코드 구조와 수정 포인트 정리
-- [featureMatrix-server/README.md](/e:/apps/featureMatrix-ServerAdmin/featureMatrix-server/README.md): 서버 폴더의 별도 문서
+- [implementation.md](implementation.md): 코드 구조와 수정 포인트 정리
 
 ## 주의사항
 
-- 저장소 안 일부 한글 텍스트는 현재 인코딩이 깨져 보이는 파일이 있습니다.
-- 기존 문서에는 충돌 처리(`409 Conflict`) 설명이 있었지만, 현재 `server.py` 구현은 해당 방식이 아닙니다.
-- `featureMatrix-server/activity.json`은 실행 중 변경될 수 있는 데이터 파일이므로 문서 수정과 별개로 다루는 것이 좋습니다.
+- `featureMatrix-server/activity.json`은 실행 중 변경되는 데이터 파일입니다.
+- 현재 서버는 `serverTs` 충돌 감지 후 클라이언트에서 선택(내 것 유지 / 서버 것 적용)하는 방식입니다.
+- esbuild 번들러는 `cd src && npm install` 이후에 사용 가능합니다. 설치하지 않은 경우 `build-esbuild.js`가 자동으로 레거시 번들러(`build.js`)로 폴백합니다.

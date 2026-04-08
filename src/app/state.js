@@ -2,7 +2,7 @@
    state.js — 전역 상태(S), 저장/로드 (서버/로컬), Undo
 ══════════════════════════════════════════ */
 
-import { SK, UNDO_MAX, DEFAULT_LIST_COLS, ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY } from './constants.js';
+import { SK, UNDO_MAX, DEFAULT_LIST_COLS, ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY, DATA_VERSION, MIGRATIONS } from './constants.js';
 
 /** 전역 상태 — 앱 전체에서 import해서 사용 */
 export const S = {
@@ -42,6 +42,19 @@ export const S = {
 export let lastServerTs = 0;
 export function setLastServerTs(ts) { lastServerTs = ts; }
 
+/**
+ * 아이템 배열에 스키마 마이그레이션을 순차 적용.
+ * 저장된 데이터 버전(dataVersion)부터 DATA_VERSION까지 마이그레이션 함수를 실행.
+ */
+export function migrateItems(items, fromVersion = 1) {
+  let result = items;
+  for (let v = fromVersion; v < DATA_VERSION; v++) {
+    const fn = MIGRATIONS[v];
+    if (fn) result = result.map(fn);
+  }
+  return result;
+}
+
 function apiBase() {
   const url = (S.settings.serverUrl || '').trim();
   return url || window.location.origin;
@@ -53,6 +66,25 @@ function apiHeaders() {
   if (adminToken)  h['X-Admin-Token']  = adminToken;
   if (editorToken) h['X-Editor-Token'] = editorToken;
   return h;
+}
+
+/**
+ * API fetch 유틸 — 인증 헤더 자동 주입, 상태 코드 에러 변환
+ * @param {string} path  - apiBase() 기준 경로 (예: '/api/data')
+ * @param {RequestInit} [options]
+ * @returns {Promise<any>} 파싱된 JSON
+ */
+export async function apiFetch(path, options = {}) {
+  const res = await fetch(apiBase() + path, {
+    ...options,
+    headers: { ...apiHeaders(), ...(options.headers || {}) }
+  });
+  if (!res.ok) {
+    const err = new Error(res.statusText || String(res.status));
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
 }
 
 /* ══════════════════════════════════════════
@@ -81,7 +113,7 @@ const SHARED_SETTINGS = [
 function buildServerPayload() {
   const shared = {};
   SHARED_SETTINGS.forEach(k => { shared[k] = S.settings[k]; });
-  return { items: S.items, settings: shared };
+  return { items: S.items, settings: shared, dataVersion: DATA_VERSION };
 }
 
 /* 로컬 전용 payload (서버 연결 정보 포함) */
@@ -109,7 +141,7 @@ function buildLocalPayload() {
 /* 서버 payload 적용 (공유 데이터만) */
 function applyServerPayload(d) {
   if (!d) return;
-  if (d.items) S.items = d.items;
+  if (d.items) S.items = migrateItems(d.items, d.dataVersion || 1);
   if (d.settings) {
     const ss = d.settings;
     SHARED_SETTINGS.forEach(k => {
@@ -127,7 +159,7 @@ function applyServerPayload(d) {
 /* 로컬 payload 적용 (개인 설정) */
 function applyLocalPayload(d) {
   if (!d) return;
-  if (d.items) S.items = d.items; // 캐시 복원
+  if (d.items) S.items = migrateItems(d.items, d.dataVersion || 1); // 캐시 복원 + 마이그레이션
   if (d.display) Object.keys(d.display).forEach(k => { if (k in S.display) S.display[k] = d.display[k]; });
   if (d.filters) Object.keys(d.filters).forEach(k => { if (k in S.filters) S.filters[k] = d.filters[k]; });
   if (d.local) {
@@ -150,7 +182,13 @@ function applyLocalPayload(d) {
 }
 
 function saveLocal() {
-  try { localStorage.setItem(SK, JSON.stringify(buildLocalPayload())); } catch(e) {}
+  try {
+    localStorage.setItem(SK, JSON.stringify(buildLocalPayload()));
+  } catch(e) {
+    if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
+      notify('⚠ 로컬 저장소가 가득 찼습니다. 일부 데이터가 저장되지 않았을 수 있습니다.', 'warning');
+    }
+  }
 }
 
 function loadLocal() {
@@ -162,20 +200,18 @@ function loadLocal() {
 
 export async function saveToServer() {
   try {
-    const res = await fetch(apiBase() + '/api/data', {
+    const json = await apiFetch('/api/data', {
       method: 'POST',
-      headers: apiHeaders(),
       body: JSON.stringify({ payload: buildServerPayload(), editor: S.settings.userName || '익명' })
     });
-    const json = await res.json();
-    if (!json.ok) { notify('서버 저장 실패: ' + json.error, true); return false; }
+    if (!json.ok) { notify('서버 저장 실패: ' + json.error, 'error'); return false; }
     lastServerTs = json.serverTs;
     window.setServerStatus?.('ok');
     saveLocal();
     return true;
   } catch(e) {
     window.setServerStatus?.('error');
-    notify('서버에 연결할 수 없습니다. 로컬에 임시 저장됩니다.', true);
+    notify('서버에 연결할 수 없습니다. 로컬에 임시 저장됩니다.', 'warning');
     saveLocal();
     return false;
   }
@@ -183,12 +219,7 @@ export async function saveToServer() {
 
 export async function loadFromServer() {
   try {
-    const res = await fetch(apiBase() + '/api/data', { headers: apiHeaders() });
-    if (!res.ok) {
-      if (res.status === 403) notify('편집 권한이 없습니다. 로그인하세요.', true);
-      throw new Error(res.status);
-    }
-    const json = await res.json();
+    const json = await apiFetch('/api/data');
     if (json.payload) {
       applyServerPayload(json.payload); // 공유 데이터 반영
       lastServerTs = json.serverTs;
@@ -199,17 +230,16 @@ export async function loadFromServer() {
     // 서버에 데이터 없음 → 로컬 캐시 items 유지
     return false;
   } catch(e) {
+    if (e.status === 403) notify('편집 권한이 없습니다. 로그인하세요.', 'error');
     window.setServerStatus?.('error');
-    notify('서버 연결 실패 — 로컬 캐시를 불러옵니다.', true);
+    notify('서버 연결 실패 — 로컬 캐시를 불러옵니다.', 'warning');
     return false;
   }
 }
 
 export async function pollServerTs() {
   try {
-    const res = await fetch(apiBase() + '/api/ping', { headers: apiHeaders() });
-    if (!res.ok) return null;
-    const json = await res.json();
+    const json = await apiFetch('/api/ping');
     return { serverTs: json.serverTs, lastEditor: json.lastEditor || '', lastEditTime: json.lastEditTime || 0, hasEditorPw: json.hasEditorPw ?? false };
   } catch(e) { return null; }
 }
@@ -239,7 +269,7 @@ export function resolveConflictUseServer(serverData) {
   lastServerTs = serverData.serverTs || lastServerTs;
   saveLocal();
   window.__sobukRenderAll?.();
-  notify('서버 데이터로 업데이트됐습니다.');
+  notify('서버 데이터로 업데이트됐습니다.', 'success');
 }
 
 const undoStack = [];
@@ -257,7 +287,7 @@ export function doUndo() {
   window.__sobukRenderAll?.();
   updateUndoFab();
   logActivity('되돌리기', `${S.items.length}개 항목으로 복원`);
-  notify('되돌렸습니다.');
+  notify('되돌렸습니다.', 'success');
 }
 
 export function getUndoHistory() { return undoStack.slice(); }
@@ -310,7 +340,8 @@ export function fmtDate(ts) {
 }
 
 export const today = () => new Date().toISOString().slice(0, 10);
-export const notify = (msg, isErr=false) => window.__sobukNotify?.(msg, isErr);
+/** @param {string} msg @param {boolean|'success'|'warning'|'error'} [type] */
+export const notify = (msg, type = false) => window.__sobukNotify?.(msg, type);
 
 /* ══════════════════════════════════════════
    활동 로그
@@ -318,15 +349,9 @@ export const notify = (msg, isErr=false) => window.__sobukNotify?.(msg, isErr);
 export async function logActivity(action, detail = '') {
   if (S.settings.storageMode !== 'server') return;
   try {
-    await fetch(apiBase() + '/api/log', {
+    await apiFetch('/api/log', {
       method: 'POST',
-      headers: apiHeaders(),
-      body: JSON.stringify({
-        action,
-        detail,
-        user:  S.settings.userName || '익명',
-        ts:    Date.now()
-      })
+      body: JSON.stringify({ action, detail, user: S.settings.userName || '익명', ts: Date.now() })
     });
   } catch(e) {}
 }
@@ -339,22 +364,32 @@ export function updateLocks(locks) {
   if (locks) Object.assign(editLocks, locks);
 }
 
+/* 락 TTL 타이머 맵: key → timerId */
+const _lockTimers = {};
+const LOCK_TTL = 5 * 60 * 1000; // 5분
+
 export async function lockItem(key) {
   if (S.settings.storageMode !== 'server' || !key) return null;
+  // 기존 TTL 타이머 초기화
+  if (_lockTimers[key]) { clearTimeout(_lockTimers[key]); delete _lockTimers[key]; }
   try {
-    const res = await fetch(apiBase() + '/api/lock', {
-      method: 'POST', headers: apiHeaders(),
+    const result = await apiFetch('/api/lock', {
+      method: 'POST',
       body: JSON.stringify({ key, user: S.settings.userName || '익명' })
     });
-    return await res.json();
+    // 5분 후 자동 해제
+    _lockTimers[key] = setTimeout(() => unlockItem(key), LOCK_TTL);
+    return result;
   } catch(e) { return null; }
 }
 
 export async function unlockItem(key) {
   if (S.settings.storageMode !== 'server' || !key) return;
+  // TTL 타이머 정리
+  if (_lockTimers[key]) { clearTimeout(_lockTimers[key]); delete _lockTimers[key]; }
   try {
-    await fetch(apiBase() + '/api/unlock', {
-      method: 'POST', headers: apiHeaders(),
+    await apiFetch('/api/unlock', {
+      method: 'POST',
       body: JSON.stringify({ key, user: S.settings.userName || '익명' })
     });
   } catch(e) {}

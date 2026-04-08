@@ -6,7 +6,7 @@ import { DEMO } from './constants.js';
 import { renderDashboard, setHmView } from './dashboard.js';
 import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
          pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
-         loadFromServer, saveToServer, logActivity, notify,
+         loadFromServer, saveToServer, logActivity, notify, apiFetch,
          lockItem, unlockItem, updateLocks, editLocks } from './state.js';
 import { isAdmin, isEditor, requireAdmin, requireEditor,
          openLoginModal, closeLoginModal, submitLogin,
@@ -29,7 +29,8 @@ import { openModal, closeModal, openEditModal, openAddModal, openAddInCell,
          openCtxMenu, openStatusMenu, setItemStatus,
          mdInsert, mdInsertLine } from './modal.js';
 import { expClip, expTSV, expXLS, expHTML, expMdZip, impMdFiles,
-         dzOver, dzLeave, dzDrop, csvFileSel, analyzeCSV, backToStep1, doImport } from './io.js';
+         dzOver, dzLeave, dzDrop, csvFileSel, analyzeCSV, backToStep1, doImport,
+         expFullJSON, impFullJSON } from './io.js';
 import { sstab, syncSettingsUI, previewTitle, setMW, setPPos,
          adjFont, adjCardFont, adjRadius, adjGap, adjColW, adjCatW, adjSubCatW, adjCellFold,
          onAnimTgl, syncAnimUI, renderColEditor, toggleColVisible,
@@ -55,6 +56,7 @@ Object.assign(window, {
   mdInsert, mdInsertLine,
   expClip, expTSV, expXLS, expHTML, expMdZip, impMdFiles,
   dzOver, dzLeave, dzDrop, csvFileSel, analyzeCSV, backToStep1, doImport,
+  expFullJSON, impFullJSON,
   sstab, syncSettingsUI, previewTitle, setMW, setPPos,
   adjFont, adjCardFont, adjRadius, adjGap, adjColW, adjCatW, adjSubCatW, adjCellFold,
   onAnimTgl, syncAnimUI, renderColEditor, toggleColVisible,
@@ -69,11 +71,19 @@ Object.assign(window, {
 
 /* ── notify 인라인 ── */
 window.__sobukRenderAll = () => renderAll();
-window.__sobukNotify = (msg, isErr=false) => {
+/** @param {string} msg @param {boolean|'success'|'warning'|'error'} type */
+window.__sobukNotify = (msg, type = false) => {
   const el = document.getElementById('notif');
   if (!el) return;
   el.textContent = msg;
-  el.style.background = isErr ? 'var(--danger)' : 'var(--text)';
+  const bgMap = {
+    error:   'var(--danger)',
+    warning: 'var(--warning, #D97706)',
+    success: 'var(--success, #16A34A)',
+  };
+  // 하위 호환: true → error
+  const key = type === true ? 'error' : type;
+  el.style.background = bgMap[key] || 'var(--text)';
   el.classList.add('on');
   setTimeout(() => el.classList.remove('on'), 2400);
 };
@@ -259,6 +269,7 @@ document.querySelectorAll('.ov').forEach(ov => {
 
 /* ── 폴링: 다른 사용자 변경 감지 ── */
 let _pollTimer = null;
+window.addEventListener('beforeunload', () => { if (_pollTimer) clearInterval(_pollTimer); });
 function startPolling() {
   if (_pollTimer) clearInterval(_pollTimer);
   const interval = (S.settings.pollInterval || 10) * 1000;
@@ -380,11 +391,8 @@ window.loadInlineActivityLog = async () => {
   if (!body) return;
   body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">불러오는 중...</div>';
   try {
-    const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
-    const headers = { 'X-Admin-Token': getAdminToken() };
     const limit = parseInt(document.getElementById('logLimitInp')?.value || '100', 10) || 100;
-    const res  = await fetch(`${apiUrl}/api/log?limit=${limit}`, { headers });
-    const json = await res.json();
+    const json = await apiFetch(`/api/log?limit=${limit}`);
     if (!json.ok) {
       if (res.status === 403) {
         sessionStorage.removeItem('fmAdminToken'); // 세션 만료 시 토큰 제거

@@ -5,7 +5,7 @@
 ══════════════════════════════════════════ */
 
 import { S, esc, normOwner, getOwnerColor, getPK } from './state.js';
-import { animOk } from './render.js';
+import { animOk, getFiltered, isFilterActive } from './render.js';
 
 /* ── 시간 포매팅 ── */
 function timeAgo(ts) {
@@ -149,8 +149,10 @@ export function renderDashboard() {
   const el = document.getElementById('dashboardView');
   if (!el) return;
 
-  const all   = S.items.filter(it => it.isDelete !== 'Y');
-  const total = all.length;
+  /* 필터가 활성화된 경우 필터 결과를 사용, 아닌 경우 삭제 항목 제외 전체 */
+  const filterOn = isFilterActive();
+  const all      = filterOn ? getFiltered() : S.items.filter(it => it.isDelete !== 'Y');
+  const total    = all.length;
 
   /* 통계 계산 */
   let high = 0, mid = 0, low = 0, imp = 0, done = 0;
@@ -347,12 +349,19 @@ export function renderDashboard() {
     </div>
   </div>`;
 
+  const filterBanner = filterOn
+    ? `<div style="margin-top:8px;font-size:.75rem;background:var(--accent-l);color:var(--accent);border-radius:6px;padding:4px 10px;display:inline-block">
+        🔍 필터 적용됨 — <button onclick="resetFilters()" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;font-size:inherit;padding:0">전체 보기</button>
+       </div>`
+    : '';
+
   el.innerHTML = `
 <div class="db-wrap">
   <div class="db-hero" data-anim-idx="0">
     <div>
       <div class="db-eyebrow">Mission Control</div>
       <h2 class="db-title">${esc(heroName)}</h2>
+      ${filterBanner}
     </div>
   </div>
   ${bodySection}
