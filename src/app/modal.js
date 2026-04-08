@@ -27,7 +27,7 @@ export function switchEditTab(tab) {
     const pane = document.getElementById(`epane-${t}`);
     if (pane) pane.style.display = t === tab ? '' : 'none';
   });
-  if (tab === 'md') { updateMdStat(); syncMdPreview(); }
+  if (tab === 'md') { updateMdStat(); syncMdPreview(); switchMdView('preview'); }
 }
 
 /* ── MD 뷰 모드 ── */
@@ -272,7 +272,11 @@ export function openMdModal(key) {
   const it = findItem(key); if (!it) return;
   openEditModal(key);
   switchEditTab('md');
-  switchMdView('preview');
+  if (it.mdContent && it.mdContent.trim()) {
+    switchMdView('preview');
+  } else {
+    switchMdView('edit');
+  }
 }
 
 /* ── 저장 ── */

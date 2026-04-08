@@ -5,7 +5,7 @@
 import { STATUS_CLS, STATUS_LBL, FLABELS } from './constants.js';
 import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate, editLocks } from './state.js';
 import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
-import { isAdmin } from './admin.js';
+import { isAdmin, isEditor } from './admin.js';
 
 /* ── 애니메이션 유틸 ── */
 const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;
@@ -194,7 +194,7 @@ export function renderMatrix() {
   el.className = 'mwrap' + (S.settings.matrixWidth === 'fluid' ? ' fluid' : '');
   if (!items.length) {
     const emptyMsg = S.settings.storageMode === 'server'
-      ? '<div class="empty"><div style="font-size:2rem;opacity:.3">🌐</div><div style="font-size:.875rem;text-align:center">서버에 데이터가 없거나 연결을 확인해주세요.<br><span style="font-size:.75rem;color:var(--text-3)">설정 → 서버 탭에서 API 키를 확인하세요.</span></div></div>'
+      ? '<div class="empty"><div style="font-size:2rem;opacity:.3">🌐</div><div style="font-size:.875rem;text-align:center">서버에 데이터가 없거나 연결을 확인해주세요.<br><span style="font-size:.75rem;color:var(--text-3)">관리자에게 문의하거나 로그인 후 다시 시도하세요.</span></div></div>'
       : '<div class="empty"><div style="font-size:2rem;opacity:.3">📋</div><div style="font-size:.875rem;text-align:center">표시할 기능이 없습니다.</div></div>';
     el.innerHTML = emptyMsg;
     return;
@@ -265,9 +265,9 @@ export function renderMatrix() {
           if (isExp && ci.length > fold && fold > 0)
             h += `<button class="cell-more-btn" onclick="collapseCell(event,'${eattr(ck)}')">▲ 접기</button>`;
           
-          h += `<div class="cell-quick-wrap"><input class="cell-quick-inp" placeholder="기능명 입력 후 Enter…"
-            onkeydown="if(event.key==='Enter'){quickCellAdd('${eattr(gn)}','${eattr(sg)}','${eattr(cn)}','${eattr(scn)}',this)}else if(event.key==='Escape'){this.value='';this.blur()}"
-            onclick="event.stopPropagation()"></div>`;
+          if (isEditor() && S.display.showQuickAdd) {
+            h += `<button class="cell-quick-add-btn" onclick="event.stopPropagation();openAddInCell('${eattr(gn)}','${eattr(sg)}','${eattr(cn)}','${eattr(scn)}')">+ 추가</button>`;
+          }
           h += '</td>';
         });
       });

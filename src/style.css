@@ -204,16 +204,19 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .cell-cnt{position:absolute;top:3px;right:3px;font-size:.55rem;font-weight:700;border-radius:10px;padding:1px 5px;line-height:1.5;pointer-events:none}
 .cell-more-btn{width:100%;border:none;border-radius:4px;background:var(--surface-2);color:var(--text-3);font-size:.68rem;padding:4px;cursor:pointer;text-align:center;transition:all .14s;display:block;margin-top:3px;font-family:'Noto Sans KR',sans-serif;border:1px solid var(--border)}
 .cell-more-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
+.cell-quick-add-btn{width:100%;border:1px dashed var(--border-2);border-radius:4px;background:transparent;color:var(--text-3);font-size:.68rem;padding:4px;cursor:pointer;text-align:center;transition:all .14s;display:block;margin-top:3px;font-family:'Noto Sans KR',sans-serif}
+.cell-quick-add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
 
 /* X축 헤더 sticky 제거 (mscroll overflow-x:auto 중첩으로 무력화) */
 .mx-thead-sticky .m-corner{background:var(--surface-2)}
 
 /* ── 카드 ── */
-.mitem{background:var(--surface);border-radius:6px;padding:5px 7px;cursor:pointer;position:relative;transition:box-shadow .15s,transform .15s}
+.mitem{background:var(--surface);border-radius:6px;padding:5px 7px;cursor:pointer;position:relative;transition:box-shadow .15s,transform .15s;min-width:60px}
 .mitem:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);z-index:2}
 .mitem:hover .card-actions{opacity:1;pointer-events:auto}
 .mitem.dragging{opacity:.3}
 .mitem.item-locked{outline:2px dashed var(--warning);outline-offset:-2px}
+[data-theme="dark"] .mitem{border:1px solid var(--border)}
 .card-actions{position:absolute;top:3px;right:3px;display:flex;gap:2px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:3}
 .card-act-btn{width:20px;height:20px;border:none;border-radius:4px;background:var(--surface-2);color:var(--text-3);font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;line-height:1}
 .card-act-btn:hover{background:var(--accent-l);color:var(--accent)}
@@ -268,7 +271,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .ltbl tbody tr{transition:background .12s}
 .ltbl tbody tr:hover td{background:var(--surface-2)}
 .ltbl tr.rdel td{opacity:.5}.ltbl tr.rdel .cn{text-decoration:line-through}
-.ck{font-family:monospace;font-size:.7rem;font-weight:700;color:var(--text-3)}
+.ck{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.7rem;font-weight:700;color:var(--text-3)}
 .cn{font-weight:600;color:var(--text);word-break:keep-all}
 .pp{display:inline-block;font-size:.67rem;font-weight:700;padding:2px 6px;border-radius:4px;line-height:1.4}
 .pp.h{background:var(--danger-bg);color:var(--p-high,#C0312A)}
@@ -444,13 +447,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-hm-tab.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow-xs)}
 /* 히트맵 */
 .db-heatmap-panel{overflow:hidden}
-.db-hm-wrap{overflow-x:auto}
+.db-hm-wrap{overflow-x:auto;padding-right:16px}
 .db-hm-grid{display:grid;gap:4px;min-width:max-content}
 .db-hm-corner{width:80px}
 .db-hm-col-hd{font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);text-align:center;padding:0 2px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .db-hm-row-hd{font-size:.62rem;font-weight:600;color:var(--text-2);width:80px;text-align:right;padding-right:10px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:transparent;transition:opacity .2s,transform .15s}
-.db-hm-cell:hover{transform:scale(1.15);z-index:2;color:var(--text)}
+.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--text);transition:opacity .2s,transform .15s}
+.db-hm-cell:hover{transform:scale(1.1);z-index:2}
 .db-hm-legend{display:flex;align-items:center;gap:8px;margin-top:14px}
 .db-hm-legend-lbl{font-size:.6rem;color:var(--text-3);letter-spacing:.04em}
 .db-hm-legend-bar{display:flex;gap:3px}
@@ -460,9 +463,10 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-st-badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex-shrink:0}
 .db-st-badge{font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--surface-3)}
 /* 타임라인 */
-.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box}
-.db-body-right .db-timeline-panel{flex:1;min-height:0}
-.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0}
+.db-timeline-panel{display:flex;flex-direction:column;box-sizing:border-box;max-height:400px}
+.db-body-right .db-timeline-panel{flex:1;min-height:0;max-height:none}
+.db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0;max-height:320px}
+.db-body-right .db-timeline{max-height:none}
 .db-tl-item{display:flex;gap:12px}
 .db-tl-line-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
 .db-tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}

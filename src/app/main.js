@@ -131,6 +131,7 @@ window.onDispTgl = () => {
   S.display.showUpdated   = document.getElementById('togUpd').checked;
   S.display.showStatus    = document.getElementById('togStatus').checked;
   S.display.showMdBadge   = document.getElementById('togMd').checked;
+  S.display.showQuickAdd  = document.getElementById('togQuickAdd')?.checked ?? false;
   save(); renderAll();
 };
 
@@ -361,6 +362,19 @@ window.saveUserNamePopup = (skip = false) => {
   document.getElementById('userNameModal').classList.remove('on');
 };
 
+window.syncEditorPwStatus = async () => {
+  const inp = document.getElementById('editorPwInp');
+  if (!inp || S.settings.storageMode !== 'server') return;
+  try {
+    const result = await pollServerTs();
+    if (result && result.hasEditorPw) {
+      inp.placeholder = '새 비밀번호 (비워두면 제거) — 현재 설정됨 ****';
+    } else {
+      inp.placeholder = '새 비밀번호 (비워두면 비번 없이 편집 가능)';
+    }
+  } catch(e) {}
+};
+
 window.loadInlineActivityLog = async () => {
   const body = document.getElementById('inlineLogBody');
   if (!body) return;
@@ -368,7 +382,8 @@ window.loadInlineActivityLog = async () => {
   try {
     const apiUrl  = (S.settings.serverUrl || '').trim() || window.location.origin;
     const headers = { 'X-Admin-Token': getAdminToken() };
-    const res  = await fetch(apiUrl + '/api/log', { headers });
+    const limit = parseInt(document.getElementById('logLimitInp')?.value || '100', 10) || 100;
+    const res  = await fetch(`${apiUrl}/api/log?limit=${limit}`, { headers });
     const json = await res.json();
     if (!json.ok) {
       if (res.status === 403) {
@@ -493,6 +508,18 @@ async function init() {
   syncServerSettingsUI();
   updateAdminUI();
   scheduleCardAnim();
+  // 빌드 넘버 표시
+  (() => {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ver = S.settings.version || '1.0.0';
+    const el = document.getElementById('buildNumberDisplay');
+    if (el) el.textContent = `${ver}-build${yy}${MM}${dd}${hh}${mm}`;
+  })();
   S.view = 'dashboard';
   renderAll();
   updateUndoFab();

@@ -146,8 +146,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <label class="tgl"><input type="checkbox" id="togStatus" checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">진행상태 뱃지</span></label>
           <label class="tgl"><input type="checkbox" id="togMd"     checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">MD 뱃지</span></label>
           <div style="font-size:.62rem;font-weight:700;letter-spacing:.04em;color:var(--text-3);text-transform:uppercase;margin:6px 0 2px">보조</div>
-          <label class="tgl"><input type="checkbox" id="togCnt"   checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">셀 카운터</span></label>
-          <label class="tgl"><input type="checkbox" id="togUpd"         onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">수정일</span></label>
+          <label class="tgl"><input type="checkbox" id="togCnt"      checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">셀 카운터</span></label>
+          <label class="tgl"><input type="checkbox" id="togUpd"            onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">수정일</span></label>
+          <label class="tgl"><input type="checkbox" id="togQuickAdd"       onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">빠른 추가 버튼</span></label>
         </div>
       </div>
       <div class="fsep"></div>
@@ -170,7 +171,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     </div>
     <div class="stab-row" style="padding:0 20px">
       <button class="stab on" id="etab-info" onclick="switchEditTab('info')">📋 기본 정보</button>
-      <button class="stab"    id="etab-md"   onclick="switchEditTab('md')">📝 마크다운</button>
+      <button class="stab"    id="etab-md"   onclick="switchEditTab('md')">📝 기능정의요구서</button>
     </div>
     <div class="mbody" id="epane-info" style="padding:16px 20px">
       <div class="mg">
@@ -226,8 +227,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <!-- 2행: 뷰 전환 + 파일 -->
         <div style="display:flex;align-items:center;gap:5px">
           <div style="display:flex;gap:2px;background:var(--surface-2);border-radius:6px;padding:2px">
-            <button class="vtab on" id="mdTabEdit"  onclick="switchMdView('edit')"    style="height:22px;padding:0 9px;font-size:.7rem">✏ 편집</button>
-            <button class="vtab"    id="mdTabPrev"  onclick="switchMdView('preview')" style="height:22px;padding:0 9px;font-size:.7rem">👁 보기</button>
+            <button class="vtab on" id="mdTabPrev"  onclick="switchMdView('preview')" style="height:22px;padding:0 9px;font-size:.7rem">👁 보기</button>
+            <button class="vtab"    id="mdTabEdit"  onclick="switchMdView('edit')"    style="height:22px;padding:0 9px;font-size:.7rem">✏ 편집</button>
             <button class="vtab"    id="mdTabSplit" onclick="switchMdView('split')"   style="height:22px;padding:0 9px;font-size:.7rem">⬜ 분할</button>
           </div>
           <div style="width:1px;height:16px;background:var(--border);flex-shrink:0"></div>
@@ -362,6 +363,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl">필터 전환 페이드</div><div class="ssub">필터 변경 시 콘텐츠 fade 전환</div></div><label class="tgl"><input type="checkbox" id="animFilter" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">행 Hover Shimmer</div><div class="ssub">리스트 뷰 행 hover 광택 효과</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
         <div class="srow"><div><div class="slbl">모달 Backdrop Blur</div><div class="ssub">모달 배경 블러 처리</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
+        <div class="sec-ttl" style="margin-top:12px">빌드 정보</div>
+        <div class="srow"><div><div class="slbl">빌드 넘버</div></div><span id="buildNumberDisplay" style="font-size:.82rem;font-weight:600;color:var(--text-2);font-family:monospace">-</span></div>
       </div>
       <!-- 디자인: 테마 최상단 → 카드스타일+색상 2열 → 미리보기 -->
       <div class="spane" id="sdesign">
@@ -403,15 +406,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <button class="btn btn-s btn-sm" onclick="expTSV()">⬇ TSV</button>
           <button class="btn btn-s btn-sm" onclick="expXLS()">📊 Excel</button>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;align-items:center">
           <div style="display:flex;align-items:center;gap:8px">
             <label style="font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="htmlW" value="fluid" checked> 가변폭</label>
             <label style="font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="htmlW" value="fixed"> 고정폭</label>
           </div>
           <button class="btn btn-s btn-sm" onclick="expHTML()">🌐 HTML</button>
-        </div>
-        <div style="margin-bottom:4px">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:4px">MD 내용이 작성된 항목만 포함됩니다.</div>
           <button class="btn btn-s btn-sm" onclick="expMdZip()">📦 MD ZIP</button>
         </div>
         <div class="sec-ttl" style="margin-top:12px">초기화 · 설정 파일</div>
@@ -449,7 +449,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         </div>
         <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-p btn-sm" onclick="saveServerSettings()">서버 설정 저장</button>
-          <button class="btn btn-s btn-sm" onclick="openLoginModal()" title="로그인">🔑 로그인</button>
         </div>
       </div>
       <div class="spane" id="sadmin">
@@ -497,7 +496,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <div class="srow"><div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 복원</div></div><button class="btn btn-d btn-sm" onclick="resetData()">초기화</button></div>
         <div class="sec-ttl" style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
           <span>활동 로그</span>
-          <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:.7rem;color:var(--text-3)">최근</span>
+            <input type="number" id="logLimitInp" value="100" min="10" max="1000"
+              style="width:50px;height:22px;font-size:.72rem;text-align:center;padding:0 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--text)">
+            <span style="font-size:.7rem;color:var(--text-3)">개</span>
+            <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
+          </div>
         </div>
         <div id="inlineLogBody" style="height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:.78rem">
           <div style="padding:16px;text-align:center;color:var(--text-3)">탭을 열면 자동으로 불러옵니다.</div>

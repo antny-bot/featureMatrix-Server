@@ -47,12 +47,12 @@ function buildHeatmap(all, groups, cats) {
       if (hmData[k] > hmMax) hmMax = hmData[k];
     });
     return `<div class="db-hm-wrap">
-      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${cats.length},1fr)">
+      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
         <div class="db-hm-corner"></div>
-        ${cats.map(c => `<div class="db-hm-col-hd" title="${esc(c)}">${esc(c)}</div>`).join('')}
-        ${groups.map(g => `
-          <div class="db-hm-row-hd" title="${esc(g)}">${esc(g)}</div>
-          ${cats.map(c => {
+        ${groups.map(g => `<div class="db-hm-col-hd" title="${esc(g)}">${esc(g)}</div>`).join('')}
+        ${cats.map(c => `
+          <div class="db-hm-row-hd" title="${esc(c)}">${esc(c)}</div>
+          ${groups.map(g => {
             const cnt = hmData[`${g}||${c}`] || 0;
             const op  = hmMax > 0 ? (cnt === 0 ? 0.06 : 0.15 + cnt/hmMax * 0.85) : 0.06;
             return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc(g)} × ${esc(c)}: ${cnt}개">${cnt > 0 ? cnt : ''}</div>`;
@@ -205,124 +205,108 @@ export function renderDashboard() {
   /* ── 히어로 섹션 ── */
   const heroName = S.settings.dbHeroName || '프로젝트 현황';
 
-  /* ── 통합 2열 본문 (스탯카드 1~3 + 그룹진척 + 담당자 / 스탯카드4 + 타임라인) ── */
+  /* ── 섹션 HTML 빌더 ── */
   const SC_OW = { '기획':'var(--text-3)', '개발중':'var(--accent)', '완료':'var(--success)', '보류':'var(--warning)' };
+
+  const buildStatsSection = () => `
+    <div class="db-cards">
+      <div class="db-card db-card--theme">
+        <div class="db-card-label">전체 기능</div>
+        <div class="db-card-value">${total.toLocaleString()}</div>
+        <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
+      </div>
+      <div class="db-card">
+        <div class="db-card-label">기획</div>
+        <div class="db-card-value" style="color:var(--text-3)">${statusCount['기획']}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['기획']/total*100) : 0}%</div>
+      </div>
+      <div class="db-card">
+        <div class="db-card-label">개발중</div>
+        <div class="db-card-value" style="color:var(--accent)">${statusCount['개발중']}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['개발중']/total*100) : 0}%</div>
+      </div>
+      <div class="db-card">
+        <div class="db-card-label">완료</div>
+        <div class="db-card-value" style="color:var(--success)">${statusCount['완료']}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['완료']/total*100) : 0}%</div>
+      </div>
+    </div>`;
+
+  const buildInsightSection = () => `
+    <div class="db-panel">
+      <div class="db-panel-hd">
+        <div class="db-panel-title">그룹별 진척도</div>
+        <div class="db-panel-sub">기획 · 개발중 · 완료 · 보류 비율</div>
+      </div>
+      <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
+    </div>
+    <div class="db-panel">
+      <div class="db-panel-hd">
+        <div class="db-panel-title">담당별 기능 현황</div>
+      </div>
+      ${owners.length === 0
+        ? `<div class="db-empty">담당자 정보가 없습니다</div>`
+        : `<div class="db-owners-unified">
+            <div class="db-owners-hdr">
+              <div class="db-owner-info"></div>
+              <div class="db-owners-bar-hdr" style="flex:1">진행상태</div>
+              <div class="db-owners-bar-hdr" style="text-align:right;min-width:100px">우선순위</div>
+            </div>
+            ${owners.map(([owner, cnt]) => {
+              const t = cnt.total;
+              const stLeg = ['기획','개발중','완료','보류']
+                .filter(s => cnt.status[s] > 0)
+                .map(s => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC_OW[s]}"></span>${s} ${cnt.status[s]}</span>`)
+                .join('');
+              const prioText = [
+                cnt.high > 0 ? `<span style="color:var(--p-high,var(--danger));font-weight:700">상 ${cnt.high}</span>` : '',
+                cnt.mid  > 0 ? `<span style="color:var(--p-mid,var(--accent))">중 ${cnt.mid}</span>` : '',
+                cnt.low  > 0 ? `<span style="color:var(--text-3)">하 ${cnt.low}</span>` : '',
+              ].filter(Boolean).join('<span style="color:var(--border-2);margin:0 2px">|</span>');
+              return `
+              <div class="db-owner-row-unified">
+                <div class="db-owner-info">
+                  <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
+                  <span class="db-owner-name">${esc(owner)}</span>
+                  <span class="db-owner-total">${t}</span>
+                </div>
+                <div class="db-owner-bar-wrap" style="flex:1">
+                  <div class="db-bar-track">
+                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['기획']||0)/t*100).toFixed(1)  : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
+                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['개발중']||0)/t*100).toFixed(1): 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
+                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['완료']||0)/t*100).toFixed(1)  : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
+                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['보류']||0)/t*100).toFixed(1)  : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
+                  </div>
+                  ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ''}
+                </div>
+                <div style="min-width:100px;text-align:right;font-size:.7rem;display:flex;align-items:center;justify-content:flex-end;gap:3px;flex-shrink:0">${prioText || '<span style="color:var(--text-3)">-</span>'}</div>
+              </div>`;
+            }).join('')}
+          </div>`
+      }
+    </div>`;
+
+  const buildHeatmapSection = () => `
+    <div class="db-panel db-heatmap-panel">
+      <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="db-panel-title">기능 분포 히트맵</div>
+          <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+        </div>
+        <div class="db-hm-tabs">
+          <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
+          <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
+        </div>
+      </div>
+      ${buildHeatmap(all, groups, cats)}
+    </div>`;
+
+  const sectionBuilders = { stats: buildStatsSection, insight: buildInsightSection, heatmap: buildHeatmapSection };
+
   const bodySection = `
   <div class="db-body" data-anim-idx="1">
     <div class="db-body-left">
-      <div class="db-cards-3">
-        <div class="db-card db-card--theme">
-          <div class="db-card-label">전체 기능</div>
-          <div class="db-card-value">${total.toLocaleString()}</div>
-          <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
-        </div>
-        <div class="db-card">
-          <div class="db-card-label">우선순위 분포</div>
-          <div class="db-prio-bars">
-            <div class="db-prio-row">
-              <span class="db-prio-lbl sv-h">상</span>
-              <div class="db-bar-track"><div class="db-bar-fill db-bar--high" style="width:${total > 0 ? Math.round(high/total*100) : 0}%"></div></div>
-              <span class="db-prio-cnt">${high}</span>
-            </div>
-            <div class="db-prio-row">
-              <span class="db-prio-lbl sv-m">중</span>
-              <div class="db-bar-track"><div class="db-bar-fill db-bar--mid" style="width:${total > 0 ? Math.round(mid/total*100) : 0}%"></div></div>
-              <span class="db-prio-cnt">${mid}</span>
-            </div>
-            <div class="db-prio-row">
-              <span class="db-prio-lbl sv-l">하</span>
-              <div class="db-bar-track"><div class="db-bar-fill db-bar--low" style="width:${total > 0 ? Math.round(low/total*100) : 0}%"></div></div>
-              <span class="db-prio-cnt">${low}</span>
-            </div>
-          </div>
-        </div>
-        <div class="db-card">
-          <div class="db-card-label">완료율</div>
-          <div class="db-pct-wrap">
-            <div class="db-pct-num">${pct}<span class="db-pct-sign">%</span></div>
-            <div class="db-pct-sub">${done} / ${total} 완료</div>
-          </div>
-          <div class="db-bar-track" style="margin-top:12px">
-            <div class="db-bar-fill db-bar--done" style="width:${pct}%"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="db-panel">
-        <div class="db-panel-hd">
-          <div class="db-panel-title">그룹별 진척도</div>
-          <div class="db-panel-sub">기획 · 개발중 · 완료 · 보류 비율</div>
-        </div>
-        <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
-      </div>
-
-      <div class="db-panel">
-        <div class="db-panel-hd">
-          <div class="db-panel-title">담당별 기능 현황</div>
-        </div>
-        ${owners.length === 0
-          ? `<div class="db-empty">담당자 정보가 없습니다</div>`
-          : `<div class="db-owners-unified">
-              <div class="db-owners-hdr">
-                <div class="db-owner-info"></div>
-                <div class="db-owners-bar-hdr">우선순위</div>
-                <div class="db-owners-bar-hdr">진행상태</div>
-              </div>
-              ${owners.map(([owner, cnt]) => {
-                const t = cnt.total;
-                const prioLeg = [
-                  cnt.high > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--p-high,var(--danger))"></span>상 ${cnt.high}</span>` : '',
-                  cnt.mid  > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--p-mid,var(--accent))"></span>중 ${cnt.mid}</span>` : '',
-                  cnt.low  > 0 ? `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:var(--text-3)"></span>하 ${cnt.low}</span>` : '',
-                ].filter(Boolean).join('');
-                const stLeg = ['기획','개발중','완료','보류']
-                  .filter(s => cnt.status[s] > 0)
-                  .map(s => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC_OW[s]}"></span>${s} ${cnt.status[s]}</span>`)
-                  .join('');
-                return `
-                <div class="db-owner-row-unified">
-                  <div class="db-owner-info">
-                    <span class="db-owner-dot" style="background:${getOwnerColor(owner)}"></span>
-                    <span class="db-owner-name">${esc(owner)}</span>
-                    <span class="db-owner-total">${t}</span>
-                  </div>
-                  <div class="db-owner-bar-wrap">
-                    <div class="db-bar-track">
-                      <div class="db-owner-seg db-bar--high" style="width:${t > 0 ? (cnt.high/t*100).toFixed(1) : 0}%" title="상 ${cnt.high}"></div>
-                      <div class="db-owner-seg db-bar--mid"  style="width:${t > 0 ? (cnt.mid/t*100).toFixed(1)  : 0}%" title="중 ${cnt.mid}"></div>
-                      <div class="db-owner-seg db-bar--low"  style="width:${t > 0 ? (cnt.low/t*100).toFixed(1)  : 0}%" title="하 ${cnt.low}"></div>
-                    </div>
-                    ${prioLeg ? `<div class="db-gp-legend db-owner-legend">${prioLeg}</div>` : ''}
-                  </div>
-                  <div class="db-owner-bar-wrap">
-                    <div class="db-bar-track">
-                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['기획']||0)/t*100).toFixed(1)  : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
-                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['개발중']||0)/t*100).toFixed(1): 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
-                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['완료']||0)/t*100).toFixed(1)  : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
-                      <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['보류']||0)/t*100).toFixed(1)  : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
-                    </div>
-                    ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ''}
-                  </div>
-                </div>`;
-              }).join('')}
-            </div>`
-        }
-      </div>
-
-      ${sections.includes('heatmap') ? `
-      <div class="db-panel db-heatmap-panel">
-        <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="db-panel-title">기능 분포 히트맵</div>
-            <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
-          </div>
-          <div class="db-hm-tabs">
-            <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
-            <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
-          </div>
-        </div>
-        ${buildHeatmap(all, groups, cats)}
-      </div>` : ''}
+      ${sections.map(s => sectionBuilders[s] ? sectionBuilders[s]() : '').join('')}
     </div>
 
     <div class="db-body-right">
