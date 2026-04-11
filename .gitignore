@@ -13,3 +13,6 @@ __pycache__/
 # Node & OS
 node_modules/
 .DS_Store
+
+# 빌드 아티팩트
+src/dist/
