@@ -2,7 +2,7 @@
    render.js — 매트릭스·리스트 렌더, 통계, 필터 UI
 ══════════════════════════════════════════ */
 
-import { STATUS_CLS, STATUS_LBL, FLABELS } from './constants.js';
+import { STATUS_CLS, STATUS_LBL, STATUS_OPTS, STATUS_CHIP_COLORS, FLABELS } from './constants.js';
 import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate, editLocks } from './state.js';
 import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
 import { isAdmin, isEditor } from './admin.js';
@@ -149,19 +149,22 @@ function buildStruct(items) {
 /* ── nav-side / fpanel 상태 동기화 ── */
 function syncLayout() {
   const v = S.view;
-  const navMap = { dashboard: 'navD', matrix: 'navM', list: 'navL' };
-  ['navD', 'navM', 'navL'].forEach(id => {
+  const navMap = { dashboard: 'navD', matrix: 'navM', board: 'navB', list: 'navL' };
+  ['navD', 'navM', 'navB', 'navL'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.className = 'nav-item' + (navMap[v] === id ? ' on' : '');
   });
-  ['dashboardView', 'matrixView', 'listView'].forEach(id => {
+  ['dashboardView', 'matrixView', 'boardView', 'listView'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = id === v + 'View' ? '' : 'none';
   });
+  if (v !== 'board' && window.hideBoardActionBar) window.hideBoardActionBar();
   const fp = document.getElementById('fpanel');
   if (fp) fp.classList.toggle('fp-hide', v === 'dashboard');
   const cs = document.getElementById('contentSearch');
   if (cs) cs.style.display = v === 'dashboard' ? 'none' : '';
+  const contentEl = document.getElementById('contentArea');
+  if (contentEl) contentEl.style.overflowY = v === 'board' ? 'hidden' : '';
 }
 
 /* ── 전체 렌더 ── */
@@ -171,6 +174,7 @@ export function renderAll(withFade = false) {
     renderStats();
     if (S.view === 'matrix') renderMatrix();
     else if (S.view === 'list') renderList();
+    else if (S.view === 'board' && window.renderBoard) window.renderBoard();
     else if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
     updateDL();
     renderOwnerChips();
@@ -455,6 +459,7 @@ export function switchView(v) {
   syncLayout();
   if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }
   else if (v === 'list') renderList();
+  else if (v === 'board') { document.getElementById('bulkBar').style.display = 'none'; if (window.renderBoard) window.renderBoard(); }
   else { document.getElementById('bulkBar').style.display = 'none'; if (window.renderDashboard) window.renderDashboard(); }
 }
 
@@ -478,19 +483,13 @@ export function renderPrioChips() {
 export function renderStatusChips() {
   const el = document.getElementById('statusChips');
   if (!el) return;
-  const STATUS_COLORS = {
-    '기획': { col:'#2563A8', bg:'#EBF2FB' },
-    '개발중':{ col:'#9A6200', bg:'#FDF4E1' },
-    '완료': { col:'#1D7A4F', bg:'#EAF5EF' },
-    '보류': { col:'#6B7280', bg:'#F3F4F6' },
-  };
   const counts = {};
   S.items.forEach(it => {
     if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
   });
-  el.innerHTML = ['기획','개발중','완료','보류'].map(st => {
+  el.innerHTML = STATUS_OPTS.map(st => {
     const on  = (S.filters.statuses||[]).includes(st);
-    const { col, bg } = STATUS_COLORS[st] || { col:'#888', bg:'#eee' };
+    const { col, bg } = STATUS_CHIP_COLORS[st] || { col:'#888', bg:'#eee' };
     const style = on
       ? `color:${col};background:${bg};border-color:${col};`
       : `color:${col};border-color:var(--border-2);`;

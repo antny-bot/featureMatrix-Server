@@ -31,6 +31,10 @@ import { openModal, closeModal, openEditModal, openAddModal, openAddInCell,
 import { expClip, expTSV, expXLS, expHTML, expMdZip, impMdFiles,
          dzOver, dzLeave, dzDrop, csvFileSel, analyzeCSV, backToStep1, doImport,
          expFullJSON, impFullJSON } from './io.js';
+import { renderBoard, boardCardClick, boardCardDblClick,
+         boardMoveSelected, hideBoardActionBar, boardClearSel,
+         boardCardDragStart, boardCardDragEnd,
+         boardDragOver, boardDragLeave, boardDrop } from './board.js';
 import { sstab, syncSettingsUI, previewTitle, setMW, setPPos,
          adjFont, adjCardFont, adjRadius, adjGap, adjColW, adjCatW, adjSubCatW, adjCellFold,
          onAnimTgl, syncAnimUI, renderColEditor, toggleColVisible,
@@ -63,6 +67,10 @@ Object.assign(window, {
   colDragStart, colDragOver, colDragLeave, colDrop, colDragEnd, resetListCols,
   renderAxisEditor, axisDragStart, axisDragOver, axisDragLeave, axisDrop, axisDragEnd, resetAxisOrder,
   expSettJSON, impSettJSON, resetData, resetSettings,
+  renderBoard, boardCardClick, boardCardDblClick,
+  boardMoveSelected, hideBoardActionBar, boardClearSel,
+  boardCardDragStart, boardCardDragEnd,
+  boardDragOver, boardDragLeave, boardDrop,
   isAdmin, isEditor, requireAdmin, requireEditor,
   openLoginModal, closeLoginModal, submitLogin,
   adminLogout, logout, updateAdminUI, getAdminToken, getEditorToken,
@@ -279,7 +287,7 @@ function startPolling() {
     if (result !== null) {
       setServerStatus('ok');
       // locks 업데이트
-      if (result.locks) { updateLocks(result.locks); renderAll(); }
+      if (result.locks) { const changed = updateLocks(result.locks); if (changed) renderAll(); }
       if (result.serverTs > lastServerTs) {
         const banner = document.getElementById('updateBanner');
         if (banner) {

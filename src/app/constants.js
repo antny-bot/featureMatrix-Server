@@ -40,9 +40,27 @@ export const FLABELS = {
   mdPath:'MD경로', mdContent:'MD내용'
 };
 
-export const STATUS_OPTS = ['기획','개발중','완료','보류'];
-export const STATUS_CLS  = { 기획:'status-plan', 개발중:'status-dev', 완료:'status-done', 보류:'status-hold' };
-export const STATUS_LBL  = { 기획:'기획', 개발중:'개발', 완료:'완료', 보류:'보류' };
+export const STATUS_OPTS = ['대기','시작가능','진행중','검토중','완료'];
+export const STATUS_CLS  = { 대기:'status-backlog', 시작가능:'status-ready', 진행중:'status-progress', 검토중:'status-review', 완료:'status-done' };
+export const STATUS_LBL  = { 대기:'대기', 시작가능:'시작가능', 진행중:'진행중', 검토중:'검토중', 완료:'완료' };
+
+/** 상태별 강조 색상 (바 세그먼트, 컬럼 상단 테두리, 텍스트 강조용) */
+export const STATUS_ACCENT = {
+  '대기':    'var(--text-3)',
+  '시작가능': '#7C3AED',
+  '진행중':  'var(--accent)',
+  '검토중':  '#D97706',
+  '완료':    'var(--success)',
+};
+
+/** 상태별 칩/뱃지 색상 (필터 버튼, 툴팁 등) */
+export const STATUS_CHIP_COLORS = {
+  '대기':    { col:'#6B7280', bg:'#F3F4F6' },
+  '시작가능': { col:'#7C3AED', bg:'#F5F3FF' },
+  '진행중':  { col:'#2563A8', bg:'#EBF2FB' },
+  '검토중':  { col:'#D97706', bg:'#FFF7ED' },
+  '완료':    { col:'#1D7A4F', bg:'#EAF5EF' },
+};
 
 export const DEFAULT_LIST_COLS = [
   {key:'key',visible:true}, {key:'name',visible:true}, {key:'group',visible:true},

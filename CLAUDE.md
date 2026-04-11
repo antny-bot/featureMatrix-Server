@@ -19,6 +19,17 @@
   - Follow PEP 8 guidelines for Python code.
   - Keep templates clean and use 'extends'/'include' for reusability.
 
+## Frontend Build System
+- **절대로 `featureMatrix-server/static/index.html`을 직접 수정하지 말 것** — 이 파일은 빌드 결과물이다.
+- 프론트엔드 소스는 `src/` 디렉토리에 있다:
+  - JS 모듈: `src/app/*.js`
+  - CSS: `src/style.css`
+  - HTML 템플릿: `src/index.html`
+- 빌드 명령: `cd src && npm run build`
+  - 빌드 결과는 `src/dist/index.html`에 생성되고, `featureMatrix-server/static/index.html`로 자동 복사된다.
+- 프론트엔드 변경 시 항상 소스 파일(`src/`)을 수정한 후 빌드를 실행할 것.
+
 ## Commands
 - Run App: `python app.py` or `flask run`
 - Install Dependencies: `pip install -r requirements.txt`
+- Build Frontend: `cd src && npm run build`

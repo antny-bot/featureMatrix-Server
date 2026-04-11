@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge docker --no-ff -m ':*)",
+      "Bash(git pull:*)",
+      "Bash(git push:*)",
+      "Bash(git branch:*)"
+    ]
+  }
+}

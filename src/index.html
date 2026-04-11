@@ -79,6 +79,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
       <span>매트릭스</span>
     </button>
+    <button class="nav-item" id="navB" onclick="switchView('board')" title="보드">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="4" height="18" rx="1"/><rect x="10" y="3" width="4" height="18" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>
+      <span>보드</span>
+    </button>
     <button class="nav-item" id="navL" onclick="switchView('list')" title="리스트">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>
       <span>리스트</span>
@@ -101,6 +105,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     <div id="dashboardView" style="display:none"></div>
     <div id="matrixView" class="mwrap fluid"></div>
     <div id="bulkBar" class="bulk-bar" style="display:none"></div>
+    <div id="boardView"  class="bwrap" style="display:none"></div>
     <div id="listView"   class="lwrap" style="display:none"></div>
   </main>
   <!-- 오른쪽 필터 패널 (매트릭스·리스트에서만 표시) -->
@@ -634,5 +639,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     </div>
   </div>
 </div>
+<div id="boardActionBar" class="board-action-bar"></div>
 </body>
 </html>

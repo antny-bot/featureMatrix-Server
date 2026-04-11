@@ -379,8 +379,10 @@ export function pushChangeLog(action, key, name, extra = {}) {
 export const editLocks = {};  // { key: { user, ts } }
 
 export function updateLocks(locks) {
+  const prev = JSON.stringify(editLocks);
   Object.keys(editLocks).forEach(k => delete editLocks[k]);
   if (locks) Object.assign(editLocks, locks);
+  return JSON.stringify(editLocks) !== prev;
 }
 
 /* 락 TTL 타이머 맵: key → timerId */

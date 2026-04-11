@@ -5,13 +5,8 @@
 ══════════════════════════════════════════ */
 
 import { S, esc, normOwner, getOwnerColor, getPK, fmtDate } from './state.js';
+import { STATUS_OPTS, STATUS_ACCENT } from './constants.js';
 import { animOk, getFiltered, isFilterActive } from './render.js';
-
-/* ── 상태 색상 ── */
-function statusColor(status) {
-  const map = { '기획': 'var(--text-3)', '개발중': 'var(--accent)', '완료': 'var(--success)', '보류': 'var(--warning)' };
-  return map[status] || 'var(--text-3)';
-}
 
 /* ── 히트맵 뷰 상태 ── */
 let _hmView = 'cat';
@@ -19,7 +14,7 @@ export function setHmView(v) { _hmView = v; renderDashboard(); }
 
 /* ── 히트맵 HTML ── */
 function buildHeatmap(all, groups, cats) {
-  const STATUSES = ['기획', '개발중', '완료', '보류'];
+  const STATUSES = STATUS_OPTS;
 
   if (_hmView === 'cat') {
     if (groups.length === 0 || cats.length === 0)
@@ -69,7 +64,7 @@ function buildHeatmap(all, groups, cats) {
         <div class="db-hm-corner"></div>
         ${groups.map(g => `<div class="db-hm-col-hd" title="${esc(g)}">${esc(g)}</div>`).join('')}
         ${STATUSES.map(st => `
-          <div class="db-hm-row-hd" title="${esc(st)}" style="color:${statusColor(st)};font-weight:700">${esc(st)}</div>
+          <div class="db-hm-row-hd" title="${esc(st)}" style="color:${STATUS_ACCENT[st]||'var(--text-3)'};font-weight:700">${esc(st)}</div>
           ${groups.map(g => {
             const cnt = hmData[`${g}||${st}`] || 0;
             const op  = hmMax > 0 ? (cnt === 0 ? 0.06 : 0.15 + cnt/hmMax * 0.85) : 0.06;
@@ -92,25 +87,21 @@ function buildHeatmap(all, groups, cats) {
 function buildGroupProgress(all, groups) {
   if (groups.length === 0) return `<div class="db-empty">그룹 데이터가 없습니다</div>`;
 
-  const STATUSES = ['기획', '개발중', '완료', '보류'];
-  const SC = { '기획': 'var(--text-3)', '개발중': 'var(--accent)', '완료': 'var(--success)', '보류': 'var(--warning)' };
-
   return groups.map(g => {
     const items = all.filter(it => it.group === g);
     const total = items.length;
     if (total === 0) return '';
-    const sc = { '기획': 0, '개발중': 0, '완료': 0, '보류': 0 };
+    const sc = Object.fromEntries(STATUS_OPTS.map(st => [st, 0]));
     items.forEach(it => { if (sc[it.status] !== undefined) sc[it.status]++; });
-    const doneCount = sc['완료'];
-    const donePct   = Math.round(doneCount / total * 100);
+    const donePct = Math.round((sc['완료'] || 0) / total * 100);
 
-    const segments = STATUSES.filter(s => sc[s] > 0).map(s =>
-      `<div class="db-gp-seg" style="width:${(sc[s]/total*100).toFixed(1)}%;background:${SC[s]}"
+    const segments = STATUS_OPTS.filter(s => sc[s] > 0).map(s =>
+      `<div class="db-gp-seg" style="width:${(sc[s]/total*100).toFixed(1)}%;background:${STATUS_ACCENT[s]}"
         title="${s} ${sc[s]}개 (${Math.round(sc[s]/total*100)}%)"></div>`
     ).join('');
 
-    const legend = STATUSES.filter(s => sc[s] > 0).map(s =>
-      `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC[s]}"></span>${s} ${sc[s]}</span>`
+    const legend = STATUS_OPTS.filter(s => sc[s] > 0).map(s =>
+      `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${STATUS_ACCENT[s]}"></span>${s} ${sc[s]}</span>`
     ).join('');
 
     return `
@@ -142,7 +133,7 @@ export function renderDashboard() {
 
   /* 통계 계산 */
   let high = 0, mid = 0, low = 0, imp = 0, done = 0;
-  const statusCount = { '기획': 0, '개발중': 0, '완료': 0, '보류': 0 };
+  const statusCount = Object.fromEntries(STATUS_OPTS.map(st => [st, 0]));
   const ownerMap = {};
 
   all.forEach(it => {
@@ -192,7 +183,6 @@ export function renderDashboard() {
   const heroName = S.settings.dbHeroName || '프로젝트 현황';
 
   /* ── 섹션 HTML 빌더 ── */
-  const SC_OW = { '기획':'var(--text-3)', '개발중':'var(--accent)', '완료':'var(--success)', '보류':'var(--warning)' };
 
   const buildStatsSection = () => `
     <div class="db-cards">
@@ -202,14 +192,14 @@ export function renderDashboard() {
         <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
       </div>
       <div class="db-card">
-        <div class="db-card-label">기획</div>
-        <div class="db-card-value" style="color:var(--text-3)">${statusCount['기획']}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['기획']/total*100) : 0}%</div>
+        <div class="db-card-label">대기</div>
+        <div class="db-card-value" style="color:var(--text-3)">${statusCount['대기']}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['대기']/total*100) : 0}%</div>
       </div>
       <div class="db-card">
-        <div class="db-card-label">개발중</div>
-        <div class="db-card-value" style="color:var(--accent)">${statusCount['개발중']}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['개발중']/total*100) : 0}%</div>
+        <div class="db-card-label">진행중</div>
+        <div class="db-card-value" style="color:var(--accent)">${statusCount['진행중']}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['진행중']/total*100) : 0}%</div>
       </div>
       <div class="db-card">
         <div class="db-card-label">완료</div>
@@ -222,7 +212,7 @@ export function renderDashboard() {
     <div class="db-panel">
       <div class="db-panel-hd">
         <div class="db-panel-title">그룹별 진척도</div>
-        <div class="db-panel-sub">기획 · 개발중 · 완료 · 보류 비율</div>
+        <div class="db-panel-sub">대기 · 시작가능 · 진행중 · 검토중 · 완료 비율</div>
       </div>
       <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
     </div>
@@ -240,9 +230,9 @@ export function renderDashboard() {
             </div>
             ${owners.map(([owner, cnt]) => {
               const t = cnt.total;
-              const stLeg = ['기획','개발중','완료','보류']
+              const stLeg = STATUS_OPTS
                 .filter(s => cnt.status[s] > 0)
-                .map(s => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${SC_OW[s]}"></span>${s} ${cnt.status[s]}</span>`)
+                .map(s => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${STATUS_ACCENT[s]}"></span>${s} ${cnt.status[s]}</span>`)
                 .join('');
               const prioText = [
                 cnt.high > 0 ? `<span style="color:var(--p-high,var(--danger));font-weight:700">상 ${cnt.high}</span>` : '',
@@ -258,10 +248,7 @@ export function renderDashboard() {
                 </div>
                 <div class="db-owner-bar-wrap" style="flex:1">
                   <div class="db-bar-track">
-                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['기획']||0)/t*100).toFixed(1)  : 0}%;background:var(--text-3)" title="기획 ${cnt.status['기획']||0}"></div>
-                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['개발중']||0)/t*100).toFixed(1): 0}%;background:var(--accent)" title="개발중 ${cnt.status['개발중']||0}"></div>
-                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['완료']||0)/t*100).toFixed(1)  : 0}%;background:var(--success)" title="완료 ${cnt.status['완료']||0}"></div>
-                    <div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status['보류']||0)/t*100).toFixed(1)  : 0}%;background:var(--warning)" title="보류 ${cnt.status['보류']||0}"></div>
+                    ${STATUS_OPTS.map(s => `<div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status[s]||0)/t*100).toFixed(1) : 0}%;background:${STATUS_ACCENT[s]}" title="${s} ${cnt.status[s]||0}"></div>`).join('')}
                   </div>
                   ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ''}
                 </div>
