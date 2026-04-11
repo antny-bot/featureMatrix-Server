@@ -16,7 +16,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write   # GitHub Release 생성에 필요
       packages: write
 
     steps:
@@ -79,3 +79,13 @@ jobs:
             GITHUB_RUN_NUMBER=${{ github.run_number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # git tag push 시에만 GitHub Release 자동 생성
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true   # 이전 릴리즈 이후 커밋을 자동으로 릴리즈 노트로 생성
+          make_latest: true
