@@ -11,10 +11,12 @@ from flask import Flask, request, jsonify, send_from_directory, abort
 
 BASE_DIR       = Path(__file__).parent
 STATIC_DIR     = BASE_DIR / 'static'
-DATA_FILE      = BASE_DIR / 'data.json'
-CONFIG_FILE    = BASE_DIR / 'config.json'
-ACTIVITY_FILE  = BASE_DIR / 'activity.json'
-TOKENS_FILE    = BASE_DIR / 'tokens.json'
+DATA_DIR       = Path(os.environ.get('FEATURE_MATRIX_DATA_DIR', str(BASE_DIR))).resolve()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DATA_FILE      = DATA_DIR / 'data.json'
+CONFIG_FILE    = DATA_DIR / 'config.json'
+ACTIVITY_FILE  = DATA_DIR / 'activity.json'
+TOKENS_FILE    = DATA_DIR / 'tokens.json'
 
 TOKEN_TTL_MS   = 24 * 60 * 60 * 1000  # 24시간
 
@@ -324,11 +326,11 @@ def not_found(e):
 # ── 실행 ──────────────────────────────────────────────────
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=5000)
-    parser.add_argument('--host', default='0.0.0.0')
-    parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--admin-password',  default='', help='관리자 비밀번호')
-    parser.add_argument('--editor-password', default='', help='편집자 비밀번호 (미설정 시 비번 없음)')
+    parser.add_argument('--port', type=int, default=int(os.environ.get('PORT', 5000)))
+    parser.add_argument('--host', default=os.environ.get('HOST', '0.0.0.0'))
+    parser.add_argument('--debug', action='store_true', default=os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true', 'yes'))
+    parser.add_argument('--admin-password',  default=os.environ.get('ADMIN_PASSWORD', ''), help='관리자 비밀번호')
+    parser.add_argument('--editor-password', default=os.environ.get('EDITOR_PASSWORD', ''), help='편집자 비밀번호 (미설정 시 비번 없음)')
     args = parser.parse_args()
 
     RUNTIME['admin_password']  = args.admin_password
@@ -338,7 +340,7 @@ if __name__ == '__main__':
     print(f'   http://{args.host}:{args.port}')
     print(f'   관리자: {"비밀번호 설정됨" if args.admin_password else "미설정 (모든 사용자 관리자)"}')
     print(f'   편집자: {"비밀번호 설정됨" if get_editor_password() else "미설정 (로그인 없이 편집 가능)"}')
-    print(f'   데이터: {DATA_FILE}')
+    print(f'   데이터: {DATA_DIR}')
     print(f'   정적파일: {STATIC_DIR}\n')
 
     app.run(host=args.host, port=args.port, debug=args.debug)

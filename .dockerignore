@@ -1,0 +1,16 @@
+.git
+.gitignore
+.vscode
+.claude
+node_modules
+src/node_modules
+src/dist
+data
+.env
+featureMatrix-server/__pycache__
+featureMatrix-server/*.pyc
+featureMatrix-server/static/index.html
+featureMatrix-server/config.json
+featureMatrix-server/data.json
+featureMatrix-server/activity.json
+featureMatrix-server/tokens.json

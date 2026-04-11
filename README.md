@@ -39,6 +39,10 @@ featureMatrix-ServerAdmin/
 |   `-- static/
 |       |-- index.html
 |       `-- fonts/
+|-- Dockerfile              # 멀티스테이지 빌드 (Node.js → Python)
+|-- docker-compose.yml
+|-- .dockerignore
+|-- .env.example
 |-- implementation.md
 `-- README.md
 ```
@@ -202,3 +206,74 @@ export const MIGRATIONS = {
 - `featureMatrix-server/activity.json`은 실행 중 변경되는 데이터 파일입니다.
 - 현재 서버는 `serverTs` 충돌 감지 후 클라이언트에서 선택(내 것 유지 / 서버 것 적용)하는 방식입니다.
 - esbuild 번들러는 `cd src && npm install` 이후에 사용 가능합니다. 설치하지 않은 경우 `build-esbuild.js`가 자동으로 레거시 번들러(`build.js`)로 폴백합니다.
+
+## Docker
+
+루트에 멀티스테이지 `Dockerfile`과 `docker-compose.yml`이 포함되어 있습니다.
+
+### 빠른 시작
+
+```bash
+# 1. 환경변수 파일 준비
+copy .env.example .env    # Windows CMD
+# cp .env.example .env    # bash / macOS / Linux
+
+# 2. .env 파일에서 ADMIN_PASSWORD 수정 (필수)
+
+# 3. 실행
+docker compose up --build -d
+```
+
+접속: `http://localhost:5000`
+
+데이터는 `./data` 폴더에 영속적으로 저장됩니다.
+
+### 환경변수 (.env)
+
+| 변수 | 필수 | 기본값 | 설명 |
+|------|------|--------|------|
+| `ADMIN_PASSWORD` | 필수 | — | 관리자 비밀번호 |
+| `EDITOR_PASSWORD` | 선택 | (없음) | 편집자 비밀번호 (미설정 시 편집자 모드 비활성) |
+| `PORT` | 선택 | `5000` | 호스트 포트 |
+
+### 직접 실행 (docker run)
+
+```bash
+docker build -t feature-matrix-admin .
+docker run -d \
+  -p 5000:5000 \
+  -e ADMIN_PASSWORD=1234 \
+  -e EDITOR_PASSWORD= \
+  -e FEATURE_MATRIX_DATA_DIR=/app/data \
+  -v "$(pwd)/data:/app/data" \
+  --name feature-matrix-admin \
+  feature-matrix-admin
+```
+
+### 유용한 명령
+
+```bash
+docker compose logs -f    # 로그 확인
+docker compose down       # 중지 (데이터 유지)
+docker compose down -v    # 중지 + 볼륨 삭제
+```
+
+### Docker Desktop 설치 확인
+
+Windows에서 Docker로 실행하려면 먼저 Docker Desktop이 정상 설치 및 실행 중이어야 합니다.
+
+1. Docker Desktop을 설치하고 실행합니다.
+2. 새 터미널을 열고 아래 명령이 동작하는지 확인합니다.
+
+```bash
+docker --version
+docker compose version
+```
+
+3. 엔진이 살아있는지 확인합니다.
+
+```bash
+docker ps
+```
+
+위 명령이 정상 동작하면 현재 프로젝트도 Docker로 실행할 준비가 된 상태입니다.

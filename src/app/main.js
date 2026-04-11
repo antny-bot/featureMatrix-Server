@@ -6,7 +6,7 @@ import { DEMO } from './constants.js';
 import { renderDashboard, setHmView } from './dashboard.js';
 import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
          pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
-         loadFromServer, saveToServer, logActivity, notify, apiFetch,
+         loadFromServer, saveToServer, logActivity, notify, apiFetch, fmtDate,
          lockItem, unlockItem, updateLocks, editLocks } from './state.js';
 import { isAdmin, isEditor, requireAdmin, requireEditor,
          openLoginModal, closeLoginModal, submitLogin,
@@ -284,7 +284,7 @@ function startPolling() {
         const banner = document.getElementById('updateBanner');
         if (banner) {
           const editor = result.lastEditor || '누군가';
-          const ago    = result.lastEditTime ? fmtAgo(result.lastEditTime) : '';
+          const ago    = result.lastEditTime ? fmtDate(result.lastEditTime) : '';
           const msgEl  = document.getElementById('updateBannerMsg');
           if (msgEl) msgEl.textContent = `⚠ ${editor}${ago ? ('이' === editor.slice(-1) ? '가' : '이') + ' ' + ago + '에' : '가'} 데이터를 변경했습니다.`;
           banner.classList.add('on');
@@ -296,14 +296,6 @@ function startPolling() {
   }, interval);
 }
 
-function fmtAgo(ts) {
-  if (!ts) return '';
-  const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 60)     return '방금';
-  if (diff < 3600)   return Math.floor(diff / 60) + '분 전';
-  if (diff < 86400)  return Math.floor(diff / 3600) + '시간 전';
-  return Math.floor(diff / 86400) + '일 전';
-}
 
 window.reloadFromServer = async () => {
   await loadFromServer();
@@ -361,18 +353,6 @@ function showUserNamePopup() {
   }
 }
 
-window.saveUserNamePopup = (skip = false) => {
-  if (!skip) {
-    const name = document.getElementById('userNamePopupInp').value.trim();
-    if (name) {
-      S.settings.userName = name;
-      save();
-      syncServerSettingsUI();
-    }
-  }
-  document.getElementById('userNameModal').classList.remove('on');
-};
-
 window.syncEditorPwStatus = async () => {
   const inp = document.getElementById('editorPwInp');
   if (!inp || S.settings.storageMode !== 'server') return;
@@ -393,15 +373,6 @@ window.loadInlineActivityLog = async () => {
   try {
     const limit = parseInt(document.getElementById('logLimitInp')?.value || '100', 10) || 100;
     const json = await apiFetch(`/api/log?limit=${limit}`);
-    if (!json.ok) {
-      if (res.status === 403) {
-        sessionStorage.removeItem('fmAdminToken'); // 세션 만료 시 토큰 제거
-        updateAdminUI();
-        body.innerHTML = '<div style="padding:16px;color:var(--danger)">세션이 만료됐습니다. 관리자 재인증이 필요합니다.</div>';
-        return;
-      }
-      body.innerHTML = `<div style="padding:16px;color:var(--danger)">${json.error}</div>`; return;
-    }
     if (!json.entries?.length) { body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
     const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
     body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
@@ -423,7 +394,13 @@ window.loadInlineActivityLog = async () => {
         </tr>`;
       }).join('') + '</tbody></table>';
   } catch(err) {
-    body.innerHTML = '<div style="padding:16px;color:var(--danger)">서버에 연결할 수 없습니다.</div>';
+    if (err.status === 403) {
+      sessionStorage.removeItem('fmAdminToken');
+      updateAdminUI();
+      body.innerHTML = '<div style="padding:16px;color:var(--danger)">세션이 만료됐습니다. 관리자 재인증이 필요합니다.</div>';
+    } else {
+      body.innerHTML = '<div style="padding:16px;color:var(--danger)">서버에 연결할 수 없습니다.</div>';
+    }
   }
 };
 function setServerStatus(status) {

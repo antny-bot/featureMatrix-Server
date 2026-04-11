@@ -16,10 +16,9 @@ export function sstab(btn, paneId) {
   document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById(paneId)?.classList.add('on');
-  if (paneId === 'sg')      syncAnimUI();
-  if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); }
+  if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); syncAnimUI(); }
   if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
-  if (paneId === 'sdat')    window.syncServerSettingsUI?.();
+  if (paneId === 'sserv')   window.syncServerSettingsUI?.();
   if (paneId === 'sadmin')  { window.loadInlineActivityLog?.(); window.renderDbSectionOrder?.(); window.syncEditorPwStatus?.(); }
 }
 
