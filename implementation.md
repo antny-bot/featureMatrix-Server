@@ -32,11 +32,14 @@ featureMatrix-ServerAdmin/
 │     ├─ modal.js
 │     ├─ io.js
 │     ├─ settings.js
+│     ├─ dashboard.js
 │     └─ main.js
 └─ featureMatrix-server/
    ├─ server.py
    ├─ config.json
    ├─ data.json
+   ├─ activity.json
+   ├─ tokens.json
    ├─ requirements.txt
    ├─ README.md
    └─ static/
@@ -58,8 +61,20 @@ featureMatrix-ServerAdmin/
 
 ### 서버
 
-- `featureMatrix-server/server.py`는 `GET /api/data`, `POST /api/data`, `GET /api/ping`, `POST /api/auth`를 제공한다.
-- `config.json`에 API key를 저장하고, `data.json`에 현재 공유 payload를 저장한다.
+- `featureMatrix-server/server.py`는 아래 엔드포인트를 제공한다.
+  - `GET /api/data` — 인증 없이 읽기 허용
+  - `POST /api/data` — 편집자/관리자 토큰 필요
+  - `GET /api/ping` — 폴링 (serverTs, lastEditor, locks, hasEditorPw 반환)
+  - `POST /api/auth` — 로그인 (role: 'editor' | 'admin')
+  - `GET /api/log` — 활동 로그 조회 (관리자 전용)
+  - `POST /api/log` — 활동 로그 기록 (편집자 이상)
+  - `POST /api/lock` — 편집 락 설정 (편집자 이상)
+  - `POST /api/unlock` — 편집 락 해제
+  - `POST /api/set-editor-password` — 편집자 비번 변경 (관리자 전용)
+- `config.json`에 allowed_origins, editor_password를 저장한다.
+- `data.json`에 현재 공유 payload를 저장한다.
+- `activity.json`에 활동 로그를 저장한다 (최대 500개).
+- `tokens.json`에 관리자 토큰을 영속 저장한다 (편집자 토큰은 메모리만).
 - 정적 파일은 `featureMatrix-server/static/index.html`에서 서빙한다.
 
 ### 빌드
@@ -74,68 +89,88 @@ featureMatrix-ServerAdmin/
 
 ### `src/app/constants.js`
 
-- 필드 목록 `FIELDS`
-- 라벨 맵 `FLABELS`
-- 상태값, 테마 정의, 데모 데이터
-- 상태/우선순위의 허용값을 여기 기준으로 맞춘다
+- 필드 목록 `FIELDS`, 라벨 맵 `FLABELS`
+- 상태값(`STATUS_OPTS`, `STATUS_CLS`, `STATUS_LBL`), 테마 정의(`THEMES`), 데모 데이터(`DEMO`)
+- 데이터 스키마 버전 `DATA_VERSION` 및 마이그레이션 맵 `MIGRATIONS`
+- 기본 리스트 컬럼 `DEFAULT_LIST_COLS`
 
 ### `src/app/state.js`
 
 - 전역 상태 `S`
-- 로컬 저장/복원
-- 서버 저장/복원
-- undo stack
-- 공통 유틸리티 (`esc`, `eattr`, `genKey`, `notify` 등)
+- 로컬 저장(`saveLocal`) / 복원(`loadLocal`)
+- 서버 저장(`saveToServer`) / 복원(`loadFromServer`) / 폴링(`pollServerTs`)
+- Undo stack (`pushUndo`, `doUndo`, `getUndoHistory`)
+- 공통 유틸리티: `esc`, `eattr`, `genKey`, `notify`, `fmtDate`, `getPK`, `normOwner`, `getOwnerColor`, `findItem`, `apiFetch`
+- 편집 락: `editLocks`, `lockItem`, `unlockItem`, `updateLocks`
+- 활동 로그: `logActivity` (서버), `pushChangeLog` (클라이언트)
 
 주의:
 - 저장 관련 동작의 중심 파일이라 기능 추가 시 가장 먼저 확인해야 한다.
-- 공유 설정과 개인 설정을 분리해서 저장한다.
+- 공유 설정(`SHARED_SETTINGS`)과 개인 설정(`local` 블록)을 분리해서 저장한다.
+- `apiFetch`는 HTTP 비-2xx 응답 시 `err.status`가 담긴 Error를 throw한다.
 
 ### `src/app/admin.js`
 
-- 관리자 인증 토큰 처리
-- 관리자 모달 열기/닫기
-- 관리자 전용 UI 잠금 상태 업데이트
+- 편집자/관리자 역할별 토큰 발급 및 검사 (`isAdmin`, `isEditor`)
+- 로그인 모달 흐름 (`openLoginModal`, `closeLoginModal`, `submitLogin`)
+- 로그아웃 (`logout`, `adminLogout` — 동일 함수의 별칭)
+- 관리자 전용 UI 잠금 상태 업데이트 (`updateAdminUI`)
+- 편집자 비번 변경 (`setEditorPassword`)
+- 로컬 모드에서는 isAdmin/isEditor가 항상 true 반환
 
 ### `src/app/render.js`
 
 - 매트릭스 뷰, 리스트 뷰 렌더링
-- 필터 칩 렌더링
-- bulk selection 상태 렌더링
-- 화면에 뭔가 보이는 로직 대부분이 여기 있다
+- 필터 칩 렌더링 (`renderOwnerChips`, `renderPrioChips`, `renderStatusChips`)
+- 필터링 로직 (`getFiltered`, `isFilterActive`) — `field:value` 검색 구문 지원
+- bulk selection 상태 (`bulkSel`, `bulkToggle`, `bulkToggleAll`, `bulkClear`, `renderBulkBar`)
+- CountUp 애니메이션 (`countUp`)
+- 통계 (`renderStats`)
+
+### `src/app/dashboard.js`
+
+- 대시보드 뷰 렌더링
+- 섹션: stats(스탯카드) / insight(그룹 진척도·담당자·타임라인) / heatmap
+- 섹션 순서는 `S.settings.dbSections` 배열로 제어
+- 히트맵 뷰 모드 상태: `_hmView` ('cat' | 'status'), `setHmView()`
 
 ### `src/app/modal.js`
 
-- 항목 추가/수정 모달
-- markdown 편집 모드
-- 컨텍스트 메뉴
-- 드래그 앤 드롭 후처리
+- 항목 추가/수정 모달 (`openAddModal`, `openEditModal`, `saveItem`, `hardDelete`)
+- markdown 편집 모드 (`openMdModal`, `switchMdView`, `onMdInput`, `parseMd`)
+- 드래그앤드롭 후처리 (`onDS`, `onDEnd`, `onDE`, `onDO`, `onDL`, `onDrop`)
+- 컨텍스트 메뉴 (`openCtxMenu`, `openStatusMenu`, `setItemStatus`)
+- MD 툴바 (`mdInsert`, `mdInsertLine`)
 
 ### `src/app/io.js`
 
 - TSV/XLS/HTML/MD ZIP export
-- CSV/TSV import
-- markdown 파일 import
+- CSV/TSV import (2단계 마법사)
+- markdown 파일 import (`impMdFiles`)
+- 전체 JSON export/import (`expFullJSON`, `impFullJSON`)
 
 ### `src/app/settings.js`
 
-- 설정 모달 동기화
-- 컬럼 순서/표시 여부
-- 축 순서 편집
-- 각종 UI 세팅 증감 로직
+- 설정 모달 동기화 (`syncSettingsUI`)
+- 컬럼 순서/표시 여부 (`renderColEditor`, `toggleColVisible`)
+- 축 순서 편집 (`renderAxisEditor`)
+- 각종 UI 세팅 증감 로직 (`adjFont`, `adjCardFont`, `adjRadius`, `adjGap`, etc.)
 
 ### `src/app/main.js`
 
-- 초기 진입점
+- 초기 진입점 (`init`)
 - 각 모듈의 함수를 `window`에 연결
-- 키보드 단축키
-- 서버 polling
+- 키보드 단축키 (`/`, `n`, `m`, `l`, `z`, `?`, `Ctrl+i/e/,/s`)
+- 서버 polling (`startPolling`, `setServerStatus`)
+- 검색/필터 이벤트 핸들러
+- 대시보드 섹션 순서 드래그 (`dbSecDragStart` 등)
 
 ### `featureMatrix-server/server.py`
 
 - 공유 데이터 저장 API
-- API key 검사
-- 관리자 인증 엔드포인트
+- 편집자/관리자 이중 역할 인증
+- 편집 락 (메모리, TTL 60초 자동 만료)
+- 활동 로그 기록/조회
 - 정적 파일 서빙
 
 ---
@@ -146,7 +181,7 @@ featureMatrix-ServerAdmin/
 
 ```js
 {
-  key,
+  key,          // 'N0001' 형식
   name,
   desc,
   path,
@@ -154,40 +189,35 @@ featureMatrix-ServerAdmin/
   subGroup,
   category,
   subCategory,
-  priority,
-  status,
+  priority,     // '상' | '중' | '하'
+  status,       // '' | '기획' | '개발중' | '완료' | '보류'
   owner,
-  isDelete,
-  isImportant,
+  isDelete,     // 'N' | 'Y'
+  isImportant,  // 'N' | 'Y'
   relSystem,
   memo,
   mdPath,
   mdContent,
-  updatedAt
+  updatedAt     // timestamp (ms)
 }
 ```
 
 ### 저장 정책
 
 - `items`는 로컬과 서버 모두에 들어간다.
-- 서버에는 일부 `settings`만 공유된다.
+- 서버에는 일부 `settings`만 공유된다 (`SHARED_SETTINGS`).
 - 개인별 설정은 로컬 저장소에만 남는다.
 
-`state.js` 기준 공유 설정:
+`state.js` 기준 공유 설정 (`SHARED_SETTINGS`):
 
-- `title`
-- `subtitle`
-- `groupOrder`
-- `catOrder`
-- `priorityStyles`
-- `customColors`
-- `matrixWidth`
-- `cellFold`
-- `colW`
-- `catW`
-- `subCatW`
-- `cardRadius`
-- `cardGap`
+- `title`, `subtitle`
+- `groupOrder`, `catOrder`
+- `dbHeroName`, `dbSections`
+- `priorityStyles`, `customColors`
+- `matrixWidth`, `cellFold`
+- `colW`, `catW`, `subCatW`
+- `cardRadius`, `cardGap`
+- `changeLogMax`
 
 ---
 
@@ -227,6 +257,61 @@ featureMatrix-ServerAdmin/
 
 ---
 
+## 현재 코드 리뷰 기준 버그/리스크
+
+### 1. `pollServerTs()`가 `locks` 필드를 반환하지 않음 ★ 버그
+
+- 서버 `/api/ping`은 `locks` 객체를 반환한다.
+- `state.js`의 `pollServerTs()`는 `{ serverTs, lastEditor, lastEditTime, hasEditorPw }`만 반환한다.
+- `main.js`의 `startPolling()`에서 `result.locks` 를 체크하지만 항상 `undefined`가 된다.
+- 결과: 다른 사용자가 아이템 편집 중일 때 락 UI(노란 점선 테두리)가 갱신되지 않는다.
+
+수정 위치: `src/app/state.js` → `pollServerTs()` 반환 객체에 `locks: json.locks` 추가.
+
+### 2. `main.js`에서 `saveUserNamePopup` 이중 정의
+
+- line 364: `window.saveUserNamePopup`이 정의된 뒤 `window`에 바인딩된다.
+- line 592: `init()` 이후 동일 이름으로 재정의되어 덮어쓴다.
+- 두 번째 정의가 최종 적용되므로 첫 번째 정의(line 364~374)는 dead code다.
+
+수정 위치: `src/app/main.js` line 364~374 제거.
+
+### 3. `loadInlineActivityLog`에서 미정의 변수 `res` 참조
+
+- `apiFetch`는 HTTP 비-2xx 응답을 `throw`하므로 `try` 블록 안에서 `json.ok === false`인 경우는 
+  이론상 발생하지 않는다.
+- 그러나 코드 내 `if (!json.ok) { if (res.status === 403) ... }` 형태로 `res`를 참조하고 있어,
+  만약 실행된다면 `ReferenceError`가 발생한다.
+- 현재는 dead code이지만 `apiFetch` 구현이 바뀌면 런타임 에러로 터질 수 있다.
+
+수정 위치: `src/app/main.js` `loadInlineActivityLog` 내 `if (!json.ok)` 블록 정리.
+
+### 4. 시간 포매팅 함수 3중 중복
+
+- `state.js`: `fmtDate(ts)` — export됨, 분/시간/일 전 포맷
+- `main.js`: `fmtAgo(ts)` — 로컬 함수, 거의 동일한 로직
+- `dashboard.js`: `timeAgo(ts)` — 로컬 함수, 비슷한 로직
+
+`main.js`의 `fmtAgo`와 `dashboard.js`의 `timeAgo`는 `state.js`의 `fmtDate`를 import해서 대체할 수 있다.
+
+### 5. `handleLockedClick`이 window에 미노출
+
+- `admin.js`에서 export되지만 `main.js`의 `Object.assign(window, ...)` 블록에 포함되지 않는다.
+- HTML에서 인라인 이벤트로 호출 시 `ReferenceError` 발생.
+- 현재 HTML에서 실제 사용 여부 확인 후 바인딩 또는 제거 결정 필요.
+
+---
+
+## 우선순위 높은 후속 작업
+
+1. `pollServerTs()`에 `locks` 필드 추가 (실시간 편집 락 UI 복구)
+2. `main.js`의 중복 `saveUserNamePopup` 제거
+3. `loadInlineActivityLog`의 `res` 미정의 참조 정리
+4. `fmtAgo` / `timeAgo` → `fmtDate` 통합
+5. `handleLockedClick` window 바인딩 추가 또는 사용처 삭제
+
+---
+
 ## 권장 개발 흐름
 
 ### UI 기능 추가
@@ -244,57 +329,6 @@ featureMatrix-ServerAdmin/
 2. `server.py` 응답 구조를 바꾼다.
 3. `state.js`의 load/save/poll 코드를 동기화한다.
 4. polling 배너나 conflict UI가 필요한지 `main.js`를 검토한다.
-
----
-
-## 현재 코드 리뷰 기준 주요 리스크
-
-아래 항목은 후속 작업 전에 먼저 확인하는 것이 좋다.
-
-### 1. `main.js`에서 미수입 식별자 사용
-
-- `bulkSel`, `esc`, `notify`, `fmtAgo` 등이 로컬 import 없이 사용된다.
-- 대표 위치:
-  - `src/app/main.js`의 bulk 작업 구간
-  - diff modal 구성 구간
-  - polling 메시지 구간
-
-영향:
-- 관련 버튼이나 배너 로직 실행 시 `ReferenceError` 가능성이 높다.
-
-### 2. `state.js`에 중복 함수와 잘못된 함수 호출 존재
-
-- `resolveConflictUseServer`가 두 번 선언되어 있다.
-- 두 번째 선언은 존재하지 않는 `applyPayload`를 호출한다.
-
-영향:
-- conflict 처리 경로가 실행되면 런타임 에러 또는 의도치 않은 동작 가능성이 있다.
-
-### 3. 서버가 관리자 토큰을 실제 쓰기 권한에 사용하지 않음
-
-- `server.py`에는 `check_admin_token()`이 있지만 `POST /api/data`에서 호출하지 않는다.
-- 현재는 API key만 알면 누구나 전체 데이터를 수정할 수 있다.
-
-영향:
-- 클라이언트의 관리자 잠금 UI는 우회 가능하고, 서버 단에서는 권한 보호가 성립하지 않는다.
-
-### 4. README와 실제 충돌 처리 구현이 다름
-
-- README는 `serverTs` 기반 충돌 감지와 `409 Conflict`를 설명한다.
-- 실제 서버 구현은 last-write-wins이며 409를 반환하지 않는다.
-
-영향:
-- 동시 편집 시 데이터 유실이 발생할 수 있고 문서 신뢰도도 떨어진다.
-
----
-
-## 우선순위 높은 후속 작업 제안
-
-1. `main.js` import 누락과 참조 오류부터 정리
-2. `state.js`의 중복 함수 제거 및 conflict 로직 정리
-3. 서버 write API에 관리자 토큰 강제 여부 결정
-4. README와 실제 서버 동작을 일치시키기
-5. 핵심 저장/불러오기 경로에 smoke test 추가
 
 ---
 
@@ -317,6 +351,7 @@ featureMatrix-ServerAdmin/
 - 전체 흐름 파악: `src/app/main.js`
 - 데이터/저장 구조: `src/app/state.js`
 - 화면 표시 수정: `src/app/render.js`
+- 대시보드 수정: `src/app/dashboard.js`
 - 편집 모달 수정: `src/app/modal.js`
 - import/export 수정: `src/app/io.js`
 - 서버 저장 로직: `featureMatrix-server/server.py`
@@ -326,5 +361,3 @@ featureMatrix-ServerAdmin/
 ## 결론
 
 이 프로젝트는 구조 자체는 단순하지만, 전역 상태와 `window` 바인딩에 많이 의존한다. 따라서 기능을 추가할 때는 한 파일만 수정해서 끝나는 경우가 드물다. 보통 상태, 렌더링, 저장, 빌드 결과를 함께 확인해야 안전하다.
-
-특히 서버 동기화와 관리자 권한은 UI와 서버 구현이 완전히 일치하지 않는 부분이 있으므로, 후속 에이전트는 이 영역을 먼저 안정화한 뒤 기능 확장을 진행하는 편이 좋다.
