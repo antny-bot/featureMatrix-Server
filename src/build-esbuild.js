@@ -11,11 +11,40 @@
    - Tree-shaking 으로 미사용 코드 자동 제거
 ══════════════════════════════════════════ */
 
-const fs   = require('fs');
-const path = require('path');
+const fs     = require('fs');
+const path   = require('path');
+const { execSync } = require('child_process');
 
 const ROOT = __dirname;
 const DIST = path.join(ROOT, 'dist');
+
+/* ── 버전 정보 수집 ── */
+function getBuildMeta() {
+  // VERSION 파일 (단일 진실 원천)
+  const versionFile = path.join(ROOT, '..', 'VERSION');
+  const version = fs.existsSync(versionFile)
+    ? fs.readFileSync(versionFile, 'utf8').trim()
+    : require('./package.json').version;
+
+  // git 커밋 해시
+  let gitHash = 'unknown';
+  try {
+    gitHash = execSync('git rev-parse --short HEAD', { stdio: ['pipe', 'pipe', 'ignore'] })
+      .toString().trim();
+  } catch (_) {}
+
+  // 빌드 날짜 + CI 런 번호
+  const now = new Date();
+  const buildDate = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('');
+  const runNumber = process.env.GITHUB_RUN_NUMBER || 'local';
+  const buildId = `${buildDate}.${runNumber}`;
+
+  return { version, gitHash, buildId };
+}
 
 async function build() {
   let esbuild;
@@ -31,6 +60,9 @@ async function build() {
 
   if (!fs.existsSync(DIST)) fs.mkdirSync(DIST, { recursive: true });
 
+  const { version, gitHash, buildId } = getBuildMeta();
+  console.log(`📦 버전: v${version}  빌드: ${buildId}  커밋: ${gitHash}`);
+
   /* ── 1. esbuild 로 JS 번들 생성 ── */
   const bundleResult = await esbuild.build({
     entryPoints: [path.join(ROOT, 'app/main.js')],
@@ -41,7 +73,10 @@ async function build() {
     treeShaking: true,
     logLevel: 'info',
     define: {
-      // window 브릿지 → 직접 호출 (번들 내부에서는 같은 스코프)
+      // 빌드 시점 버전 정보 주입 (런타임에서 new Date() 사용 금지)
+      __APP_VERSION__: JSON.stringify(version),
+      __BUILD_ID__:    JSON.stringify(buildId),
+      __GIT_HASH__:    JSON.stringify(gitHash),
     },
     plugins: [],
   });
@@ -109,6 +144,7 @@ function __inlineNotify(msg, type) {
   const bundleKB = Math.round(fs.statSync(outPath).size / 1024);
   console.log('✅ 빌드 완료! (esbuild)');
   console.log(`   출력: dist/index.html (${bundleKB}KB)`);
+  console.log(`   버전: v${version} (build ${buildId})`);
   console.log(`   서버 없이 더블클릭으로 실행 가능`);
 
   /* ── 9. 서버 static 자동 복사 ── */

@@ -1,10 +1,19 @@
 FROM node:22-alpine AS frontend-builder
-WORKDIR /app/src
+WORKDIR /app
 
+# VERSION 파일을 먼저 복사 (빌드 시 버전 주입에 필요)
+COPY VERSION ./VERSION
+
+WORKDIR /app/src
 COPY src/package*.json ./
 RUN npm ci
 
 COPY src/ ./
+
+# GITHUB_RUN_NUMBER를 빌드 arg로 받아서 환경변수로 전달
+ARG GITHUB_RUN_NUMBER=local
+ENV GITHUB_RUN_NUMBER=${GITHUB_RUN_NUMBER}
+
 RUN npm run build
 # 빌드 결과: /app/src/dist/index.html
 

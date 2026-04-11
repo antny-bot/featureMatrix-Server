@@ -535,17 +535,12 @@ async function init() {
   syncServerSettingsUI();
   updateAdminUI();
   scheduleCardAnim();
-  // 빌드 넘버 표시
+  // 빌드번호 표시 (빌드 시점에 주입된 상수 사용, 런타임 생성 금지)
   (() => {
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const MM = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const ver = S.settings.version || '1.0.0';
+    const ver = (typeof __APP_VERSION__ !== 'undefined') ? __APP_VERSION__ : 'dev';
+    const bid = (typeof __BUILD_ID__    !== 'undefined') ? __BUILD_ID__    : 'local';
     const el = document.getElementById('buildNumberDisplay');
-    if (el) el.textContent = `${ver}-build${yy}${MM}${dd}${hh}${mm}`;
+    if (el) el.textContent = `v${ver} (build ${bid})`;
   })();
   S.view = 'dashboard';
   renderAll();
