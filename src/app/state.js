@@ -246,7 +246,7 @@ export async function loadFromServer() {
 export async function pollServerTs() {
   try {
     const json = await apiFetch('/api/ping');
-    return { serverTs: json.serverTs, lastEditor: json.lastEditor || '', lastEditTime: json.lastEditTime || 0, hasEditorPw: json.hasEditorPw ?? false };
+    return { serverTs: json.serverTs, lastEditor: json.lastEditor || '', lastEditTime: json.lastEditTime || 0, hasEditorPw: json.hasEditorPw ?? false, locks: json.locks || {} };
   } catch(e) { return null; }
 }
 

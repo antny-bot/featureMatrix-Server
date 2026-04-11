@@ -4,22 +4,8 @@
    섹션: stats / insight(그룹진척+담당자+타임라인) / heatmap
 ══════════════════════════════════════════ */
 
-import { S, esc, normOwner, getOwnerColor, getPK } from './state.js';
+import { S, esc, normOwner, getOwnerColor, getPK, fmtDate } from './state.js';
 import { animOk, getFiltered, isFilterActive } from './render.js';
-
-/* ── 시간 포매팅 ── */
-function timeAgo(ts) {
-  if (!ts) return '';
-  const diff = Date.now() - ts;
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return '방금 전';
-  if (m < 60) return `${m}분 전`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}시간 전`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}일 전`;
-  return new Date(ts).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
 
 /* ── 상태 색상 ── */
 function statusColor(status) {
@@ -328,7 +314,7 @@ export function renderDashboard() {
                     ${i < recent.length - 1 ? '<div class="db-tl-line"></div>' : ''}
                   </div>
                   <div class="db-tl-body">
-                    <div class="db-tl-time">${timeAgo(it.ts)}</div>
+                    <div class="db-tl-time">${fmtDate(it.ts)}</div>
                     <div class="db-tl-name${isDeleted ? ' db-tl-name--del' : ''}" ${isDeleted ? '' : `onclick="openEditModal('${esc(it.key)}')"`}>${esc(it.name || it.key)}</div>
                     <div class="db-tl-meta">
                       <span class="db-tl-action" style="color:${actionColor}">${esc(it.action)}</span>

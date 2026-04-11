@@ -204,10 +204,3 @@ function _updateNavLogin(admin, editor, serverMode) {
   }
 }
 
-/* ── 잠긴 요소 클릭 핸들러 ── */
-export function handleLockedClick(e, callback) {
-  if (!isAdmin()) {
-    e.stopPropagation();
-    requireAdmin(callback);
-  }
-}
