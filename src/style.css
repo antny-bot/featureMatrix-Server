@@ -110,9 +110,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 
 /* ── 헤더 ── */
 .hdr{position:sticky;top:0;z-index:200;height:50px;display:flex;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-xs)}
-/* ── 헤더 완료율 바 ── */
-.hdr-prog{position:absolute;bottom:0;left:0;right:0;height:2px;background:transparent;pointer-events:none}
-.hdr-prog-bar{height:100%;background:var(--success);transition:width .5s cubic-bezier(.4,0,.2,1);border-radius:0 1px 1px 0;min-width:0}
+
 .hdr-left{display:flex;align-items:center;height:100%;padding:0 8px 0 12px;gap:6px;border-right:1px solid var(--border);flex-shrink:0}
 .logo-kr{font-family:'Noto Serif KR','Georgia',serif;font-size:.88rem;font-weight:600;letter-spacing:.03em;color:var(--text);white-space:nowrap}
 .logo-sub{font-size:.58rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}

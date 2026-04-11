@@ -118,9 +118,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 
 /* ── 헤더 ── */
 .hdr{position:sticky;top:0;z-index:200;height:50px;display:flex;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-xs)}
-/* ── 헤더 완료율 바 ── */
-.hdr-prog{position:absolute;bottom:0;left:0;right:0;height:2px;background:transparent;pointer-events:none}
-.hdr-prog-bar{height:100%;background:var(--success);transition:width .5s cubic-bezier(.4,0,.2,1);border-radius:0 1px 1px 0;min-width:0}
+
 .hdr-left{display:flex;align-items:center;height:100%;padding:0 8px 0 12px;gap:6px;border-right:1px solid var(--border);flex-shrink:0}
 .logo-kr{font-family:'Noto Serif KR','Georgia',serif;font-size:.88rem;font-weight:600;letter-spacing:.03em;color:var(--text);white-space:nowrap}
 .logo-sub{font-size:.58rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
@@ -587,7 +585,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <span>테마</span>
     </button>
   </div>
-  <div class="hdr-prog" id="hdrProg" title="완료율 0%"><div class="hdr-prog-bar" id="hdrProgBar" style="width:0%"></div></div>
 </header>
 
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
@@ -1199,7 +1196,7 @@ function __inlineNotify(msg, isErr) {
   display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true, showQuickAdd:false },
   settings: {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:12, subCatW:100, cellFold:0,
+    colW:130, catW:12, subCatW:72, cellFold:0,
     matrixWidth:'fluid', panelPos:'left', panelVisible:true,
     title:'소복 매트릭스', subtitle:'Function Matrix', themeId:'sobuk',
     priorityStyles: { high:'left-thick', mid:'left-thin', low:'none' },
@@ -2123,12 +2120,6 @@ function syncLayout() {
   countUp('stImp', imp); countUp('stNew', nw);
   const fb = document.getElementById('fbadge');
   if (fb) fb.className = 'fbadge' + (isFilterActive() ? ' on' : '');
-  /* 완료율 진행바 */
-  const pct = items.length > 0 ? Math.round(done / items.length * 100) : 0;
-  const bar = document.getElementById('hdrProgBar');
-  const prog = document.getElementById('hdrProg');
-  if (bar) bar.style.width = pct + '%';
-  if (prog) prog.title = `완료 ${done}/${items.length} (${pct}%)`;
 }
 
 /* ── 매트릭스 ── */function renderMatrix() {
@@ -2391,7 +2382,7 @@ function renderListCell(it, key) {
     '보류': { col:'#6B7280', bg:'#F3F4F6' },
   };
   const counts = {};
-  S.items.filter(it => it.isDelete !== 'Y').forEach(it => {
+  S.items.forEach(it => {
     if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
   });
   el.innerHTML = ['기획','개발중','완료','보류'].map(st => {
@@ -3536,7 +3527,7 @@ function renderSingleAxis(orderKey, field, listId, label) {
   if (!confirm('설정을 기본값으로 초기화하겠습니까?')) return;
   Object.assign(S.settings, {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:12, subCatW:100, cellFold:3,
+    colW:130, catW:12, subCatW:72, cellFold:3,
     matrixWidth:'fluid', panelPos:'left', themeId:'sobuk',
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},

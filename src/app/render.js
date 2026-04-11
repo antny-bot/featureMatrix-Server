@@ -204,12 +204,6 @@ export function renderStats() {
   countUp('stImp', imp); countUp('stNew', nw);
   const fb = document.getElementById('fbadge');
   if (fb) fb.className = 'fbadge' + (isFilterActive() ? ' on' : '');
-  /* 완료율 진행바 */
-  const pct = items.length > 0 ? Math.round(done / items.length * 100) : 0;
-  const bar = document.getElementById('hdrProgBar');
-  const prog = document.getElementById('hdrProg');
-  if (bar) bar.style.width = pct + '%';
-  if (prog) prog.title = `완료 ${done}/${items.length} (${pct}%)`;
 }
 
 /* ── 매트릭스 ── */
@@ -491,7 +485,7 @@ export function renderStatusChips() {
     '보류': { col:'#6B7280', bg:'#F3F4F6' },
   };
   const counts = {};
-  S.items.filter(it => it.isDelete !== 'Y').forEach(it => {
+  S.items.forEach(it => {
     if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
   });
   el.innerHTML = ['기획','개발중','완료','보류'].map(st => {
