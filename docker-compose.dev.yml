@@ -1,6 +1,11 @@
+# 로컬 개발용 - 소스코드에서 직접 빌드
+# 사용법: docker compose -f docker-compose.dev.yml up -d --build
+
 services:
   feature-matrix:
-    image: ghcr.io/antny-bot/featurematrix-server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "${PORT:-5000}:5000"
     environment:
