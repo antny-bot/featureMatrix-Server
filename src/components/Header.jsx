@@ -11,6 +11,7 @@
 
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
+import { useAppStore } from '../store/useAppStore.js';
 
 /* ── SVG 아이콘 상수 ── */
 const ICON_SERVER = (
@@ -60,6 +61,8 @@ function IconMoon() {
 export default function Header() {
   const { isAdmin, isEditor, isServerMode } = useAuth();
   const { isDark } = useTheme();
+  const title    = useAppStore(s => s.settings.title    || 'featureMATRIX');
+  const subtitle = useAppStore(s => s.settings.subtitle || '기능정의 툴');
 
   const showAdminBadge  = isAdmin  && isServerMode;
   const showLogoutBtn   = (isAdmin || isEditor) && isServerMode;
@@ -69,8 +72,8 @@ export default function Header() {
     <header className="hdr">
       <div className="hdr-left">
         <div>
-          <div className="logo-kr" id="dTitle">featureMATRIX</div>
-          <div className="logo-sub" id="dSub">기능정의 툴</div>
+          <div className="logo-kr" id="dTitle">{title}</div>
+          <div className="logo-sub" id="dSub">{subtitle}</div>
         </div>
       </div>
 

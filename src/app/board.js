@@ -6,32 +6,37 @@
    드래그 상태(_dragKey)는 모듈 변수로 유지 (드래그 중 re-render 방지).
 ══════════════════════════════════════════ */
 
-import { S, esc, eattr, save, pushUndo, pushChangeLog } from './state.js';
-import { STATUS_OPTS, STATUS_LBL } from './constants.js';
+import { S, save, pushUndo, pushChangeLog } from './state.js';
+import { STATUS_OPTS } from './constants.js';
 import { renderAll } from './render.js';
-import { setStore, getStore } from '../store/useAppStore.js';
 
-/* ── 드래그 상태 (모듈 스코프 유지) ── */
-let _dragKey = null;
+/* ── 드래그/선택 상태 (모듈 스코프 — Zustand 리렌더 없이 드래그 이벤트 체인 유지) ── */
+let _dragKey  = null;
+let _boardSel = new Set();
 
-/* ── boardSel 헬퍼 ── */
-function getSel()       { return new Set(getStore().boardSel ?? []); }
-function setSel(newSet) { setStore({ boardSel: [...newSet] }); }
+function notifySel() {
+  window.dispatchEvent(new CustomEvent('boardSelChange', { detail: { sel: [..._boardSel] } }));
+}
+
+function bcEl(key) { return document.getElementById('bcard-' + key); }
 
 /* ── 선택: Shift → 다중 토글, 일반 클릭 → 단일 선택 ── */
+/* mxCardClick 패턴과 동일: _boardSel 모듈 변수 업데이트 + notifySel().
+   BoardView.jsx가 selSet으로 extraClass를 적용하므로 DOM classList 조작 불필요. */
 export function boardCardClick(e, key) {
-  const sel = getSel();
   if (e.shiftKey) {
-    if (sel.has(key)) sel.delete(key); else sel.add(key);
+    if (_boardSel.has(key)) _boardSel.delete(key);
+    else                    _boardSel.add(key);
   } else {
-    sel.clear();
-    sel.add(key);
+    _boardSel.clear();
+    _boardSel.add(key);
   }
-  setSel(sel);
+  notifySel();
 }
 
 export function boardCardDblClick(key) {
-  setSel(new Set());
+  _boardSel.clear();
+  notifySel();
   window.openEditModal?.(key);
 }
 
@@ -45,39 +50,37 @@ function _moveItems(keys, toStatus) {
       pushChangeLog('상태변경', it.key, it.name, { status: toStatus, owner: it.owner });
     }
   });
-  setSel(new Set());
+  _boardSel.clear();
+  notifySel();
   save();
   renderAll();
 }
 
 export function boardMoveSelected(toStatus) {
-  const sel = getSel();
-  if (sel.size === 0) return;
-  _moveItems(sel, toStatus);
+  if (_boardSel.size === 0) return;
+  _moveItems(new Set(_boardSel), toStatus);
 }
 
 /* ── 선택 초기화 ── */
-export function hideBoardActionBar() { setSel(new Set()); }
-export function boardClearSel()      { setSel(new Set()); }
+export function hideBoardActionBar() { _boardSel.clear(); notifySel(); }
+export function boardClearSel()      { _boardSel.clear(); notifySel(); }
 
 /* ── 드래그 앤 드롭 ── */
 export function boardCardDragStart(e, key) {
   _dragKey = key;
   e.dataTransfer.effectAllowed = 'move';
-  const sel = getSel();
-  if (sel.size > 0 && !sel.has(key)) {
-    sel.clear();
-    sel.add(key);
-    setSel(sel);
-  } else if (sel.size === 0) {
-    sel.add(key);
-    setSel(sel);
+  if (_boardSel.size > 0 && !_boardSel.has(key)) {
+    _boardSel.clear();
+    _boardSel.add(key);
+    notifySel();
+  } else if (_boardSel.size === 0) {
+    _boardSel.add(key);
+    notifySel();
   }
-  /* dragging 클래스: React re-render 이후에 붙여야 유지됨 */
+  /* dragging 클래스: React 리렌더 이후에 붙어야 유지됨 (onDS와 동일 패턴) */
   setTimeout(() => {
-    const latest = getSel();
-    latest.forEach(k => document.getElementById('bcard-' + k)?.classList.add('dragging'));
-  }, 30);
+    _boardSel.forEach(k => bcEl(k)?.classList.add('dragging'));
+  }, 0);
 }
 
 export function boardCardDragEnd() {
@@ -100,6 +103,5 @@ export function boardDrop(e, colKey) {
   e.preventDefault();
   document.getElementById('bbody-' + colKey)?.classList.remove('drag-over');
   if (!_dragKey) return;
-  const sel = getSel();
-  _moveItems(sel.size > 0 ? sel : new Set([_dragKey]), colKey);
+  _moveItems(_boardSel.size > 0 ? new Set(_boardSel) : new Set([_dragKey]), colKey);
 }

@@ -10,6 +10,8 @@
 import { useEffect } from 'react';
 import Header from './Header.jsx';
 import BoardView from './BoardView.jsx';
+import DashboardView from './DashboardView.jsx';
+import SettingsPanel from './SettingsPanel.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 
@@ -275,220 +277,7 @@ const APP_TEMPLATE = `
 </div>
 
 <!-- 설정 모달 -->
-<div class="ov" id="settingsModal">
-  <div class="mbox" style="width:760px">
-    <div class="mhd"><span class="mtitle">⚙ 환경 설정</span><button class="mclose" onclick="closeModal('settingsModal')">✕</button></div>
-    <div class="stab-row">
-      <button class="stab on" onclick="sstab(this,'sg')">일반</button>
-      <button class="stab" onclick="sstab(this,'sdesign')">디자인</button>
-      <button class="stab" onclick="sstab(this,'scola')">컬럼·축</button>
-      <button class="stab" onclick="sstab(this,'sdat')">데이터</button>
-      <button class="stab" onclick="sstab(this,'sserv')">서버</button>
-      <button class="stab" id="slogTab" onclick="sstab(this,'slog')">로그</button>
-      <button class="stab" id="sadminTab" onclick="sstab(this,'sadmin')" style="display:none">🔑 관리자</button>
-    </div>
-    <div class="mbody" style="padding:14px 20px">
-
-      <!-- ── 일반: 폰트·카드·열너비·빌드 ── -->
-      <div class="spane on" id="sg">
-        <div class="sec-ttl">폰트 &amp; 카드</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-          <div class="srow"><div><div class="slbl">기준 폰트</div></div><div class="stepper"><button class="stepbtn" onclick="adjFont(-1)">−</button><span id="dBaseFont">16px</span><button class="stepbtn" onclick="adjFont(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">카드 폰트</div></div><div class="stepper"><button class="stepbtn" onclick="adjCardFont(-1)">−</button><span id="dCardFont">12px</span><button class="stepbtn" onclick="adjCardFont(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">모서리 반경</div></div><div class="stepper"><button class="stepbtn" onclick="adjRadius(-1)">−</button><span id="dRadius">6px</span><button class="stepbtn" onclick="adjRadius(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">카드 간격</div></div><div class="stepper"><button class="stepbtn" onclick="adjGap(-1)">−</button><span id="dGap">4px</span><button class="stepbtn" onclick="adjGap(1)">+</button></div></div>
-        </div>
-        <div class="sec-ttl" style="margin-top:12px">매트릭스 열 너비</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-          <div class="srow"><div><div class="slbl">그룹 열 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjColW(-10)">−</button><span id="dColW">130px</span><button class="stepbtn" onclick="adjColW(10)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">셀 접기 기준</div><div class="ssub">0=항상 펼침</div></div><div class="stepper"><button class="stepbtn" onclick="adjCellFold(-1)">−</button><span id="dCellFold">3</span><button class="stepbtn" onclick="adjCellFold(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">보드 더 보기 기준</div><div class="ssub">컬럼당 기본 표시 카드 수</div></div><div class="stepper"><button class="stepbtn" onclick="adjBoardFoldCount(-1)">−</button><span id="dBoardFoldCount">6</span><button class="stepbtn" onclick="adjBoardFoldCount(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjCatW(-4)">−</button><span id="dCatW">24px</span><button class="stepbtn" onclick="adjCatW(4)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">서브카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjSubCatW(-4)">−</button><span id="dSubCatW">72px</span><button class="stepbtn" onclick="adjSubCatW(4)">+</button></div></div>
-        </div>
-        <!-- 매트릭스 너비·필터 패널 위치: 고정값(fluid/right) — 숨김 처리, DOM id 유지 -->
-        <span id="mwF" style="display:none"></span><span id="mwX" style="display:none"></span>
-        <span id="ppL" style="display:none"></span><span id="ppR" style="display:none"></span>
-        <div class="sec-ttl" style="margin-top:12px">빌드 정보</div>
-        <div class="srow"><div><div class="slbl">빌드 넘버</div></div><span id="buildNumberDisplay" style="font-size:.82rem;font-weight:600;color:var(--text-2);font-family:monospace">-</span></div>
-      </div>
-
-      <!-- ── 디자인: 테마·카드스타일·색상·미리보기·애니메이션 ── -->
-      <div class="spane" id="sdesign">
-        <div class="sec-ttl">테마</div>
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">테마 선택 시 색상이 자동 업데이트됩니다.</div>
-        <div class="theme-grid" id="themeGrid"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:16px">
-          <div>
-            <div class="sec-ttl">카드 스타일</div>
-            <div id="prioStyleRows"></div>
-          </div>
-          <div>
-            <div class="sec-ttl">포인트·배경 색상</div>
-            <div id="designContent"></div>
-          </div>
-        </div>
-        <div class="sec-ttl" style="margin-top:12px">카드 미리보기</div>
-        <div class="preview-cards" id="previewCards"></div>
-        <div class="sec-ttl" style="margin-top:12px">애니메이션</div>
-        <div class="srow"><div><div class="slbl">애니메이션 전체</div><div class="ssub">모든 애니메이션 일괄 on/off</div></div><label class="tgl"><input type="checkbox" id="animEnabled" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">숫자 카운트업</div><div class="ssub">헤더 통계 숫자 증가 효과</div></div><label class="tgl"><input type="checkbox" id="animCountUp" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">카드 등장 효과</div><div class="ssub">카드 렌더 시 순서대로 fade-in</div></div><label class="tgl"><input type="checkbox" id="animCard" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">필터 전환 페이드</div><div class="ssub">필터 변경 시 콘텐츠 fade 전환</div></div><label class="tgl"><input type="checkbox" id="animFilter" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">행 Hover Shimmer</div><div class="ssub">리스트 뷰 행 hover 광택 효과</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">모달 Backdrop Blur</div><div class="ssub">모달 배경 블러 처리</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-      </div>
-
-      <!-- ── 컬럼·축: 리스트컬럼·축순서 ── -->
-      <div class="spane" id="scola">
-        <div class="sec-ttl">리스트 컬럼</div>
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">체크: 표시 여부 &nbsp;|&nbsp; ⠿ 드래그: 순서 변경</div>
-        <div class="col-editor" id="colEditor"></div>
-        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetListCols()">기본값 복원</button></div>
-        <div class="sec-ttl" style="margin-top:16px">축 순서</div>
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">⠿ 드래그로 X축(그룹)·Y축(카테고리) 순서를 재정렬합니다.</div>
-        <div class="sec-ttl" style="font-size:.62rem">그룹 (X축)</div>
-        <div class="col-editor" id="groupAxisList"></div>
-        <div class="sec-ttl" style="margin-top:12px;font-size:.62rem">카테고리 (Y축)</div>
-        <div class="col-editor" id="catAxisList"></div>
-        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetAxisOrder()">자동 정렬 초기화</button></div>
-      </div>
-
-      <!-- ── 데이터: 내보내기·설정 파일 ── -->
-      <div class="spane" id="sdat">
-        <div class="sec-ttl">내보내기</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
-          <button class="btn btn-s btn-sm" onclick="expClip()">📋 클립보드</button>
-          <button class="btn btn-s btn-sm" onclick="expTSV()">⬇ TSV</button>
-          <button class="btn btn-s btn-sm" onclick="expXLS()">📊 Excel</button>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;align-items:center">
-          <div style="display:flex;align-items:center;gap:8px">
-            <label style="font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="htmlW" value="fluid" checked> 가변폭</label>
-            <label style="font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="htmlW" value="fixed"> 고정폭</label>
-          </div>
-          <button class="btn btn-s btn-sm" onclick="expHTML()">🌐 HTML</button>
-          <button class="btn btn-s btn-sm" onclick="expMdZip()">📦 MD ZIP</button>
-        </div>
-        <div class="sec-ttl" style="margin-top:12px">설정 파일</div>
-        <div class="srow"><div><div class="slbl">설정 초기화</div><div class="ssub">개인 설정만 기본값으로</div></div><button class="btn btn-s btn-sm" onclick="resetSettings()">설정만 초기화</button></div>
-        <div class="srow"><div><div class="slbl">설정 JSON 저장</div></div><button class="btn btn-s btn-sm" onclick="expSettJSON()">⬇ 저장</button></div>
-        <div class="srow"><div><div class="slbl">설정 JSON 불러오기</div></div><div><button class="btn btn-s btn-sm" onclick="document.getElementById('settFile').click()">↑ 불러오기</button><input type="file" id="settFile" accept=".json" style="display:none" onchange="impSettJSON(event)"></div></div>
-      </div>
-
-      <!-- ── 서버: 스토리지 모드·연결 설정 ── -->
-      <div class="spane" id="sserv">
-        <div class="sec-ttl">스토리지 모드</div>
-        <div style="display:flex;gap:12px;margin-bottom:12px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer">
-            <input type="radio" name="storageMode" id="modeServer" value="server" onchange="saveServerSettings()">
-            🌐 서버 (공유, 기본)
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer">
-            <input type="radio" name="storageMode" id="modeLocal" value="local" onchange="saveServerSettings()">
-            💾 로컬 (개인)
-          </label>
-        </div>
-        <div class="sec-ttl">연결 설정</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div class="slbl">사용자 이름</div>
-          <div class="ssub">변경 이력 및 활동 로그에 표시되는 이름</div>
-          <input class="inp" id="sUserName" placeholder="홍길동" style="height:28px;font-size:.8rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
-        </div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px;margin-top:4px">
-          <div class="slbl">서버 URL</div>
-          <div class="ssub">비워두면 현재 도메인 사용</div>
-          <input class="inp" id="sServerUrl" placeholder="http://서버IP:5000" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
-        </div>
-        <div class="srow" style="margin-top:4px">
-          <div><div class="slbl">변경 감지 주기</div><div class="ssub">다른 사용자의 변경을 감지하는 간격</div></div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <input class="inp" id="sPollInterval" type="number" min="5" max="300" value="10" style="width:60px;height:28px;text-align:center;font-size:.82rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
-            <span style="font-size:.78rem;color:var(--text-3)">초</span>
-          </div>
-        </div>
-        <div style="margin-top:14px">
-          <button class="btn btn-p btn-sm" onclick="saveServerSettings()">저장</button>
-        </div>
-      </div>
-
-      <!-- ── 로그: 활동로그·이력보관수 ── -->
-      <div class="spane" id="slog">
-        <div class="srow">
-          <div><div class="slbl">최근 변경 이력 보관 수</div><div class="ssub">10~500개, 초과분은 자동 삭제</div></div>
-          <div class="stepper"><button class="stepbtn" onclick="adjChangeLogMax(-10)">−</button><span id="dChangeLogMax">50</span><button class="stepbtn" onclick="adjChangeLogMax(10)">+</button></div>
-        </div>
-        <div class="sec-ttl" style="margin-top:16px;display:flex;align-items:center;justify-content:space-between">
-          <span>활동 로그</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:.7rem;color:var(--text-3)">최근</span>
-            <input type="number" id="logLimitInp" value="100" min="10" max="1000"
-              style="width:50px;height:22px;font-size:.72rem;text-align:center;padding:0 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--text)">
-            <span style="font-size:.7rem;color:var(--text-3)">개</span>
-            <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
-          </div>
-        </div>
-        <div id="inlineLogBody" style="height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:.78rem">
-          <div style="padding:16px;text-align:center;color:var(--text-3)">탭을 열면 자동으로 불러옵니다.</div>
-        </div>
-      </div>
-
-      <!-- ── 관리자: 공유설정·데이터관리·접근제어 ── -->
-      <div class="spane" id="sadmin">
-        <!-- 공유 콘텐츠 설정 -->
-        <div class="sec-ttl">공유 콘텐츠 설정</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px">
-            <div class="slbl">헤더 타이틀</div>
-            <input class="inp" id="sTitle" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()">
-          </div>
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px">
-            <div class="slbl">서브 타이틀</div>
-            <input class="inp" id="sSub" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()">
-          </div>
-        </div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div><div class="slbl">대시보드 히어로 제목</div><div class="ssub">대시보드 상단에 표시할 프로젝트명</div></div>
-          <input class="inp" id="dbHeroName" placeholder="프로젝트 현황" style="height:28px;font-size:.82rem" oninput="saveDbSettings()">
-        </div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:8px;margin-top:4px">
-          <div><div class="slbl">대시보드 섹션 순서</div><div class="ssub">드래그하거나 ▲▼ 버튼으로 순서를 변경하세요</div></div>
-          <div id="dbSectionOrder" style="display:flex;flex-direction:column;gap:6px;width:100%"></div>
-        </div>
-        <!-- 데이터 관리 -->
-        <div class="sec-ttl" style="margin-top:16px">데이터 관리</div>
-        <div class="srow">
-          <div>
-            <div class="slbl">가져오기</div>
-            <div class="ssub">기존 데이터가 덮어씌워집니다. 관리자 전용.</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>openModal('importModal'))">📥 CSV/TSV</button>
-            <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>document.getElementById('mdImpInpAdmin').click())">📂 MD ZIP</button>
-            <input type="file" id="mdImpInpAdmin" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
-          </div>
-        </div>
-        <div class="srow">
-          <div><div class="slbl" style="color:var(--danger)">데이터 초기화</div><div class="ssub">샘플 데이터로 전체 복원</div></div>
-          <button class="btn btn-d btn-sm" onclick="resetData()">초기화</button>
-        </div>
-        <!-- 접근 제어 -->
-        <div class="sec-ttl" style="margin-top:16px">접근 제어</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:6px">
-          <div><div class="slbl">편집자 비밀번호</div><div class="ssub">비워두면 비번 없이 편집 가능</div></div>
-          <div style="display:flex;gap:8px;width:100%">
-            <input class="inp" id="editorPwInp" type="password" placeholder="새 비밀번호 (비우면 제거)"
-              style="flex:1;height:28px;font-size:.82rem"
-              onkeydown="if(event.key==='Enter')setEditorPassword()">
-            <button class="btn btn-s btn-sm" onclick="setEditorPassword()">변경</button>
-          </div>
-          <div id="editorPwErr" style="color:var(--danger);font-size:.78rem;min-height:14px"></div>
-        </div>
-      </div>
-    </div>
-    <div class="mfoot"><button class="btn btn-p btn-sm" onclick="closeModal('settingsModal')">닫기</button></div>
-  </div>
-</div>
+<div class="ov" id="settingsModal"></div>
 
 <!-- 단축키 모달 -->
 <div class="ov" id="shortcutsModal">
@@ -599,6 +388,8 @@ export default function App() {
         <Header />
         <div dangerouslySetInnerHTML={{ __html: APP_TEMPLATE }} />
         <BoardView />
+        <DashboardView />
+        <SettingsPanel />
       </AuthProvider>
     </ThemeProvider>
   );

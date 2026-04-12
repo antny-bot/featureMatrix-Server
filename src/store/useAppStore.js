@@ -67,8 +67,6 @@ const initialState = {
   serverTs: 0,
   isLoading: false,
   serverStatus: 'idle', // 'idle' | 'ok' | 'error'
-  // 보드 뷰 선택 상태 (Set은 직렬화 불가 → 배열로 저장)
-  boardSel: [],
 };
 
 /* ── Zustand 스토어 ── */
@@ -78,7 +76,6 @@ export const useAppStore = create((set, get) => ({
   /* ── 기본 setter들 ── */
   setItems: (items) => set({ items }),
   setView: (view) => set({ view }),
-  setBoardSel: (boardSel) => set({ boardSel }),
   setSearchQ: (searchQ) => set({ searchQ }),
   setExpandedCells: (expandedCells) => set({ expandedCells }),
   setEditKey: (editKey) => set({ editKey }),

@@ -304,10 +304,6 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .board-col-body{flex:1;overflow-y:hidden;padding:4px 7px 6px;display:flex;flex-direction:column;gap:6px;min-height:0}
 .board-col-body--expanded{overflow-y:auto}
 .board-col-body.drag-over{background:var(--accent-l);outline:2px dashed var(--accent);outline-offset:-3px}
-/* 더 보기 / 접기 버튼 */
-.board-more-btn{flex-shrink:0;margin:0 7px 8px;padding:5px 0;border:1px dashed var(--border);border-radius:6px;background:transparent;color:var(--text-3);font-size:.72rem;cursor:pointer;transition:background .15s,color .15s}
-.board-more-btn:hover{background:var(--surface-3);color:var(--text)}
-.board-more-btn--fold{border-style:solid;color:var(--text-2)}
 .mitem.board-selected,.mitem.mxsel{outline:2px solid var(--accent);outline-offset:1px;background:var(--accent-l) !important}
 .mitem.dragging{opacity:.45;transform:scale(.97)}
 .board-action-bar{display:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);border-radius:24px;padding:8px 16px;gap:10px;align-items:center;font-size:.75rem;box-shadow:0 4px 20px var(--shadow);z-index:300;white-space:nowrap}
@@ -22928,7 +22924,7 @@ function __inlineNotify(msg, type) {
   });
 
   // store/useAppStore.js
-  var initialState, useAppStore, getStore, setStore;
+  var initialState, useAppStore, setStore;
   var init_useAppStore = __esm({
     "store/useAppStore.js"() {
       init_esm();
@@ -22995,17 +22991,14 @@ function __inlineNotify(msg, type) {
         // 서버 동기화 상태
         serverTs: 0,
         isLoading: false,
-        serverStatus: "idle",
+        serverStatus: "idle"
         // 'idle' | 'ok' | 'error'
-        // 보드 뷰 선택 상태 (Set은 직렬화 불가 → 배열로 저장)
-        boardSel: []
       };
       useAppStore = create((set, get) => ({
         ...initialState,
         /* ── 기본 setter들 ── */
         setItems: (items) => set({ items }),
         setView: (view) => set({ view }),
-        setBoardSel: (boardSel) => set({ boardSel }),
         setSearchQ: (searchQ) => set({ searchQ }),
         setExpandedCells: (expandedCells) => set({ expandedCells }),
         setEditKey: (editKey) => set({ editKey }),
@@ -23050,7 +23043,6 @@ function __inlineNotify(msg, type) {
           });
         }
       }));
-      getStore = () => useAppStore.getState();
       setStore = (patch) => useAppStore.setState(patch);
     }
   });
@@ -24426,311 +24418,6 @@ function __inlineNotify(msg, type) {
     }
   });
 
-  // app/dashboard.js
-  function setHmView(v) {
-    _hmView = v;
-    renderDashboard();
-  }
-  function buildHeatmap(all, groups, cats) {
-    const STATUSES = STATUS_OPTS;
-    if (_hmView === "cat") {
-      if (groups.length === 0 || cats.length === 0)
-        return `<div class="db-empty">\uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
-      const hmData = {};
-      let hmMax = 0;
-      all.forEach((it) => {
-        if (!it.group || !it.category) return;
-        const k = `${it.group}||${it.category}`;
-        hmData[k] = (hmData[k] || 0) + 1;
-        if (hmData[k] > hmMax) hmMax = hmData[k];
-      });
-      return `<div class="db-hm-wrap">
-      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
-        <div class="db-hm-corner"></div>
-        ${groups.map((g) => `<div class="db-hm-col-hd" title="${esc2(g)}">${esc2(g)}</div>`).join("")}
-        ${cats.map((c) => `
-          <div class="db-hm-row-hd" title="${esc2(c)}">${esc2(c)}</div>
-          ${groups.map((g) => {
-        const cnt = hmData[`${g}||${c}`] || 0;
-        const op = hmMax > 0 ? cnt === 0 ? 0.06 : 0.15 + cnt / hmMax * 0.85 : 0.06;
-        return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc2(g)} \xD7 ${esc2(c)}: ${cnt}\uAC1C">${cnt > 0 ? cnt : ""}</div>`;
-      }).join("")}
-        `).join("")}
-      </div>
-      <div class="db-hm-legend">
-        <span class="db-hm-legend-lbl">\uBC00\uB3C4:</span>
-        <div class="db-hm-legend-bar">
-          ${[0.06, 0.3, 0.55, 0.8, 1].map((op) => `<div class="db-hm-legend-seg" style="--op:${op}"></div>`).join("")}
-        </div>
-        <span class="db-hm-legend-lbl">\uB192\uC74C</span>
-      </div>
-    </div>`;
-    } else {
-      if (groups.length === 0)
-        return `<div class="db-empty">\uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
-      const hmData = {};
-      let hmMax = 0;
-      all.forEach((it) => {
-        if (!it.group || !it.status) return;
-        const k = `${it.group}||${it.status}`;
-        hmData[k] = (hmData[k] || 0) + 1;
-        if (hmData[k] > hmMax) hmMax = hmData[k];
-      });
-      return `<div class="db-hm-wrap">
-      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
-        <div class="db-hm-corner"></div>
-        ${groups.map((g) => `<div class="db-hm-col-hd" title="${esc2(g)}">${esc2(g)}</div>`).join("")}
-        ${STATUSES.map((st) => `
-          <div class="db-hm-row-hd" title="${esc2(st)}" style="color:${STATUS_ACCENT[st] || "var(--text-3)"};font-weight:700">${esc2(st)}</div>
-          ${groups.map((g) => {
-        const cnt = hmData[`${g}||${st}`] || 0;
-        const op = hmMax > 0 ? cnt === 0 ? 0.06 : 0.15 + cnt / hmMax * 0.85 : 0.06;
-        return `<div class="db-hm-cell db-hm-cell--status-${st}" style="--op:${op.toFixed(2)}" title="${esc2(g)} \xD7 ${esc2(st)}: ${cnt}\uAC1C">${cnt > 0 ? cnt : ""}</div>`;
-      }).join("")}
-        `).join("")}
-      </div>
-      <div class="db-hm-legend">
-        <span class="db-hm-legend-lbl">\uBC00\uB3C4:</span>
-        <div class="db-hm-legend-bar">
-          ${[0.06, 0.3, 0.55, 0.8, 1].map((op) => `<div class="db-hm-legend-seg" style="--op:${op}"></div>`).join("")}
-        </div>
-        <span class="db-hm-legend-lbl">\uB192\uC74C</span>
-      </div>
-    </div>`;
-    }
-  }
-  function buildGroupProgress(all, groups) {
-    if (groups.length === 0) return `<div class="db-empty">\uADF8\uB8F9 \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
-    return groups.map((g) => {
-      const items = all.filter((it) => it.group === g);
-      const total = items.length;
-      if (total === 0) return "";
-      const sc = Object.fromEntries(STATUS_OPTS.map((st) => [st, 0]));
-      items.forEach((it) => {
-        if (sc[it.status] !== void 0) sc[it.status]++;
-      });
-      const donePct = Math.round((sc["\uC644\uB8CC"] || 0) / total * 100);
-      const segments = STATUS_OPTS.filter((s) => sc[s] > 0).map(
-        (s) => `<div class="db-gp-seg" style="width:${(sc[s] / total * 100).toFixed(1)}%;background:${STATUS_ACCENT[s]}"
-        title="${s} ${sc[s]}\uAC1C (${Math.round(sc[s] / total * 100)}%)"></div>`
-      ).join("");
-      const legend = STATUS_OPTS.filter((s) => sc[s] > 0).map(
-        (s) => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${STATUS_ACCENT[s]}"></span>${s} ${sc[s]}</span>`
-      ).join("");
-      return `
-    <div class="db-gp-row">
-      <div class="db-gp-info">
-        <span class="db-gp-name" title="${esc2(g)}">${esc2(g)}</span>
-        <span class="db-gp-total">${total}\uAC1C</span>
-      </div>
-      <div class="db-gp-bar-area">
-        <div class="db-gp-bar-wrap">
-          <div class="db-gp-track">${segments}</div>
-          <span class="db-gp-pct" style="color:${donePct >= 100 ? "var(--success)" : "var(--text-2)"}">${donePct}%</span>
-        </div>
-        <div class="db-gp-legend">${legend}</div>
-      </div>
-    </div>`;
-    }).filter(Boolean).join("");
-  }
-  function renderDashboard() {
-    const el = document.getElementById("dashboardView");
-    if (!el) return;
-    const filterOn = isFilterActive();
-    const all = filterOn ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
-    const total = all.length;
-    let high = 0, mid = 0, low = 0, imp = 0, done = 0;
-    const statusCount = Object.fromEntries(STATUS_OPTS.map((st) => [st, 0]));
-    const ownerMap = {};
-    all.forEach((it) => {
-      if (it.priority === "\uC0C1") high++;
-      else if (it.priority === "\uC911") mid++;
-      else low++;
-      if (it.isImportant === "Y") imp++;
-      if (it.status === "\uC644\uB8CC") done++;
-      if (statusCount[it.status] !== void 0) statusCount[it.status]++;
-      const o = normOwner(it.owner);
-      if (!ownerMap[o]) ownerMap[o] = { total: 0, high: 0, mid: 0, low: 0, status: {} };
-      ownerMap[o].total++;
-      ownerMap[o][getPK(it.priority)]++;
-      if (it.status) ownerMap[o].status[it.status] = (ownerMap[o].status[it.status] || 0) + 1;
-    });
-    const pct = total > 0 ? Math.round(done / total * 100) : 0;
-    const allGroups = [...new Set(all.map((it) => it.group).filter(Boolean))];
-    const allCats = [...new Set(all.map((it) => it.category).filter(Boolean))];
-    const orderG = S.settings.groupOrder.filter((g) => allGroups.includes(g));
-    const extraG = allGroups.filter((g) => !orderG.includes(g));
-    const groups = [...orderG, ...extraG];
-    const orderC = S.settings.catOrder.filter((c) => allCats.includes(c));
-    const extraC = allCats.filter((c) => !orderC.includes(c));
-    const cats = [...orderC, ...extraC];
-    const recentMax = S.settings.changeLogMax || 50;
-    const recent = (S.changeLog || []).slice(0, recentMax);
-    const owners = Object.entries(ownerMap).sort((a, b) => {
-      if (b[1].total !== a[1].total) return b[1].total - a[1].total;
-      if (b[1].high !== a[1].high) return b[1].high - a[1].high;
-      return (b[1].status["\uC644\uB8CC"] || 0) - (a[1].status["\uC644\uB8CC"] || 0);
-    }).slice(0, 10);
-    const sections = (S.settings.dbSections || ["stats", "insight", "heatmap"]).filter((s) => ["stats", "insight", "heatmap"].includes(s));
-    const heroName = S.settings.dbHeroName || "\uD504\uB85C\uC81D\uD2B8 \uD604\uD669";
-    const buildStatsSection = () => `
-    <div class="db-cards">
-      <div class="db-card db-card--theme">
-        <div class="db-card-label">\uC804\uCCB4 \uAE30\uB2A5</div>
-        <div class="db-card-value">${total.toLocaleString()}</div>
-        <div class="db-card-sub">\uC911\uC694 <strong>${imp}</strong>\uAC1C \uD3EC\uD568</div>
-      </div>
-      ${STATUS_OPTS.map((st) => `
-      <div class="db-card db-card--mini">
-        <div class="db-card-label">${esc2(st)}</div>
-        <div class="db-card-value db-card-value--mini" style="color:${STATUS_ACCENT[st]}">${statusCount[st]}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount[st] / total * 100) : 0}%</div>
-      </div>`).join("")}
-    </div>`;
-    const buildInsightSection = () => `
-    <div class="db-panel">
-      <div class="db-panel-hd">
-        <div class="db-panel-title">\uADF8\uB8F9\uBCC4 \uC9C4\uCC99\uB3C4</div>
-        <div class="db-panel-sub">\uB300\uAE30 \xB7 \uC2DC\uC791\uAC00\uB2A5 \xB7 \uC9C4\uD589\uC911 \xB7 \uAC80\uD1A0\uC911 \xB7 \uC644\uB8CC \uBE44\uC728</div>
-      </div>
-      <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
-    </div>
-    <div class="db-panel">
-      <div class="db-panel-hd">
-        <div class="db-panel-title">\uB2F4\uB2F9\uBCC4 \uAE30\uB2A5 \uD604\uD669</div>
-      </div>
-      ${owners.length === 0 ? `<div class="db-empty">\uB2F4\uB2F9\uC790 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>` : `<div class="db-owners-unified">
-            <div class="db-owners-hdr">
-              <div class="db-owner-info"></div>
-              <div class="db-owners-bar-hdr" style="flex:1">\uC9C4\uD589\uC0C1\uD0DC</div>
-              <div class="db-owners-bar-hdr" style="text-align:right;min-width:100px">\uC6B0\uC120\uC21C\uC704</div>
-            </div>
-            ${owners.map(([owner, cnt]) => {
-      const t = cnt.total;
-      const stLeg = STATUS_OPTS.filter((s) => cnt.status[s] > 0).map((s) => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${STATUS_ACCENT[s]}"></span>${s} ${cnt.status[s]}</span>`).join("");
-      const prioText = [
-        cnt.high > 0 ? `<span style="color:var(--p-high,var(--danger));font-weight:700">\uC0C1 ${cnt.high}</span>` : "",
-        cnt.mid > 0 ? `<span style="color:var(--p-mid,var(--accent))">\uC911 ${cnt.mid}</span>` : "",
-        cnt.low > 0 ? `<span style="color:var(--text-3)">\uD558 ${cnt.low}</span>` : ""
-      ].filter(Boolean).join('<span style="color:var(--border-2);margin:0 2px">|</span>');
-      return `
-              <div class="db-owner-row-unified">
-                <div class="db-owner-info">
-                  <span class="db-owner-dot" style="background:${getOwnerColor2(owner)}"></span>
-                  <span class="db-owner-name">${esc2(owner)}</span>
-                  <span class="db-owner-total">${t}</span>
-                </div>
-                <div class="db-owner-bar-wrap" style="flex:1">
-                  <div class="db-bar-track">
-                    ${STATUS_OPTS.map((s) => `<div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status[s] || 0) / t * 100).toFixed(1) : 0}%;background:${STATUS_ACCENT[s]}" title="${s} ${cnt.status[s] || 0}"></div>`).join("")}
-                  </div>
-                  ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ""}
-                </div>
-                <div style="min-width:100px;text-align:right;font-size:.7rem;display:flex;align-items:center;justify-content:flex-end;gap:3px;flex-shrink:0">${prioText || '<span style="color:var(--text-3)">-</span>'}</div>
-              </div>`;
-    }).join("")}
-          </div>`}
-    </div>`;
-    const buildHeatmapSection = () => `
-    <div class="db-panel db-heatmap-panel">
-      <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="db-panel-title">\uAE30\uB2A5 \uBD84\uD3EC \uD788\uD2B8\uB9F5</div>
-          <div class="db-panel-sub">${_hmView === "cat" ? "\uADF8\uB8F9 \xD7 \uCE74\uD14C\uACE0\uB9AC" : "\uADF8\uB8F9 \xD7 \uC0C1\uD0DC"} \uAD50\uCC28 \uBC00\uB3C4</div>
-        </div>
-        <div class="db-hm-tabs">
-          <button class="db-hm-tab${_hmView === "cat" ? " on" : ""}" onclick="setHmView('cat')">\uADF8\uB8F9\xD7\uCE74\uD14C\uACE0\uB9AC</button>
-          <button class="db-hm-tab${_hmView === "status" ? " on" : ""}" onclick="setHmView('status')">\uADF8\uB8F9\xD7\uC0C1\uD0DC</button>
-        </div>
-      </div>
-      ${buildHeatmap(all, groups, cats)}
-    </div>`;
-    const sectionBuilders = { stats: buildStatsSection, insight: buildInsightSection, heatmap: buildHeatmapSection };
-    const bodySection = `
-  <div class="db-body" data-anim-idx="1">
-    <div class="db-body-left">
-      ${sections.map((s) => sectionBuilders[s] ? sectionBuilders[s]() : "").join("")}
-    </div>
-
-    <div class="db-body-right">
-      <div class="db-panel db-timeline-panel">
-        <div class="db-panel-hd">
-          <div class="db-panel-title">\uCD5C\uADFC \uBCC0\uACBD</div>
-          <div class="db-panel-sub">\uCD94\uAC00\xB7\uC218\uC815\xB7\uC0AD\uC81C \uAE30\uC900</div>
-        </div>
-        ${recent.length === 0 ? `<div class="db-empty">\uBCC0\uACBD \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>` : `<div class="db-timeline">
-              ${recent.map((it, i) => {
-      const actionColor = { "\uCD94\uAC00": "var(--success)", "\uC218\uC815": "var(--accent)", "\uC0AD\uC81C\uCC98\uB9AC": "var(--warning)", "\uC0AD\uC81C\uBCF5\uC6D0": "var(--text-3)", "\uC644\uC804\uC0AD\uC81C": "var(--danger)", "\uC0C1\uD0DC\uBCC0\uACBD": "var(--accent)" }[it.action] || "var(--text-3)";
-      const isDeleted = it.action === "\uC644\uC804\uC0AD\uC81C" || it.action === "\uC0AD\uC81C\uCC98\uB9AC";
-      return `
-                <div class="db-tl-item">
-                  <div class="db-tl-line-wrap">
-                    <div class="db-tl-dot" style="background:${actionColor}"></div>
-                    ${i < recent.length - 1 ? '<div class="db-tl-line"></div>' : ""}
-                  </div>
-                  <div class="db-tl-body">
-                    <div class="db-tl-time">${fmtDate(it.ts)}</div>
-                    <div class="db-tl-name${isDeleted ? " db-tl-name--del" : ""}" ${isDeleted ? "" : `onclick="openEditModal('${esc2(it.key)}')"`}>${esc2(it.name || it.key)}</div>
-                    <div class="db-tl-meta">
-                      <span class="db-tl-action" style="color:${actionColor}">${esc2(it.action)}</span>
-                      ${it.owner ? `<span class="db-tl-owner" style="color:${getOwnerColor2(it.owner)}">${esc2(it.owner)}</span>` : ""}
-                      ${it.user ? `<span class="db-tl-status">${esc2(it.user)}</span>` : ""}
-                    </div>
-                  </div>
-                </div>`;
-    }).join("")}
-            </div>
-            <button class="db-more-btn" onclick="switchView('list')">\uC804\uCCB4 \uBAA9\uB85D \uBCF4\uAE30 \u2192</button>`}
-      </div>
-    </div>
-  </div>`;
-    const filterBanner = filterOn ? `<div style="margin-top:8px;font-size:.75rem;background:var(--accent-l);color:var(--accent);border-radius:6px;padding:4px 10px;display:inline-block">
-        \u{1F50D} \uD544\uD130 \uC801\uC6A9\uB428 \u2014 <button onclick="resetFilters()" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;font-size:inherit;padding:0">\uC804\uCCB4 \uBCF4\uAE30</button>
-       </div>` : "";
-    el.innerHTML = `
-<div class="db-wrap">
-  <div class="db-hero" data-anim-idx="0">
-    <div>
-      <div class="db-eyebrow">Mission Control</div>
-      <h2 class="db-title">${esc2(heroName)}</h2>
-      ${filterBanner}
-    </div>
-  </div>
-  ${bodySection}
-</div>`;
-    if (animOk()) {
-      el.querySelectorAll("[data-anim-idx]").forEach((sec) => {
-        const idx = parseInt(sec.dataset.animIdx, 10);
-        sec.style.opacity = "0";
-        sec.style.transform = "translateY(12px)";
-        sec.style.transition = "none";
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            sec.style.transition = "opacity .32s ease, transform .32s ease";
-            sec.style.opacity = "1";
-            sec.style.transform = "translateY(0)";
-          }, idx * 80);
-        });
-      });
-    }
-    requestAnimationFrame(() => {
-      const bodyLeft = el.querySelector(".db-body-left");
-      const bodyRight = el.querySelector(".db-body-right");
-      if (bodyLeft && bodyRight) {
-        bodyRight.style.maxHeight = bodyLeft.offsetHeight + "px";
-      }
-    });
-  }
-  var _hmView;
-  var init_dashboard = __esm({
-    "app/dashboard.js"() {
-      init_state();
-      init_constants();
-      init_render();
-      _hmView = "cat";
-    }
-  });
-
   // app/modal.js
   function openModal(id) {
     const el = document.getElementById(id);
@@ -25903,25 +25590,25 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   });
 
   // app/board.js
-  function getSel() {
-    return new Set(getStore().boardSel ?? []);
+  function notifySel() {
+    window.dispatchEvent(new CustomEvent("boardSelChange", { detail: { sel: [..._boardSel] } }));
   }
-  function setSel(newSet) {
-    setStore({ boardSel: [...newSet] });
+  function bcEl(key) {
+    return document.getElementById("bcard-" + key);
   }
   function boardCardClick(e, key) {
-    const sel = getSel();
     if (e.shiftKey) {
-      if (sel.has(key)) sel.delete(key);
-      else sel.add(key);
+      if (_boardSel.has(key)) _boardSel.delete(key);
+      else _boardSel.add(key);
     } else {
-      sel.clear();
-      sel.add(key);
+      _boardSel.clear();
+      _boardSel.add(key);
     }
-    setSel(sel);
+    notifySel();
   }
   function boardCardDblClick(key) {
-    setSel(/* @__PURE__ */ new Set());
+    _boardSel.clear();
+    notifySel();
     window.openEditModal?.(key);
   }
   function _moveItems(keys, toStatus) {
@@ -25936,37 +25623,37 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         pushChangeLog("\uC0C1\uD0DC\uBCC0\uACBD", it.key, it.name, { status: toStatus, owner: it.owner });
       }
     });
-    setSel(/* @__PURE__ */ new Set());
+    _boardSel.clear();
+    notifySel();
     save();
     renderAll();
   }
   function boardMoveSelected(toStatus) {
-    const sel = getSel();
-    if (sel.size === 0) return;
-    _moveItems(sel, toStatus);
+    if (_boardSel.size === 0) return;
+    _moveItems(new Set(_boardSel), toStatus);
   }
   function hideBoardActionBar() {
-    setSel(/* @__PURE__ */ new Set());
+    _boardSel.clear();
+    notifySel();
   }
   function boardClearSel() {
-    setSel(/* @__PURE__ */ new Set());
+    _boardSel.clear();
+    notifySel();
   }
   function boardCardDragStart(e, key) {
     _dragKey = key;
     e.dataTransfer.effectAllowed = "move";
-    const sel = getSel();
-    if (sel.size > 0 && !sel.has(key)) {
-      sel.clear();
-      sel.add(key);
-      setSel(sel);
-    } else if (sel.size === 0) {
-      sel.add(key);
-      setSel(sel);
+    if (_boardSel.size > 0 && !_boardSel.has(key)) {
+      _boardSel.clear();
+      _boardSel.add(key);
+      notifySel();
+    } else if (_boardSel.size === 0) {
+      _boardSel.add(key);
+      notifySel();
     }
     setTimeout(() => {
-      const latest = getSel();
-      latest.forEach((k) => document.getElementById("bcard-" + k)?.classList.add("dragging"));
-    }, 30);
+      _boardSel.forEach((k) => bcEl(k)?.classList.add("dragging"));
+    }, 0);
   }
   function boardCardDragEnd() {
     _dragKey = null;
@@ -25984,17 +25671,16 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     e.preventDefault();
     document.getElementById("bbody-" + colKey)?.classList.remove("drag-over");
     if (!_dragKey) return;
-    const sel = getSel();
-    _moveItems(sel.size > 0 ? sel : /* @__PURE__ */ new Set([_dragKey]), colKey);
+    _moveItems(_boardSel.size > 0 ? new Set(_boardSel) : /* @__PURE__ */ new Set([_dragKey]), colKey);
   }
-  var _dragKey;
+  var _dragKey, _boardSel;
   var init_board = __esm({
     "app/board.js"() {
       init_state();
       init_constants();
       init_render();
-      init_useAppStore();
       _dragKey = null;
+      _boardSel = /* @__PURE__ */ new Set();
     }
   });
 
@@ -26025,65 +25711,18 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     }
   }
   function syncSettingsUI() {
-    const ss = S.settings;
-    const admin = isAdmin();
-    const titleEl = document.getElementById("sTitle");
-    const subEl = document.getElementById("sSub");
-    if (titleEl) {
-      titleEl.value = ss.title;
-      titleEl.disabled = !admin;
-    }
-    if (subEl) {
-      subEl.value = ss.subtitle;
-      subEl.disabled = !admin;
-    }
-    const dbHeroEl = document.getElementById("dbHeroName");
-    if (dbHeroEl) dbHeroEl.value = ss.dbHeroName || "";
-    const dTitleEl = document.getElementById("dTitle");
-    const dSubEl = document.getElementById("dSub");
-    if (dTitleEl) dTitleEl.textContent = ss.title || "featureMATRIX";
-    if (dSubEl) dSubEl.textContent = ss.subtitle || "\uAE30\uB2A5\uC815\uC758 \uD234";
-    document.title = ss.title || "featureMATRIX";
-    document.getElementById("dBaseFont").textContent = ss.baseFont + "px";
-    document.getElementById("dCardFont").textContent = ss.cardFont + "px";
-    document.getElementById("dRadius").textContent = ss.cardRadius + "px";
-    document.getElementById("dGap").textContent = ss.cardGap + "px";
-    document.getElementById("dColW").textContent = ss.colW + "px";
-    document.getElementById("dCatW").textContent = ss.catW + "px";
-    document.getElementById("dSubCatW").textContent = ss.subCatW + "px";
-    document.getElementById("dCellFold").textContent = ss.cellFold === 0 ? "\u221E" : ss.cellFold;
-    const dCLMax = document.getElementById("dChangeLogMax");
-    if (dCLMax) dCLMax.textContent = ss.changeLogMax ?? 50;
-    const dBFC = document.getElementById("dBoardFoldCount");
-    if (dBFC) dBFC.textContent = ss.boardFoldCount ?? 6;
-    document.getElementById("mwF").className = "rbtn" + (ss.matrixWidth === "fluid" ? " on" : "");
-    document.getElementById("mwX").className = "rbtn" + (ss.matrixWidth === "fixed" ? " on" : "");
-    document.getElementById("ppL").className = "rbtn" + (ss.panelPos === "left" ? " on" : "");
-    document.getElementById("ppR").className = "rbtn" + (ss.panelPos === "right" ? " on" : "");
-    document.getElementById("layout").classList.toggle("pr", ss.panelPos === "right");
-    document.getElementById("fpanel").classList.toggle("collapsed", !ss.panelVisible);
-    const di = S.display;
-    document.getElementById("togOwner").checked = di.showOwner;
-    document.getElementById("togStar").checked = di.showStar;
-    document.getElementById("togNew").checked = di.showNewBadge;
-    document.getElementById("togCnt").checked = di.showCellCount;
-    document.getElementById("togUpd").checked = !!di.showUpdated;
-    document.getElementById("togStatus").checked = di.showStatus !== false;
-    document.getElementById("togMd").checked = di.showMdBadge !== false;
-    const togQA = document.getElementById("togQuickAdd");
-    if (togQA) togQA.checked = !!di.showQuickAdd;
-    document.getElementById("togDel").checked = S.filters.showDeleted;
-    document.getElementById("togImp").checked = S.filters.importantOnly;
-    syncAnimUI();
+    setStore({ settings: { ...S.settings }, display: { ...S.display }, filters: { ...S.filters } });
+    document.getElementById("layout")?.classList.toggle("pr", S.settings.panelPos === "right");
+    document.getElementById("fpanel")?.classList.toggle("collapsed", !S.settings.panelVisible);
+    document.title = S.settings.title || "featureMATRIX";
     updateAdminUI();
   }
   function previewTitle() {
-    S.settings.title = document.getElementById("sTitle").value;
-    S.settings.subtitle = document.getElementById("sSub").value;
-    document.getElementById("dTitle").textContent = S.settings.title;
-    document.getElementById("dSub").textContent = S.settings.subtitle;
+    S.settings.title = document.getElementById("sTitle")?.value ?? S.settings.title;
+    S.settings.subtitle = document.getElementById("sSub")?.value ?? S.settings.subtitle;
     document.title = S.settings.title;
     save();
+    setStore({ settings: { ...S.settings } });
   }
   function setMW(v) {
     S.settings.matrixWidth = v;
@@ -26101,89 +25740,78 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   }
   function adjFont(d) {
     S.settings.baseFont = Math.max(12, Math.min(22, S.settings.baseFont + d));
-    document.getElementById("dBaseFont").textContent = S.settings.baseFont + "px";
     save();
     applyVars();
+    setStore({ settings: { ...S.settings } });
   }
   function adjCardFont(d) {
     S.settings.cardFont = Math.max(9, Math.min(18, S.settings.cardFont + d));
-    document.getElementById("dCardFont").textContent = S.settings.cardFont + "px";
     save();
     applyVars();
+    setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
   function adjRadius(d) {
     S.settings.cardRadius = Math.max(0, Math.min(14, S.settings.cardRadius + d));
-    document.getElementById("dRadius").textContent = S.settings.cardRadius + "px";
     save();
     applyVars();
+    setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
   function adjGap(d) {
     S.settings.cardGap = Math.max(0, Math.min(20, S.settings.cardGap + d));
-    document.getElementById("dGap").textContent = S.settings.cardGap + "px";
     save();
     applyVars();
+    setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
   function adjColW(d) {
     S.settings.colW = Math.max(80, Math.min(300, S.settings.colW + d));
-    document.getElementById("dColW").textContent = S.settings.colW + "px";
     save();
     applyVars();
+    setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
   function adjCatW(d) {
     S.settings.catW = Math.max(40, Math.min(80, S.settings.catW + d));
-    document.getElementById("dCatW").textContent = S.settings.catW + "px";
     save();
     applyVars();
+    setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
   function adjSubCatW(d) {
     S.settings.subCatW = Math.max(40, Math.min(200, S.settings.subCatW + d));
-    document.getElementById("dSubCatW").textContent = S.settings.subCatW + "px";
     save();
     applyVars();
+    setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
   function adjCellFold(d) {
     S.settings.cellFold = Math.max(0, Math.min(20, S.settings.cellFold + d));
-    document.getElementById("dCellFold").textContent = S.settings.cellFold === 0 ? "\u221E" : S.settings.cellFold;
     save();
     S.expandedCells = /* @__PURE__ */ new Set();
+    setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
   function adjChangeLogMax(d) {
     S.settings.changeLogMax = Math.max(10, Math.min(500, S.settings.changeLogMax + d));
-    document.getElementById("dChangeLogMax").textContent = S.settings.changeLogMax;
     save();
+    setStore({ settings: { ...S.settings } });
   }
   function adjBoardFoldCount(d) {
-    S.settings.boardFoldCount = Math.max(2, Math.min(30, (S.settings.boardFoldCount ?? 6) + d));
-    document.getElementById("dBoardFoldCount").textContent = S.settings.boardFoldCount;
+    S.settings.boardFoldCount = Math.max(0, Math.min(30, (S.settings.boardFoldCount ?? 6) + d));
+    const v = S.settings.boardFoldCount;
+    document.getElementById("dBoardFoldCount").textContent = v === 0 ? "\u221E" : v;
     save();
+    setStore({ settings: { ...S.settings } });
   }
   function onAnimTgl() {
-    const a = S.settings.animations;
-    a.enabled = document.getElementById("animEnabled").checked;
-    a.countUp = document.getElementById("animCountUp").checked;
-    a.card = document.getElementById("animCard").checked;
-    a.filter = document.getElementById("animFilter").checked;
-    a.shimmer = document.getElementById("animShimmer").checked;
-    a.blur = document.getElementById("animBlur").checked;
     save();
     applyBlurSetting();
+    setStore({ settings: { ...S.settings } });
     renderAll();
   }
   function syncAnimUI() {
-    const a = S.settings.animations;
-    document.getElementById("animEnabled").checked = a.enabled;
-    document.getElementById("animCountUp").checked = a.countUp;
-    document.getElementById("animCard").checked = a.card;
-    document.getElementById("animFilter").checked = a.filter;
-    document.getElementById("animShimmer").checked = a.shimmer;
-    document.getElementById("animBlur").checked = a.blur;
   }
   function renderColEditor() {
     const el = document.getElementById("colEditor");
@@ -26378,6 +26006,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       init_io();
       init_constants();
       init_admin();
+      init_useAppStore();
       _colDragIdx = null;
       _axisDragIdx = null;
       _axisField = null;
@@ -26508,7 +26137,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     "app/main.js"() {
       init_DragDropTouch();
       init_constants();
-      init_dashboard();
       init_state();
       init_admin();
       init_theme();
@@ -26518,8 +26146,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       init_board();
       init_settings();
       Object.assign(window, {
-        renderDashboard,
-        setHmView,
         doUndo,
         toggleTheme,
         applyTheme,
@@ -27044,7 +26670,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react5 = __toESM(require_react());
+  var import_react7 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -27107,6 +26733,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var useTheme = () => (0, import_react2.useContext)(ThemeContext);
 
   // components/Header.jsx
+  init_useAppStore();
   var import_jsx_runtime3 = __toESM(require_jsx_runtime());
   var ICON_SERVER = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("rect", { x: "2", y: "2", width: "20", height: "8", rx: "2" }),
@@ -27141,13 +26768,15 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   function Header() {
     const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode: isServerMode2 } = useAuth();
     const { isDark } = useTheme();
+    const title = useAppStore((s) => s.settings.title || "featureMATRIX");
+    const subtitle = useAppStore((s) => s.settings.subtitle || "\uAE30\uB2A5\uC815\uC758 \uD234");
     const showAdminBadge = isAdmin2 && isServerMode2;
     const showLogoutBtn = (isAdmin2 || isEditor2) && isServerMode2;
     const logoutTitle = isAdmin2 ? "\uAD00\uB9AC\uC790 \uB85C\uADF8\uC544\uC6C3" : "\uD3B8\uC9D1\uC790 \uB85C\uADF8\uC544\uC6C3";
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("header", { className: "hdr", children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "hdr-left", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "logo-kr", id: "dTitle", children: "featureMATRIX" }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "logo-sub", id: "dSub", children: "\uAE30\uB2A5\uC815\uC758 \uD234" })
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "logo-kr", id: "dTitle", children: title }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "logo-sub", id: "dSub", children: subtitle })
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stTotal", style: { display: "none" }, children: "0" }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stHigh", style: { display: "none" }, children: "0" }),
@@ -27228,24 +26857,36 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_jsx_runtime4 = __toESM(require_jsx_runtime());
   function BoardView() {
     const items = useAppStore((s) => s.items);
-    const boardSel = useAppStore((s) => s.boardSel);
+    const foldCount = useAppStore((s) => s.settings.boardFoldCount ?? 6);
     const [boardContainer, setBoardContainer] = (0, import_react4.useState)(null);
     const [barContainer, setBarContainer] = (0, import_react4.useState)(null);
     const [expanded, setExpanded] = (0, import_react4.useState)(/* @__PURE__ */ new Set());
-    const foldCount = useAppStore((s) => s.settings.boardFoldCount ?? 6);
+    const [boardSel, setBoardSel] = (0, import_react4.useState)([]);
     (0, import_react4.useEffect)(() => {
       setBoardContainer(document.getElementById("boardView"));
       setBarContainer(document.getElementById("boardActionBar"));
     }, []);
-    const toggleExpand = (0, import_react4.useCallback)((colKey) => {
-      setExpanded((prev) => {
-        const next = new Set(prev);
-        if (next.has(colKey)) next.delete(colKey);
-        else next.add(colKey);
-        return next;
-      });
+    (0, import_react4.useEffect)(() => {
+      const handler = (e) => setBoardSel(e.detail.sel);
+      window.addEventListener("boardSelChange", handler);
+      return () => window.removeEventListener("boardSelChange", handler);
     }, []);
-    const selSet = (0, import_react4.useMemo)(() => new Set(boardSel), [boardSel]);
+    (0, import_react4.useEffect)(() => {
+      window.boardExpandCol = (colKey) => setExpanded((prev) => {
+        const n = new Set(prev);
+        n.add(colKey);
+        return n;
+      });
+      window.boardCollapseCol = (colKey) => setExpanded((prev) => {
+        const n = new Set(prev);
+        n.delete(colKey);
+        return n;
+      });
+      return () => {
+        delete window.boardExpandCol;
+        delete window.boardCollapseCol;
+      };
+    }, []);
     if (!boardContainer || !barContainer) return null;
     const filteredItems = isFilterActive() ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
     const c = getColors();
@@ -27254,21 +26895,25 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       if (byCol[it.status]) byCol[it.status].push(it);
       else byCol["\uB300\uAE30"].push(it);
     });
+    const selSet = new Set(boardSel);
     const boardPortal = (0, import_react_dom.createPortal)(
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "board-cols", children: STATUS_OPTS.map((colKey) => {
         const colItems = byCol[colKey];
-        const isExp = expanded.has(colKey);
-        const overLimit = colItems.length > foldCount;
+        const alwaysExpanded = foldCount === 0;
+        const isExp = expanded.has(colKey) || alwaysExpanded;
+        const overLimit = !alwaysExpanded && colItems.length > foldCount;
         const visible = isExp ? colItems : colItems.slice(0, foldCount);
         const hidden = colItems.length - foldCount;
         const cardsHtml = visible.map((it) => renderCard(it, c, -1, {
           id: `bcard-${it.key}`,
           extraClass: selSet.has(it.key) ? "board-selected" : "",
+          // mxSel 패턴과 동일
           onclick: `boardCardClick(event,'${eattr(it.key)}')`,
           ondblclick: `boardCardDblClick('${eattr(it.key)}')`,
           ondragstart: `boardCardDragStart(event,'${eattr(it.key)}')`,
           ondragend: "boardCardDragEnd()"
         })).join("");
+        const moreHtml = overLimit && !isExp ? `<button class="cell-more-btn" onclick="boardExpandCol('${eattr(colKey)}')">\u25BC ${hidden}\uAC1C \uB354\uBCF4\uAE30</button>` : overLimit && isExp ? `<button class="cell-more-btn" onclick="boardCollapseCol('${eattr(colKey)}')">\u25B2 \uC811\uAE30</button>` : "";
         return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "board-col", children: [
           /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "board-col-hd", style: { borderTop: `3px solid ${STATUS_ACCENT[colKey]}` }, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { children: [
             esc2(colKey),
@@ -27294,27 +26939,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                 e.currentTarget.classList.remove("drag-over");
                 window.boardDrop?.(e, colKey);
               },
-              dangerouslySetInnerHTML: { __html: cardsHtml }
-            }
-          ),
-          overLimit && !isExp && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
-            "button",
-            {
-              className: "board-more-btn",
-              onClick: () => toggleExpand(colKey),
-              children: [
-                "\uB354 \uBCF4\uAE30 (",
-                hidden,
-                "\uAC1C)"
-              ]
-            }
-          ),
-          overLimit && isExp && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
-            "button",
-            {
-              className: "board-more-btn board-more-btn--fold",
-              onClick: () => toggleExpand(colKey),
-              children: "\uC811\uAE30"
+              dangerouslySetInnerHTML: { __html: cardsHtml + moreHtml }
             }
           )
         ] }, colKey);
@@ -27345,8 +26970,818 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     ] });
   }
 
-  // components/App.jsx
+  // components/DashboardView.jsx
+  var import_react_dom2 = __toESM(require_react_dom());
+  var import_react5 = __toESM(require_react());
+  init_useAppStore();
+
+  // app/dashboard.js
+  init_state();
+  init_constants();
+  init_render();
+  function buildHeatmap(all, groups, cats, hmView) {
+    const STATUSES = STATUS_OPTS;
+    if (hmView === "cat") {
+      if (groups.length === 0 || cats.length === 0)
+        return `<div class="db-empty">\uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
+      const hmData = {};
+      let hmMax = 0;
+      all.forEach((it) => {
+        if (!it.group || !it.category) return;
+        const k = `${it.group}||${it.category}`;
+        hmData[k] = (hmData[k] || 0) + 1;
+        if (hmData[k] > hmMax) hmMax = hmData[k];
+      });
+      return `<div class="db-hm-wrap">
+      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
+        <div class="db-hm-corner"></div>
+        ${groups.map((g) => `<div class="db-hm-col-hd" title="${esc2(g)}">${esc2(g)}</div>`).join("")}
+        ${cats.map((c) => `
+          <div class="db-hm-row-hd" title="${esc2(c)}">${esc2(c)}</div>
+          ${groups.map((g) => {
+        const cnt = hmData[`${g}||${c}`] || 0;
+        const op = hmMax > 0 ? cnt === 0 ? 0.06 : 0.15 + cnt / hmMax * 0.85 : 0.06;
+        return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc2(g)} \xD7 ${esc2(c)}: ${cnt}\uAC1C">${cnt > 0 ? cnt : ""}</div>`;
+      }).join("")}
+        `).join("")}
+      </div>
+      <div class="db-hm-legend">
+        <span class="db-hm-legend-lbl">\uBC00\uB3C4:</span>
+        <div class="db-hm-legend-bar">
+          ${[0.06, 0.3, 0.55, 0.8, 1].map((op) => `<div class="db-hm-legend-seg" style="--op:${op}"></div>`).join("")}
+        </div>
+        <span class="db-hm-legend-lbl">\uB192\uC74C</span>
+      </div>
+    </div>`;
+    } else {
+      if (groups.length === 0)
+        return `<div class="db-empty">\uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
+      const hmData = {};
+      let hmMax = 0;
+      all.forEach((it) => {
+        if (!it.group || !it.status) return;
+        const k = `${it.group}||${it.status}`;
+        hmData[k] = (hmData[k] || 0) + 1;
+        if (hmData[k] > hmMax) hmMax = hmData[k];
+      });
+      return `<div class="db-hm-wrap">
+      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
+        <div class="db-hm-corner"></div>
+        ${groups.map((g) => `<div class="db-hm-col-hd" title="${esc2(g)}">${esc2(g)}</div>`).join("")}
+        ${STATUSES.map((st) => `
+          <div class="db-hm-row-hd" title="${esc2(st)}" style="color:${STATUS_ACCENT[st] || "var(--text-3)"};font-weight:700">${esc2(st)}</div>
+          ${groups.map((g) => {
+        const cnt = hmData[`${g}||${st}`] || 0;
+        const op = hmMax > 0 ? cnt === 0 ? 0.06 : 0.15 + cnt / hmMax * 0.85 : 0.06;
+        return `<div class="db-hm-cell db-hm-cell--status-${st}" style="--op:${op.toFixed(2)}" title="${esc2(g)} \xD7 ${esc2(st)}: ${cnt}\uAC1C">${cnt > 0 ? cnt : ""}</div>`;
+      }).join("")}
+        `).join("")}
+      </div>
+      <div class="db-hm-legend">
+        <span class="db-hm-legend-lbl">\uBC00\uB3C4:</span>
+        <div class="db-hm-legend-bar">
+          ${[0.06, 0.3, 0.55, 0.8, 1].map((op) => `<div class="db-hm-legend-seg" style="--op:${op}"></div>`).join("")}
+        </div>
+        <span class="db-hm-legend-lbl">\uB192\uC74C</span>
+      </div>
+    </div>`;
+    }
+  }
+  function buildGroupProgress(all, groups) {
+    if (groups.length === 0) return `<div class="db-empty">\uADF8\uB8F9 \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
+    return groups.map((g) => {
+      const items = all.filter((it) => it.group === g);
+      const total = items.length;
+      if (total === 0) return "";
+      const sc = Object.fromEntries(STATUS_OPTS.map((st) => [st, 0]));
+      items.forEach((it) => {
+        if (sc[it.status] !== void 0) sc[it.status]++;
+      });
+      const donePct = Math.round((sc["\uC644\uB8CC"] || 0) / total * 100);
+      const segments = STATUS_OPTS.filter((s) => sc[s] > 0).map(
+        (s) => `<div class="db-gp-seg" style="width:${(sc[s] / total * 100).toFixed(1)}%;background:${STATUS_ACCENT[s]}"
+        title="${s} ${sc[s]}\uAC1C (${Math.round(sc[s] / total * 100)}%)"></div>`
+      ).join("");
+      const legend = STATUS_OPTS.filter((s) => sc[s] > 0).map(
+        (s) => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${STATUS_ACCENT[s]}"></span>${s} ${sc[s]}</span>`
+      ).join("");
+      return `
+    <div class="db-gp-row">
+      <div class="db-gp-info">
+        <span class="db-gp-name" title="${esc2(g)}">${esc2(g)}</span>
+        <span class="db-gp-total">${total}\uAC1C</span>
+      </div>
+      <div class="db-gp-bar-area">
+        <div class="db-gp-bar-wrap">
+          <div class="db-gp-track">${segments}</div>
+          <span class="db-gp-pct" style="color:${donePct >= 100 ? "var(--success)" : "var(--text-2)"}">${donePct}%</span>
+        </div>
+        <div class="db-gp-legend">${legend}</div>
+      </div>
+    </div>`;
+    }).filter(Boolean).join("");
+  }
+  function buildDashboardHtml(hmView = "cat") {
+    const filterOn = isFilterActive();
+    const all = filterOn ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
+    const total = all.length;
+    let high = 0, mid = 0, low = 0, imp = 0, done = 0;
+    const statusCount = Object.fromEntries(STATUS_OPTS.map((st) => [st, 0]));
+    const ownerMap = {};
+    all.forEach((it) => {
+      if (it.priority === "\uC0C1") high++;
+      else if (it.priority === "\uC911") mid++;
+      else low++;
+      if (it.isImportant === "Y") imp++;
+      if (it.status === "\uC644\uB8CC") done++;
+      if (statusCount[it.status] !== void 0) statusCount[it.status]++;
+      const o = normOwner(it.owner);
+      if (!ownerMap[o]) ownerMap[o] = { total: 0, high: 0, mid: 0, low: 0, status: {} };
+      ownerMap[o].total++;
+      ownerMap[o][getPK(it.priority)]++;
+      if (it.status) ownerMap[o].status[it.status] = (ownerMap[o].status[it.status] || 0) + 1;
+    });
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
+    const allGroups = [...new Set(all.map((it) => it.group).filter(Boolean))];
+    const allCats = [...new Set(all.map((it) => it.category).filter(Boolean))];
+    const orderG = S.settings.groupOrder.filter((g) => allGroups.includes(g));
+    const extraG = allGroups.filter((g) => !orderG.includes(g));
+    const groups = [...orderG, ...extraG];
+    const orderC = S.settings.catOrder.filter((c) => allCats.includes(c));
+    const extraC = allCats.filter((c) => !orderC.includes(c));
+    const cats = [...orderC, ...extraC];
+    const recentMax = S.settings.changeLogMax || 50;
+    const recent = (S.changeLog || []).slice(0, recentMax);
+    const owners = Object.entries(ownerMap).sort((a, b) => {
+      if (b[1].total !== a[1].total) return b[1].total - a[1].total;
+      if (b[1].high !== a[1].high) return b[1].high - a[1].high;
+      return (b[1].status["\uC644\uB8CC"] || 0) - (a[1].status["\uC644\uB8CC"] || 0);
+    }).slice(0, 10);
+    const sections = (S.settings.dbSections || ["stats", "insight", "heatmap"]).filter((s) => ["stats", "insight", "heatmap"].includes(s));
+    const heroName = S.settings.dbHeroName || "\uD504\uB85C\uC81D\uD2B8 \uD604\uD669";
+    const buildStatsSection = () => `
+    <div class="db-cards">
+      <div class="db-card db-card--theme">
+        <div class="db-card-label">\uC804\uCCB4 \uAE30\uB2A5</div>
+        <div class="db-card-value">${total.toLocaleString()}</div>
+        <div class="db-card-sub">\uC911\uC694 <strong>${imp}</strong>\uAC1C \uD3EC\uD568</div>
+      </div>
+      ${STATUS_OPTS.map((st) => `
+      <div class="db-card db-card--mini">
+        <div class="db-card-label">${esc2(st)}</div>
+        <div class="db-card-value db-card-value--mini" style="color:${STATUS_ACCENT[st]}">${statusCount[st]}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount[st] / total * 100) : 0}%</div>
+      </div>`).join("")}
+    </div>`;
+    const buildInsightSection = () => `
+    <div class="db-panel">
+      <div class="db-panel-hd">
+        <div class="db-panel-title">\uADF8\uB8F9\uBCC4 \uC9C4\uCC99\uB3C4</div>
+        <div class="db-panel-sub">\uB300\uAE30 \xB7 \uC2DC\uC791\uAC00\uB2A5 \xB7 \uC9C4\uD589\uC911 \xB7 \uAC80\uD1A0\uC911 \xB7 \uC644\uB8CC \uBE44\uC728</div>
+      </div>
+      <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
+    </div>
+    <div class="db-panel">
+      <div class="db-panel-hd">
+        <div class="db-panel-title">\uB2F4\uB2F9\uBCC4 \uAE30\uB2A5 \uD604\uD669</div>
+      </div>
+      ${owners.length === 0 ? `<div class="db-empty">\uB2F4\uB2F9\uC790 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>` : `<div class="db-owners-unified">
+            <div class="db-owners-hdr">
+              <div class="db-owner-info"></div>
+              <div class="db-owners-bar-hdr" style="flex:1">\uC9C4\uD589\uC0C1\uD0DC</div>
+              <div class="db-owners-bar-hdr" style="text-align:right;min-width:100px">\uC6B0\uC120\uC21C\uC704</div>
+            </div>
+            ${owners.map(([owner, cnt]) => {
+      const t = cnt.total;
+      const stLeg = STATUS_OPTS.filter((s) => cnt.status[s] > 0).map((s) => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${STATUS_ACCENT[s]}"></span>${s} ${cnt.status[s]}</span>`).join("");
+      const prioText = [
+        cnt.high > 0 ? `<span style="color:var(--p-high,var(--danger));font-weight:700">\uC0C1 ${cnt.high}</span>` : "",
+        cnt.mid > 0 ? `<span style="color:var(--p-mid,var(--accent))">\uC911 ${cnt.mid}</span>` : "",
+        cnt.low > 0 ? `<span style="color:var(--text-3)">\uD558 ${cnt.low}</span>` : ""
+      ].filter(Boolean).join('<span style="color:var(--border-2);margin:0 2px">|</span>');
+      return `
+              <div class="db-owner-row-unified">
+                <div class="db-owner-info">
+                  <span class="db-owner-dot" style="background:${getOwnerColor2(owner)}"></span>
+                  <span class="db-owner-name">${esc2(owner)}</span>
+                  <span class="db-owner-total">${t}</span>
+                </div>
+                <div class="db-owner-bar-wrap" style="flex:1">
+                  <div class="db-bar-track">
+                    ${STATUS_OPTS.map((s) => `<div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status[s] || 0) / t * 100).toFixed(1) : 0}%;background:${STATUS_ACCENT[s]}" title="${s} ${cnt.status[s] || 0}"></div>`).join("")}
+                  </div>
+                  ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ""}
+                </div>
+                <div style="min-width:100px;text-align:right;font-size:.7rem;display:flex;align-items:center;justify-content:flex-end;gap:3px;flex-shrink:0">${prioText || '<span style="color:var(--text-3)">-</span>'}</div>
+              </div>`;
+    }).join("")}
+          </div>`}
+    </div>`;
+    const buildHeatmapSection = () => `
+    <div class="db-panel db-heatmap-panel">
+      <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="db-panel-title">\uAE30\uB2A5 \uBD84\uD3EC \uD788\uD2B8\uB9F5</div>
+          <div class="db-panel-sub">${hmView === "cat" ? "\uADF8\uB8F9 \xD7 \uCE74\uD14C\uACE0\uB9AC" : "\uADF8\uB8F9 \xD7 \uC0C1\uD0DC"} \uAD50\uCC28 \uBC00\uB3C4</div>
+        </div>
+        <div class="db-hm-tabs">
+          <button class="db-hm-tab${hmView === "cat" ? " on" : ""}" onclick="setHmView('cat')">\uADF8\uB8F9\xD7\uCE74\uD14C\uACE0\uB9AC</button>
+          <button class="db-hm-tab${hmView === "status" ? " on" : ""}" onclick="setHmView('status')">\uADF8\uB8F9\xD7\uC0C1\uD0DC</button>
+        </div>
+      </div>
+      ${buildHeatmap(all, groups, cats, hmView)}
+    </div>`;
+    const sectionBuilders = { stats: buildStatsSection, insight: buildInsightSection, heatmap: buildHeatmapSection };
+    const bodySection = `
+  <div class="db-body" data-anim-idx="1">
+    <div class="db-body-left">
+      ${sections.map((s) => sectionBuilders[s] ? sectionBuilders[s]() : "").join("")}
+    </div>
+
+    <div class="db-body-right">
+      <div class="db-panel db-timeline-panel">
+        <div class="db-panel-hd">
+          <div class="db-panel-title">\uCD5C\uADFC \uBCC0\uACBD</div>
+          <div class="db-panel-sub">\uCD94\uAC00\xB7\uC218\uC815\xB7\uC0AD\uC81C \uAE30\uC900</div>
+        </div>
+        ${recent.length === 0 ? `<div class="db-empty">\uBCC0\uACBD \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>` : `<div class="db-timeline">
+              ${recent.map((it, i) => {
+      const actionColor = { "\uCD94\uAC00": "var(--success)", "\uC218\uC815": "var(--accent)", "\uC0AD\uC81C\uCC98\uB9AC": "var(--warning)", "\uC0AD\uC81C\uBCF5\uC6D0": "var(--text-3)", "\uC644\uC804\uC0AD\uC81C": "var(--danger)", "\uC0C1\uD0DC\uBCC0\uACBD": "var(--accent)" }[it.action] || "var(--text-3)";
+      const isDeleted = it.action === "\uC644\uC804\uC0AD\uC81C" || it.action === "\uC0AD\uC81C\uCC98\uB9AC";
+      return `
+                <div class="db-tl-item">
+                  <div class="db-tl-line-wrap">
+                    <div class="db-tl-dot" style="background:${actionColor}"></div>
+                    ${i < recent.length - 1 ? '<div class="db-tl-line"></div>' : ""}
+                  </div>
+                  <div class="db-tl-body">
+                    <div class="db-tl-time">${fmtDate(it.ts)}</div>
+                    <div class="db-tl-name${isDeleted ? " db-tl-name--del" : ""}" ${isDeleted ? "" : `onclick="openEditModal('${esc2(it.key)}')"`}>${esc2(it.name || it.key)}</div>
+                    <div class="db-tl-meta">
+                      <span class="db-tl-action" style="color:${actionColor}">${esc2(it.action)}</span>
+                      ${it.owner ? `<span class="db-tl-owner" style="color:${getOwnerColor2(it.owner)}">${esc2(it.owner)}</span>` : ""}
+                      ${it.user ? `<span class="db-tl-status">${esc2(it.user)}</span>` : ""}
+                    </div>
+                  </div>
+                </div>`;
+    }).join("")}
+            </div>
+            <button class="db-more-btn" onclick="switchView('list')">\uC804\uCCB4 \uBAA9\uB85D \uBCF4\uAE30 \u2192</button>`}
+      </div>
+    </div>
+  </div>`;
+    const filterBanner = filterOn ? `<div style="margin-top:8px;font-size:.75rem;background:var(--accent-l);color:var(--accent);border-radius:6px;padding:4px 10px;display:inline-block">
+        \u{1F50D} \uD544\uD130 \uC801\uC6A9\uB428 \u2014 <button onclick="resetFilters()" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;font-size:inherit;padding:0">\uC804\uCCB4 \uBCF4\uAE30</button>
+       </div>` : "";
+    return `
+<div class="db-wrap">
+  <div class="db-hero" data-anim-idx="0">
+    <div>
+      <div class="db-eyebrow">Mission Control</div>
+      <h2 class="db-title">${esc2(heroName)}</h2>
+      ${filterBanner}
+    </div>
+  </div>
+  ${bodySection}
+</div>`;
+  }
+
+  // components/DashboardView.jsx
+  init_render();
   var import_jsx_runtime5 = __toESM(require_jsx_runtime());
+  function DashboardView() {
+    const items = useAppStore((s) => s.items);
+    const settings = useAppStore((s) => s.settings);
+    const [container, setContainer] = (0, import_react5.useState)(null);
+    const [hmView, setHmView] = (0, import_react5.useState)("cat");
+    (0, import_react5.useEffect)(() => {
+      setContainer(document.getElementById("dashboardView"));
+    }, []);
+    (0, import_react5.useEffect)(() => {
+      window.setHmView = (v) => setHmView(v);
+      return () => {
+        delete window.setHmView;
+      };
+    }, []);
+    (0, import_react5.useEffect)(() => {
+      if (!container) return;
+      if (animOk()) {
+        container.querySelectorAll("[data-anim-idx]").forEach((sec) => {
+          const idx = parseInt(sec.dataset.animIdx, 10);
+          sec.style.opacity = "0";
+          sec.style.transform = "translateY(12px)";
+          sec.style.transition = "none";
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              sec.style.transition = "opacity .32s ease, transform .32s ease";
+              sec.style.opacity = "1";
+              sec.style.transform = "translateY(0)";
+            }, idx * 80);
+          });
+        });
+      }
+      requestAnimationFrame(() => {
+        const bodyLeft = container.querySelector(".db-body-left");
+        const bodyRight = container.querySelector(".db-body-right");
+        if (bodyLeft && bodyRight) {
+          bodyRight.style.maxHeight = bodyLeft.offsetHeight + "px";
+        }
+      });
+    });
+    if (!container) return null;
+    const html = buildDashboardHtml(hmView);
+    return (0, import_react_dom2.createPortal)(
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { dangerouslySetInnerHTML: { __html: html } }),
+      container
+    );
+  }
+
+  // components/SettingsPanel.jsx
+  var import_react_dom3 = __toESM(require_react_dom());
+  var import_react6 = __toESM(require_react());
+  init_useAppStore();
+  init_state();
+  init_useAppStore();
+  init_theme();
+  var import_jsx_runtime6 = __toESM(require_jsx_runtime());
+  function syncSettings() {
+    setStore({ settings: { ...S.settings } });
+  }
+  function SettingsPanel() {
+    const settings = useAppStore((s) => s.settings);
+    const display = useAppStore((s) => s.display);
+    const filters = useAppStore((s) => s.filters);
+    const { isAdmin: isAdmin2 } = useAuth();
+    const [container, setContainer] = (0, import_react6.useState)(null);
+    const [activeTab, setActiveTab] = (0, import_react6.useState)("sg");
+    (0, import_react6.useEffect)(() => {
+      setContainer(document.getElementById("settingsModal"));
+    }, []);
+    (0, import_react6.useEffect)(() => {
+      if (activeTab === "sdesign") {
+        window.renderPrioStyleRows?.();
+        window.renderPreviewCards?.();
+        window.updateDesignContent?.();
+        window.renderThemeGrid?.();
+      }
+      if (activeTab === "scola") {
+        window.renderColEditor?.();
+        window.renderAxisEditor?.();
+      }
+      if (activeTab === "sserv") window.syncServerSettingsUI?.();
+      if (activeTab === "slog") window.loadInlineActivityLog?.();
+      if (activeTab === "sadmin") {
+        window.renderDbSectionOrder?.();
+        window.syncEditorPwStatus?.();
+      }
+    }, [activeTab]);
+    (0, import_react6.useEffect)(() => {
+      window.__settingsPanelOpen = () => setActiveTab("sg");
+      return () => {
+        delete window.__settingsPanelOpen;
+      };
+    }, []);
+    if (!container) return null;
+    const switchTab = (tab) => setActiveTab(tab);
+    return (0, import_react_dom3.createPortal)(
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "mbox", style: { width: "760px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "mhd", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "mtitle", children: "\u2699 \uD658\uACBD \uC124\uC815" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("settingsModal"), children: "\u2715" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "stab-row", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: `stab${activeTab === "sg" ? " on" : ""}`, onClick: () => switchTab("sg"), children: "\uC77C\uBC18" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: `stab${activeTab === "sdesign" ? " on" : ""}`, onClick: () => switchTab("sdesign"), children: "\uB514\uC790\uC778" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: `stab${activeTab === "scola" ? " on" : ""}`, onClick: () => switchTab("scola"), children: "\uCEEC\uB7FC\xB7\uCD95" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: `stab${activeTab === "sdat" ? " on" : ""}`, onClick: () => switchTab("sdat"), children: "\uB370\uC774\uD130" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: `stab${activeTab === "sserv" ? " on" : ""}`, onClick: () => switchTab("sserv"), children: "\uC11C\uBC84" }),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: `stab${activeTab === "slog" ? " on" : ""}`, id: "slogTab", onClick: () => switchTab("slog"), children: "\uB85C\uADF8" }),
+          isAdmin2 && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: `stab${activeTab === "sadmin" ? " on" : ""}`, id: "sadminTab", onClick: () => switchTab("sadmin"), children: "\u{1F511} \uAD00\uB9AC\uC790" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "mbody", style: { padding: "14px 20px" }, children: [
+          activeTab === "sg" && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uD3F0\uD2B8 & \uCE74\uB4DC" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uAE30\uC900 \uD3F0\uD2B8", value: `${settings.baseFont}px`, onMinus: () => {
+                S.settings.baseFont = Math.max(12, Math.min(22, settings.baseFont - 1));
+                save();
+                applyVars();
+                syncSettings();
+              }, onPlus: () => {
+                S.settings.baseFont = Math.max(12, Math.min(22, settings.baseFont + 1));
+                save();
+                applyVars();
+                syncSettings();
+              } }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uCE74\uB4DC \uD3F0\uD2B8", value: `${settings.cardFont}px`, onMinus: () => {
+                S.settings.cardFont = Math.max(9, Math.min(18, settings.cardFont - 1));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, onPlus: () => {
+                S.settings.cardFont = Math.max(9, Math.min(18, settings.cardFont + 1));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              } }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uBAA8\uC11C\uB9AC \uBC18\uACBD", value: `${settings.cardRadius}px`, onMinus: () => {
+                S.settings.cardRadius = Math.max(0, Math.min(14, settings.cardRadius - 1));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, onPlus: () => {
+                S.settings.cardRadius = Math.max(0, Math.min(14, settings.cardRadius + 1));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              } }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uCE74\uB4DC \uAC04\uACA9", value: `${settings.cardGap}px`, onMinus: () => {
+                S.settings.cardGap = Math.max(0, Math.min(20, settings.cardGap - 1));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, onPlus: () => {
+                S.settings.cardGap = Math.max(0, Math.min(20, settings.cardGap + 1));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              } })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px" }, children: "\uB9E4\uD2B8\uB9AD\uC2A4 \uC5F4 \uB108\uBE44" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uADF8\uB8F9 \uC5F4 \uD3ED", value: `${settings.colW}px`, onMinus: () => {
+                S.settings.colW = Math.max(80, Math.min(300, settings.colW - 10));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, onPlus: () => {
+                S.settings.colW = Math.max(80, Math.min(300, settings.colW + 10));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, step: 10 }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uC140 \uC811\uAE30 \uAE30\uC900", value: settings.cellFold === 0 ? "\u221E" : settings.cellFold, sub: "0=\uD56D\uC0C1 \uD3BC\uCE68", onMinus: () => {
+                S.settings.cellFold = Math.max(0, Math.min(20, settings.cellFold - 1));
+                S.expandedCells = /* @__PURE__ */ new Set();
+                save();
+                syncSettings();
+                window.renderAll?.();
+              }, onPlus: () => {
+                S.settings.cellFold = Math.max(0, Math.min(20, settings.cellFold + 1));
+                S.expandedCells = /* @__PURE__ */ new Set();
+                save();
+                syncSettings();
+                window.renderAll?.();
+              } }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uBCF4\uB4DC \uC140 \uC811\uAE30 \uAE30\uC900", value: settings.boardFoldCount === 0 ? "\u221E" : settings.boardFoldCount, sub: "0=\uD56D\uC0C1 \uD3BC\uCE68", onMinus: () => {
+                S.settings.boardFoldCount = Math.max(0, Math.min(30, (settings.boardFoldCount ?? 6) - 1));
+                save();
+                syncSettings();
+              }, onPlus: () => {
+                S.settings.boardFoldCount = Math.max(0, Math.min(30, (settings.boardFoldCount ?? 6) + 1));
+                save();
+                syncSettings();
+              } }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uCE74\uD14C\uACE0\uB9AC \uD3ED", value: `${settings.catW}px`, onMinus: () => {
+                S.settings.catW = Math.max(40, Math.min(80, settings.catW - 4));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, onPlus: () => {
+                S.settings.catW = Math.max(40, Math.min(80, settings.catW + 4));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, step: 4 }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC \uD3ED", value: `${settings.subCatW}px`, onMinus: () => {
+                S.settings.subCatW = Math.max(40, Math.min(200, settings.subCatW - 4));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, onPlus: () => {
+                S.settings.subCatW = Math.max(40, Math.min(200, settings.subCatW + 4));
+                save();
+                applyVars();
+                syncSettings();
+                window.renderAll?.();
+              }, step: 4 })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { id: "mwF", style: { display: "none" } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { id: "mwX", style: { display: "none" } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { id: "ppL", style: { display: "none" } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { id: "ppR", style: { display: "none" } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px" }, children: "\uBE4C\uB4DC \uC815\uBCF4" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uBE4C\uB4DC \uB118\uBC84" }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { id: "buildNumberDisplay", style: { fontSize: ".82rem", fontWeight: 600, color: "var(--text-2)", fontFamily: "monospace" }, children: "-" })
+            ] })
+          ] }),
+          activeTab === "sdesign" && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uD14C\uB9C8" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: { fontSize: ".77rem", color: "var(--text-3)", marginBottom: "10px" }, children: "\uD14C\uB9C8 \uC120\uD0DD \uC2DC \uC0C9\uC0C1\uC774 \uC790\uB3D9 \uC5C5\uB370\uC774\uD2B8\uB429\uB2C8\uB2E4." }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "theme-grid", id: "themeGrid" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px", marginTop: "16px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uCE74\uB4DC \uC2A4\uD0C0\uC77C" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { id: "prioStyleRows" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uD3EC\uC778\uD2B8\xB7\uBC30\uACBD \uC0C9\uC0C1" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { id: "designContent" })
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px" }, children: "\uCE74\uB4DC \uBBF8\uB9AC\uBCF4\uAE30" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "preview-cards", id: "previewCards" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px" }, children: "\uC560\uB2C8\uBA54\uC774\uC158" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(AnimToggle, { id: "animEnabled", label: "\uC560\uB2C8\uBA54\uC774\uC158 \uC804\uCCB4", sub: "\uBAA8\uB4E0 \uC560\uB2C8\uBA54\uC774\uC158 \uC77C\uAD04 on/off", checked: settings.animations.enabled, onChange: (v) => {
+              S.settings.animations.enabled = v;
+              save();
+              applyBlurSetting();
+              syncSettings();
+              window.renderAll?.();
+            } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(AnimToggle, { id: "animCountUp", label: "\uC22B\uC790 \uCE74\uC6B4\uD2B8\uC5C5", sub: "\uD5E4\uB354 \uD1B5\uACC4 \uC22B\uC790 \uC99D\uAC00 \uD6A8\uACFC", checked: settings.animations.countUp, onChange: (v) => {
+              S.settings.animations.countUp = v;
+              save();
+              syncSettings();
+              window.renderAll?.();
+            } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(AnimToggle, { id: "animCard", label: "\uCE74\uB4DC \uB4F1\uC7A5 \uD6A8\uACFC", sub: "\uCE74\uB4DC \uB80C\uB354 \uC2DC \uC21C\uC11C\uB300\uB85C fade-in", checked: settings.animations.card, onChange: (v) => {
+              S.settings.animations.card = v;
+              save();
+              syncSettings();
+              window.renderAll?.();
+            } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(AnimToggle, { id: "animFilter", label: "\uD544\uD130 \uC804\uD658 \uD398\uC774\uB4DC", sub: "\uD544\uD130 \uBCC0\uACBD \uC2DC \uCF58\uD150\uCE20 fade \uC804\uD658", checked: settings.animations.filter, onChange: (v) => {
+              S.settings.animations.filter = v;
+              save();
+              syncSettings();
+              window.renderAll?.();
+            } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(AnimToggle, { id: "animShimmer", label: "\uD589 Hover Shimmer", sub: "\uB9AC\uC2A4\uD2B8 \uBDF0 \uD589 hover \uAD11\uD0DD \uD6A8\uACFC", checked: settings.animations.shimmer, onChange: (v) => {
+              S.settings.animations.shimmer = v;
+              save();
+              syncSettings();
+              window.renderAll?.();
+            } }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(AnimToggle, { id: "animBlur", label: "\uBAA8\uB2EC Backdrop Blur", sub: "\uBAA8\uB2EC \uBC30\uACBD \uBE14\uB7EC \uCC98\uB9AC", checked: settings.animations.blur, onChange: (v) => {
+              S.settings.animations.blur = v;
+              save();
+              applyBlurSetting();
+              syncSettings();
+            } })
+          ] }),
+          activeTab === "scola" && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uB9AC\uC2A4\uD2B8 \uCEEC\uB7FC" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: { fontSize: ".77rem", color: "var(--text-3)", marginBottom: "10px" }, children: "\uCCB4\uD06C: \uD45C\uC2DC \uC5EC\uBD80 \xA0|\xA0 \u283F \uB4DC\uB798\uADF8: \uC21C\uC11C \uBCC0\uACBD" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "col-editor", id: "colEditor" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: { marginTop: "10px" }, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.resetListCols?.(), children: "\uAE30\uBCF8\uAC12 \uBCF5\uC6D0" }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "16px" }, children: "\uCD95 \uC21C\uC11C" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: { fontSize: ".77rem", color: "var(--text-3)", marginBottom: "10px" }, children: "\u283F \uB4DC\uB798\uADF8\uB85C X\uCD95(\uADF8\uB8F9)\xB7Y\uCD95(\uCE74\uD14C\uACE0\uB9AC) \uC21C\uC11C\uB97C \uC7AC\uC815\uB82C\uD569\uB2C8\uB2E4." }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { fontSize: ".62rem" }, children: "\uADF8\uB8F9 (X\uCD95)" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "col-editor", id: "groupAxisList" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px", fontSize: ".62rem" }, children: "\uCE74\uD14C\uACE0\uB9AC (Y\uCD95)" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "col-editor", id: "catAxisList" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: { marginTop: "10px" }, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.resetAxisOrder?.(), children: "\uC790\uB3D9 \uC815\uB82C \uCD08\uAE30\uD654" }) })
+          ] }),
+          activeTab === "sdat" && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uB0B4\uBCF4\uB0B4\uAE30" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expClip?.(), children: "\u{1F4CB} \uD074\uB9BD\uBCF4\uB4DC" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expTSV?.(), children: "\u2B07 TSV" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expXLS?.(), children: "\u{1F4CA} Excel" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "4px", alignItems: "center" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { style: { fontSize: ".78rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { type: "radio", name: "htmlW", value: "fluid", defaultChecked: true }),
+                  " \uAC00\uBCC0\uD3ED"
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { style: { fontSize: ".78rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { type: "radio", name: "htmlW", value: "fixed" }),
+                  " \uACE0\uC815\uD3ED"
+                ] })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expHTML?.(), children: "\u{1F310} HTML" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expMdZip?.(), children: "\u{1F4E6} MD ZIP" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px" }, children: "\uC124\uC815 \uD30C\uC77C" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uC124\uC815 \uCD08\uAE30\uD654" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uAC1C\uC778 \uC124\uC815\uB9CC \uAE30\uBCF8\uAC12\uC73C\uB85C" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.resetSettings?.(), children: "\uC124\uC815\uB9CC \uCD08\uAE30\uD654" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uC124\uC815 JSON \uC800\uC7A5" }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expSettJSON?.(), children: "\u2B07 \uC800\uC7A5" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uC124\uC815 JSON \uBD88\uB7EC\uC624\uAE30" }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => document.getElementById("settFile")?.click(), children: "\u2191 \uBD88\uB7EC\uC624\uAE30" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { type: "file", id: "settFile", accept: ".json", style: { display: "none" }, onChange: (e) => window.impSettJSON?.(e) })
+              ] })
+            ] })
+          ] }),
+          activeTab === "sserv" && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uC2A4\uD1A0\uB9AC\uC9C0 \uBAA8\uB4DC" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", gap: "12px", marginBottom: "12px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "6px", fontSize: ".82rem", cursor: "pointer" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { type: "radio", name: "storageMode", id: "modeServer", value: "server", onChange: () => window.saveServerSettings?.() }),
+                "\u{1F310} \uC11C\uBC84 (\uACF5\uC720, \uAE30\uBCF8)"
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "6px", fontSize: ".82rem", cursor: "pointer" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { type: "radio", name: "storageMode", id: "modeLocal", value: "local", onChange: () => window.saveServerSettings?.() }),
+                "\u{1F4BE} \uB85C\uCEEC (\uAC1C\uC778)"
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uC5F0\uACB0 \uC124\uC815" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "5px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uC0AC\uC6A9\uC790 \uC774\uB984" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uBCC0\uACBD \uC774\uB825 \uBC0F \uD65C\uB3D9 \uB85C\uADF8\uC5D0 \uD45C\uC2DC\uB418\uB294 \uC774\uB984" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { className: "inp", id: "sUserName", placeholder: "\uD64D\uAE38\uB3D9", style: { height: "28px", fontSize: ".8rem" }, onKeyDown: (e) => {
+                if (e.key === "Enter") window.saveServerSettings?.();
+              } })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "5px", marginTop: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uC11C\uBC84 URL" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uBE44\uC6CC\uB450\uBA74 \uD604\uC7AC \uB3C4\uBA54\uC778 \uC0AC\uC6A9" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { className: "inp", id: "sServerUrl", placeholder: "http://\uC11C\uBC84IP:5000", style: { height: "28px", fontSize: ".8rem", fontFamily: "monospace" }, onKeyDown: (e) => {
+                if (e.key === "Enter") window.saveServerSettings?.();
+              } })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", style: { marginTop: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uBCC0\uACBD \uAC10\uC9C0 \uC8FC\uAE30" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uB2E4\uB978 \uC0AC\uC6A9\uC790\uC758 \uBCC0\uACBD\uC744 \uAC10\uC9C0\uD558\uB294 \uAC04\uACA9" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { className: "inp", id: "sPollInterval", type: "number", min: "5", max: "300", defaultValue: "10", style: { width: "60px", height: "28px", textAlign: "center", fontSize: ".82rem" }, onKeyDown: (e) => {
+                  if (e.key === "Enter") window.saveServerSettings?.();
+                } }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { style: { fontSize: ".78rem", color: "var(--text-3)" }, children: "\uCD08" })
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: { marginTop: "14px" }, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveServerSettings?.(), children: "\uC800\uC7A5" }) })
+          ] }),
+          activeTab === "slog" && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uCD5C\uADFC \uBCC0\uACBD \uC774\uB825 \uBCF4\uAD00 \uC218" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "10~500\uAC1C, \uCD08\uACFC\uBD84\uC740 \uC790\uB3D9 \uC0AD\uC81C" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "stepper", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "stepbtn", onClick: () => {
+                  S.settings.changeLogMax = Math.max(10, Math.min(500, (settings.changeLogMax ?? 50) - 10));
+                  save();
+                  syncSettings();
+                }, children: "\u2212" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { children: settings.changeLogMax ?? 50 }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "stepbtn", onClick: () => {
+                  S.settings.changeLogMax = Math.max(10, Math.min(500, (settings.changeLogMax ?? 50) + 10));
+                  save();
+                  syncSettings();
+                }, children: "+" })
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "sec-ttl", style: { marginTop: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { children: "\uD65C\uB3D9 \uB85C\uADF8" }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { style: { fontSize: ".7rem", color: "var(--text-3)" }, children: "\uCD5C\uADFC" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    id: "logLimitInp",
+                    defaultValue: "100",
+                    min: "10",
+                    max: "1000",
+                    style: { width: "50px", height: "22px", fontSize: ".72rem", textAlign: "center", padding: "0 4px", border: "1px solid var(--border)", borderRadius: "4px", background: "var(--surface-2)", color: "var(--text)" }
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { style: { fontSize: ".7rem", color: "var(--text-3)" }, children: "\uAC1C" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-g btn-sm", style: { fontSize: ".68rem" }, onClick: () => window.loadInlineActivityLog?.(), children: "\u21BA \uC0C8\uB85C\uACE0\uCE68" })
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { id: "inlineLogBody", style: { height: "320px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "6px", fontSize: ".78rem" }, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: { padding: "16px", textAlign: "center", color: "var(--text-3)" }, children: "\uD0ED\uC744 \uC5F4\uBA74 \uC790\uB3D9\uC73C\uB85C \uBD88\uB7EC\uC635\uB2C8\uB2E4." }) })
+          ] }),
+          activeTab === "sadmin" && isAdmin2 && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", children: "\uACF5\uC720 \uCF58\uD150\uCE20 \uC124\uC815" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", style: { borderBottom: "none", padding: "8px 10px", background: "var(--surface-2)", borderRadius: "8px", flexDirection: "column", alignItems: "flex-start", gap: "6px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uD5E4\uB354 \uD0C0\uC774\uD2C0" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { className: "inp", id: "sTitle", style: { height: "28px", fontSize: ".8rem" }, onInput: () => window.previewTitle?.() })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", style: { borderBottom: "none", padding: "8px 10px", background: "var(--surface-2)", borderRadius: "8px", flexDirection: "column", alignItems: "flex-start", gap: "6px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uC11C\uBE0C \uD0C0\uC774\uD2C0" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { className: "inp", id: "sSub", style: { height: "28px", fontSize: ".8rem" }, onInput: () => window.previewTitle?.() })
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "5px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uB300\uC2DC\uBCF4\uB4DC \uD788\uC5B4\uB85C \uC81C\uBAA9" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uB300\uC2DC\uBCF4\uB4DC \uC0C1\uB2E8\uC5D0 \uD45C\uC2DC\uD560 \uD504\uB85C\uC81D\uD2B8\uBA85" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { className: "inp", id: "dbHeroName", placeholder: "\uD504\uB85C\uC81D\uD2B8 \uD604\uD669", style: { height: "28px", fontSize: ".82rem" }, onInput: () => window.saveDbSettings?.() })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "8px", marginTop: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uB300\uC2DC\uBCF4\uB4DC \uC139\uC158 \uC21C\uC11C" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uB4DC\uB798\uADF8\uD558\uAC70\uB098 \u25B2\u25BC \uBC84\uD2BC\uC73C\uB85C \uC21C\uC11C\uB97C \uBCC0\uACBD\uD558\uC138\uC694" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { id: "dbSectionOrder", style: { display: "flex", flexDirection: "column", gap: "6px", width: "100%" } })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "16px" }, children: "\uB370\uC774\uD130 \uAD00\uB9AC" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uAC00\uC838\uC624\uAE30" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uAE30\uC874 \uB370\uC774\uD130\uAC00 \uB36E\uC5B4\uC50C\uC6CC\uC9D1\uB2C8\uB2E4. \uAD00\uB9AC\uC790 \uC804\uC6A9." })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.requireAdmin?.(() => window.openModal?.("importModal")), children: "\u{1F4E5} CSV/TSV" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.requireAdmin?.(() => document.getElementById("mdImpInpAdmin")?.click()), children: "\u{1F4C2} MD ZIP" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { type: "file", id: "mdImpInpAdmin", accept: ".md", multiple: true, style: { display: "none" }, onChange: (e) => window.impMdFiles?.(e) })
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", style: { color: "var(--danger)" }, children: "\uB370\uC774\uD130 \uCD08\uAE30\uD654" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uC0D8\uD50C \uB370\uC774\uD130\uB85C \uC804\uCCB4 \uBCF5\uC6D0" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-d btn-sm", onClick: () => window.resetData?.(), children: "\uCD08\uAE30\uD654" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "sec-ttl", style: { marginTop: "16px" }, children: "\uC811\uADFC \uC81C\uC5B4" }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "6px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: "\uD3B8\uC9D1\uC790 \uBE44\uBC00\uBC88\uD638" }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: "\uBE44\uC6CC\uB450\uBA74 \uBE44\uBC88 \uC5C6\uC774 \uD3B8\uC9D1 \uAC00\uB2A5" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", gap: "8px", width: "100%" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                  "input",
+                  {
+                    className: "inp",
+                    id: "editorPwInp",
+                    type: "password",
+                    placeholder: "\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6B0\uBA74 \uC81C\uAC70)",
+                    style: { flex: 1, height: "28px", fontSize: ".82rem" },
+                    onKeyDown: (e) => {
+                      if (e.key === "Enter") window.setEditorPassword?.();
+                    }
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.setEditorPassword?.(), children: "\uBCC0\uACBD" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { id: "editorPwErr", style: { color: "var(--danger)", fontSize: ".78rem", minHeight: "14px" } })
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.closeModal?.("settingsModal"), children: "\uB2EB\uAE30" }) })
+      ] }),
+      container
+    );
+  }
+  function Stepper({ label, sub, value, onMinus, onPlus }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: label }),
+        sub && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: sub })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "stepper", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "stepbtn", onClick: onMinus, children: "\u2212" }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { children: value }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("button", { className: "stepbtn", onClick: onPlus, children: "+" })
+      ] })
+    ] });
+  }
+  function AnimToggle({ id, label, sub, checked, onChange }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "srow", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "slbl", children: label }),
+        sub && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "ssub", children: sub })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("label", { className: "tgl", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("input", { type: "checkbox", id, checked, onChange: (e) => onChange(e.target.checked) }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "tgl-track" })
+      ] })
+    ] });
+  }
+
+  // components/App.jsx
+  var import_jsx_runtime7 = __toESM(require_jsx_runtime());
   var APP_TEMPLATE = `
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
   <span id="updateBannerMsg">\u26A0 \uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.</span>
@@ -27614,220 +28049,7 @@ $$')" title="\uBE14\uB85D \uC218\uC2DD"   style="width:26px;padding:0">\u222B</b
 </div>
 
 <!-- \uC124\uC815 \uBAA8\uB2EC -->
-<div class="ov" id="settingsModal">
-  <div class="mbox" style="width:760px">
-    <div class="mhd"><span class="mtitle">\u2699 \uD658\uACBD \uC124\uC815</span><button class="mclose" onclick="closeModal('settingsModal')">\u2715</button></div>
-    <div class="stab-row">
-      <button class="stab on" onclick="sstab(this,'sg')">\uC77C\uBC18</button>
-      <button class="stab" onclick="sstab(this,'sdesign')">\uB514\uC790\uC778</button>
-      <button class="stab" onclick="sstab(this,'scola')">\uCEEC\uB7FC\xB7\uCD95</button>
-      <button class="stab" onclick="sstab(this,'sdat')">\uB370\uC774\uD130</button>
-      <button class="stab" onclick="sstab(this,'sserv')">\uC11C\uBC84</button>
-      <button class="stab" id="slogTab" onclick="sstab(this,'slog')">\uB85C\uADF8</button>
-      <button class="stab" id="sadminTab" onclick="sstab(this,'sadmin')" style="display:none">\u{1F511} \uAD00\uB9AC\uC790</button>
-    </div>
-    <div class="mbody" style="padding:14px 20px">
-
-      <!-- \u2500\u2500 \uC77C\uBC18: \uD3F0\uD2B8\xB7\uCE74\uB4DC\xB7\uC5F4\uB108\uBE44\xB7\uBE4C\uB4DC \u2500\u2500 -->
-      <div class="spane on" id="sg">
-        <div class="sec-ttl">\uD3F0\uD2B8 &amp; \uCE74\uB4DC</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-          <div class="srow"><div><div class="slbl">\uAE30\uC900 \uD3F0\uD2B8</div></div><div class="stepper"><button class="stepbtn" onclick="adjFont(-1)">\u2212</button><span id="dBaseFont">16px</span><button class="stepbtn" onclick="adjFont(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">\uCE74\uB4DC \uD3F0\uD2B8</div></div><div class="stepper"><button class="stepbtn" onclick="adjCardFont(-1)">\u2212</button><span id="dCardFont">12px</span><button class="stepbtn" onclick="adjCardFont(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">\uBAA8\uC11C\uB9AC \uBC18\uACBD</div></div><div class="stepper"><button class="stepbtn" onclick="adjRadius(-1)">\u2212</button><span id="dRadius">6px</span><button class="stepbtn" onclick="adjRadius(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">\uCE74\uB4DC \uAC04\uACA9</div></div><div class="stepper"><button class="stepbtn" onclick="adjGap(-1)">\u2212</button><span id="dGap">4px</span><button class="stepbtn" onclick="adjGap(1)">+</button></div></div>
-        </div>
-        <div class="sec-ttl" style="margin-top:12px">\uB9E4\uD2B8\uB9AD\uC2A4 \uC5F4 \uB108\uBE44</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-          <div class="srow"><div><div class="slbl">\uADF8\uB8F9 \uC5F4 \uD3ED</div></div><div class="stepper"><button class="stepbtn" onclick="adjColW(-10)">\u2212</button><span id="dColW">130px</span><button class="stepbtn" onclick="adjColW(10)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">\uC140 \uC811\uAE30 \uAE30\uC900</div><div class="ssub">0=\uD56D\uC0C1 \uD3BC\uCE68</div></div><div class="stepper"><button class="stepbtn" onclick="adjCellFold(-1)">\u2212</button><span id="dCellFold">3</span><button class="stepbtn" onclick="adjCellFold(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">\uBCF4\uB4DC \uB354 \uBCF4\uAE30 \uAE30\uC900</div><div class="ssub">\uCEEC\uB7FC\uB2F9 \uAE30\uBCF8 \uD45C\uC2DC \uCE74\uB4DC \uC218</div></div><div class="stepper"><button class="stepbtn" onclick="adjBoardFoldCount(-1)">\u2212</button><span id="dBoardFoldCount">6</span><button class="stepbtn" onclick="adjBoardFoldCount(1)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">\uCE74\uD14C\uACE0\uB9AC \uD3ED</div></div><div class="stepper"><button class="stepbtn" onclick="adjCatW(-4)">\u2212</button><span id="dCatW">24px</span><button class="stepbtn" onclick="adjCatW(4)">+</button></div></div>
-          <div class="srow"><div><div class="slbl">\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC \uD3ED</div></div><div class="stepper"><button class="stepbtn" onclick="adjSubCatW(-4)">\u2212</button><span id="dSubCatW">72px</span><button class="stepbtn" onclick="adjSubCatW(4)">+</button></div></div>
-        </div>
-        <!-- \uB9E4\uD2B8\uB9AD\uC2A4 \uB108\uBE44\xB7\uD544\uD130 \uD328\uB110 \uC704\uCE58: \uACE0\uC815\uAC12(fluid/right) \u2014 \uC228\uAE40 \uCC98\uB9AC, DOM id \uC720\uC9C0 -->
-        <span id="mwF" style="display:none"></span><span id="mwX" style="display:none"></span>
-        <span id="ppL" style="display:none"></span><span id="ppR" style="display:none"></span>
-        <div class="sec-ttl" style="margin-top:12px">\uBE4C\uB4DC \uC815\uBCF4</div>
-        <div class="srow"><div><div class="slbl">\uBE4C\uB4DC \uB118\uBC84</div></div><span id="buildNumberDisplay" style="font-size:.82rem;font-weight:600;color:var(--text-2);font-family:monospace">-</span></div>
-      </div>
-
-      <!-- \u2500\u2500 \uB514\uC790\uC778: \uD14C\uB9C8\xB7\uCE74\uB4DC\uC2A4\uD0C0\uC77C\xB7\uC0C9\uC0C1\xB7\uBBF8\uB9AC\uBCF4\uAE30\xB7\uC560\uB2C8\uBA54\uC774\uC158 \u2500\u2500 -->
-      <div class="spane" id="sdesign">
-        <div class="sec-ttl">\uD14C\uB9C8</div>
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">\uD14C\uB9C8 \uC120\uD0DD \uC2DC \uC0C9\uC0C1\uC774 \uC790\uB3D9 \uC5C5\uB370\uC774\uD2B8\uB429\uB2C8\uB2E4.</div>
-        <div class="theme-grid" id="themeGrid"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:16px">
-          <div>
-            <div class="sec-ttl">\uCE74\uB4DC \uC2A4\uD0C0\uC77C</div>
-            <div id="prioStyleRows"></div>
-          </div>
-          <div>
-            <div class="sec-ttl">\uD3EC\uC778\uD2B8\xB7\uBC30\uACBD \uC0C9\uC0C1</div>
-            <div id="designContent"></div>
-          </div>
-        </div>
-        <div class="sec-ttl" style="margin-top:12px">\uCE74\uB4DC \uBBF8\uB9AC\uBCF4\uAE30</div>
-        <div class="preview-cards" id="previewCards"></div>
-        <div class="sec-ttl" style="margin-top:12px">\uC560\uB2C8\uBA54\uC774\uC158</div>
-        <div class="srow"><div><div class="slbl">\uC560\uB2C8\uBA54\uC774\uC158 \uC804\uCCB4</div><div class="ssub">\uBAA8\uB4E0 \uC560\uB2C8\uBA54\uC774\uC158 \uC77C\uAD04 on/off</div></div><label class="tgl"><input type="checkbox" id="animEnabled" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">\uC22B\uC790 \uCE74\uC6B4\uD2B8\uC5C5</div><div class="ssub">\uD5E4\uB354 \uD1B5\uACC4 \uC22B\uC790 \uC99D\uAC00 \uD6A8\uACFC</div></div><label class="tgl"><input type="checkbox" id="animCountUp" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">\uCE74\uB4DC \uB4F1\uC7A5 \uD6A8\uACFC</div><div class="ssub">\uCE74\uB4DC \uB80C\uB354 \uC2DC \uC21C\uC11C\uB300\uB85C fade-in</div></div><label class="tgl"><input type="checkbox" id="animCard" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">\uD544\uD130 \uC804\uD658 \uD398\uC774\uB4DC</div><div class="ssub">\uD544\uD130 \uBCC0\uACBD \uC2DC \uCF58\uD150\uCE20 fade \uC804\uD658</div></div><label class="tgl"><input type="checkbox" id="animFilter" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">\uD589 Hover Shimmer</div><div class="ssub">\uB9AC\uC2A4\uD2B8 \uBDF0 \uD589 hover \uAD11\uD0DD \uD6A8\uACFC</div></div><label class="tgl"><input type="checkbox" id="animShimmer" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-        <div class="srow"><div><div class="slbl">\uBAA8\uB2EC Backdrop Blur</div><div class="ssub">\uBAA8\uB2EC \uBC30\uACBD \uBE14\uB7EC \uCC98\uB9AC</div></div><label class="tgl"><input type="checkbox" id="animBlur" onchange="onAnimTgl()"><span class="tgl-track"></span></label></div>
-      </div>
-
-      <!-- \u2500\u2500 \uCEEC\uB7FC\xB7\uCD95: \uB9AC\uC2A4\uD2B8\uCEEC\uB7FC\xB7\uCD95\uC21C\uC11C \u2500\u2500 -->
-      <div class="spane" id="scola">
-        <div class="sec-ttl">\uB9AC\uC2A4\uD2B8 \uCEEC\uB7FC</div>
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">\uCCB4\uD06C: \uD45C\uC2DC \uC5EC\uBD80 &nbsp;|&nbsp; \u283F \uB4DC\uB798\uADF8: \uC21C\uC11C \uBCC0\uACBD</div>
-        <div class="col-editor" id="colEditor"></div>
-        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetListCols()">\uAE30\uBCF8\uAC12 \uBCF5\uC6D0</button></div>
-        <div class="sec-ttl" style="margin-top:16px">\uCD95 \uC21C\uC11C</div>
-        <div style="font-size:.77rem;color:var(--text-3);margin-bottom:10px">\u283F \uB4DC\uB798\uADF8\uB85C X\uCD95(\uADF8\uB8F9)\xB7Y\uCD95(\uCE74\uD14C\uACE0\uB9AC) \uC21C\uC11C\uB97C \uC7AC\uC815\uB82C\uD569\uB2C8\uB2E4.</div>
-        <div class="sec-ttl" style="font-size:.62rem">\uADF8\uB8F9 (X\uCD95)</div>
-        <div class="col-editor" id="groupAxisList"></div>
-        <div class="sec-ttl" style="margin-top:12px;font-size:.62rem">\uCE74\uD14C\uACE0\uB9AC (Y\uCD95)</div>
-        <div class="col-editor" id="catAxisList"></div>
-        <div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="resetAxisOrder()">\uC790\uB3D9 \uC815\uB82C \uCD08\uAE30\uD654</button></div>
-      </div>
-
-      <!-- \u2500\u2500 \uB370\uC774\uD130: \uB0B4\uBCF4\uB0B4\uAE30\xB7\uC124\uC815 \uD30C\uC77C \u2500\u2500 -->
-      <div class="spane" id="sdat">
-        <div class="sec-ttl">\uB0B4\uBCF4\uB0B4\uAE30</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
-          <button class="btn btn-s btn-sm" onclick="expClip()">\u{1F4CB} \uD074\uB9BD\uBCF4\uB4DC</button>
-          <button class="btn btn-s btn-sm" onclick="expTSV()">\u2B07 TSV</button>
-          <button class="btn btn-s btn-sm" onclick="expXLS()">\u{1F4CA} Excel</button>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;align-items:center">
-          <div style="display:flex;align-items:center;gap:8px">
-            <label style="font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="htmlW" value="fluid" checked> \uAC00\uBCC0\uD3ED</label>
-            <label style="font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="htmlW" value="fixed"> \uACE0\uC815\uD3ED</label>
-          </div>
-          <button class="btn btn-s btn-sm" onclick="expHTML()">\u{1F310} HTML</button>
-          <button class="btn btn-s btn-sm" onclick="expMdZip()">\u{1F4E6} MD ZIP</button>
-        </div>
-        <div class="sec-ttl" style="margin-top:12px">\uC124\uC815 \uD30C\uC77C</div>
-        <div class="srow"><div><div class="slbl">\uC124\uC815 \uCD08\uAE30\uD654</div><div class="ssub">\uAC1C\uC778 \uC124\uC815\uB9CC \uAE30\uBCF8\uAC12\uC73C\uB85C</div></div><button class="btn btn-s btn-sm" onclick="resetSettings()">\uC124\uC815\uB9CC \uCD08\uAE30\uD654</button></div>
-        <div class="srow"><div><div class="slbl">\uC124\uC815 JSON \uC800\uC7A5</div></div><button class="btn btn-s btn-sm" onclick="expSettJSON()">\u2B07 \uC800\uC7A5</button></div>
-        <div class="srow"><div><div class="slbl">\uC124\uC815 JSON \uBD88\uB7EC\uC624\uAE30</div></div><div><button class="btn btn-s btn-sm" onclick="document.getElementById('settFile').click()">\u2191 \uBD88\uB7EC\uC624\uAE30</button><input type="file" id="settFile" accept=".json" style="display:none" onchange="impSettJSON(event)"></div></div>
-      </div>
-
-      <!-- \u2500\u2500 \uC11C\uBC84: \uC2A4\uD1A0\uB9AC\uC9C0 \uBAA8\uB4DC\xB7\uC5F0\uACB0 \uC124\uC815 \u2500\u2500 -->
-      <div class="spane" id="sserv">
-        <div class="sec-ttl">\uC2A4\uD1A0\uB9AC\uC9C0 \uBAA8\uB4DC</div>
-        <div style="display:flex;gap:12px;margin-bottom:12px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer">
-            <input type="radio" name="storageMode" id="modeServer" value="server" onchange="saveServerSettings()">
-            \u{1F310} \uC11C\uBC84 (\uACF5\uC720, \uAE30\uBCF8)
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer">
-            <input type="radio" name="storageMode" id="modeLocal" value="local" onchange="saveServerSettings()">
-            \u{1F4BE} \uB85C\uCEEC (\uAC1C\uC778)
-          </label>
-        </div>
-        <div class="sec-ttl">\uC5F0\uACB0 \uC124\uC815</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div class="slbl">\uC0AC\uC6A9\uC790 \uC774\uB984</div>
-          <div class="ssub">\uBCC0\uACBD \uC774\uB825 \uBC0F \uD65C\uB3D9 \uB85C\uADF8\uC5D0 \uD45C\uC2DC\uB418\uB294 \uC774\uB984</div>
-          <input class="inp" id="sUserName" placeholder="\uD64D\uAE38\uB3D9" style="height:28px;font-size:.8rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
-        </div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px;margin-top:4px">
-          <div class="slbl">\uC11C\uBC84 URL</div>
-          <div class="ssub">\uBE44\uC6CC\uB450\uBA74 \uD604\uC7AC \uB3C4\uBA54\uC778 \uC0AC\uC6A9</div>
-          <input class="inp" id="sServerUrl" placeholder="http://\uC11C\uBC84IP:5000" style="height:28px;font-size:.8rem;font-family:monospace" onkeydown="if(event.key==='Enter')saveServerSettings()">
-        </div>
-        <div class="srow" style="margin-top:4px">
-          <div><div class="slbl">\uBCC0\uACBD \uAC10\uC9C0 \uC8FC\uAE30</div><div class="ssub">\uB2E4\uB978 \uC0AC\uC6A9\uC790\uC758 \uBCC0\uACBD\uC744 \uAC10\uC9C0\uD558\uB294 \uAC04\uACA9</div></div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <input class="inp" id="sPollInterval" type="number" min="5" max="300" value="10" style="width:60px;height:28px;text-align:center;font-size:.82rem" onkeydown="if(event.key==='Enter')saveServerSettings()">
-            <span style="font-size:.78rem;color:var(--text-3)">\uCD08</span>
-          </div>
-        </div>
-        <div style="margin-top:14px">
-          <button class="btn btn-p btn-sm" onclick="saveServerSettings()">\uC800\uC7A5</button>
-        </div>
-      </div>
-
-      <!-- \u2500\u2500 \uB85C\uADF8: \uD65C\uB3D9\uB85C\uADF8\xB7\uC774\uB825\uBCF4\uAD00\uC218 \u2500\u2500 -->
-      <div class="spane" id="slog">
-        <div class="srow">
-          <div><div class="slbl">\uCD5C\uADFC \uBCC0\uACBD \uC774\uB825 \uBCF4\uAD00 \uC218</div><div class="ssub">10~500\uAC1C, \uCD08\uACFC\uBD84\uC740 \uC790\uB3D9 \uC0AD\uC81C</div></div>
-          <div class="stepper"><button class="stepbtn" onclick="adjChangeLogMax(-10)">\u2212</button><span id="dChangeLogMax">50</span><button class="stepbtn" onclick="adjChangeLogMax(10)">+</button></div>
-        </div>
-        <div class="sec-ttl" style="margin-top:16px;display:flex;align-items:center;justify-content:space-between">
-          <span>\uD65C\uB3D9 \uB85C\uADF8</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:.7rem;color:var(--text-3)">\uCD5C\uADFC</span>
-            <input type="number" id="logLimitInp" value="100" min="10" max="1000"
-              style="width:50px;height:22px;font-size:.72rem;text-align:center;padding:0 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--text)">
-            <span style="font-size:.7rem;color:var(--text-3)">\uAC1C</span>
-            <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">\u21BA \uC0C8\uB85C\uACE0\uCE68</button>
-          </div>
-        </div>
-        <div id="inlineLogBody" style="height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:.78rem">
-          <div style="padding:16px;text-align:center;color:var(--text-3)">\uD0ED\uC744 \uC5F4\uBA74 \uC790\uB3D9\uC73C\uB85C \uBD88\uB7EC\uC635\uB2C8\uB2E4.</div>
-        </div>
-      </div>
-
-      <!-- \u2500\u2500 \uAD00\uB9AC\uC790: \uACF5\uC720\uC124\uC815\xB7\uB370\uC774\uD130\uAD00\uB9AC\xB7\uC811\uADFC\uC81C\uC5B4 \u2500\u2500 -->
-      <div class="spane" id="sadmin">
-        <!-- \uACF5\uC720 \uCF58\uD150\uCE20 \uC124\uC815 -->
-        <div class="sec-ttl">\uACF5\uC720 \uCF58\uD150\uCE20 \uC124\uC815</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px">
-            <div class="slbl">\uD5E4\uB354 \uD0C0\uC774\uD2C0</div>
-            <input class="inp" id="sTitle" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()">
-          </div>
-          <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px">
-            <div class="slbl">\uC11C\uBE0C \uD0C0\uC774\uD2C0</div>
-            <input class="inp" id="sSub" data-admin style="height:28px;font-size:.8rem" oninput="previewTitle()">
-          </div>
-        </div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div><div class="slbl">\uB300\uC2DC\uBCF4\uB4DC \uD788\uC5B4\uB85C \uC81C\uBAA9</div><div class="ssub">\uB300\uC2DC\uBCF4\uB4DC \uC0C1\uB2E8\uC5D0 \uD45C\uC2DC\uD560 \uD504\uB85C\uC81D\uD2B8\uBA85</div></div>
-          <input class="inp" id="dbHeroName" placeholder="\uD504\uB85C\uC81D\uD2B8 \uD604\uD669" style="height:28px;font-size:.82rem" oninput="saveDbSettings()">
-        </div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:8px;margin-top:4px">
-          <div><div class="slbl">\uB300\uC2DC\uBCF4\uB4DC \uC139\uC158 \uC21C\uC11C</div><div class="ssub">\uB4DC\uB798\uADF8\uD558\uAC70\uB098 \u25B2\u25BC \uBC84\uD2BC\uC73C\uB85C \uC21C\uC11C\uB97C \uBCC0\uACBD\uD558\uC138\uC694</div></div>
-          <div id="dbSectionOrder" style="display:flex;flex-direction:column;gap:6px;width:100%"></div>
-        </div>
-        <!-- \uB370\uC774\uD130 \uAD00\uB9AC -->
-        <div class="sec-ttl" style="margin-top:16px">\uB370\uC774\uD130 \uAD00\uB9AC</div>
-        <div class="srow">
-          <div>
-            <div class="slbl">\uAC00\uC838\uC624\uAE30</div>
-            <div class="ssub">\uAE30\uC874 \uB370\uC774\uD130\uAC00 \uB36E\uC5B4\uC50C\uC6CC\uC9D1\uB2C8\uB2E4. \uAD00\uB9AC\uC790 \uC804\uC6A9.</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>openModal('importModal'))">\u{1F4E5} CSV/TSV</button>
-            <button class="btn btn-s btn-sm" onclick="requireAdmin(()=>document.getElementById('mdImpInpAdmin').click())">\u{1F4C2} MD ZIP</button>
-            <input type="file" id="mdImpInpAdmin" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
-          </div>
-        </div>
-        <div class="srow">
-          <div><div class="slbl" style="color:var(--danger)">\uB370\uC774\uD130 \uCD08\uAE30\uD654</div><div class="ssub">\uC0D8\uD50C \uB370\uC774\uD130\uB85C \uC804\uCCB4 \uBCF5\uC6D0</div></div>
-          <button class="btn btn-d btn-sm" onclick="resetData()">\uCD08\uAE30\uD654</button>
-        </div>
-        <!-- \uC811\uADFC \uC81C\uC5B4 -->
-        <div class="sec-ttl" style="margin-top:16px">\uC811\uADFC \uC81C\uC5B4</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:6px">
-          <div><div class="slbl">\uD3B8\uC9D1\uC790 \uBE44\uBC00\uBC88\uD638</div><div class="ssub">\uBE44\uC6CC\uB450\uBA74 \uBE44\uBC88 \uC5C6\uC774 \uD3B8\uC9D1 \uAC00\uB2A5</div></div>
-          <div style="display:flex;gap:8px;width:100%">
-            <input class="inp" id="editorPwInp" type="password" placeholder="\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6B0\uBA74 \uC81C\uAC70)"
-              style="flex:1;height:28px;font-size:.82rem"
-              onkeydown="if(event.key==='Enter')setEditorPassword()">
-            <button class="btn btn-s btn-sm" onclick="setEditorPassword()">\uBCC0\uACBD</button>
-          </div>
-          <div id="editorPwErr" style="color:var(--danger);font-size:.78rem;min-height:14px"></div>
-        </div>
-      </div>
-    </div>
-    <div class="mfoot"><button class="btn btn-p btn-sm" onclick="closeModal('settingsModal')">\uB2EB\uAE30</button></div>
-  </div>
-</div>
+<div class="ov" id="settingsModal"></div>
 
 <!-- \uB2E8\uCD95\uD0A4 \uBAA8\uB2EC -->
 <div class="ov" id="shortcutsModal">
@@ -27922,22 +28144,24 @@ $$')" title="\uBE14\uB85D \uC218\uC2DD"   style="width:26px;padding:0">\u222B</b
 <div id="boardActionBar" class="board-action-bar"></div>
 `;
   function App() {
-    (0, import_react5.useEffect)(() => {
+    (0, import_react7.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] main.js \uCD08\uAE30\uD654 \uC2E4\uD328:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(AuthProvider, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Header, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(BoardView, {})
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Header, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } }),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(BoardView, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DashboardView, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(SettingsPanel, {})
     ] }) });
   }
 
   // main.jsx
-  var import_jsx_runtime6 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime8 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime6.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime8.jsx)(App, {}));
 })();
 /*! Bundled license information:
 

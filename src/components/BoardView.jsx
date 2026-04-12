@@ -4,24 +4,26 @@
    높이 수정: portal root = .board-cols (wrapper div 없음)
               → .bwrap flex 체인 유지 → 컬럼이 화면 끝까지 뻗음
 
-   아코디언: FOLD_COUNT 초과 시 "더 보기" 버튼 표시
-             컬럼별 expanded Set으로 상태 관리
+   더 보기: foldCount 기준 초과 시 카드 목록 내부에 cell-more-btn 스타일 버튼
+            foldCount = 0 이면 항상 펼침 (버튼 없음)
+            boardExpandCol / boardCollapseCol window 브릿지로 expanded 상태 제어
+
+   선택/드래그: board.js의 _boardSel 모듈 변수로 관리 → DOM classList 직접 조작
+               CustomEvent(boardSelChange) → useState(boardSel)로 ActionBar 알림
 ══════════════════════════════════════════ */
 
 import { createPortal } from 'react-dom';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { STATUS_OPTS, STATUS_LBL, STATUS_ACCENT } from '../app/constants.js';
 import { getFiltered, isFilterActive, renderCard } from '../app/render.js';
 import { getColors } from '../app/theme.js';
 import { S, esc, eattr } from '../app/state.js';
 
-/* foldCount는 useAppStore(s => s.settings.boardFoldCount) 로 읽음 */
-
 /* ── 메인 컴포넌트 ── */
 export default function BoardView() {
   const items    = useAppStore(s => s.items);   // 데이터 변경 시 리렌더 트리거
-  const boardSel = useAppStore(s => s.boardSel);
+  const foldCount = useAppStore(s => s.settings.boardFoldCount ?? 6);
 
   /* portal containers: dangerouslySetInnerHTML 마운트 후 존재 */
   const [boardContainer, setBoardContainer] = useState(null);
@@ -29,22 +31,28 @@ export default function BoardView() {
 
   /* 컬럼별 펼침 상태 */
   const [expanded, setExpanded] = useState(new Set());
-  const foldCount = useAppStore(s => s.settings.boardFoldCount ?? 6);
+
+  /* 선택 상태: board.js CustomEvent로 수신 */
+  const [boardSel, setBoardSel] = useState([]);
 
   useEffect(() => {
     setBoardContainer(document.getElementById('boardView'));
     setBarContainer(document.getElementById('boardActionBar'));
   }, []);
 
-  const toggleExpand = useCallback((colKey) => {
-    setExpanded(prev => {
-      const next = new Set(prev);
-      if (next.has(colKey)) next.delete(colKey); else next.add(colKey);
-      return next;
-    });
+  /* boardSelChange 이벤트 수신 */
+  useEffect(() => {
+    const handler = (e) => setBoardSel(e.detail.sel);
+    window.addEventListener('boardSelChange', handler);
+    return () => window.removeEventListener('boardSelChange', handler);
   }, []);
 
-  const selSet = useMemo(() => new Set(boardSel), [boardSel]);
+  /* 컬럼 펼침/접기 브릿지 (onclick="boardExpandCol('...')" 에서 호출) */
+  useEffect(() => {
+    window.boardExpandCol   = (colKey) => setExpanded(prev => { const n = new Set(prev); n.add(colKey);    return n; });
+    window.boardCollapseCol = (colKey) => setExpanded(prev => { const n = new Set(prev); n.delete(colKey); return n; });
+    return () => { delete window.boardExpandCol; delete window.boardCollapseCol; };
+  }, []);
 
   if (!boardContainer || !barContainer) return null;
 
@@ -60,24 +68,35 @@ export default function BoardView() {
     else byCol['대기'].push(it);
   });
 
+  /* 선택 Set — renderCard extraClass 적용 (mxSel 패턴과 동일) */
+  const selSet = new Set(boardSel);
+
   /* ── 보드 컬럼 포털 (.board-cols 자체를 portal root로 → wrapper div 없음) ── */
   const boardPortal = createPortal(
     <div className="board-cols">
       {STATUS_OPTS.map(colKey => {
-        const colItems  = byCol[colKey];
-        const isExp     = expanded.has(colKey);
-        const overLimit = colItems.length > foldCount;
-        const visible   = isExp ? colItems : colItems.slice(0, foldCount);
-        const hidden    = colItems.length - foldCount;
+        const colItems      = byCol[colKey];
+        const alwaysExpanded = foldCount === 0;
+        const isExp          = expanded.has(colKey) || alwaysExpanded;
+        const overLimit      = !alwaysExpanded && colItems.length > foldCount;
+        const visible        = isExp ? colItems : colItems.slice(0, foldCount);
+        const hidden         = colItems.length - foldCount;
 
         const cardsHtml = visible.map(it => renderCard(it, c, -1, {
           id:          `bcard-${it.key}`,
-          extraClass:  selSet.has(it.key) ? 'board-selected' : '',
+          extraClass:  selSet.has(it.key) ? 'board-selected' : '',  // mxSel 패턴과 동일
           onclick:     `boardCardClick(event,'${eattr(it.key)}')`,
           ondblclick:  `boardCardDblClick('${eattr(it.key)}')`,
           ondragstart: `boardCardDragStart(event,'${eattr(it.key)}')`,
           ondragend:   'boardCardDragEnd()',
         })).join('');
+
+        /* 더 보기 / 접기 버튼 — dangerouslySetInnerHTML 내부에 포함 */
+        const moreHtml = overLimit && !isExp
+          ? `<button class="cell-more-btn" onclick="boardExpandCol('${eattr(colKey)}')">▼ ${hidden}개 더보기</button>`
+          : overLimit && isExp
+          ? `<button class="cell-more-btn" onclick="boardCollapseCol('${eattr(colKey)}')">▲ 접기</button>`
+          : '';
 
         return (
           <div key={colKey} className="board-col">
@@ -89,7 +108,7 @@ export default function BoardView() {
               </span>
             </div>
 
-            {/* 카드 영역: dangerouslySetInnerHTML + React drag 이벤트 공존 가능 */}
+            {/* 카드 영역: dangerouslySetInnerHTML + React drag 이벤트 공존 */}
             <div
               className={`board-col-body${isExp ? ' board-col-body--expanded' : ''}`}
               id={`bbody-${colKey}`}
@@ -99,7 +118,6 @@ export default function BoardView() {
                 e.currentTarget.classList.add('drag-over');
               }}
               onDragLeave={e => {
-                /* 자식 요소로 이동할 때는 무시 */
                 if (!e.currentTarget.contains(e.relatedTarget)) {
                   e.currentTarget.classList.remove('drag-over');
                 }
@@ -109,26 +127,8 @@ export default function BoardView() {
                 e.currentTarget.classList.remove('drag-over');
                 window.boardDrop?.(e, colKey);
               }}
-              dangerouslySetInnerHTML={{ __html: cardsHtml }}
+              dangerouslySetInnerHTML={{ __html: cardsHtml + moreHtml }}
             />
-
-            {/* 더 보기 / 접기 버튼 */}
-            {overLimit && !isExp && (
-              <button
-                className="board-more-btn"
-                onClick={() => toggleExpand(colKey)}
-              >
-                더 보기 ({hidden}개)
-              </button>
-            )}
-            {overLimit && isExp && (
-              <button
-                className="board-more-btn board-more-btn--fold"
-                onClick={() => toggleExpand(colKey)}
-              >
-                접기
-              </button>
-            )}
           </div>
         );
       })}

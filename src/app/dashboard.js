@@ -6,17 +6,13 @@
 
 import { S, esc, normOwner, getOwnerColor, getPK, fmtDate } from './state.js';
 import { STATUS_OPTS, STATUS_ACCENT } from './constants.js';
-import { animOk, getFiltered, isFilterActive } from './render.js';
-
-/* ── 히트맵 뷰 상태 ── */
-let _hmView = 'cat';
-export function setHmView(v) { _hmView = v; renderDashboard(); }
+import { getFiltered, isFilterActive } from './render.js';
 
 /* ── 히트맵 HTML ── */
-function buildHeatmap(all, groups, cats) {
+function buildHeatmap(all, groups, cats, hmView) {
   const STATUSES = STATUS_OPTS;
 
-  if (_hmView === 'cat') {
+  if (hmView === 'cat') {
     if (groups.length === 0 || cats.length === 0)
       return `<div class="db-empty">데이터가 없습니다</div>`;
     const hmData = {};
@@ -48,7 +44,7 @@ function buildHeatmap(all, groups, cats) {
         <span class="db-hm-legend-lbl">높음</span>
       </div>
     </div>`;
-  } else {
+  } else { // hmView === 'status'
     if (groups.length === 0)
       return `<div class="db-empty">데이터가 없습니다</div>`;
     const hmData = {};
@@ -121,11 +117,8 @@ function buildGroupProgress(all, groups) {
   }).filter(Boolean).join('');
 }
 
-/* ── renderDashboard ── */
-export function renderDashboard() {
-  const el = document.getElementById('dashboardView');
-  if (!el) return;
-
+/* ── buildDashboardHtml(hmView) — HTML 문자열 반환 (순수 함수) ── */
+export function buildDashboardHtml(hmView = 'cat') {
   /* 필터가 활성화된 경우 필터 결과를 사용, 아닌 경우 삭제 항목 제외 전체 */
   const filterOn = isFilterActive();
   const all      = filterOn ? getFiltered() : S.items.filter(it => it.isDelete !== 'Y');
@@ -255,14 +248,14 @@ export function renderDashboard() {
       <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <div class="db-panel-title">기능 분포 히트맵</div>
-          <div class="db-panel-sub">${_hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
+          <div class="db-panel-sub">${hmView === 'cat' ? '그룹 × 카테고리' : '그룹 × 상태'} 교차 밀도</div>
         </div>
         <div class="db-hm-tabs">
-          <button class="db-hm-tab${_hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
-          <button class="db-hm-tab${_hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
+          <button class="db-hm-tab${hmView === 'cat' ? ' on' : ''}" onclick="setHmView('cat')">그룹×카테고리</button>
+          <button class="db-hm-tab${hmView === 'status' ? ' on' : ''}" onclick="setHmView('status')">그룹×상태</button>
         </div>
       </div>
-      ${buildHeatmap(all, groups, cats)}
+      ${buildHeatmap(all, groups, cats, hmView)}
     </div>`;
 
   const sectionBuilders = { stats: buildStatsSection, insight: buildInsightSection, heatmap: buildHeatmapSection };
@@ -315,7 +308,7 @@ export function renderDashboard() {
        </div>`
     : '';
 
-  el.innerHTML = `
+  return `
 <div class="db-wrap">
   <div class="db-hero" data-anim-idx="0">
     <div>
@@ -326,30 +319,4 @@ export function renderDashboard() {
   </div>
   ${bodySection}
 </div>`;
-
-  /* 섹션별 순차 fade-in */
-  if (animOk()) {
-    el.querySelectorAll('[data-anim-idx]').forEach(sec => {
-      const idx = parseInt(sec.dataset.animIdx, 10);
-      sec.style.opacity = '0';
-      sec.style.transform = 'translateY(12px)';
-      sec.style.transition = 'none';
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          sec.style.transition = 'opacity .32s ease, transform .32s ease';
-          sec.style.opacity = '1';
-          sec.style.transform = 'translateY(0)';
-        }, idx * 80);
-      });
-    });
-  }
-
-  /* 우측 패널(최근 변경) 높이를 좌측 컬럼 하단에 맞춤 */
-  requestAnimationFrame(() => {
-    const bodyLeft  = el.querySelector('.db-body-left');
-    const bodyRight = el.querySelector('.db-body-right');
-    if (bodyLeft && bodyRight) {
-      bodyRight.style.maxHeight = bodyLeft.offsetHeight + 'px';
-    }
-  });
 }

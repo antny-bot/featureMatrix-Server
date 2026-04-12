@@ -296,10 +296,6 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .board-col-body{flex:1;overflow-y:hidden;padding:4px 7px 6px;display:flex;flex-direction:column;gap:6px;min-height:0}
 .board-col-body--expanded{overflow-y:auto}
 .board-col-body.drag-over{background:var(--accent-l);outline:2px dashed var(--accent);outline-offset:-3px}
-/* 더 보기 / 접기 버튼 */
-.board-more-btn{flex-shrink:0;margin:0 7px 8px;padding:5px 0;border:1px dashed var(--border);border-radius:6px;background:transparent;color:var(--text-3);font-size:.72rem;cursor:pointer;transition:background .15s,color .15s}
-.board-more-btn:hover{background:var(--surface-3);color:var(--text)}
-.board-more-btn--fold{border-style:solid;color:var(--text-2)}
 .mitem.board-selected,.mitem.mxsel{outline:2px solid var(--accent);outline-offset:1px;background:var(--accent-l) !important}
 .mitem.dragging{opacity:.45;transform:scale(.97)}
 .board-action-bar{display:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);border-radius:24px;padding:8px 16px;gap:10px;align-items:center;font-size:.75rem;box-shadow:0 4px 20px var(--shadow);z-index:300;white-space:nowrap}
