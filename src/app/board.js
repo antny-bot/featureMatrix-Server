@@ -1,74 +1,37 @@
 /* ══════════════════════════════════════════
    board.js — 보드(칸반) 뷰
+
+   Phase 4: 선택 상태(_boardSel) → Zustand store(boardSel)로 전환.
+   renderBoard / renderBoardActionBar → BoardView.jsx React 포털로 이관.
+   드래그 상태(_dragKey)는 모듈 변수로 유지 (드래그 중 re-render 방지).
 ══════════════════════════════════════════ */
 
 import { S, esc, eattr, save, pushUndo, pushChangeLog } from './state.js';
-import { STATUS_OPTS, STATUS_LBL, STATUS_ACCENT } from './constants.js';
-import { renderAll, getFiltered, isFilterActive, renderCard } from './render.js';
-import { getColors } from './theme.js';
+import { STATUS_OPTS, STATUS_LBL } from './constants.js';
+import { renderAll } from './render.js';
+import { setStore, getStore } from '../store/useAppStore.js';
 
-let _boardSel = new Set();
-let _dragKey  = null;
+/* ── 드래그 상태 (모듈 스코프 유지) ── */
+let _dragKey = null;
 
-/* ── 보드 렌더링 ── */
-export function renderBoard() {
-  const el = document.getElementById('boardView');
-  if (!el) return;
+/* ── boardSel 헬퍼 ── */
+function getSel()       { return new Set(getStore().boardSel ?? []); }
+function setSel(newSet) { setStore({ boardSel: [...newSet] }); }
 
-  const items = isFilterActive() ? getFiltered() : S.items.filter(it => it.isDelete !== 'Y');
-  const c     = getColors();
-
-  const byCol = Object.fromEntries(STATUS_OPTS.map(k => [k, []]));
-  items.forEach(it => {
-    if (byCol[it.status]) byCol[it.status].push(it);
-    else byCol['대기'].push(it);
-  });
-
-  el.innerHTML = `
-    <div class="board-cols">
-      ${STATUS_OPTS.map(colKey => `
-        <div class="board-col">
-          <div class="board-col-hd" style="border-top:3px solid ${STATUS_ACCENT[colKey]}">
-            <span>${esc(colKey)}<span class="board-col-cnt">${byCol[colKey].length}</span></span>
-          </div>
-          <div class="board-col-body"
-            id="bbody-${eattr(colKey)}"
-            ondragover="boardDragOver(event,'${eattr(colKey)}')"
-            ondragleave="boardDragLeave(event,'${eattr(colKey)}')"
-            ondrop="boardDrop(event,'${eattr(colKey)}')">
-            ${byCol[colKey].map(it => renderCard(it, c, -1, {
-              id:          `bcard-${it.key}`,
-              extraClass:  _boardSel.has(it.key) ? 'board-selected' : '',
-              onclick:     `boardCardClick(event,'${eattr(it.key)}')`,
-              ondblclick:  `boardCardDblClick('${eattr(it.key)}')`,
-              ondragstart: `boardCardDragStart(event,'${eattr(it.key)}')`,
-              ondragend:   'boardCardDragEnd()',
-            })).join('')}
-          </div>
-        </div>
-      `).join('')}
-    </div>`;
-
-  renderBoardActionBar();
-}
-
-/* ── 선택: Shift → 다중, 일반 클릭 → 토글 단일 ── */
+/* ── 선택: Shift → 다중 토글, 일반 클릭 → 단일 선택 ── */
 export function boardCardClick(e, key) {
+  const sel = getSel();
   if (e.shiftKey) {
-    const card = document.getElementById('bcard-' + key);
-    if (_boardSel.has(key)) { _boardSel.delete(key); card?.classList.remove('board-selected'); }
-    else                    { _boardSel.add(key);    card?.classList.add('board-selected');    }
+    if (sel.has(key)) sel.delete(key); else sel.add(key);
   } else {
-    _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('board-selected'));
-    _boardSel.clear();
-    _boardSel.add(key);
-    document.getElementById('bcard-' + key)?.classList.add('board-selected');
+    sel.clear();
+    sel.add(key);
   }
-  renderBoardActionBar();
+  setSel(sel);
 }
 
 export function boardCardDblClick(key) {
-  _boardSel.clear();
+  setSel(new Set());
   window.openEditModal?.(key);
 }
 
@@ -82,64 +45,45 @@ function _moveItems(keys, toStatus) {
       pushChangeLog('상태변경', it.key, it.name, { status: toStatus, owner: it.owner });
     }
   });
-  _boardSel.clear();
+  setSel(new Set());
   save();
   renderAll();
 }
 
 export function boardMoveSelected(toStatus) {
-  if (_boardSel.size === 0) return;
-  _moveItems(_boardSel, toStatus);
+  const sel = getSel();
+  if (sel.size === 0) return;
+  _moveItems(sel, toStatus);
 }
 
-/* ── 하단 액션 바 ── */
-export function renderBoardActionBar() {
-  const bar = document.getElementById('boardActionBar');
-  if (!bar) return;
-  if (_boardSel.size === 0) {
-    bar.classList.remove('on');
-    bar.innerHTML = '';
-    return;
-  }
-  bar.classList.add('on');
-  bar.innerHTML = `
-    <span>${_boardSel.size}개 선택</span>
-    ${STATUS_OPTS.map(st => `<button onclick="boardMoveSelected('${eattr(st)}')">${esc(STATUS_LBL[st])}</button>`).join('')}
-    <button class="bar-close" onclick="boardClearSel()">✕</button>`;
-}
-
-export function hideBoardActionBar() {
-  _boardSel.clear();
-  const bar = document.getElementById('boardActionBar');
-  if (bar) { bar.classList.remove('on'); bar.innerHTML = ''; }
-}
-
-export function boardClearSel() {
-  _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('board-selected'));
-  _boardSel.clear();
-  renderBoardActionBar();
-}
+/* ── 선택 초기화 ── */
+export function hideBoardActionBar() { setSel(new Set()); }
+export function boardClearSel()      { setSel(new Set()); }
 
 /* ── 드래그 앤 드롭 ── */
 export function boardCardDragStart(e, key) {
   _dragKey = key;
   e.dataTransfer.effectAllowed = 'move';
-  if (_boardSel.size > 0 && !_boardSel.has(key)) {
-    _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('board-selected'));
-    _boardSel.clear();
-    _boardSel.add(key);
-    document.getElementById('bcard-' + key)?.classList.add('board-selected');
-  } else if (_boardSel.size === 0) {
-    _boardSel.add(key);
+  const sel = getSel();
+  if (sel.size > 0 && !sel.has(key)) {
+    sel.clear();
+    sel.add(key);
+    setSel(sel);
+  } else if (sel.size === 0) {
+    sel.add(key);
+    setSel(sel);
   }
+  /* dragging 클래스: React re-render 이후에 붙여야 유지됨 */
   setTimeout(() => {
-    _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.add('dragging'));
-  }, 0);
+    const latest = getSel();
+    latest.forEach(k => document.getElementById('bcard-' + k)?.classList.add('dragging'));
+  }, 30);
 }
 
 export function boardCardDragEnd() {
   _dragKey = null;
-  document.querySelectorAll('.board-card.dragging, .mitem.dragging').forEach(c => c.classList.remove('dragging'));
+  document.querySelectorAll('.board-card.dragging, .mitem.dragging')
+    .forEach(el => el.classList.remove('dragging'));
 }
 
 export function boardDragOver(e, colKey) {
@@ -156,5 +100,6 @@ export function boardDrop(e, colKey) {
   e.preventDefault();
   document.getElementById('bbody-' + colKey)?.classList.remove('drag-over');
   if (!_dragKey) return;
-  _moveItems(_boardSel.size > 0 ? _boardSel : new Set([_dragKey]), colKey);
+  const sel = getSel();
+  _moveItems(sel.size > 0 ? sel : new Set([_dragKey]), colKey);
 }

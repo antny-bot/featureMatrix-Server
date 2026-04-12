@@ -9,6 +9,7 @@
 
 import { useEffect } from 'react';
 import Header from './Header.jsx';
+import BoardView from './BoardView.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 
@@ -596,6 +597,7 @@ export default function App() {
       <AuthProvider>
         <Header />
         <div dangerouslySetInnerHTML={{ __html: APP_TEMPLATE }} />
+        <BoardView />
       </AuthProvider>
     </ThemeProvider>
   );

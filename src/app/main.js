@@ -32,7 +32,7 @@ import { openModal, closeModal, openEditModal, openAddModal, openAddInCell,
 import { expClip, expTSV, expXLS, expHTML, expMdZip, impMdFiles,
          dzOver, dzLeave, dzDrop, csvFileSel, analyzeCSV, backToStep1, doImport,
          expFullJSON, impFullJSON } from './io.js';
-import { renderBoard, boardCardClick, boardCardDblClick,
+import { boardCardClick, boardCardDblClick,
          boardMoveSelected, hideBoardActionBar, boardClearSel,
          boardCardDragStart, boardCardDragEnd,
          boardDragOver, boardDragLeave, boardDrop } from './board.js';
@@ -69,7 +69,7 @@ Object.assign(window, {
   colDragStart, colDragOver, colDragLeave, colDrop, colDragEnd, resetListCols,
   renderAxisEditor, axisDragStart, axisDragOver, axisDragLeave, axisDrop, axisDragEnd, resetAxisOrder,
   expSettJSON, impSettJSON, resetData, resetSettings,
-  renderBoard, boardCardClick, boardCardDblClick,
+  boardCardClick, boardCardDblClick,
   boardMoveSelected, hideBoardActionBar, boardClearSel,
   boardCardDragStart, boardCardDragEnd,
   boardDragOver, boardDragLeave, boardDrop,
