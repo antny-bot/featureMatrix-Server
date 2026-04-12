@@ -44,6 +44,9 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word}
 body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고딕',sans-serif;font-size:1rem;font-weight:400;line-height:1.75;letter-spacing:-.01em;color:var(--text);background:var(--bg);min-height:100vh}
+/* React root: 레이아웃에 영향 없도록 투명 처리 */
+#root{display:contents}
+#updateBanner.on{display:flex}
 
 /* ── 버튼 ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.8125rem;font-weight:500;letter-spacing:-.01em;padding:0 13px;height:33px;border-radius:7px;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:background .18s,transform .18s,box-shadow .18s,color .18s,border-color .18s;user-select:none;line-height:1}

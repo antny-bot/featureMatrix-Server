@@ -139,8 +139,9 @@ function __inlineNotify(msg, type) {
     /<link\s+rel="stylesheet"\s+href="style\.css"[^>]*>/,
     () => `<style>\n${css}\n</style>`
   );
+  // main.jsx(React) 또는 기존 main.js 플레이스홀더를 번들로 교체
   html = html.replace(
-    /<script\s+type="module"\s+src="app\/main\.js"><\/script>/,
+    /<script\s+type="module"\s+src="(?:main\.jsx|app\/main\.js)"><\/script>/,
     () => `<script>\n'use strict';\n${fullScript}\n</script>`
   );
 
