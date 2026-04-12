@@ -29,7 +29,7 @@ export const S = {
     changeLogMax: 50,      // 최근 변경 이력 최대 보관 개수
     storageMode: 'server',
     serverUrl:   '',
-    pollInterval: 10,
+    pollInterval: 60,
     userName:    '',       // 수정자 표시용 이름
   },
   sort: { key:'key', dir:'asc' },

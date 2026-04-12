@@ -2,7 +2,7 @@
    board.js — 보드(칸반) 뷰
 ══════════════════════════════════════════ */
 
-import { S, esc, eattr, save, pushUndo } from './state.js';
+import { S, esc, eattr, save, pushUndo, pushChangeLog } from './state.js';
 import { STATUS_OPTS, STATUS_LBL, STATUS_ACCENT } from './constants.js';
 import { renderAll, getFiltered, isFilterActive, renderCard } from './render.js';
 import { getColors } from './theme.js';
@@ -74,8 +74,14 @@ export function boardCardDblClick(key) {
 
 /* ── 카드 이동 공통 ── */
 function _moveItems(keys, toStatus) {
+  if (!window.isEditor?.()) { window.__sobukNotify?.('편집 권한이 없습니다.', true); return; }
   pushUndo();
-  S.items.forEach(it => { if (keys.has(it.key)) it.status = toStatus; });
+  S.items.forEach(it => {
+    if (keys.has(it.key)) {
+      it.status = toStatus;
+      pushChangeLog('상태변경', it.key, it.name, { status: toStatus, owner: it.owner });
+    }
+  });
   _boardSel.clear();
   save();
   renderAll();

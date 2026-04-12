@@ -340,6 +340,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <button class="stab" onclick="sstab(this,'scola')">컬럼·축</button>
       <button class="stab" onclick="sstab(this,'sdat')">데이터</button>
       <button class="stab" onclick="sstab(this,'sserv')">서버</button>
+      <button class="stab" id="slogTab" onclick="sstab(this,'slog')">로그</button>
       <button class="stab" id="sadminTab" onclick="sstab(this,'sadmin')" style="display:none">🔑 관리자</button>
     </div>
     <div class="mbody" style="padding:14px 20px">
@@ -466,24 +467,32 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         </div>
       </div>
 
-      <!-- ── 관리자: 접근제어·공유설정·데이터관리·모니터링 ── -->
+      <!-- ── 로그: 활동로그·이력보관수 ── -->
+      <div class="spane" id="slog">
+        <div class="srow">
+          <div><div class="slbl">최근 변경 이력 보관 수</div><div class="ssub">10~500개, 초과분은 자동 삭제</div></div>
+          <div class="stepper"><button class="stepbtn" onclick="adjChangeLogMax(-10)">−</button><span id="dChangeLogMax">50</span><button class="stepbtn" onclick="adjChangeLogMax(10)">+</button></div>
+        </div>
+        <div class="sec-ttl" style="margin-top:16px;display:flex;align-items:center;justify-content:space-between">
+          <span>활동 로그</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:.7rem;color:var(--text-3)">최근</span>
+            <input type="number" id="logLimitInp" value="100" min="10" max="1000"
+              style="width:50px;height:22px;font-size:.72rem;text-align:center;padding:0 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--text)">
+            <span style="font-size:.7rem;color:var(--text-3)">개</span>
+            <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
+          </div>
+        </div>
+        <div id="inlineLogBody" style="height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:.78rem">
+          <div style="padding:16px;text-align:center;color:var(--text-3)">탭을 열면 자동으로 불러옵니다.</div>
+        </div>
+      </div>
+
+      <!-- ── 관리자: 공유설정·데이터관리·접근제어 ── -->
       <div class="spane" id="sadmin">
 
-        <!-- 접근 제어 -->
-        <div class="sec-ttl">접근 제어</div>
-        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:6px">
-          <div><div class="slbl">편집자 비밀번호</div><div class="ssub">비워두면 비번 없이 편집 가능</div></div>
-          <div style="display:flex;gap:8px;width:100%">
-            <input class="inp" id="editorPwInp" type="password" placeholder="새 비밀번호 (비우면 제거)"
-              style="flex:1;height:28px;font-size:.82rem"
-              onkeydown="if(event.key==='Enter')setEditorPassword()">
-            <button class="btn btn-s btn-sm" onclick="setEditorPassword()">변경</button>
-          </div>
-          <div id="editorPwErr" style="color:var(--danger);font-size:.78rem;min-height:14px"></div>
-        </div>
-
         <!-- 공유 콘텐츠 설정 -->
-        <div class="sec-ttl" style="margin-top:16px">공유 콘텐츠 설정</div>
+        <div class="sec-ttl">공유 콘텐츠 설정</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div class="srow" style="border-bottom:none;padding:8px 10px;background:var(--surface-2);border-radius:8px;flex-direction:column;align-items:flex-start;gap:6px">
             <div class="slbl">헤더 타이틀</div>
@@ -506,10 +515,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         <!-- 데이터 관리 -->
         <div class="sec-ttl" style="margin-top:16px">데이터 관리</div>
         <div class="srow">
-          <div><div class="slbl">최근 변경 이력 보관 수</div><div class="ssub">10~500개, 초과분은 자동 삭제</div></div>
-          <div class="stepper"><button class="stepbtn" onclick="adjChangeLogMax(-10)">−</button><span id="dChangeLogMax">50</span><button class="stepbtn" onclick="adjChangeLogMax(10)">+</button></div>
-        </div>
-        <div class="srow">
           <div>
             <div class="slbl">가져오기</div>
             <div class="ssub">기존 데이터가 덮어씌워집니다. 관리자 전용.</div>
@@ -525,19 +530,17 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           <button class="btn btn-d btn-sm" onclick="resetData()">초기화</button>
         </div>
 
-        <!-- 모니터링 -->
-        <div class="sec-ttl" style="margin-top:16px;display:flex;align-items:center;justify-content:space-between">
-          <span>활동 로그</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:.7rem;color:var(--text-3)">최근</span>
-            <input type="number" id="logLimitInp" value="100" min="10" max="1000"
-              style="width:50px;height:22px;font-size:.72rem;text-align:center;padding:0 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--text)">
-            <span style="font-size:.7rem;color:var(--text-3)">개</span>
-            <button class="btn btn-g btn-sm" style="font-size:.68rem" onclick="loadInlineActivityLog()">↺ 새로고침</button>
+        <!-- 접근 제어 -->
+        <div class="sec-ttl" style="margin-top:16px">접근 제어</div>
+        <div class="srow" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <div><div class="slbl">편집자 비밀번호</div><div class="ssub">비워두면 비번 없이 편집 가능</div></div>
+          <div style="display:flex;gap:8px;width:100%">
+            <input class="inp" id="editorPwInp" type="password" placeholder="새 비밀번호 (비우면 제거)"
+              style="flex:1;height:28px;font-size:.82rem"
+              onkeydown="if(event.key==='Enter')setEditorPassword()">
+            <button class="btn btn-s btn-sm" onclick="setEditorPassword()">변경</button>
           </div>
-        </div>
-        <div id="inlineLogBody" style="height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:.78rem">
-          <div style="padding:16px;text-align:center;color:var(--text-3)">탭을 열면 자동으로 불러옵니다.</div>
+          <div id="editorPwErr" style="color:var(--danger);font-size:.78rem;min-height:14px"></div>
         </div>
 
       </div>
@@ -554,7 +557,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">N</span></div><span style="font-size:.8125rem;color:var(--text-2)">기능 추가</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">F</span></div><span style="font-size:.8125rem;color:var(--text-2)">필터 패널 토글</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">/</span></div><span style="font-size:.8125rem;color:var(--text-2)">검색 포커스</span></div>
+      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">D</span></div><span style="font-size:.8125rem;color:var(--text-2)">대시보드 뷰</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">M</span></div><span style="font-size:.8125rem;color:var(--text-2)">매트릭스 뷰</span></div>
+      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">B</span></div><span style="font-size:.8125rem;color:var(--text-2)">보드 뷰</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">L</span></div><span style="font-size:.8125rem;color:var(--text-2)">리스트 뷰</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Z</span></div><span style="font-size:.8125rem;color:var(--text-2)">실행 취소</span></div>
       <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">우클릭</span></div><span style="font-size:.8125rem;color:var(--text-2)">카드 컨텍스트 메뉴</span></div>

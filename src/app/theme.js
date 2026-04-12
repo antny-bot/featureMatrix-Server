@@ -50,6 +50,8 @@ export function applyTheme(tid) {
   window.__sobukRenderAll?.();
   renderThemeGrid();
   updateDesignContent();
+  renderPrioStyleRows();
+  renderPreviewCards();
   notify(`테마 적용: ${THEMES[tid].name}`);
 }
 

@@ -29,6 +29,19 @@
   - 빌드 결과는 `src/dist/index.html`에 생성되고, `featureMatrix-server/static/index.html`로 자동 복사된다.
 - 프론트엔드 변경 시 항상 소스 파일(`src/`)을 수정한 후 빌드를 실행할 것.
 
+## Do Not Read (불필요한 토큰 낭비 방지)
+다음 파일들은 읽지 말 것 — 빌드 결과물, 바이너리, 런타임 데이터이므로 코드 작업과 무관하다:
+
+| 파일 | 이유 |
+|------|------|
+| `featureMatrix-server/static/index.html` | 빌드 결과물 (소스: `src/index.html`) |
+| `src/dist/index.html` | 빌드 중간 결과물 |
+| `featureMatrix-server/__pycache__/*.pyc` | Python 컴파일 캐시 |
+| `featureMatrix-server/static/fonts/*.woff2` | 바이너리 폰트 파일 |
+| `src/package-lock.json` | 자동 생성 의존성 잠금 파일 |
+| `featureMatrix-server/activity.json` | 런타임 활동 로그 데이터 |
+| `featureMatrix-server/tokens.json` | 런타임 인증 토큰 데이터 |
+
 ## Commands
 - Run App: `python app.py` or `flask run`
 - Install Dependencies: `pip install -r requirements.txt`

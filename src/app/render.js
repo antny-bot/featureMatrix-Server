@@ -270,7 +270,13 @@ export function renderMatrix() {
   });
   const badge = n => `<span class="gcnt">${n}</span>`;
 
-  let h = '<div class="mscroll"><table class="mtable"><thead class="mx-thead-sticky"><tr>';
+  /* 최소 테이블 폭 계산: 행 헤더(카테고리+서브카테고리) + 각 서브그룹 컬럼 * colW
+     → table-layout:fixed 가 컨테이너에 맞춰 축소하지 못하도록 min-width 고정 */
+  const ss = S.settings;
+  const totalSubCols = st.groups.reduce((acc, gn) => acc + st.gsubs[gn].length, 0);
+  const tableMinW = (ss.catW || 12) + (ss.subCatW || 72) + totalSubCols * (ss.colW || 130);
+
+  let h = `<div class="mscroll"><table class="mtable" style="min-width:${tableMinW}px"><thead class="mx-thead-sticky"><tr>`;
   h += `<th class="m-corner" rowspan="2"></th><th class="m-corner" rowspan="2"></th>`;
   st.groups.forEach(gn => {
     h += `<th class="m-ghd" colspan="${st.gsubs[gn].length}">${esc(gn)}${showCnt ? badge(gCnt[gn]||0) : ''}</th>`;
@@ -369,9 +375,10 @@ export function renderCard(item, c, si = -1, overrides = {}) {
   const dragEnd      = overrides.ondragend   ?? 'onDEnd(event)';
   const clickHandler = overrides.onclick     ?? `openEditOrMd('${eattr(item.key)}')`;
   const dblClick     = overrides.ondblclick  ? ` ondblclick="${overrides.ondblclick}"` : '';
-  return `<div class="mitem${isDel?' item-del':''}${lockInfo && lockInfo.user !== myName ? ' item-locked' : ''}${extraClass}" draggable="true" data-key="${eattr(item.key)}"${idAttr}
+  const canDrag = isEditor();
+  return `<div class="mitem${isDel?' item-del':''}${lockInfo && lockInfo.user !== myName ? ' item-locked' : ''}${extraClass}" draggable="${canDrag}" data-key="${eattr(item.key)}"${idAttr}
     style="${css}${delay}"
-    ondragstart="${dragStart}" ondragend="${dragEnd}"
+    ondragstart="${canDrag ? dragStart : ''}" ondragend="${canDrag ? dragEnd : ''}"
     onmouseover="startTT(event,'${eattr(item.key)}')" onmouseout="clearTT()"
     onclick="${clickHandler}"${dblClick}
     oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${actions}

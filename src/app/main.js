@@ -253,7 +253,9 @@ document.addEventListener('keydown', e => {
   }
   if (e.key==='n'||e.key==='N') openAddModal();
   if (e.key==='f'||e.key==='F') window.togglePanel();
+  if (e.key==='d'||e.key==='D') switchView('dashboard');
   if (e.key==='m'||e.key==='M') switchView('matrix');
+  if (e.key==='b'||e.key==='B') switchView('board');
   if (e.key==='l'||e.key==='L') switchView('list');
   if (e.key==='z'||e.key==='Z') doUndo();
   if (e.key==='?')              openModal('shortcutsModal');
@@ -282,14 +284,14 @@ let _pollTimer = null;
 window.addEventListener('beforeunload', () => { if (_pollTimer) clearInterval(_pollTimer); });
 function startPolling() {
   if (_pollTimer) clearInterval(_pollTimer);
-  const interval = (S.settings.pollInterval || 10) * 1000;
+  const interval = (S.settings.pollInterval || 60) * 1000;
   if (S.settings.storageMode !== 'server') return;
   _pollTimer = setInterval(async () => {
     const result = await pollServerTs();
     if (result !== null) {
       setServerStatus('ok');
       // locks 업데이트
-      if (result.locks) { const changed = updateLocks(result.locks); if (changed) renderAll(); }
+      if (result.locks) { const changed = updateLocks(result.locks); if (changed && S.view !== 'dashboard') renderAll(); }
       if (result.serverTs > lastServerTs) {
         const banner = document.getElementById('updateBanner');
         if (banner) {
@@ -440,7 +442,7 @@ function syncServerSettingsUI() {
   const urlEl  = document.getElementById('sServerUrl');
   if (urlEl)  urlEl.value  = S.settings.serverUrl  || '';
   const pollEl = document.getElementById('sPollInterval');
-  if (pollEl) pollEl.value = S.settings.pollInterval || 10;
+  if (pollEl) pollEl.value = S.settings.pollInterval || 60;
   const nameEl = document.getElementById('sUserName');
   if (nameEl) nameEl.value = S.settings.userName    || '';
   const badge  = document.getElementById('storageModeBadge');

@@ -19,7 +19,8 @@ export function sstab(btn, paneId) {
   if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); syncAnimUI(); }
   if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
   if (paneId === 'sserv')   window.syncServerSettingsUI?.();
-  if (paneId === 'sadmin')  { window.loadInlineActivityLog?.(); window.renderDbSectionOrder?.(); window.syncEditorPwStatus?.(); }
+  if (paneId === 'slog')    { window.loadInlineActivityLog?.(); }
+  if (paneId === 'sadmin')  { window.renderDbSectionOrder?.(); window.syncEditorPwStatus?.(); }
 }
 
 /* ── 설정 UI 전체 동기화 ── */
