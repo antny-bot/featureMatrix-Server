@@ -49,6 +49,8 @@ export function syncSettingsUI() {
   document.getElementById('dCellFold').textContent  = ss.cellFold  === 0 ? '∞' : ss.cellFold;
   const dCLMax = document.getElementById('dChangeLogMax');
   if (dCLMax) dCLMax.textContent = ss.changeLogMax ?? 50;
+  const dBFC = document.getElementById('dBoardFoldCount');
+  if (dBFC) dBFC.textContent = ss.boardFoldCount ?? 6;
   document.getElementById('mwF').className = 'rbtn' + (ss.matrixWidth === 'fluid' ? ' on' : '');
   document.getElementById('mwX').className = 'rbtn' + (ss.matrixWidth === 'fixed'  ? ' on' : '');
   document.getElementById('ppL').className = 'rbtn' + (ss.panelPos   === 'left'  ? ' on' : '');
@@ -94,7 +96,8 @@ export function adjColW(d)     { S.settings.colW        = Math.max(80,Math.min(3
 export function adjCatW(d)     { S.settings.catW        = Math.max(40,Math.min(80,S.settings.catW+d));        document.getElementById('dCatW').textContent     =S.settings.catW+'px';        save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
 export function adjSubCatW(d)  { S.settings.subCatW     = Math.max(40,Math.min(200,S.settings.subCatW+d));    document.getElementById('dSubCatW').textContent  =S.settings.subCatW+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
 export function adjCellFold(d)      { S.settings.cellFold      = Math.max(0,  Math.min(20,  S.settings.cellFold+d));      document.getElementById('dCellFold').textContent      = S.settings.cellFold===0?'∞':S.settings.cellFold; save(); S.expandedCells=new Set(); if(S.view==='matrix')renderMatrix(); }
-export function adjChangeLogMax(d)  { S.settings.changeLogMax  = Math.max(10, Math.min(500, S.settings.changeLogMax+d));  document.getElementById('dChangeLogMax').textContent  = S.settings.changeLogMax; save(); }
+export function adjChangeLogMax(d)   { S.settings.changeLogMax   = Math.max(10, Math.min(500, S.settings.changeLogMax+d));   document.getElementById('dChangeLogMax').textContent   = S.settings.changeLogMax;   save(); }
+export function adjBoardFoldCount(d) { S.settings.boardFoldCount = Math.max(2,  Math.min(30,  (S.settings.boardFoldCount??6)+d)); document.getElementById('dBoardFoldCount').textContent = S.settings.boardFoldCount; save(); }
 
 /* ── 애니메이션 ── */
 export function onAnimTgl() {
@@ -227,7 +230,7 @@ export function resetSettings() {
   if (!confirm('설정을 기본값으로 초기화하겠습니까?')) return;
   Object.assign(S.settings, {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:52, subCatW:80, cellFold:3,
+    colW:130, catW:52, subCatW:80, cellFold:3, boardFoldCount:6,
     matrixWidth:'fluid', panelPos:'left', themeId:'sobuk',
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},

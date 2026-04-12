@@ -52,6 +52,7 @@ const initialState = {
     dbHeroName: '',
     dbSections: ['stats', 'insight', 'heatmap'],
     changeLogMax: 50,
+    boardFoldCount: 6,
     storageMode: 'server',
     serverUrl: '',
     pollInterval: 60,

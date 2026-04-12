@@ -22876,6 +22876,8 @@ function __inlineNotify(msg, type) {
           dbSections: ["stats", "insight", "heatmap"],
           changeLogMax: 50,
           // 최근 변경 이력 최대 보관 개수
+          boardFoldCount: 6,
+          // 보드 뷰 컬럼 기본 표시 카드 수
           storageMode: "server",
           serverUrl: "",
           pollInterval: 60,
@@ -22979,6 +22981,7 @@ function __inlineNotify(msg, type) {
           dbHeroName: "",
           dbSections: ["stats", "insight", "heatmap"],
           changeLogMax: 50,
+          boardFoldCount: 6,
           storageMode: "server",
           serverUrl: "",
           pollInterval: 60,
@@ -26051,6 +26054,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     document.getElementById("dCellFold").textContent = ss.cellFold === 0 ? "\u221E" : ss.cellFold;
     const dCLMax = document.getElementById("dChangeLogMax");
     if (dCLMax) dCLMax.textContent = ss.changeLogMax ?? 50;
+    const dBFC = document.getElementById("dBoardFoldCount");
+    if (dBFC) dBFC.textContent = ss.boardFoldCount ?? 6;
     document.getElementById("mwF").className = "rbtn" + (ss.matrixWidth === "fluid" ? " on" : "");
     document.getElementById("mwX").className = "rbtn" + (ss.matrixWidth === "fixed" ? " on" : "");
     document.getElementById("ppL").className = "rbtn" + (ss.panelPos === "left" ? " on" : "");
@@ -26148,6 +26153,16 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     save();
     S.expandedCells = /* @__PURE__ */ new Set();
     if (S.view === "matrix") renderMatrix();
+  }
+  function adjChangeLogMax(d) {
+    S.settings.changeLogMax = Math.max(10, Math.min(500, S.settings.changeLogMax + d));
+    document.getElementById("dChangeLogMax").textContent = S.settings.changeLogMax;
+    save();
+  }
+  function adjBoardFoldCount(d) {
+    S.settings.boardFoldCount = Math.max(2, Math.min(30, (S.settings.boardFoldCount ?? 6) + d));
+    document.getElementById("dBoardFoldCount").textContent = S.settings.boardFoldCount;
+    save();
   }
   function onAnimTgl() {
     const a = S.settings.animations;
@@ -26337,6 +26352,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       catW: 52,
       subCatW: 80,
       cellFold: 3,
+      boardFoldCount: 6,
       matrixWidth: "fluid",
       panelPos: "left",
       themeId: "sobuk",
@@ -26586,6 +26602,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         adjCatW,
         adjSubCatW,
         adjCellFold,
+        adjChangeLogMax,
+        adjBoardFoldCount,
         onAnimTgl,
         syncAnimUI,
         renderColEditor,
@@ -27208,13 +27226,13 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   init_theme();
   init_state();
   var import_jsx_runtime4 = __toESM(require_jsx_runtime());
-  var FOLD_COUNT = 6;
   function BoardView() {
     const items = useAppStore((s) => s.items);
     const boardSel = useAppStore((s) => s.boardSel);
     const [boardContainer, setBoardContainer] = (0, import_react4.useState)(null);
     const [barContainer, setBarContainer] = (0, import_react4.useState)(null);
     const [expanded, setExpanded] = (0, import_react4.useState)(/* @__PURE__ */ new Set());
+    const foldCount = useAppStore((s) => s.settings.boardFoldCount ?? 6);
     (0, import_react4.useEffect)(() => {
       setBoardContainer(document.getElementById("boardView"));
       setBarContainer(document.getElementById("boardActionBar"));
@@ -27240,9 +27258,9 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "board-cols", children: STATUS_OPTS.map((colKey) => {
         const colItems = byCol[colKey];
         const isExp = expanded.has(colKey);
-        const overLimit = colItems.length > FOLD_COUNT;
-        const visible = isExp ? colItems : colItems.slice(0, FOLD_COUNT);
-        const hidden = colItems.length - FOLD_COUNT;
+        const overLimit = colItems.length > foldCount;
+        const visible = isExp ? colItems : colItems.slice(0, foldCount);
+        const hidden = colItems.length - foldCount;
         const cardsHtml = visible.map((it) => renderCard(it, c, -1, {
           id: `bcard-${it.key}`,
           extraClass: selSet.has(it.key) ? "board-selected" : "",
@@ -27623,6 +27641,7 @@ $$')" title="\uBE14\uB85D \uC218\uC2DD"   style="width:26px;padding:0">\u222B</b
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
           <div class="srow"><div><div class="slbl">\uADF8\uB8F9 \uC5F4 \uD3ED</div></div><div class="stepper"><button class="stepbtn" onclick="adjColW(-10)">\u2212</button><span id="dColW">130px</span><button class="stepbtn" onclick="adjColW(10)">+</button></div></div>
           <div class="srow"><div><div class="slbl">\uC140 \uC811\uAE30 \uAE30\uC900</div><div class="ssub">0=\uD56D\uC0C1 \uD3BC\uCE68</div></div><div class="stepper"><button class="stepbtn" onclick="adjCellFold(-1)">\u2212</button><span id="dCellFold">3</span><button class="stepbtn" onclick="adjCellFold(1)">+</button></div></div>
+          <div class="srow"><div><div class="slbl">\uBCF4\uB4DC \uB354 \uBCF4\uAE30 \uAE30\uC900</div><div class="ssub">\uCEEC\uB7FC\uB2F9 \uAE30\uBCF8 \uD45C\uC2DC \uCE74\uB4DC \uC218</div></div><div class="stepper"><button class="stepbtn" onclick="adjBoardFoldCount(-1)">\u2212</button><span id="dBoardFoldCount">6</span><button class="stepbtn" onclick="adjBoardFoldCount(1)">+</button></div></div>
           <div class="srow"><div><div class="slbl">\uCE74\uD14C\uACE0\uB9AC \uD3ED</div></div><div class="stepper"><button class="stepbtn" onclick="adjCatW(-4)">\u2212</button><span id="dCatW">24px</span><button class="stepbtn" onclick="adjCatW(4)">+</button></div></div>
           <div class="srow"><div><div class="slbl">\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC \uD3ED</div></div><div class="stepper"><button class="stepbtn" onclick="adjSubCatW(-4)">\u2212</button><span id="dSubCatW">72px</span><button class="stepbtn" onclick="adjSubCatW(4)">+</button></div></div>
         </div>

@@ -16,8 +16,7 @@ import { getFiltered, isFilterActive, renderCard } from '../app/render.js';
 import { getColors } from '../app/theme.js';
 import { S, esc, eattr } from '../app/state.js';
 
-/* ── 기본 접힘 개수 (대략 1080p 기준 6~7개 카드 보임) ── */
-const FOLD_COUNT = 6;
+/* foldCount는 useAppStore(s => s.settings.boardFoldCount) 로 읽음 */
 
 /* ── 메인 컴포넌트 ── */
 export default function BoardView() {
@@ -30,6 +29,7 @@ export default function BoardView() {
 
   /* 컬럼별 펼침 상태 */
   const [expanded, setExpanded] = useState(new Set());
+  const foldCount = useAppStore(s => s.settings.boardFoldCount ?? 6);
 
   useEffect(() => {
     setBoardContainer(document.getElementById('boardView'));
@@ -66,9 +66,9 @@ export default function BoardView() {
       {STATUS_OPTS.map(colKey => {
         const colItems  = byCol[colKey];
         const isExp     = expanded.has(colKey);
-        const overLimit = colItems.length > FOLD_COUNT;
-        const visible   = isExp ? colItems : colItems.slice(0, FOLD_COUNT);
-        const hidden    = colItems.length - FOLD_COUNT;
+        const overLimit = colItems.length > foldCount;
+        const visible   = isExp ? colItems : colItems.slice(0, foldCount);
+        const hidden    = colItems.length - foldCount;
 
         const cardsHtml = visible.map(it => renderCard(it, c, -1, {
           id:          `bcard-${it.key}`,

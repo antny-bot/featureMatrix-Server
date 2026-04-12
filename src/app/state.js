@@ -27,6 +27,7 @@ export const S = {
     dbHeroName: '',
     dbSections: ['stats', 'insight', 'heatmap'],
     changeLogMax: 50,      // 최근 변경 이력 최대 보관 개수
+    boardFoldCount: 6,     // 보드 뷰 컬럼 기본 표시 카드 수
     storageMode: 'server',
     serverUrl:   '',
     pollInterval: 60,

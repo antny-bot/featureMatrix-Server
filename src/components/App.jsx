@@ -302,6 +302,7 @@ const APP_TEMPLATE = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
           <div class="srow"><div><div class="slbl">그룹 열 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjColW(-10)">−</button><span id="dColW">130px</span><button class="stepbtn" onclick="adjColW(10)">+</button></div></div>
           <div class="srow"><div><div class="slbl">셀 접기 기준</div><div class="ssub">0=항상 펼침</div></div><div class="stepper"><button class="stepbtn" onclick="adjCellFold(-1)">−</button><span id="dCellFold">3</span><button class="stepbtn" onclick="adjCellFold(1)">+</button></div></div>
+          <div class="srow"><div><div class="slbl">보드 더 보기 기준</div><div class="ssub">컬럼당 기본 표시 카드 수</div></div><div class="stepper"><button class="stepbtn" onclick="adjBoardFoldCount(-1)">−</button><span id="dBoardFoldCount">6</span><button class="stepbtn" onclick="adjBoardFoldCount(1)">+</button></div></div>
           <div class="srow"><div><div class="slbl">카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjCatW(-4)">−</button><span id="dCatW">24px</span><button class="stepbtn" onclick="adjCatW(4)">+</button></div></div>
           <div class="srow"><div><div class="slbl">서브카테고리 폭</div></div><div class="stepper"><button class="stepbtn" onclick="adjSubCatW(-4)">−</button><span id="dSubCatW">72px</span><button class="stepbtn" onclick="adjSubCatW(4)">+</button></div></div>
         </div>
