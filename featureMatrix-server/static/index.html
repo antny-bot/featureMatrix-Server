@@ -297,11 +297,17 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* ── 보드 뷰 ── */
 .bwrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
 .board-cols{display:flex;gap:10px;padding:12px 14px;flex:1;overflow-x:auto;overflow-y:hidden;align-items:stretch}
-.board-col{display:flex;flex-direction:column;flex:1;min-width:200px;max-width:320px;background:var(--surface-2);border-radius:10px;overflow:hidden;border:1px solid var(--border);height:100%}
+.board-col{display:flex;flex-direction:column;flex:1;min-width:200px;max-width:320px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);height:100%;overflow:hidden}
 .board-col-hd{padding:10px 12px 8px;font-size:.72rem;font-weight:700;letter-spacing:.03em;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .board-col-cnt{font-size:.65rem;font-weight:400;background:var(--surface-3);color:var(--text-3);border-radius:10px;padding:1px 7px;margin-left:4px}
-.board-col-body{flex:1;overflow-y:auto;padding:4px 7px 10px;display:flex;flex-direction:column;gap:6px;min-height:80px}
+/* 기본: 스크롤 없음(아이템 개수만큼만 높이), 펼침 시 스크롤 허용 */
+.board-col-body{flex:1;overflow-y:hidden;padding:4px 7px 6px;display:flex;flex-direction:column;gap:6px;min-height:0}
+.board-col-body--expanded{overflow-y:auto}
 .board-col-body.drag-over{background:var(--accent-l);outline:2px dashed var(--accent);outline-offset:-3px}
+/* 더 보기 / 접기 버튼 */
+.board-more-btn{flex-shrink:0;margin:0 7px 8px;padding:5px 0;border:1px dashed var(--border);border-radius:6px;background:transparent;color:var(--text-3);font-size:.72rem;cursor:pointer;transition:background .15s,color .15s}
+.board-more-btn:hover{background:var(--surface-3);color:var(--text)}
+.board-more-btn--fold{border-style:solid;color:var(--text-2)}
 .mitem.board-selected,.mitem.mxsel{outline:2px solid var(--accent);outline-offset:1px;background:var(--accent-l) !important}
 .mitem.dragging{opacity:.45;transform:scale(.97)}
 .board-action-bar{display:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);border-radius:24px;padding:8px 16px;gap:10px;align-items:center;font-size:.75rem;box-shadow:0 4px 20px var(--shadow);z-index:300;white-space:nowrap}
@@ -27202,80 +27208,122 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   init_theme();
   init_state();
   var import_jsx_runtime4 = __toESM(require_jsx_runtime());
-  function buildBoardHtml(selSet) {
-    const items = isFilterActive() ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
-    const c = getColors();
-    const byCol = Object.fromEntries(STATUS_OPTS.map((k) => [k, []]));
-    items.forEach((it) => {
-      if (byCol[it.status]) byCol[it.status].push(it);
-      else byCol["\uB300\uAE30"].push(it);
-    });
-    return `<div class="board-cols">${STATUS_OPTS.map(
-      (colKey) => `
-      <div class="board-col">
-        <div class="board-col-hd" style="border-top:3px solid ${STATUS_ACCENT[colKey]}">
-          <span>${esc2(colKey)}<span class="board-col-cnt">${byCol[colKey].length}</span></span>
-        </div>
-        <div class="board-col-body"
-          id="bbody-${eattr(colKey)}"
-          ondragover="boardDragOver(event,'${eattr(colKey)}')"
-          ondragleave="boardDragLeave(event,'${eattr(colKey)}')"
-          ondrop="boardDrop(event,'${eattr(colKey)}')">
-          ${byCol[colKey].map((it) => renderCard(it, c, -1, {
-        id: `bcard-${it.key}`,
-        extraClass: selSet.has(it.key) ? "board-selected" : "",
-        onclick: `boardCardClick(event,'${eattr(it.key)}')`,
-        ondblclick: `boardCardDblClick('${eattr(it.key)}')`,
-        ondragstart: `boardCardDragStart(event,'${eattr(it.key)}')`,
-        ondragend: "boardCardDragEnd()"
-      })).join("")}
-        </div>
-      </div>`
-    ).join("")}</div>`;
-  }
-  function BoardColumns({ container, selSet, items }) {
-    const html = (0, import_react4.useMemo)(
-      () => buildBoardHtml(selSet),
-      // items 배열 참조 + selSet 크기/내용 변경 시 재계산
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [items, selSet]
-    );
-    return (0, import_react_dom.createPortal)(
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { dangerouslySetInnerHTML: { __html: html } }),
-      container
-    );
-  }
-  function BoardActionBar({ container, boardSel }) {
-    (0, import_react4.useEffect)(() => {
-      container.classList.toggle("on", boardSel.length > 0);
-    }, [boardSel.length, container]);
-    if (boardSel.length === 0) return (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_jsx_runtime4.Fragment, {}), container);
-    return (0, import_react_dom.createPortal)(
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { children: [
-          boardSel.length,
-          "\uAC1C \uC120\uD0DD"
-        ] }),
-        STATUS_OPTS.map((st) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { onClick: () => window.boardMoveSelected?.(st), children: STATUS_LBL[st] }, st)),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { className: "bar-close", onClick: () => window.boardClearSel?.(), children: "\u2715" })
-      ] }),
-      container
-    );
-  }
+  var FOLD_COUNT = 6;
   function BoardView() {
     const items = useAppStore((s) => s.items);
     const boardSel = useAppStore((s) => s.boardSel);
     const [boardContainer, setBoardContainer] = (0, import_react4.useState)(null);
     const [barContainer, setBarContainer] = (0, import_react4.useState)(null);
+    const [expanded, setExpanded] = (0, import_react4.useState)(/* @__PURE__ */ new Set());
     (0, import_react4.useEffect)(() => {
       setBoardContainer(document.getElementById("boardView"));
       setBarContainer(document.getElementById("boardActionBar"));
     }, []);
+    const toggleExpand = (0, import_react4.useCallback)((colKey) => {
+      setExpanded((prev) => {
+        const next = new Set(prev);
+        if (next.has(colKey)) next.delete(colKey);
+        else next.add(colKey);
+        return next;
+      });
+    }, []);
     const selSet = (0, import_react4.useMemo)(() => new Set(boardSel), [boardSel]);
     if (!boardContainer || !barContainer) return null;
+    const filteredItems = isFilterActive() ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
+    const c = getColors();
+    const byCol = Object.fromEntries(STATUS_OPTS.map((k) => [k, []]));
+    filteredItems.forEach((it) => {
+      if (byCol[it.status]) byCol[it.status].push(it);
+      else byCol["\uB300\uAE30"].push(it);
+    });
+    const boardPortal = (0, import_react_dom.createPortal)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "board-cols", children: STATUS_OPTS.map((colKey) => {
+        const colItems = byCol[colKey];
+        const isExp = expanded.has(colKey);
+        const overLimit = colItems.length > FOLD_COUNT;
+        const visible = isExp ? colItems : colItems.slice(0, FOLD_COUNT);
+        const hidden = colItems.length - FOLD_COUNT;
+        const cardsHtml = visible.map((it) => renderCard(it, c, -1, {
+          id: `bcard-${it.key}`,
+          extraClass: selSet.has(it.key) ? "board-selected" : "",
+          onclick: `boardCardClick(event,'${eattr(it.key)}')`,
+          ondblclick: `boardCardDblClick('${eattr(it.key)}')`,
+          ondragstart: `boardCardDragStart(event,'${eattr(it.key)}')`,
+          ondragend: "boardCardDragEnd()"
+        })).join("");
+        return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "board-col", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "board-col-hd", style: { borderTop: `3px solid ${STATUS_ACCENT[colKey]}` }, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { children: [
+            esc2(colKey),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "board-col-cnt", children: colItems.length })
+          ] }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+            "div",
+            {
+              className: `board-col-body${isExp ? " board-col-body--expanded" : ""}`,
+              id: `bbody-${colKey}`,
+              onDragOver: (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                e.currentTarget.classList.add("drag-over");
+              },
+              onDragLeave: (e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  e.currentTarget.classList.remove("drag-over");
+                }
+              },
+              onDrop: (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove("drag-over");
+                window.boardDrop?.(e, colKey);
+              },
+              dangerouslySetInnerHTML: { __html: cardsHtml }
+            }
+          ),
+          overLimit && !isExp && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+            "button",
+            {
+              className: "board-more-btn",
+              onClick: () => toggleExpand(colKey),
+              children: [
+                "\uB354 \uBCF4\uAE30 (",
+                hidden,
+                "\uAC1C)"
+              ]
+            }
+          ),
+          overLimit && isExp && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+            "button",
+            {
+              className: "board-more-btn board-more-btn--fold",
+              onClick: () => toggleExpand(colKey),
+              children: "\uC811\uAE30"
+            }
+          )
+        ] }, colKey);
+      }) }),
+      boardContainer
+    );
+    const barPortal = (0, import_react_dom.createPortal)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(BoardActionBar, { boardSel, container: barContainer }),
+      barContainer
+    );
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(BoardColumns, { container: boardContainer, selSet, items }),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(BoardActionBar, { container: barContainer, boardSel })
+      boardPortal,
+      barPortal
+    ] });
+  }
+  function BoardActionBar({ boardSel, container }) {
+    (0, import_react4.useEffect)(() => {
+      container.classList.toggle("on", boardSel.length > 0);
+    }, [boardSel.length, container]);
+    if (boardSel.length === 0) return null;
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { children: [
+        boardSel.length,
+        "\uAC1C \uC120\uD0DD"
+      ] }),
+      STATUS_OPTS.map((st) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { onClick: () => window.boardMoveSelected?.(st), children: STATUS_LBL[st] }, st)),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { className: "bar-close", onClick: () => window.boardClearSel?.(), children: "\u2715" })
     ] });
   }
 
