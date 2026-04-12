@@ -78,7 +78,7 @@ def load_config():
     cfg = {'allowed_origins': [], 'editor_password': ''}
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(cfg, f, indent=2, ensure_ascii=False)
-    print(f'\n✅ config.json 생성됨\n')
+    print(f'\n[ok] config.json 생성됨\n')
     return cfg
 
 CONFIG = load_config()
@@ -354,7 +354,7 @@ if __name__ == '__main__':
     RUNTIME['admin_password']  = args.admin_password
     RUNTIME['editor_password'] = args.editor_password
 
-    print(f'🚀 featureMatrix-server')
+    print(f'[start] featureMatrix-server')
     print(f'   http://{args.host}:{args.port}')
     print(f'   관리자: {"비밀번호 설정됨" if args.admin_password else "미설정 (모든 사용자 관리자)"}')
     print(f'   편집자: {"비밀번호 설정됨" if get_editor_password() else "미설정 (로그인 없이 편집 가능)"}')

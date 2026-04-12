@@ -6,6 +6,21 @@ import { STATUS_CLS, STATUS_LBL, STATUS_OPTS, STATUS_CHIP_COLORS, FLABELS } from
 import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate, editLocks } from './state.js';
 import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
 import { isAdmin, isEditor } from './admin.js';
+import { setStore } from '../store/useAppStore.js';
+
+/* ── Zustand 동기화: renderAll() 후 React 컴포넌트에 S 상태 반영 ── */
+function syncToStore() {
+  setStore({
+    items:    S.items,
+    view:     S.view,
+    searchQ:  S.searchQ,
+    filters:  { ...S.filters },
+    display:  { ...S.display },
+    settings: { ...S.settings },
+    sort:     { ...S.sort },
+    editKey:  S.editKey,
+  });
+}
 
 /* ── 애니메이션 유틸 ── */
 const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;
@@ -204,6 +219,7 @@ export function renderAll(withFade = false) {
     renderOwnerChips();
     renderPrioChips();
     renderStatusChips();
+    syncToStore();
   };
   if (withFade && animOk('filter')) {
     const area = document.getElementById('contentArea');

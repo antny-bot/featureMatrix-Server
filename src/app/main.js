@@ -79,6 +79,9 @@ Object.assign(window, {
   setEditorPassword,
 });
 
+/* ── AuthContext용 S 브릿지 ── */
+window.__S = S;
+
 /* ── notify 인라인 ── */
 window.__sobukRenderAll = () => renderAll();
 /** @param {string} msg @param {boolean|'success'|'warning'|'error'} type */

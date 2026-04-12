@@ -1783,10 +1783,10 @@ function __inlineNotify(msg, type) {
         exports.use = function(usable) {
           return resolveDispatcher().use(usable);
         };
-        exports.useActionState = function(action, initialState, permalink) {
+        exports.useActionState = function(action, initialState2, permalink) {
           return resolveDispatcher().useActionState(
             action,
-            initialState,
+            initialState2,
             permalink
           );
         };
@@ -1806,11 +1806,11 @@ function __inlineNotify(msg, type) {
         exports.useDeferredValue = function(value, initialValue) {
           return resolveDispatcher().useDeferredValue(value, initialValue);
         };
-        exports.useEffect = function(create, deps) {
-          null == create && console.warn(
+        exports.useEffect = function(create2, deps) {
+          null == create2 && console.warn(
             "React Hook useEffect requires an effect callback. Did you forget to pass a callback to the hook?"
           );
-          return resolveDispatcher().useEffect(create, deps);
+          return resolveDispatcher().useEffect(create2, deps);
         };
         exports.useEffectEvent = function(callback) {
           return resolveDispatcher().useEffectEvent(callback);
@@ -1818,23 +1818,23 @@ function __inlineNotify(msg, type) {
         exports.useId = function() {
           return resolveDispatcher().useId();
         };
-        exports.useImperativeHandle = function(ref, create, deps) {
-          return resolveDispatcher().useImperativeHandle(ref, create, deps);
+        exports.useImperativeHandle = function(ref, create2, deps) {
+          return resolveDispatcher().useImperativeHandle(ref, create2, deps);
         };
-        exports.useInsertionEffect = function(create, deps) {
-          null == create && console.warn(
+        exports.useInsertionEffect = function(create2, deps) {
+          null == create2 && console.warn(
             "React Hook useInsertionEffect requires an effect callback. Did you forget to pass a callback to the hook?"
           );
-          return resolveDispatcher().useInsertionEffect(create, deps);
+          return resolveDispatcher().useInsertionEffect(create2, deps);
         };
-        exports.useLayoutEffect = function(create, deps) {
-          null == create && console.warn(
+        exports.useLayoutEffect = function(create2, deps) {
+          null == create2 && console.warn(
             "React Hook useLayoutEffect requires an effect callback. Did you forget to pass a callback to the hook?"
           );
-          return resolveDispatcher().useLayoutEffect(create, deps);
+          return resolveDispatcher().useLayoutEffect(create2, deps);
         };
-        exports.useMemo = function(create, deps) {
-          return resolveDispatcher().useMemo(create, deps);
+        exports.useMemo = function(create2, deps) {
+          return resolveDispatcher().useMemo(create2, deps);
         };
         exports.useOptimistic = function(passthrough, reducer) {
           return resolveDispatcher().useOptimistic(passthrough, reducer);
@@ -1845,8 +1845,8 @@ function __inlineNotify(msg, type) {
         exports.useRef = function(initialValue) {
           return resolveDispatcher().useRef(initialValue);
         };
-        exports.useState = function(initialState) {
-          return resolveDispatcher().useState(initialState);
+        exports.useState = function(initialState2) {
+          return resolveDispatcher().useState(initialState2);
         };
         exports.useSyncExternalStore = function(subscribe, getSnapshot, getServerSnapshot) {
           return resolveDispatcher().useSyncExternalStore(
@@ -1925,7 +1925,7 @@ function __inlineNotify(msg, type) {
           return dispatcher;
         }
         "undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ && "function" === typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart && __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(Error());
-        var React = require_react(), Internals = {
+        var React2 = require_react(), Internals = {
           d: {
             f: noop,
             r: function() {
@@ -1943,7 +1943,7 @@ function __inlineNotify(msg, type) {
           },
           p: 0,
           findDOMNode: null
-        }, REACT_PORTAL_TYPE = Symbol.for("react.portal"), ReactSharedInternals = React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
+        }, REACT_PORTAL_TYPE = Symbol.for("react.portal"), ReactSharedInternals = React2.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
         "function" === typeof Map && null != Map.prototype && "function" === typeof Map.prototype.forEach && "function" === typeof Set && null != Set.prototype && "function" === typeof Set.prototype.clear && "function" === typeof Set.prototype.forEach || console.error(
           "React depends on Map and Set built-in types. Make sure that you load a polyfill in older browsers. https://reactjs.org/link/react-polyfills"
         );
@@ -2108,8 +2108,8 @@ function __inlineNotify(msg, type) {
         exports.unstable_batchedUpdates = function(fn, a) {
           return fn(a);
         };
-        exports.useFormState = function(action, initialState, permalink) {
-          return resolveDispatcher().useFormState(action, initialState, permalink);
+        exports.useFormState = function(action, initialState2, permalink) {
+          return resolveDispatcher().useFormState(action, initialState2, permalink);
         };
         exports.useFormStatus = function() {
           return resolveDispatcher().useHostTransitionStatus();
@@ -3478,7 +3478,7 @@ function __inlineNotify(msg, type) {
           "number" === type && getActiveElement(node.ownerDocument) === node || node.defaultValue === "" + value || (node.defaultValue = "" + value);
         }
         function validateOptionProps(element, props) {
-          null == props.value && ("object" === typeof props.children && null !== props.children ? React.Children.forEach(props.children, function(child) {
+          null == props.value && ("object" === typeof props.children && null !== props.children ? React2.Children.forEach(props.children, function(child) {
             null == child || "string" === typeof child || "number" === typeof child || "bigint" === typeof child || didWarnInvalidChild || (didWarnInvalidChild = true, console.error(
               "Cannot infer the option value of complex children. Pass a `value` prop or use a plain string as children to <option>."
             ));
@@ -7710,7 +7710,7 @@ function __inlineNotify(msg, type) {
         function mountReducer(reducer, initialArg, init2) {
           var hook = mountWorkInProgressHook();
           if (void 0 !== init2) {
-            var initialState = init2(initialArg);
+            var initialState2 = init2(initialArg);
             if (shouldDoubleInvokeUserFnsInHooksDEV) {
               setIsStrictModeForDevtools(true);
               try {
@@ -7719,14 +7719,14 @@ function __inlineNotify(msg, type) {
                 setIsStrictModeForDevtools(false);
               }
             }
-          } else initialState = initialArg;
-          hook.memoizedState = hook.baseState = initialState;
+          } else initialState2 = initialArg;
+          hook.memoizedState = hook.baseState = initialState2;
           reducer = {
             pending: null,
             lanes: 0,
             dispatch: null,
             lastRenderedReducer: reducer,
-            lastRenderedState: initialState
+            lastRenderedState: initialState2
           };
           hook.queue = reducer;
           reducer = reducer.dispatch = dispatchReducerAction.bind(
@@ -7904,8 +7904,8 @@ function __inlineNotify(msg, type) {
           ))
             hook.memoizedState = getServerSnapshot, didReceiveUpdate = true;
           hook = hook.queue;
-          var create = subscribeToStore.bind(null, fiber, hook, subscribe);
-          updateEffectImpl(2048, Passive, create, [subscribe]);
+          var create2 = subscribeToStore.bind(null, fiber, hook, subscribe);
+          updateEffectImpl(2048, Passive, create2, [subscribe]);
           if (hook.getSnapshot !== getSnapshot || cachedSnapshot || null !== workInProgressHook && workInProgressHook.memoizedState.tag & HasEffect) {
             fiber.flags |= 2048;
             pushSimpleEffect(
@@ -7958,11 +7958,11 @@ function __inlineNotify(msg, type) {
           var root2 = enqueueConcurrentRenderForLane(fiber, 2);
           null !== root2 && scheduleUpdateOnFiber(root2, fiber, 2);
         }
-        function mountStateImpl(initialState) {
+        function mountStateImpl(initialState2) {
           var hook = mountWorkInProgressHook();
-          if ("function" === typeof initialState) {
-            var initialStateInitializer = initialState;
-            initialState = initialStateInitializer();
+          if ("function" === typeof initialState2) {
+            var initialStateInitializer = initialState2;
+            initialState2 = initialStateInitializer();
             if (shouldDoubleInvokeUserFnsInHooksDEV) {
               setIsStrictModeForDevtools(true);
               try {
@@ -7972,21 +7972,21 @@ function __inlineNotify(msg, type) {
               }
             }
           }
-          hook.memoizedState = hook.baseState = initialState;
+          hook.memoizedState = hook.baseState = initialState2;
           hook.queue = {
             pending: null,
             lanes: 0,
             dispatch: null,
             lastRenderedReducer: basicStateReducer,
-            lastRenderedState: initialState
+            lastRenderedState: initialState2
           };
           return hook;
         }
-        function mountState(initialState) {
-          initialState = mountStateImpl(initialState);
-          var queue = initialState.queue, dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
+        function mountState(initialState2) {
+          initialState2 = mountStateImpl(initialState2);
+          var queue = initialState2.queue, dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
           queue.dispatch = dispatch;
-          return [initialState.memoizedState, dispatch];
+          return [initialState2.memoizedState, dispatch];
         }
         function mountOptimistic(passthrough) {
           var hook = mountWorkInProgressHook();
@@ -8241,12 +8241,12 @@ function __inlineNotify(msg, type) {
           currentStateHook.memoizedState = action;
           return [stateHook, dispatch, false];
         }
-        function pushSimpleEffect(tag, inst, create, deps) {
-          tag = { tag, create, deps, inst, next: null };
+        function pushSimpleEffect(tag, inst, create2, deps) {
+          tag = { tag, create: create2, deps, inst, next: null };
           inst = currentlyRenderingFiber.updateQueue;
           null === inst && (inst = createFunctionComponentUpdateQueue(), currentlyRenderingFiber.updateQueue = inst);
-          create = inst.lastEffect;
-          null === create ? inst.lastEffect = tag.next = tag : (deps = create.next, create.next = tag, tag.next = deps, inst.lastEffect = tag);
+          create2 = inst.lastEffect;
+          null === create2 ? inst.lastEffect = tag.next = tag : (deps = create2.next, create2.next = tag, tag.next = deps, inst.lastEffect = tag);
           return tag;
         }
         function mountRef(initialValue) {
@@ -8254,29 +8254,29 @@ function __inlineNotify(msg, type) {
           initialValue = { current: initialValue };
           return hook.memoizedState = initialValue;
         }
-        function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
+        function mountEffectImpl(fiberFlags, hookFlags, create2, deps) {
           var hook = mountWorkInProgressHook();
           currentlyRenderingFiber.flags |= fiberFlags;
           hook.memoizedState = pushSimpleEffect(
             HasEffect | hookFlags,
             { destroy: void 0 },
-            create,
+            create2,
             void 0 === deps ? null : deps
           );
         }
-        function updateEffectImpl(fiberFlags, hookFlags, create, deps) {
+        function updateEffectImpl(fiberFlags, hookFlags, create2, deps) {
           var hook = updateWorkInProgressHook();
           deps = void 0 === deps ? null : deps;
           var inst = hook.memoizedState.inst;
-          null !== currentHook && null !== deps && areHookInputsEqual(deps, currentHook.memoizedState.deps) ? hook.memoizedState = pushSimpleEffect(hookFlags, inst, create, deps) : (currentlyRenderingFiber.flags |= fiberFlags, hook.memoizedState = pushSimpleEffect(
+          null !== currentHook && null !== deps && areHookInputsEqual(deps, currentHook.memoizedState.deps) ? hook.memoizedState = pushSimpleEffect(hookFlags, inst, create2, deps) : (currentlyRenderingFiber.flags |= fiberFlags, hook.memoizedState = pushSimpleEffect(
             HasEffect | hookFlags,
             inst,
-            create,
+            create2,
             deps
           ));
         }
-        function mountEffect(create, deps) {
-          (currentlyRenderingFiber.mode & StrictEffectsMode) !== NoMode ? mountEffectImpl(276826112, Passive, create, deps) : mountEffectImpl(8390656, Passive, create, deps);
+        function mountEffect(create2, deps) {
+          (currentlyRenderingFiber.mode & StrictEffectsMode) !== NoMode ? mountEffectImpl(276826112, Passive, create2, deps) : mountEffectImpl(8390656, Passive, create2, deps);
         }
         function useEffectEventImpl(payload) {
           currentlyRenderingFiber.flags |= 4;
@@ -8310,15 +8310,15 @@ function __inlineNotify(msg, type) {
             return ref.impl.apply(void 0, arguments);
           };
         }
-        function mountLayoutEffect(create, deps) {
+        function mountLayoutEffect(create2, deps) {
           var fiberFlags = 4194308;
           (currentlyRenderingFiber.mode & StrictEffectsMode) !== NoMode && (fiberFlags |= 134217728);
-          return mountEffectImpl(fiberFlags, Layout, create, deps);
+          return mountEffectImpl(fiberFlags, Layout, create2, deps);
         }
-        function imperativeHandleEffect(create, ref) {
+        function imperativeHandleEffect(create2, ref) {
           if ("function" === typeof ref) {
-            create = create();
-            var refCleanup = ref(create);
+            create2 = create2();
+            var refCleanup = ref(create2);
             return function() {
               "function" === typeof refCleanup ? refCleanup() : ref(null);
             };
@@ -8327,14 +8327,14 @@ function __inlineNotify(msg, type) {
             return ref.hasOwnProperty("current") || console.error(
               "Expected useImperativeHandle() first argument to either be a ref callback or React.createRef() object. Instead received: %s.",
               "an object with keys {" + Object.keys(ref).join(", ") + "}"
-            ), create = create(), ref.current = create, function() {
+            ), create2 = create2(), ref.current = create2, function() {
               ref.current = null;
             };
         }
-        function mountImperativeHandle(ref, create, deps) {
-          "function" !== typeof create && console.error(
+        function mountImperativeHandle(ref, create2, deps) {
+          "function" !== typeof create2 && console.error(
             "Expected useImperativeHandle() second argument to be a function that creates a handle. Instead received: %s.",
-            null !== create ? typeof create : "null"
+            null !== create2 ? typeof create2 : "null"
           );
           deps = null !== deps && void 0 !== deps ? deps.concat([ref]) : null;
           var fiberFlags = 4194308;
@@ -8342,20 +8342,20 @@ function __inlineNotify(msg, type) {
           mountEffectImpl(
             fiberFlags,
             Layout,
-            imperativeHandleEffect.bind(null, create, ref),
+            imperativeHandleEffect.bind(null, create2, ref),
             deps
           );
         }
-        function updateImperativeHandle(ref, create, deps) {
-          "function" !== typeof create && console.error(
+        function updateImperativeHandle(ref, create2, deps) {
+          "function" !== typeof create2 && console.error(
             "Expected useImperativeHandle() second argument to be a function that creates a handle. Instead received: %s.",
-            null !== create ? typeof create : "null"
+            null !== create2 ? typeof create2 : "null"
           );
           deps = null !== deps && void 0 !== deps ? deps.concat([ref]) : null;
           updateEffectImpl(
             4,
             Layout,
-            imperativeHandleEffect.bind(null, create, ref),
+            imperativeHandleEffect.bind(null, create2, ref),
             deps
           );
         }
@@ -19110,14 +19110,14 @@ function __inlineNotify(msg, type) {
           ));
         }
         "undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ && "function" === typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart && __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(Error());
-        var Scheduler = require_scheduler(), React = require_react(), ReactDOM = require_react_dom(), assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
+        var Scheduler = require_scheduler(), React2 = require_react(), ReactDOM = require_react_dom(), assign = Object.assign, REACT_LEGACY_ELEMENT_TYPE = Symbol.for("react.element"), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy");
         Symbol.for("react.scope");
         var REACT_ACTIVITY_TYPE = Symbol.for("react.activity");
         Symbol.for("react.legacy_hidden");
         Symbol.for("react.tracing_marker");
         var REACT_MEMO_CACHE_SENTINEL = Symbol.for("react.memo_cache_sentinel");
         Symbol.for("react.view_transition");
-        var MAYBE_ITERATOR_SYMBOL = Symbol.iterator, REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), isArrayImpl = Array.isArray, ReactSharedInternals = React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, ReactDOMSharedInternals = ReactDOM.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, NotPending = Object.freeze({
+        var MAYBE_ITERATOR_SYMBOL = Symbol.iterator, REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), isArrayImpl = Array.isArray, ReactSharedInternals = React2.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, ReactDOMSharedInternals = ReactDOM.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, NotPending = Object.freeze({
           pending: false,
           data: null,
           method: null,
@@ -20416,10 +20416,10 @@ function __inlineNotify(msg, type) {
           callComponentWillUnmount
         ), callCreate = {
           react_stack_bottom_frame: function(effect) {
-            var create = effect.create;
+            var create2 = effect.create;
             effect = effect.inst;
-            create = create();
-            return effect.destroy = create;
+            create2 = create2();
+            return effect.destroy = create2;
           }
         }, callCreateInDEV = callCreate.react_stack_bottom_frame.bind(callCreate), callDestroy = {
           react_stack_bottom_frame: function(current2, nearestMountedAncestor, destroy) {
@@ -20529,38 +20529,38 @@ function __inlineNotify(msg, type) {
             mountHookTypesDev();
             return readContext(context);
           },
-          useEffect: function(create, deps) {
+          useEffect: function(create2, deps) {
             currentHookNameInDev = "useEffect";
             mountHookTypesDev();
             checkDepsAreArrayDev(deps);
-            return mountEffect(create, deps);
+            return mountEffect(create2, deps);
           },
-          useImperativeHandle: function(ref, create, deps) {
+          useImperativeHandle: function(ref, create2, deps) {
             currentHookNameInDev = "useImperativeHandle";
             mountHookTypesDev();
             checkDepsAreArrayDev(deps);
-            return mountImperativeHandle(ref, create, deps);
+            return mountImperativeHandle(ref, create2, deps);
           },
-          useInsertionEffect: function(create, deps) {
+          useInsertionEffect: function(create2, deps) {
             currentHookNameInDev = "useInsertionEffect";
             mountHookTypesDev();
             checkDepsAreArrayDev(deps);
-            mountEffectImpl(4, Insertion, create, deps);
+            mountEffectImpl(4, Insertion, create2, deps);
           },
-          useLayoutEffect: function(create, deps) {
+          useLayoutEffect: function(create2, deps) {
             currentHookNameInDev = "useLayoutEffect";
             mountHookTypesDev();
             checkDepsAreArrayDev(deps);
-            return mountLayoutEffect(create, deps);
+            return mountLayoutEffect(create2, deps);
           },
-          useMemo: function(create, deps) {
+          useMemo: function(create2, deps) {
             currentHookNameInDev = "useMemo";
             mountHookTypesDev();
             checkDepsAreArrayDev(deps);
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountMemo(create, deps);
+              return mountMemo(create2, deps);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -20581,13 +20581,13 @@ function __inlineNotify(msg, type) {
             mountHookTypesDev();
             return mountRef(initialValue);
           },
-          useState: function(initialState) {
+          useState: function(initialState2) {
             currentHookNameInDev = "useState";
             mountHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountState(initialState);
+              return mountState(initialState2);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -20620,16 +20620,16 @@ function __inlineNotify(msg, type) {
             mountHookTypesDev();
             return mountId();
           },
-          useFormState: function(action, initialState) {
+          useFormState: function(action, initialState2) {
             currentHookNameInDev = "useFormState";
             mountHookTypesDev();
             warnOnUseFormStateInDev();
-            return mountActionState(action, initialState);
+            return mountActionState(action, initialState2);
           },
-          useActionState: function(action, initialState) {
+          useActionState: function(action, initialState2) {
             currentHookNameInDev = "useActionState";
             mountHookTypesDev();
-            return mountActionState(action, initialState);
+            return mountActionState(action, initialState2);
           },
           useOptimistic: function(passthrough) {
             currentHookNameInDev = "useOptimistic";
@@ -20664,33 +20664,33 @@ function __inlineNotify(msg, type) {
             updateHookTypesDev();
             return readContext(context);
           },
-          useEffect: function(create, deps) {
+          useEffect: function(create2, deps) {
             currentHookNameInDev = "useEffect";
             updateHookTypesDev();
-            return mountEffect(create, deps);
+            return mountEffect(create2, deps);
           },
-          useImperativeHandle: function(ref, create, deps) {
+          useImperativeHandle: function(ref, create2, deps) {
             currentHookNameInDev = "useImperativeHandle";
             updateHookTypesDev();
-            return mountImperativeHandle(ref, create, deps);
+            return mountImperativeHandle(ref, create2, deps);
           },
-          useInsertionEffect: function(create, deps) {
+          useInsertionEffect: function(create2, deps) {
             currentHookNameInDev = "useInsertionEffect";
             updateHookTypesDev();
-            mountEffectImpl(4, Insertion, create, deps);
+            mountEffectImpl(4, Insertion, create2, deps);
           },
-          useLayoutEffect: function(create, deps) {
+          useLayoutEffect: function(create2, deps) {
             currentHookNameInDev = "useLayoutEffect";
             updateHookTypesDev();
-            return mountLayoutEffect(create, deps);
+            return mountLayoutEffect(create2, deps);
           },
-          useMemo: function(create, deps) {
+          useMemo: function(create2, deps) {
             currentHookNameInDev = "useMemo";
             updateHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountMemo(create, deps);
+              return mountMemo(create2, deps);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -20711,13 +20711,13 @@ function __inlineNotify(msg, type) {
             updateHookTypesDev();
             return mountRef(initialValue);
           },
-          useState: function(initialState) {
+          useState: function(initialState2) {
             currentHookNameInDev = "useState";
             updateHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountState(initialState);
+              return mountState(initialState2);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -20750,16 +20750,16 @@ function __inlineNotify(msg, type) {
             updateHookTypesDev();
             return mountId();
           },
-          useActionState: function(action, initialState) {
+          useActionState: function(action, initialState2) {
             currentHookNameInDev = "useActionState";
             updateHookTypesDev();
-            return mountActionState(action, initialState);
+            return mountActionState(action, initialState2);
           },
-          useFormState: function(action, initialState) {
+          useFormState: function(action, initialState2) {
             currentHookNameInDev = "useFormState";
             updateHookTypesDev();
             warnOnUseFormStateInDev();
-            return mountActionState(action, initialState);
+            return mountActionState(action, initialState2);
           },
           useOptimistic: function(passthrough) {
             currentHookNameInDev = "useOptimistic";
@@ -20794,33 +20794,33 @@ function __inlineNotify(msg, type) {
             updateHookTypesDev();
             return readContext(context);
           },
-          useEffect: function(create, deps) {
+          useEffect: function(create2, deps) {
             currentHookNameInDev = "useEffect";
             updateHookTypesDev();
-            updateEffectImpl(2048, Passive, create, deps);
+            updateEffectImpl(2048, Passive, create2, deps);
           },
-          useImperativeHandle: function(ref, create, deps) {
+          useImperativeHandle: function(ref, create2, deps) {
             currentHookNameInDev = "useImperativeHandle";
             updateHookTypesDev();
-            return updateImperativeHandle(ref, create, deps);
+            return updateImperativeHandle(ref, create2, deps);
           },
-          useInsertionEffect: function(create, deps) {
+          useInsertionEffect: function(create2, deps) {
             currentHookNameInDev = "useInsertionEffect";
             updateHookTypesDev();
-            return updateEffectImpl(4, Insertion, create, deps);
+            return updateEffectImpl(4, Insertion, create2, deps);
           },
-          useLayoutEffect: function(create, deps) {
+          useLayoutEffect: function(create2, deps) {
             currentHookNameInDev = "useLayoutEffect";
             updateHookTypesDev();
-            return updateEffectImpl(4, Layout, create, deps);
+            return updateEffectImpl(4, Layout, create2, deps);
           },
-          useMemo: function(create, deps) {
+          useMemo: function(create2, deps) {
             currentHookNameInDev = "useMemo";
             updateHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnUpdateInDEV;
             try {
-              return updateMemo(create, deps);
+              return updateMemo(create2, deps);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -20924,33 +20924,33 @@ function __inlineNotify(msg, type) {
             updateHookTypesDev();
             return readContext(context);
           },
-          useEffect: function(create, deps) {
+          useEffect: function(create2, deps) {
             currentHookNameInDev = "useEffect";
             updateHookTypesDev();
-            updateEffectImpl(2048, Passive, create, deps);
+            updateEffectImpl(2048, Passive, create2, deps);
           },
-          useImperativeHandle: function(ref, create, deps) {
+          useImperativeHandle: function(ref, create2, deps) {
             currentHookNameInDev = "useImperativeHandle";
             updateHookTypesDev();
-            return updateImperativeHandle(ref, create, deps);
+            return updateImperativeHandle(ref, create2, deps);
           },
-          useInsertionEffect: function(create, deps) {
+          useInsertionEffect: function(create2, deps) {
             currentHookNameInDev = "useInsertionEffect";
             updateHookTypesDev();
-            return updateEffectImpl(4, Insertion, create, deps);
+            return updateEffectImpl(4, Insertion, create2, deps);
           },
-          useLayoutEffect: function(create, deps) {
+          useLayoutEffect: function(create2, deps) {
             currentHookNameInDev = "useLayoutEffect";
             updateHookTypesDev();
-            return updateEffectImpl(4, Layout, create, deps);
+            return updateEffectImpl(4, Layout, create2, deps);
           },
-          useMemo: function(create, deps) {
+          useMemo: function(create2, deps) {
             currentHookNameInDev = "useMemo";
             updateHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnRerenderInDEV;
             try {
-              return updateMemo(create, deps);
+              return updateMemo(create2, deps);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -21060,38 +21060,38 @@ function __inlineNotify(msg, type) {
             mountHookTypesDev();
             return readContext(context);
           },
-          useEffect: function(create, deps) {
+          useEffect: function(create2, deps) {
             currentHookNameInDev = "useEffect";
             warnInvalidHookAccess();
             mountHookTypesDev();
-            return mountEffect(create, deps);
+            return mountEffect(create2, deps);
           },
-          useImperativeHandle: function(ref, create, deps) {
+          useImperativeHandle: function(ref, create2, deps) {
             currentHookNameInDev = "useImperativeHandle";
             warnInvalidHookAccess();
             mountHookTypesDev();
-            return mountImperativeHandle(ref, create, deps);
+            return mountImperativeHandle(ref, create2, deps);
           },
-          useInsertionEffect: function(create, deps) {
+          useInsertionEffect: function(create2, deps) {
             currentHookNameInDev = "useInsertionEffect";
             warnInvalidHookAccess();
             mountHookTypesDev();
-            mountEffectImpl(4, Insertion, create, deps);
+            mountEffectImpl(4, Insertion, create2, deps);
           },
-          useLayoutEffect: function(create, deps) {
+          useLayoutEffect: function(create2, deps) {
             currentHookNameInDev = "useLayoutEffect";
             warnInvalidHookAccess();
             mountHookTypesDev();
-            return mountLayoutEffect(create, deps);
+            return mountLayoutEffect(create2, deps);
           },
-          useMemo: function(create, deps) {
+          useMemo: function(create2, deps) {
             currentHookNameInDev = "useMemo";
             warnInvalidHookAccess();
             mountHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountMemo(create, deps);
+              return mountMemo(create2, deps);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -21114,14 +21114,14 @@ function __inlineNotify(msg, type) {
             mountHookTypesDev();
             return mountRef(initialValue);
           },
-          useState: function(initialState) {
+          useState: function(initialState2) {
             currentHookNameInDev = "useState";
             warnInvalidHookAccess();
             mountHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountState(initialState);
+              return mountState(initialState2);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -21159,17 +21159,17 @@ function __inlineNotify(msg, type) {
             mountHookTypesDev();
             return mountId();
           },
-          useFormState: function(action, initialState) {
+          useFormState: function(action, initialState2) {
             currentHookNameInDev = "useFormState";
             warnInvalidHookAccess();
             mountHookTypesDev();
-            return mountActionState(action, initialState);
+            return mountActionState(action, initialState2);
           },
-          useActionState: function(action, initialState) {
+          useActionState: function(action, initialState2) {
             currentHookNameInDev = "useActionState";
             warnInvalidHookAccess();
             mountHookTypesDev();
-            return mountActionState(action, initialState);
+            return mountActionState(action, initialState2);
           },
           useOptimistic: function(passthrough) {
             currentHookNameInDev = "useOptimistic";
@@ -21215,38 +21215,38 @@ function __inlineNotify(msg, type) {
             updateHookTypesDev();
             return readContext(context);
           },
-          useEffect: function(create, deps) {
+          useEffect: function(create2, deps) {
             currentHookNameInDev = "useEffect";
             warnInvalidHookAccess();
             updateHookTypesDev();
-            updateEffectImpl(2048, Passive, create, deps);
+            updateEffectImpl(2048, Passive, create2, deps);
           },
-          useImperativeHandle: function(ref, create, deps) {
+          useImperativeHandle: function(ref, create2, deps) {
             currentHookNameInDev = "useImperativeHandle";
             warnInvalidHookAccess();
             updateHookTypesDev();
-            return updateImperativeHandle(ref, create, deps);
+            return updateImperativeHandle(ref, create2, deps);
           },
-          useInsertionEffect: function(create, deps) {
+          useInsertionEffect: function(create2, deps) {
             currentHookNameInDev = "useInsertionEffect";
             warnInvalidHookAccess();
             updateHookTypesDev();
-            return updateEffectImpl(4, Insertion, create, deps);
+            return updateEffectImpl(4, Insertion, create2, deps);
           },
-          useLayoutEffect: function(create, deps) {
+          useLayoutEffect: function(create2, deps) {
             currentHookNameInDev = "useLayoutEffect";
             warnInvalidHookAccess();
             updateHookTypesDev();
-            return updateEffectImpl(4, Layout, create, deps);
+            return updateEffectImpl(4, Layout, create2, deps);
           },
-          useMemo: function(create, deps) {
+          useMemo: function(create2, deps) {
             currentHookNameInDev = "useMemo";
             warnInvalidHookAccess();
             updateHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnUpdateInDEV;
             try {
-              return updateMemo(create, deps);
+              return updateMemo(create2, deps);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -21370,38 +21370,38 @@ function __inlineNotify(msg, type) {
             updateHookTypesDev();
             return readContext(context);
           },
-          useEffect: function(create, deps) {
+          useEffect: function(create2, deps) {
             currentHookNameInDev = "useEffect";
             warnInvalidHookAccess();
             updateHookTypesDev();
-            updateEffectImpl(2048, Passive, create, deps);
+            updateEffectImpl(2048, Passive, create2, deps);
           },
-          useImperativeHandle: function(ref, create, deps) {
+          useImperativeHandle: function(ref, create2, deps) {
             currentHookNameInDev = "useImperativeHandle";
             warnInvalidHookAccess();
             updateHookTypesDev();
-            return updateImperativeHandle(ref, create, deps);
+            return updateImperativeHandle(ref, create2, deps);
           },
-          useInsertionEffect: function(create, deps) {
+          useInsertionEffect: function(create2, deps) {
             currentHookNameInDev = "useInsertionEffect";
             warnInvalidHookAccess();
             updateHookTypesDev();
-            return updateEffectImpl(4, Insertion, create, deps);
+            return updateEffectImpl(4, Insertion, create2, deps);
           },
-          useLayoutEffect: function(create, deps) {
+          useLayoutEffect: function(create2, deps) {
             currentHookNameInDev = "useLayoutEffect";
             warnInvalidHookAccess();
             updateHookTypesDev();
-            return updateEffectImpl(4, Layout, create, deps);
+            return updateEffectImpl(4, Layout, create2, deps);
           },
-          useMemo: function(create, deps) {
+          useMemo: function(create2, deps) {
             currentHookNameInDev = "useMemo";
             warnInvalidHookAccess();
             updateHookTypesDev();
             var prevDispatcher = ReactSharedInternals.H;
             ReactSharedInternals.H = InvalidNestedHooksDispatcherOnUpdateInDEV;
             try {
-              return updateMemo(create, deps);
+              return updateMemo(create2, deps);
             } finally {
               ReactSharedInternals.H = prevDispatcher;
             }
@@ -21905,7 +21905,7 @@ function __inlineNotify(msg, type) {
           }
         };
         (function() {
-          var isomorphicReactPackageVersion = React.version;
+          var isomorphicReactPackageVersion = React2.version;
           if ("19.2.5" !== isomorphicReactPackageVersion)
             throw Error(
               'Incompatible React versions: The "react" and "react-dom" packages must have the exact same version. Instead got:\n  - react:      ' + (isomorphicReactPackageVersion + "\n  - react-dom:  19.2.5\nLearn more: https://react.dev/warnings/version-mismatch")
@@ -22259,18 +22259,18 @@ function __inlineNotify(msg, type) {
         function isValidElement(object) {
           return "object" === typeof object && null !== object && object.$$typeof === REACT_ELEMENT_TYPE;
         }
-        var React = require_react(), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
+        var React2 = require_react(), REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React2.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
           return null;
         };
-        React = {
+        React2 = {
           react_stack_bottom_frame: function(callStackForError) {
             return callStackForError();
           }
         };
         var specialPropKeyWarningShown;
         var didWarnAboutElementRef = {};
-        var unknownOwnerDebugStack = React.react_stack_bottom_frame.bind(
-          React,
+        var unknownOwnerDebugStack = React2.react_stack_bottom_frame.bind(
+          React2,
           UnknownOwner
         )();
         var unknownOwnerDebugTask = createTask(getTaskName(UnknownOwner));
@@ -22660,13 +22660,13 @@ function __inlineNotify(msg, type) {
   });
 
   // app/constants.js
-  var SK, UNDO_MAX, ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY, DATA_VERSION, MIGRATIONS, FIELDS, FLABELS, STATUS_OPTS, STATUS_CLS, STATUS_LBL, STATUS_ACCENT, STATUS_CHIP_COLORS, DEFAULT_LIST_COLS, PRESETS, THEMES, DEMO;
+  var SK, UNDO_MAX, ADMIN_TOKEN_KEY2, EDITOR_TOKEN_KEY2, DATA_VERSION, MIGRATIONS, FIELDS, FLABELS, STATUS_OPTS, STATUS_CLS, STATUS_LBL, STATUS_ACCENT, STATUS_CHIP_COLORS, DEFAULT_LIST_COLS, PRESETS, THEMES, DEMO;
   var init_constants = __esm({
     "app/constants.js"() {
       SK = "sobukMXv6";
       UNDO_MAX = 20;
-      ADMIN_TOKEN_KEY = "fmAdminToken";
-      EDITOR_TOKEN_KEY = "fmEditorToken";
+      ADMIN_TOKEN_KEY2 = "fmAdminToken";
+      EDITOR_TOKEN_KEY2 = "fmEditorToken";
       DATA_VERSION = 2;
       MIGRATIONS = {
         1: (item) => ({
@@ -22818,8 +22818,8 @@ function __inlineNotify(msg, type) {
   }
   function apiHeaders() {
     const h = { "Content-Type": "application/json" };
-    const adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY);
-    const editorToken = sessionStorage.getItem(EDITOR_TOKEN_KEY);
+    const adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY2);
+    const editorToken = sessionStorage.getItem(EDITOR_TOKEN_KEY2);
     if (adminToken) h["X-Admin-Token"] = adminToken;
     if (editorToken) h["X-Editor-Token"] = editorToken;
     return h;
@@ -23455,17 +23455,17 @@ function __inlineNotify(msg, type) {
   }
   function isAdmin() {
     if (!isServerMode()) return true;
-    return !!sessionStorage.getItem(ADMIN_TOKEN_KEY);
+    return !!sessionStorage.getItem(ADMIN_TOKEN_KEY2);
   }
   function isEditor() {
     if (!isServerMode()) return true;
-    return !!(sessionStorage.getItem(EDITOR_TOKEN_KEY) || sessionStorage.getItem(ADMIN_TOKEN_KEY));
+    return !!(sessionStorage.getItem(EDITOR_TOKEN_KEY2) || sessionStorage.getItem(ADMIN_TOKEN_KEY2));
   }
   function getAdminToken() {
-    return sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
+    return sessionStorage.getItem(ADMIN_TOKEN_KEY2) || "";
   }
   function getEditorToken() {
-    return sessionStorage.getItem(EDITOR_TOKEN_KEY) || sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
+    return sessionStorage.getItem(EDITOR_TOKEN_KEY2) || sessionStorage.getItem(ADMIN_TOKEN_KEY2) || "";
   }
   function requireAdmin(callback) {
     if (isAdmin()) {
@@ -23520,9 +23520,9 @@ function __inlineNotify(msg, type) {
       });
       if (json.ok) {
         if (role === "admin") {
-          sessionStorage.setItem(ADMIN_TOKEN_KEY, json.token);
+          sessionStorage.setItem(ADMIN_TOKEN_KEY2, json.token);
         } else {
-          sessionStorage.setItem(EDITOR_TOKEN_KEY, json.token);
+          sessionStorage.setItem(EDITOR_TOKEN_KEY2, json.token);
         }
         if (name) {
           S.settings.userName = name;
@@ -23541,8 +23541,8 @@ function __inlineNotify(msg, type) {
     }
   }
   function logout() {
-    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-    sessionStorage.removeItem(EDITOR_TOKEN_KEY);
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY2);
+    sessionStorage.removeItem(EDITOR_TOKEN_KEY2);
     updateAdminUI();
     notify("\uB85C\uADF8\uC544\uC6C3\uB410\uC2B5\uB2C8\uB2E4.");
   }
@@ -23588,13 +23588,6 @@ function __inlineNotify(msg, type) {
         el.classList.toggle("admin-locked", !editor);
       }
     });
-    const badge = document.getElementById("adminBadge");
-    if (badge) badge.style.display = admin && serverMode ? "inline" : "none";
-    const logoutBtn = document.getElementById("adminLogoutBtn");
-    if (logoutBtn) {
-      logoutBtn.style.display = (admin || editor) && serverMode ? "inline-flex" : "none";
-      logoutBtn.title = admin ? "\uAD00\uB9AC\uC790 \uB85C\uADF8\uC544\uC6C3" : "\uD3B8\uC9D1\uC790 \uB85C\uADF8\uC544\uC6C3";
-    }
     const sadminTab = document.getElementById("sadminTab");
     if (sadminTab) {
       sadminTab.style.display = admin ? "" : "none";
@@ -23606,6 +23599,7 @@ function __inlineNotify(msg, type) {
       }
     }
     _updateNavLogin(admin, editor, serverMode);
+    window.__authRefresh?.();
   }
   function _updateNavLogin(admin, editor, serverMode) {
     const btn = document.getElementById("navLogin");
@@ -23635,7 +23629,205 @@ function __inlineNotify(msg, type) {
     }
   });
 
+  // node_modules/zustand/esm/vanilla.mjs
+  var createStoreImpl, createStore;
+  var init_vanilla = __esm({
+    "node_modules/zustand/esm/vanilla.mjs"() {
+      createStoreImpl = (createState) => {
+        let state;
+        const listeners = /* @__PURE__ */ new Set();
+        const setState = (partial, replace) => {
+          const nextState = typeof partial === "function" ? partial(state) : partial;
+          if (!Object.is(nextState, state)) {
+            const previousState = state;
+            state = (replace != null ? replace : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
+            listeners.forEach((listener) => listener(state, previousState));
+          }
+        };
+        const getState = () => state;
+        const getInitialState = () => initialState2;
+        const subscribe = (listener) => {
+          listeners.add(listener);
+          return () => listeners.delete(listener);
+        };
+        const api = { setState, getState, getInitialState, subscribe };
+        const initialState2 = state = createState(setState, getState, api);
+        return api;
+      };
+      createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
+    }
+  });
+
+  // node_modules/zustand/esm/react.mjs
+  function useStore(api, selector = identity) {
+    const slice = import_react2.default.useSyncExternalStore(
+      api.subscribe,
+      import_react2.default.useCallback(() => selector(api.getState()), [api, selector]),
+      import_react2.default.useCallback(() => selector(api.getInitialState()), [api, selector])
+    );
+    import_react2.default.useDebugValue(slice);
+    return slice;
+  }
+  var import_react2, identity, createImpl, create;
+  var init_react = __esm({
+    "node_modules/zustand/esm/react.mjs"() {
+      import_react2 = __toESM(require_react(), 1);
+      init_vanilla();
+      identity = (arg) => arg;
+      createImpl = (createState) => {
+        const api = createStore(createState);
+        const useBoundStore = (selector) => useStore(api, selector);
+        Object.assign(useBoundStore, api);
+        return useBoundStore;
+      };
+      create = ((createState) => createState ? createImpl(createState) : createImpl);
+    }
+  });
+
+  // node_modules/zustand/esm/index.mjs
+  var init_esm = __esm({
+    "node_modules/zustand/esm/index.mjs"() {
+      init_vanilla();
+      init_react();
+    }
+  });
+
+  // store/useAppStore.js
+  var initialState, useAppStore, setStore;
+  var init_useAppStore = __esm({
+    "store/useAppStore.js"() {
+      init_esm();
+      init_constants();
+      init_state();
+      initialState = {
+        items: [],
+        changeLog: [],
+        view: "matrix",
+        searchQ: "",
+        expandedCells: /* @__PURE__ */ new Set(),
+        filters: {
+          priorities: [],
+          statuses: [],
+          showDeleted: false,
+          importantOnly: false,
+          owners: []
+        },
+        display: {
+          showOwner: true,
+          showStar: true,
+          showNewBadge: true,
+          showCellCount: true,
+          showUpdated: false,
+          showStatus: true,
+          showMdBadge: true,
+          showQuickAdd: false
+        },
+        settings: {
+          baseFont: 16,
+          cardFont: 12,
+          cardRadius: 6,
+          cardGap: 4,
+          colW: 130,
+          catW: 52,
+          subCatW: 80,
+          cellFold: 0,
+          matrixWidth: "fluid",
+          panelPos: "left",
+          panelVisible: true,
+          title: "\uC18C\uBCF5 \uB9E4\uD2B8\uB9AD\uC2A4",
+          subtitle: "Function Matrix",
+          themeId: "sobuk",
+          priorityStyles: { high: "left-thick", mid: "left-thin", low: "none" },
+          customColors: { light: {}, dark: {} },
+          listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
+          animations: { enabled: true, countUp: true, card: true, filter: true, shimmer: true, blur: false },
+          groupOrder: [],
+          catOrder: [],
+          dbHeroName: "",
+          dbSections: ["stats", "insight", "heatmap"],
+          changeLogMax: 50,
+          storageMode: "server",
+          serverUrl: "",
+          pollInterval: 60,
+          userName: ""
+        },
+        sort: { key: "key", dir: "asc" },
+        editKey: null,
+        isDragging: false,
+        dragKey: null,
+        dragCell: null,
+        // 서버 동기화 상태
+        serverTs: 0,
+        isLoading: false,
+        serverStatus: "idle"
+        // 'idle' | 'ok' | 'error'
+      };
+      useAppStore = create((set, get) => ({
+        ...initialState,
+        /* ── 기본 setter들 ── */
+        setItems: (items) => set({ items }),
+        setView: (view) => set({ view }),
+        setSearchQ: (searchQ) => set({ searchQ }),
+        setExpandedCells: (expandedCells) => set({ expandedCells }),
+        setEditKey: (editKey) => set({ editKey }),
+        setIsDragging: (isDragging) => set({ isDragging }),
+        setServerStatus: (serverStatus) => set({ serverStatus }),
+        setIsLoading: (isLoading) => set({ isLoading }),
+        /* ── 필터 업데이트 ── */
+        setFilters: (filters) => set({ filters }),
+        updateFilter: (key, value) => set((s) => ({ filters: { ...s.filters, [key]: value } })),
+        /* ── 표시 설정 업데이트 ── */
+        setDisplay: (display) => set({ display }),
+        updateDisplay: (key, value) => set((s) => ({ display: { ...s.display, [key]: value } })),
+        /* ── 설정 업데이트 ── */
+        setSettings: (settings) => set({ settings }),
+        updateSetting: (key, value) => set((s) => ({ settings: { ...s.settings, [key]: value } })),
+        updateAnimations: (animations) => set((s) => ({ settings: { ...s.settings, animations: { ...s.settings.animations, ...animations } } })),
+        /* ── 아이템 CRUD ── */
+        addItem: (item) => set((s) => ({ items: [...s.items, item] })),
+        updateItem: (key, patch) => set((s) => ({
+          items: s.items.map((it) => it.key === key ? { ...it, ...patch } : it)
+        })),
+        removeItem: (key) => set((s) => ({ items: s.items.filter((it) => it.key !== key) })),
+        /* ── Undo/Redo: changeLog 기반 ── */
+        setChangeLog: (changeLog) => set({ changeLog }),
+        pushChangeLog: (entry) => set((s) => {
+          const max = s.settings.changeLogMax || 50;
+          const next = [entry, ...s.changeLog].slice(0, max);
+          return { changeLog: next };
+        }),
+        /* ── state.js의 S로부터 전체 상태 동기화 (Phase 4 전환기 브릿지) ── */
+        syncFromS: (S2) => {
+          set({
+            items: S2.items,
+            changeLog: S2.changeLog,
+            view: S2.view,
+            searchQ: S2.searchQ,
+            filters: { ...S2.filters },
+            display: { ...S2.display },
+            settings: { ...S2.settings },
+            sort: { ...S2.sort },
+            editKey: S2.editKey
+          });
+        }
+      }));
+      setStore = (patch) => useAppStore.setState(patch);
+    }
+  });
+
   // app/render.js
+  function syncToStore() {
+    setStore({
+      items: S.items,
+      view: S.view,
+      searchQ: S.searchQ,
+      filters: { ...S.filters },
+      display: { ...S.display },
+      settings: { ...S.settings },
+      sort: { ...S.sort },
+      editKey: S.editKey
+    });
+  }
   function animOk(k) {
     if (prefersReduced) return false;
     const a = S.settings.animations;
@@ -23812,6 +24004,7 @@ function __inlineNotify(msg, type) {
       renderOwnerChips();
       renderPrioChips();
       renderStatusChips();
+      syncToStore();
     };
     if (withFade && animOk("filter")) {
       const area = document.getElementById("contentArea");
@@ -24192,6 +24385,7 @@ function __inlineNotify(msg, type) {
       init_state();
       init_theme();
       init_admin();
+      init_useAppStore();
       prefersReduced = window.matchMedia?.("(prefers-reduced-motion:reduce)").matches ?? false;
       _cardAnimEnabled = false;
       _cu = {};
@@ -26482,6 +26676,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         getEditorToken,
         setEditorPassword
       });
+      window.__S = S;
       
       
       window.onSearch = (q) => {
@@ -26876,54 +27071,158 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_client = __toESM(require_client());
 
   // components/App.jsx
+  var import_react3 = __toESM(require_react());
+
+  // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
   var import_jsx_runtime = __toESM(require_jsx_runtime());
-  var APP_TEMPLATE = `
-<header class="hdr">
-  <div class="hdr-left">
-    <div><div class="logo-kr" id="dTitle">featureMATRIX</div><div class="logo-sub" id="dSub">\uAE30\uB2A5\uC815\uC758 \uD234</div></div>
-  </div>
-  <!-- stats: \uB300\uC2DC\uBCF4\uB4DC\uB85C \uC774\uB3D9 (DOM id \uC720\uC9C0 \u2192 countUp \uD638\uD658) -->
-  <span id="stTotal" style="display:none">0</span>
-  <span id="stHigh"  style="display:none">0</span>
-  <span id="stMid"   style="display:none">0</span>
-  <span id="stLow"   style="display:none">0</span>
-  <span id="stImp"   style="display:none">0</span>
-  <span id="stNew"   style="display:none">0</span>
-  <div class="hdr-mid">
-    <div id="hdrSearchWrap" style="display:none;align-items:center;gap:8px;flex:1;min-width:0">
-      <div class="search-wrap">
-        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search-inp" id="searchInp" placeholder="\uAC80\uC0C9 (\uAE30\uB2A5\uBA85\xB7Key\xB7\uB2F4\uB2F9\xB7\uACBD\uB85C)" oninput="onSearch(this.value)">
-        <button class="search-clear" id="searchClear" onclick="clearSearch()">\u2715</button>
-      </div>
-      <span class="hdr-count-badge" id="hdrCountBadge"></span>
-    </div>
-  </div>
-  <div class="hdr-actions">
-    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="\uAD00\uB9AC\uC790 \uBAA8\uB4DC">\u{1F511}</span>
-    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="logout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="\uB85C\uADF8\uC544\uC6C3">\u{1F512}</button>
-    <button class="btn btn-g btn-sm hdr-btn" id="serverStatusBtn" title="\uC11C\uBC84 \uC0C1\uD0DC">
-      <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-      <span id="serverStatusLabel">\uC11C\uBC84</span>
-    </button>
-    <span id="storageModeBadge" style="display:none"></span>
-    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('settingsModal')" title="\uD658\uACBD \uC124\uC815 (Ctrl+,)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span>\uC124\uC815</span>
-    </button>
-    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('shortcutsModal')" title="\uB2E8\uCD95\uD0A4 (?)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
-      <span>\uB2E8\uCD95\uD0A4</span>
-    </button>
-    <button class="btn btn-g btn-sm hdr-btn" onclick="toggleTheme()" id="themeBtn" title="\uD14C\uB9C8">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeBtnIcon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-      <span>\uD14C\uB9C8</span>
-    </button>
-  </div>
-</header>
+  var ADMIN_TOKEN_KEY = "fmAdminToken";
+  var EDITOR_TOKEN_KEY = "fmEditorToken";
+  function readAuth() {
+    const adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+    const editorToken = sessionStorage.getItem(EDITOR_TOKEN_KEY);
+    const storageMode = window.__S?.settings?.storageMode ?? "server";
+    const serverMode = storageMode === "server";
+    const adminFlag = !serverMode || !!adminToken;
+    const editorFlag = !serverMode || !!(editorToken || adminToken);
+    return { adminFlag, editorFlag, serverMode };
+  }
+  var AuthContext = (0, import_react.createContext)({
+    isAdmin: false,
+    isEditor: false,
+    isServerMode: true,
+    refresh: () => {
+    }
+  });
+  function AuthProvider({ children }) {
+    const [auth, setAuth] = (0, import_react.useState)(() => {
+      const { adminFlag, editorFlag, serverMode } = readAuth();
+      return { isAdmin: adminFlag, isEditor: editorFlag, isServerMode: serverMode };
+    });
+    const refresh = (0, import_react.useCallback)(() => {
+      const { adminFlag, editorFlag, serverMode } = readAuth();
+      setAuth({ isAdmin: adminFlag, isEditor: editorFlag, isServerMode: serverMode });
+    }, []);
+    (0, import_react.useEffect)(() => {
+      window.__authRefresh = refresh;
+      return () => {
+        delete window.__authRefresh;
+      };
+    }, [refresh]);
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthContext.Provider, { value: { ...auth, refresh }, children });
+  }
+  function useAuth() {
+    return (0, import_react.useContext)(AuthContext);
+  }
 
+  // components/Header.jsx
+  var import_jsx_runtime2 = __toESM(require_jsx_runtime());
+  var ICON_SERVER = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2", y: "2", width: "20", height: "8", rx: "2" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2", y: "14", width: "20", height: "8", rx: "2" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "6", y1: "6", x2: "6.01", y2: "6" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "6", y1: "18", x2: "6.01", y2: "18" })
+  ] });
+  var ICON_SETTINGS = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "12", cy: "12", r: "3" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" })
+  ] });
+  var ICON_SHORTCUTS = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2", y: "6", width: "20", height: "12", rx: "2" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" })
+  ] });
+  var ICON_THEME = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", id: "themeBtnIcon", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "12", cy: "12", r: "5" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "12", y1: "1", x2: "12", y2: "3" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "12", y1: "21", x2: "12", y2: "23" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "4.22", y1: "4.22", x2: "5.64", y2: "5.64" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "18.36", y1: "18.36", x2: "19.78", y2: "19.78" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "1", y1: "12", x2: "3", y2: "12" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "21", y1: "12", x2: "23", y2: "12" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "4.22", y1: "19.78", x2: "5.64", y2: "18.36" }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "18.36", y1: "5.64", x2: "19.78", y2: "4.22" })
+  ] });
+  function Header() {
+    const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode: isServerMode2 } = useAuth();
+    const showAdminBadge = isAdmin2 && isServerMode2;
+    const showLogoutBtn = (isAdmin2 || isEditor2) && isServerMode2;
+    const logoutTitle = isAdmin2 ? "\uAD00\uB9AC\uC790 \uB85C\uADF8\uC544\uC6C3" : "\uD3B8\uC9D1\uC790 \uB85C\uADF8\uC544\uC6C3";
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("header", { className: "hdr", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "hdr-left", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "logo-kr", id: "dTitle", children: "featureMATRIX" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "logo-sub", id: "dSub", children: "\uAE30\uB2A5\uC815\uC758 \uD234" })
+      ] }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stTotal", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stHigh", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stMid", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stLow", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stImp", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stNew", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "hdr-mid", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { id: "hdrSearchWrap", style: { display: "none", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "search-wrap", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { className: "search-icon", width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "11", cy: "11", r: "8" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "input",
+            {
+              className: "search-inp",
+              id: "searchInp",
+              placeholder: "\uAC80\uC0C9 (\uAE30\uB2A5\uBA85\xB7Key\xB7\uB2F4\uB2F9\xB7\uACBD\uB85C)",
+              onInput: (e) => window.onSearch?.(e.target.value)
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "search-clear", id: "searchClear", onClick: () => window.clearSearch?.(), children: "\u2715" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "hdr-count-badge", id: "hdrCountBadge" })
+      ] }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "hdr-actions", children: [
+        showAdminBadge && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "span",
+          {
+            id: "adminBadge",
+            style: { fontSize: ".68rem", fontWeight: 700, padding: "2px 7px", borderRadius: "5px", background: "var(--warning-bg)", color: "var(--warning)", border: "1px solid var(--warning)" },
+            title: "\uAD00\uB9AC\uC790 \uBAA8\uB4DC",
+            children: "\u{1F511}"
+          }
+        ),
+        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "button",
+          {
+            id: "adminLogoutBtn",
+            className: "btn btn-g btn-sm",
+            onClick: () => window.logout?.(),
+            style: { width: "27px", padding: 0, fontSize: ".82rem" },
+            title: logoutTitle,
+            children: "\u{1F512}"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", id: "serverStatusBtn", title: "\uC11C\uBC84 \uC0C1\uD0DC", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "serverStatusDot", style: { width: "7px", height: "7px", borderRadius: "50%", background: "#aaa", flexShrink: 0, display: "none", transition: "background .3s" } }),
+          ICON_SERVER,
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "serverStatusLabel", children: "\uC11C\uBC84" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "storageModeBadge", style: { display: "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.openModal?.("settingsModal"), title: "\uD658\uACBD \uC124\uC815 (Ctrl+,)", children: [
+          ICON_SETTINGS,
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\uC124\uC815" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.openModal?.("shortcutsModal"), title: "\uB2E8\uCD95\uD0A4 (?)", children: [
+          ICON_SHORTCUTS,
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\uB2E8\uCD95\uD0A4" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.toggleTheme?.(), id: "themeBtn", title: "\uD14C\uB9C8", children: [
+          ICON_THEME,
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\uD14C\uB9C8" })
+        ] })
+      ] })
+    ] });
+  }
+
+  // components/App.jsx
+  var import_jsx_runtime3 = __toESM(require_jsx_runtime());
+  var APP_TEMPLATE = `
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
   <span id="updateBannerMsg">\u26A0 \uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.</span>
   <button class="btn btn-s btn-sm" onclick="reloadFromServer()" style="border-color:var(--warning);color:var(--warning)">\uC9C0\uAE08 \uC0C8\uB85C\uACE0\uCE68</button>
@@ -27497,18 +27796,21 @@ $$')" title="\uBE14\uB85D \uC218\uC2DD"   style="width:26px;padding:0">\u222B</b
 <div id="boardActionBar" class="board-action-bar"></div>
 `;
   function App() {
-    (0, import_react.useEffect)(() => {
+    (0, import_react3.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] main.js \uCD08\uAE30\uD654 \uC2E4\uD328:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } });
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Header, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } })
+    ] });
   }
 
   // main.jsx
-  var import_jsx_runtime2 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime4 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime2.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime4.jsx)(App, {}));
 })();
 /*! Bundled license information:
 
