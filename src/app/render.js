@@ -447,9 +447,14 @@ export function renderBulkBar() {
 }
 export function bulkClear() { bulkSel.keys.clear(); renderBulkBar(); renderList(); }
 
-export function renderList() {
-  const items = getFiltered(), el = document.getElementById('listView');
-  if (!items.length) { el.innerHTML = '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>'; bulkSel.keys.clear(); renderBulkBar(); return; }
+/* ── 리스트 HTML 빌드 — ListView.jsx에서 호출 ── */
+export function buildListHtml() {
+  const items = getFiltered();
+  if (!items.length) {
+    bulkSel.keys.clear();
+    renderBulkBar();
+    return '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>';
+  }
   const vcols    = getVisibleCols();
   const sorted   = items.slice().sort((a,b) => { const va=a[S.sort.key]||'', vb=b[S.sort.key]||''; const r=va<vb?-1:va>vb?1:0; return S.sort.dir==='asc'?r:-r; });
   const useShimmer = animOk('shimmer'), useRow = animOk('card') && _cardAnimEnabled;
@@ -476,8 +481,14 @@ export function renderList() {
     h += '</tr>';
   });
   h += '</tbody></table></div></div>';
-  el.innerHTML = h;
   _cardAnimEnabled = false;
+  return h;
+}
+
+/* ── 리스트 렌더 — ListView.jsx React 포털로 위임 ── */
+export function renderList() {
+  syncToStore();
+  window.__listViewRefresh?.();
 }
 
 function renderListCell(it, key) {

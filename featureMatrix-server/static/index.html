@@ -23889,13 +23889,12 @@ function __inlineNotify(msg, type) {
     renderBulkBar();
     renderList();
   }
-  function renderList() {
-    const items = getFiltered(), el = document.getElementById("listView");
+  function buildListHtml() {
+    const items = getFiltered();
     if (!items.length) {
-      el.innerHTML = '<div class="empty"><div style="font-size:.875rem">\uD45C\uC2DC\uD560 \uAE30\uB2A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</div></div>';
       bulkSel.keys.clear();
       renderBulkBar();
-      return;
+      return '<div class="empty"><div style="font-size:.875rem">\uD45C\uC2DC\uD560 \uAE30\uB2A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</div></div>';
     }
     const vcols = getVisibleCols();
     const sorted = items.slice().sort((a, b) => {
@@ -23929,8 +23928,12 @@ function __inlineNotify(msg, type) {
       h += "</tr>";
     });
     h += "</tbody></table></div></div>";
-    el.innerHTML = h;
     _cardAnimEnabled = false;
+    return h;
+  }
+  function renderList() {
+    syncToStore();
+    window.__listViewRefresh?.();
   }
   function renderListCell(it, key) {
     const q = S.searchQ;
@@ -26608,7 +26611,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react9 = __toESM(require_react());
+  var import_react10 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -28058,8 +28061,40 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     );
   }
 
-  // components/App.jsx
+  // components/ListView.jsx
+  var import_react_dom6 = __toESM(require_react_dom());
+  var import_react9 = __toESM(require_react());
+  init_useAppStore();
+  init_render();
   var import_jsx_runtime9 = __toESM(require_jsx_runtime());
+  function ListView() {
+    const items = useAppStore((s) => s.items);
+    const settings = useAppStore((s) => s.settings);
+    const display = useAppStore((s) => s.display);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
+    const sort = useAppStore((s) => s.sort);
+    const [container, setContainer] = (0, import_react9.useState)(null);
+    const [tick, setTick] = (0, import_react9.useState)(0);
+    (0, import_react9.useEffect)(() => {
+      setContainer(document.getElementById("listView"));
+    }, []);
+    (0, import_react9.useEffect)(() => {
+      window.__listViewRefresh = () => setTick((t) => t + 1);
+      return () => {
+        delete window.__listViewRefresh;
+      };
+    }, []);
+    if (!container) return null;
+    const html = buildListHtml();
+    return (0, import_react_dom6.createPortal)(
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { dangerouslySetInnerHTML: { __html: html } }),
+      container
+    );
+  }
+
+  // components/App.jsx
+  var import_jsx_runtime10 = __toESM(require_jsx_runtime());
   var APP_TEMPLATE = `
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
   <span id="updateBannerMsg">\u26A0 \uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.</span>
@@ -28325,26 +28360,27 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
 <div id="boardActionBar" class="board-action-bar"></div>
 `;
   function App() {
-    (0, import_react9.useEffect)(() => {
+    (0, import_react10.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] main.js \uCD08\uAE30\uD654 \uC2E4\uD328:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(AuthProvider, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Header, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } }),
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(BoardView, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(DashboardView, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SettingsPanel, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(ItemModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(MatrixView, {})
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Header, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(BoardView, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(DashboardView, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(SettingsPanel, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(ItemModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(MatrixView, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(ListView, {})
     ] }) });
   }
 
   // main.jsx
-  var import_jsx_runtime10 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime11 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime10.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime11.jsx)(App, {}));
 })();
 /*! Bundled license information:
 

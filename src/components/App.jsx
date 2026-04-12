@@ -14,6 +14,7 @@ import DashboardView from './DashboardView.jsx';
 import SettingsPanel from './SettingsPanel.jsx';
 import ItemModal from './ItemModal.jsx';
 import MatrixView from './MatrixView.jsx';
+import ListView from './ListView.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 
@@ -303,6 +304,7 @@ export default function App() {
         <SettingsPanel />
         <ItemModal />
         <MatrixView />
+        <ListView />
       </AuthProvider>
     </ThemeProvider>
   );
