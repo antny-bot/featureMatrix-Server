@@ -253,16 +253,13 @@ export function renderStats() {
 }
 
 /* ── 매트릭스 ── */
-export function renderMatrix() {
+/* ── 매트릭스 HTML 빌드 — MatrixView.jsx에서 호출 (expandedCells를 인자로 받음) ── */
+export function buildMatrixHtml(expandedCells) {
   const items = getFiltered();
-  const el    = document.getElementById('matrixView');
-  el.className = 'mwrap' + (S.settings.matrixWidth === 'fluid' ? ' fluid' : '');
   if (!items.length) {
-    const emptyMsg = S.settings.storageMode === 'server'
+    return S.settings.storageMode === 'server'
       ? '<div class="empty"><div style="font-size:2rem;opacity:.3">🌐</div><div style="font-size:.875rem;text-align:center">서버에 데이터가 없거나 연결을 확인해주세요.<br><span style="font-size:.75rem;color:var(--text-3)">관리자에게 문의하거나 로그인 후 다시 시도하세요.</span></div></div>'
       : '<div class="empty"><div style="font-size:2rem;opacity:.3">📋</div><div style="font-size:.875rem;text-align:center">표시할 기능이 없습니다.</div></div>';
-    el.innerHTML = emptyMsg;
-    return;
   }
   const st = buildStruct(items);
   const cm  = {};
@@ -276,7 +273,6 @@ export function renderMatrix() {
   const c = getColors();
   const showCnt = S.display.showCellCount;
 
-  /* 카운트 집계 */
   const gCnt = {}, sgCnt = {}, catCnt = {}, scCnt = {};
   items.forEach(it => {
     const g   = it.group||'(미분류)', sg = `${g}|||${it.subGroup||''}`;
@@ -288,13 +284,11 @@ export function renderMatrix() {
   });
   const badge = n => `<span class="gcnt">${n}</span>`;
 
-  /* 최소 테이블 폭 계산: 행 헤더(카테고리+서브카테고리) + 각 서브그룹 컬럼 * colW
-     → table-layout:fixed 가 컨테이너에 맞춰 축소하지 못하도록 min-width 고정 */
   const ss = S.settings;
   const totalSubCols = st.groups.reduce((acc, gn) => acc + st.gsubs[gn].length, 0);
   const tableMinW = (ss.catW || 12) + (ss.subCatW || 72) + totalSubCols * (ss.colW || 130);
-
   const catW = ss.catW || 12, subCatW = ss.subCatW || 72;
+
   let h = `<div class="mscroll"><table class="mtable" style="min-width:${tableMinW}px"><thead class="mx-thead-sticky"><tr>`;
   h += `<th class="m-corner" rowspan="2" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px"></th><th class="m-corner" rowspan="2" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px"></th>`;
   st.groups.forEach(gn => {
@@ -324,7 +318,7 @@ export function renderMatrix() {
           const ck    = `${gn}|||${sg}|||${cn}|||${scn}`;
           const ci    = cm[ck] || [];
           const fold  = S.settings.cellFold;
-          const isExp = S.expandedCells.has(ck) || !!S.searchQ || fold === 0;
+          const isExp = expandedCells.has(ck) || !!S.searchQ || fold === 0;
           const show  = isExp ? ci : ci.slice(0, fold);
           const hidden = ci.length - show.length;
           const doCardAnim = animOk('card') && _cardAnimEnabled;
@@ -336,7 +330,6 @@ export function renderMatrix() {
             h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">▼ ${hidden}개 더보기</button>`;
           if (isExp && ci.length > fold && fold > 0)
             h += `<button class="cell-more-btn" onclick="collapseCell(event,'${eattr(ck)}')">▲ 접기</button>`;
-          
           if (isEditor() && S.display.showQuickAdd) {
             h += `<button class="cell-quick-add-btn" onclick="event.stopPropagation();openAddInCell('${eattr(gn)}','${eattr(sg)}','${eattr(cn)}','${eattr(scn)}')">+ 추가</button>`;
           }
@@ -347,12 +340,15 @@ export function renderMatrix() {
     });
   });
   h += '</tbody></table></div>';
-  el.innerHTML = h;
   _cardAnimEnabled = false;
+  return h;
 }
 
-export function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    renderMatrix(); }
-export function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); renderMatrix(); }
+/* ── 매트릭스 렌더 — MatrixView.jsx React 포털로 위임, syncToStore()만 호출 ── */
+export function renderMatrix() { syncToStore(); }
+
+export function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    syncToStore(); }
+export function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); syncToStore(); }
 
 /* ── 카드 HTML ── */
 export function renderCard(item, c, si = -1, overrides = {}) {

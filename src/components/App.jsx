@@ -13,6 +13,7 @@ import BoardView from './BoardView.jsx';
 import DashboardView from './DashboardView.jsx';
 import SettingsPanel from './SettingsPanel.jsx';
 import ItemModal from './ItemModal.jsx';
+import MatrixView from './MatrixView.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 
@@ -301,6 +302,7 @@ export default function App() {
         <DashboardView />
         <SettingsPanel />
         <ItemModal />
+        <MatrixView />
       </AuthProvider>
     </ThemeProvider>
   );

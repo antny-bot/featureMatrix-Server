@@ -23702,14 +23702,10 @@ function __inlineNotify(msg, type) {
     const fb = document.getElementById("fbadge");
     if (fb) fb.className = "fbadge" + (isFilterActive() ? " on" : "");
   }
-  function renderMatrix() {
+  function buildMatrixHtml(expandedCells) {
     const items = getFiltered();
-    const el = document.getElementById("matrixView");
-    el.className = "mwrap" + (S.settings.matrixWidth === "fluid" ? " fluid" : "");
     if (!items.length) {
-      const emptyMsg = S.settings.storageMode === "server" ? '<div class="empty"><div style="font-size:2rem;opacity:.3">\u{1F310}</div><div style="font-size:.875rem;text-align:center">\uC11C\uBC84\uC5D0 \uB370\uC774\uD130\uAC00 \uC5C6\uAC70\uB098 \uC5F0\uACB0\uC744 \uD655\uC778\uD574\uC8FC\uC138\uC694.<br><span style="font-size:.75rem;color:var(--text-3)">\uAD00\uB9AC\uC790\uC5D0\uAC8C \uBB38\uC758\uD558\uAC70\uB098 \uB85C\uADF8\uC778 \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694.</span></div></div>' : '<div class="empty"><div style="font-size:2rem;opacity:.3">\u{1F4CB}</div><div style="font-size:.875rem;text-align:center">\uD45C\uC2DC\uD560 \uAE30\uB2A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</div></div>';
-      el.innerHTML = emptyMsg;
-      return;
+      return S.settings.storageMode === "server" ? '<div class="empty"><div style="font-size:2rem;opacity:.3">\u{1F310}</div><div style="font-size:.875rem;text-align:center">\uC11C\uBC84\uC5D0 \uB370\uC774\uD130\uAC00 \uC5C6\uAC70\uB098 \uC5F0\uACB0\uC744 \uD655\uC778\uD574\uC8FC\uC138\uC694.<br><span style="font-size:.75rem;color:var(--text-3)">\uAD00\uB9AC\uC790\uC5D0\uAC8C \uBB38\uC758\uD558\uAC70\uB098 \uB85C\uADF8\uC778 \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694.</span></div></div>' : '<div class="empty"><div style="font-size:2rem;opacity:.3">\u{1F4CB}</div><div style="font-size:.875rem;text-align:center">\uD45C\uC2DC\uD560 \uAE30\uB2A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</div></div>';
     }
     const st = buildStruct(items);
     const cm = {};
@@ -23764,7 +23760,7 @@ function __inlineNotify(msg, type) {
             const ck = `${gn}|||${sg}|||${cn}|||${scn}`;
             const ci = cm[ck] || [];
             const fold = S.settings.cellFold;
-            const isExp = S.expandedCells.has(ck) || !!S.searchQ || fold === 0;
+            const isExp = expandedCells.has(ck) || !!S.searchQ || fold === 0;
             const show = isExp ? ci : ci.slice(0, fold);
             const hidden = ci.length - show.length;
             const doCardAnim = animOk("card") && _cardAnimEnabled;
@@ -23788,18 +23784,21 @@ function __inlineNotify(msg, type) {
       });
     });
     h += "</tbody></table></div>";
-    el.innerHTML = h;
     _cardAnimEnabled = false;
+    return h;
+  }
+  function renderMatrix() {
+    syncToStore();
   }
   function expandCell(e, ck) {
     e.stopPropagation();
     S.expandedCells.add(ck);
-    renderMatrix();
+    syncToStore();
   }
   function collapseCell(e, ck) {
     e.stopPropagation();
     S.expandedCells.delete(ck);
-    renderMatrix();
+    syncToStore();
   }
   function renderCard(item, c, si = -1, overrides = {}) {
     const pk = getPK(item.priority), pkC = pk[0].toUpperCase() + pk.slice(1);
@@ -26609,7 +26608,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react8 = __toESM(require_react());
+  var import_react9 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -28004,8 +28003,63 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     );
   }
 
-  // components/App.jsx
+  // components/MatrixView.jsx
+  var import_react_dom5 = __toESM(require_react_dom());
+  var import_react8 = __toESM(require_react());
+  init_useAppStore();
+  init_render();
   var import_jsx_runtime8 = __toESM(require_jsx_runtime());
+  function MatrixView() {
+    const items = useAppStore((s) => s.items);
+    const settings = useAppStore((s) => s.settings);
+    const display = useAppStore((s) => s.display);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
+    const [container, setContainer] = (0, import_react8.useState)(null);
+    const [expandedCells, setExpandedCells] = (0, import_react8.useState)(/* @__PURE__ */ new Set());
+    (0, import_react8.useEffect)(() => {
+      setContainer(document.getElementById("matrixView"));
+    }, []);
+    (0, import_react8.useEffect)(() => {
+      setExpandedCells(/* @__PURE__ */ new Set());
+    }, [filters, searchQ]);
+    (0, import_react8.useEffect)(() => {
+      if (container) {
+        container.className = `mwrap${settings.matrixWidth === "fluid" ? " fluid" : ""}`;
+      }
+    }, [container, settings.matrixWidth]);
+    (0, import_react8.useEffect)(() => {
+      window.expandCell = (e, ck) => {
+        e.stopPropagation();
+        setExpandedCells((prev) => {
+          const n = new Set(prev);
+          n.add(ck);
+          return n;
+        });
+      };
+      window.collapseCell = (e, ck) => {
+        e.stopPropagation();
+        setExpandedCells((prev) => {
+          const n = new Set(prev);
+          n.delete(ck);
+          return n;
+        });
+      };
+      return () => {
+        delete window.expandCell;
+        delete window.collapseCell;
+      };
+    }, []);
+    if (!container) return null;
+    const html = buildMatrixHtml(expandedCells);
+    return (0, import_react_dom5.createPortal)(
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { dangerouslySetInnerHTML: { __html: html } }),
+      container
+    );
+  }
+
+  // components/App.jsx
+  var import_jsx_runtime9 = __toESM(require_jsx_runtime());
   var APP_TEMPLATE = `
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
   <span id="updateBannerMsg">\u26A0 \uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.</span>
@@ -28271,25 +28325,26 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
 <div id="boardActionBar" class="board-action-bar"></div>
 `;
   function App() {
-    (0, import_react8.useEffect)(() => {
+    (0, import_react9.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] main.js \uCD08\uAE30\uD654 \uC2E4\uD328:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(AuthProvider, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Header, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(BoardView, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(DashboardView, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(SettingsPanel, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ItemModal, {})
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Header, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(BoardView, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(DashboardView, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SettingsPanel, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(ItemModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(MatrixView, {})
     ] }) });
   }
 
   // main.jsx
-  var import_jsx_runtime9 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime10 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime9.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime10.jsx)(App, {}));
 })();
 /*! Bundled license information:
 
