@@ -12,6 +12,7 @@ import Header from './Header.jsx';
 import BoardView from './BoardView.jsx';
 import DashboardView from './DashboardView.jsx';
 import SettingsPanel from './SettingsPanel.jsx';
+import ItemModal from './ItemModal.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 
@@ -113,99 +114,8 @@ const APP_TEMPLATE = `
   </aside>
 </div>
 
-<!-- 편집 모달 -->
-<div class="ov" id="editModal">
-  <div class="mbox" style="width:760px;max-height:92vh">
-    <div class="mhd" style="padding-bottom:0;border-bottom:none">
-      <span class="mtitle" id="editTitle">기능 추가</span>
-      <button class="mclose" onclick="closeModal('editModal')">✕</button>
-    </div>
-    <div class="stab-row" style="padding:0 20px">
-      <button class="stab on" id="etab-info" onclick="switchEditTab('info')">📋 기본 정보</button>
-      <button class="stab"    id="etab-md"   onclick="switchEditTab('md')">📝 기능정의요구서</button>
-    </div>
-    <div class="mbody" id="epane-info" style="padding:16px 20px">
-      <div class="mg">
-        <div class="field"><label class="lbl">Key</label><input class="inp" id="fKey" readonly tabindex="-1" style="background:var(--surface-2);color:var(--text-3)"></div>
-        <div class="field"><label class="lbl">우선순위</label><select class="sel" id="fPri"><option value="상">상</option><option value="중" selected>중</option><option value="하">하</option></select></div>
-        <div class="field s2"><label class="lbl">기능명 <span style="color:var(--danger)">*</span></label><input class="inp" id="fName" placeholder="기능명"></div>
-        <div class="field s2"><label class="lbl">설명</label><textarea class="txta" id="fDesc" style="min-height:105px;resize:vertical"></textarea></div>
-        <div class="field s2"><label class="lbl">메모</label><textarea class="txta" id="fMemo" style="min-height:105px;resize:vertical"></textarea></div>
-        <div class="field s2"><label class="lbl">경로</label><input class="inp" id="fPath" placeholder="/path/to/feature"></div>
-        <div class="field"><label class="lbl">그룹 (X축)</label><input class="inp" id="fGroup" list="dlGroup"><datalist id="dlGroup"></datalist></div>
-        <div class="field"><label class="lbl">서브그룹</label><input class="inp" id="fSubGroup" list="dlSubGroup"><datalist id="dlSubGroup"></datalist></div>
-        <div class="field"><label class="lbl">카테고리 (Y축)</label><input class="inp" id="fCat" list="dlCat"><datalist id="dlCat"></datalist></div>
-        <div class="field"><label class="lbl">서브카테고리</label><input class="inp" id="fSubCat" list="dlSubCat"><datalist id="dlSubCat"></datalist></div>
-        <div class="field"><label class="lbl">담당</label><input class="inp" id="fOwner" list="dlOwner"><datalist id="dlOwner"></datalist></div>
-        <div class="field"><label class="lbl">진행상태</label><select class="sel" id="fStatus"><option value="">—</option><option value="기획">기획</option><option value="개발중">개발중</option><option value="완료">완료</option><option value="보류">보류</option></select></div>
-        <div class="field"><label class="lbl">연관 시스템</label><input class="inp" id="fRel"></div>
-        <div style="display:flex;gap:18px;align-items:center;padding-top:2px">
-          <label class="tgl"><input type="checkbox" id="fIsImp"><span class="tgl-track"></span><span class="tgl-lbl">★ 중요</span></label>
-          <label class="tgl"><input type="checkbox" id="fIsDel"><span class="tgl-track"></span><span class="tgl-lbl">삭제 처리</span></label>
-        </div>
-      </div>
-    </div>
-    <!-- 마크다운 탭 -->
-    <div class="mbody" id="epane-md" style="display:none;padding:10px 16px;flex-direction:column;gap:8px">
-      <!-- MD 툴바: 2행 레이아웃 -->
-      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-        <!-- 1행: 서식 + 구조 + 수식 -->
-        <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
-          <div style="display:flex;gap:2px">
-            <button class="btn btn-g btn-sm" onclick="mdInsert('**','**')" title="굵게 (Ctrl+B)" style="width:26px;padding:0"><b>B</b></button>
-            <button class="btn btn-g btn-sm" onclick="mdInsert('*','*')"   title="기울임" style="width:26px;padding:0"><i>I</i></button>
-            <button class="btn btn-g btn-sm" onclick="mdInsert('~~','~~')" title="취소선" style="width:26px;padding:0"><s style="font-size:.75rem">S</s></button>
-            <button class="btn btn-g btn-sm" onclick="mdInsert('[','](url)')" title="링크" style="width:26px;padding:0">🔗</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsert('\`','\`')"  title="인라인 코드" style="width:26px;padding:0;font-family:monospace;font-size:.7rem">\`</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsert('\`\`\`\n','\n\`\`\`')" title="코드 블록" style="width:26px;padding:0">⬛</button>
-          </div>
-          <div style="width:1px;height:16px;background:var(--border);flex-shrink:0"></div>
-          <div style="display:flex;gap:2px">
-            <button class="btn btn-g btn-sm" onclick="mdInsertLine('# ')"   title="H1" style="width:26px;padding:0;font-size:.7rem;font-weight:700">H1</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsertLine('## ')"  title="H2" style="width:26px;padding:0;font-size:.7rem;font-weight:700">H2</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsertLine('### ')" title="H3" style="width:26px;padding:0;font-size:.7rem;font-weight:700">H3</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsertLine('- ')"   title="글머리 목록" style="width:26px;padding:0">•</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsertLine('1. ')"  title="순서 목록" style="width:26px;padding:0;font-size:.7rem">1.</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsertLine('> ')"   title="인용" style="width:26px;padding:0">❝</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsert('\n---\n','')" title="수평선" style="width:26px;padding:0;font-size:.8rem">—</button>
-          </div>
-          <div style="width:1px;height:16px;background:var(--border);flex-shrink:0"></div>
-          <div style="display:flex;gap:2px">
-            <button class="btn btn-g btn-sm" onclick="mdInsert('$','$')"        title="인라인 수식" style="width:26px;padding:0">∑</button>
-            <button class="btn btn-g btn-sm" onclick="mdInsert('$$\n','\n$$')" title="블록 수식"   style="width:26px;padding:0">∫</button>
-          </div>
-        </div>
-        <!-- 2행: 뷰 전환 + 파일 -->
-        <div style="display:flex;align-items:center;gap:5px">
-          <div style="display:flex;gap:2px;background:var(--surface-2);border-radius:6px;padding:2px">
-            <button class="vtab on" id="mdTabPrev"  onclick="switchMdView('preview')" style="height:22px;padding:0 9px;font-size:.7rem">👁 보기</button>
-            <button class="vtab"    id="mdTabEdit"  onclick="switchMdView('edit')"    style="height:22px;padding:0 9px;font-size:.7rem">✏ 편집</button>
-            <button class="vtab"    id="mdTabSplit" onclick="switchMdView('split')"   style="height:22px;padding:0 9px;font-size:.7rem">⬜ 분할</button>
-          </div>
-          <div style="width:1px;height:16px;background:var(--border);flex-shrink:0"></div>
-          <button class="btn btn-s btn-sm" onclick="document.getElementById('mdFileInp').click()" title="MD 파일 열기" style="gap:4px">📂 열기</button>
-          <input type="file" id="mdFileInp" accept=".md,.txt" style="display:none" onchange="impSingleMd(event)">
-          <button class="btn btn-s btn-sm" onclick="expSingleMd()" title="MD 파일 저장" style="gap:4px">⬇ 저장</button>
-          <div style="margin-left:auto;font-size:.69rem;color:var(--text-3);display:flex;gap:10px">
-            <span id="mdStatChars">0자</span><span id="mdStatLines">0줄</span><span id="mdStatWords">0단어</span>
-          </div>
-        </div>
-      </div>
-      <div id="mdWorkArea" style="display:flex;gap:8px;flex:1;min-height:0">
-        <textarea id="fMdContent"
-          style="flex:1;min-height:300px;font-family:'SFMono-Regular',Consolas,monospace;font-size:.78rem;line-height:1.7;resize:vertical;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text);outline:none"
-          placeholder="# 기능 제목&#10;&#10;## 개요&#10;마크다운으로 작성&#10;&#10;| 컬럼1 | 컬럼2 |&#10;|-------|-------|&#10;| 값1   | 값2   |&#10;&#10;수식: $E=mc^2$"
-          oninput="onMdInput()"></textarea>
-        <div id="mdPreviewPane" style="display:none;flex:1;min-height:300px;overflow-y:auto;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface)" class="md-viewer"></div>
-      </div>
-    </div>
-    <div class="mfoot">
-      <button class="btn btn-d btn-sm" id="btnHardDel" onclick="hardDelete()" style="display:none;margin-right:auto">완전 삭제</button>
-      <button class="btn btn-g btn-sm" onclick="closeModal('editModal')">취소</button>
-      <button class="btn btn-p btn-sm" onclick="saveItem()">저장</button>
-    </div>
-  </div>
-</div>
+<!-- 편집 모달 — ItemModal.jsx React 포털 -->
+<div class="ov" id="editModal"></div>
 
 <!-- Import 모달 -->
 <div class="ov" id="importModal">
@@ -390,6 +300,7 @@ export default function App() {
         <BoardView />
         <DashboardView />
         <SettingsPanel />
+        <ItemModal />
       </AuthProvider>
     </ThemeProvider>
   );

@@ -20,49 +20,17 @@ export function openModal(id) {
 }
 export const closeModal = id => document.getElementById(id)?.classList.remove('on');
 
-/* ── 편집 탭 전환 ── */
-export function switchEditTab(tab) {
-  ['info','md'].forEach(t => {
-    document.getElementById(`etab-${t}`)?.classList.toggle('on', t === tab);
-    const pane = document.getElementById(`epane-${t}`);
-    if (pane) pane.style.display = t === tab ? '' : 'none';
-  });
-  if (tab === 'md') { updateMdStat(); syncMdPreview(); switchMdView('preview'); }
-}
+/* ── 편집 탭 전환 — ItemModal.jsx 브릿지로 위임 ── */
+export function switchEditTab(tab) { window.switchEditTab?.(tab); }
 
-/* ── MD 뷰 모드 ── */
-export function switchMdView(mode) {
-  const ta = document.getElementById('fMdContent');
-  const pv = document.getElementById('mdPreviewPane');
-  const modeIdMap = { edit:'mdTabEdit', preview:'mdTabPrev', split:'mdTabSplit' };
-  ['mdTabEdit','mdTabPrev','mdTabSplit'].forEach(id => document.getElementById(id)?.classList.remove('on'));
-  document.getElementById(modeIdMap[mode])?.classList.add('on');
-  if (mode === 'edit') {
-    ta.style.display=''; ta.style.flex='1'; pv.style.display='none';
-  } else if (mode === 'preview') {
-    ta.style.display='none'; pv.style.display=''; pv.style.flex='1'; syncMdPreview();
-  } else {
-    ta.style.display=''; ta.style.flex='1'; pv.style.display=''; pv.style.flex='1'; syncMdPreview();
-  }
-}
+/* ── MD 뷰 모드 — ItemModal.jsx 브릿지로 위임 ── */
+export function switchMdView(mode) { window.switchMdView?.(mode); }
 
-export function syncMdPreview() {
-  const pv = document.getElementById('mdPreviewPane');
-  if (pv && pv.style.display !== 'none') {
-    pv.innerHTML = parseMd(document.getElementById('fMdContent').value);
-    /* KaTeX 렌더링 */
-    if (window.katex) renderKatex(pv);
-  }
-}
+export function syncMdPreview() { window.syncMdPreview?.(); }
 
-export function onMdInput() { updateMdStat(); syncMdPreview(); }
+export function onMdInput() { window.onMdInput?.(); }
 
-export function updateMdStat() {
-  const v = document.getElementById('fMdContent').value;
-  document.getElementById('mdStatChars').textContent = v.length + '자';
-  document.getElementById('mdStatLines').textContent = (v ? v.split('\n').length : 0) + '줄';
-  document.getElementById('mdStatWords').textContent = (v.trim() ? v.trim().split(/\s+/).length : 0) + '단어';
-}
+export function updateMdStat() { window.updateMdStat?.(); }
 
 /* E - MD 툴바 삽입 헬퍼 */
 export function mdInsert(before, after) {
@@ -216,7 +184,6 @@ export function openEditModal(key) {
   S.editKey = key;
   const item = findItem(key);
   if (!item) return;
-  document.getElementById('editTitle').textContent = `기능 수정 — ${item.key}`;
   const fm = {
     fKey:'key', fPri:'priority', fName:'name', fDesc:'desc', fPath:'path',
     fGroup:'group', fSubGroup:'subGroup', fCat:'category', fSubCat:'subCategory',
@@ -227,8 +194,7 @@ export function openEditModal(key) {
   });
   document.getElementById('fIsImp').checked = item.isImportant === 'Y';
   document.getElementById('fIsDel').checked = item.isDelete    === 'Y';
-  document.getElementById('btnHardDel').style.display = 'inline-flex';
-  switchEditTab('info'); switchMdView('edit'); updateMdStat();
+  window.__editModalBridge?.('edit', key);
   // 편집 중 락 등록 (서버 모드)
   lockItem(key).then(res => {
     if (res?.locked && res?.lockedBy) {
@@ -247,10 +213,8 @@ export function openAddModal() {
   document.getElementById('fPri').value     = '중';
   document.getElementById('fIsImp').checked = false;
   document.getElementById('fIsDel').checked = false;
-  document.getElementById('editTitle').textContent    = '기능 추가';
-  document.getElementById('fKey').value               = genKey();
-  document.getElementById('btnHardDel').style.display = 'none';
-  switchEditTab('info'); switchMdView('edit'); updateMdStat();
+  document.getElementById('fKey').value = genKey();
+  window.__editModalBridge?.('add', null);
   openModal('editModal');
 }
 
