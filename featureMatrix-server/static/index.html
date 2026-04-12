@@ -183,8 +183,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .owner-chip.chip-on{border-width:1.5px;font-weight:600}
 /* content: overflow-x hidden, overflow-y auto → sticky 정상 동작 */
 .content{flex:1;overflow-x:hidden;overflow-y:auto;background:var(--bg);min-width:0}
-.content-search{padding:8px 14px 0;background:var(--bg)}
-.content-search .search-wrap{max-width:480px}
+.hdr-mid .search-wrap{max-width:340px}
+.hdr-count-badge{font-size:.65rem;font-weight:700;color:var(--text-3);white-space:nowrap;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:2px 8px;flex-shrink:0}
 .content.fading{opacity:0;transition:opacity .15s}
 .content.fading-in{opacity:1;transition:opacity .2s}
 
@@ -197,14 +197,14 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .mtable{border-collapse:collapse;background:var(--surface);border-radius:0;overflow:visible;box-shadow:var(--shadow-sm);table-layout:fixed}
 .mtable th,.mtable td{vertical-align:top}
 .m-corner{background:var(--surface-2)}
-.m-subcat{padding:6px 8px;font-size:.7rem;font-weight:600;color:var(--text-3);vertical-align:middle;word-break:keep-all}
+.m-subcat{padding:6px 8px;font-size:.7rem;font-weight:600;color:var(--text-3);vertical-align:middle;word-break:keep-all;overflow-wrap:break-word;overflow:hidden}
 .m-ghd{padding:6px 10px;text-align:center;font-size:.74rem;font-weight:700;white-space:nowrap}
 /* gcnt: 헤더 텍스트색 기반으로 자연스럽게 종속 */
 .gcnt{display:inline-block;font-size:.55rem;font-weight:600;background:rgba(0,0,0,.07);color:inherit;opacity:.65;border-radius:8px;padding:1px 4px;margin-left:3px;vertical-align:middle;line-height:1.5}
 [data-theme="dark"] .gcnt{background:rgba(255,255,255,.1)}
 .m-cathd .gcnt{writing-mode:horizontal-tb;display:inline}
 .m-sghd{padding:5px 8px;text-align:center;font-size:.68rem;font-weight:600;color:var(--text-3);white-space:nowrap}
-.m-cathd{padding:6px 5px;font-size:.72rem;font-weight:700;color:var(--text-2);text-align:center;vertical-align:middle;writing-mode:vertical-rl;letter-spacing:.05em}
+.m-cathd{padding:10px 10px;font-size:.72rem;font-weight:700;color:var(--text-2);text-align:center;vertical-align:middle;writing-mode:vertical-rl;letter-spacing:.05em}
 .m-cell{padding:5px;vertical-align:top;min-height:46px;position:relative;transition:background .1s}
 .m-cell.dov{outline:2px dashed var(--accent);outline-offset:-2px}
 .cell-cnt{position:absolute;top:3px;right:3px;font-size:.55rem;font-weight:700;border-radius:10px;padding:1px 5px;line-height:1.5;pointer-events:none}
@@ -584,20 +584,29 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   <span id="stLow"   style="display:none">0</span>
   <span id="stImp"   style="display:none">0</span>
   <span id="stNew"   style="display:none">0</span>
-  <div class="hdr-mid"></div>
+  <div class="hdr-mid">
+    <div id="hdrSearchWrap" style="display:none;align-items:center;gap:8px;flex:1;min-width:0">
+      <div class="search-wrap">
+        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+      </div>
+      <span class="hdr-count-badge" id="hdrCountBadge"></span>
+    </div>
+  </div>
   <div class="hdr-actions">
-    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span>설정</span>
-    </button>
+    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
+    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="logout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="로그아웃">🔒</button>
     <button class="btn btn-g btn-sm hdr-btn" id="serverStatusBtn" title="서버 상태">
       <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
       <span id="serverStatusLabel">서버</span>
     </button>
     <span id="storageModeBadge" style="display:none"></span>
-    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
-    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="logout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="로그아웃">🔒</button>
+    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>설정</span>
+    </button>
     <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('shortcutsModal')" title="단축키 (?)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
       <span>단축키</span>
@@ -641,14 +650,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     </button>
   </nav>
   <main class="content" id="contentArea">
-    <!-- 검색바: 매트릭스·리스트에서만 표시 -->
-    <div class="content-search" id="contentSearch" style="display:none">
-      <div class="search-wrap">
-        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
-        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
-      </div>
-    </div>
     <div id="dashboardView" style="display:none"></div>
     <div id="matrixView" class="mwrap fluid"></div>
     <div id="bulkBar" class="bulk-bar" style="display:none"></div>
@@ -1635,8 +1636,8 @@ function __inlineNotify(msg, type) {
       cardRadius: 6,
       cardGap: 4,
       colW: 130,
-      catW: 12,
-      subCatW: 72,
+      catW: 52,
+      subCatW: 80,
       cellFold: 0,
       matrixWidth: "fluid",
       panelPos: "left",
@@ -2615,8 +2616,8 @@ function __inlineNotify(msg, type) {
     if (v !== "board" && window.hideBoardActionBar) window.hideBoardActionBar();
     const fp = document.getElementById("fpanel");
     if (fp) fp.classList.toggle("fp-hide", v === "dashboard");
-    const cs = document.getElementById("contentSearch");
-    if (cs) cs.style.display = v === "dashboard" ? "none" : "";
+    const hs = document.getElementById("hdrSearchWrap");
+    if (hs) hs.style.display = v === "dashboard" ? "none" : "flex";
     const contentEl = document.getElementById("contentArea");
     if (contentEl) contentEl.style.overflowY = v === "board" ? "hidden" : "";
   }
@@ -2663,6 +2664,8 @@ function __inlineNotify(msg, type) {
     countUp("stLow", l);
     countUp("stImp", imp);
     countUp("stNew", nw);
+    const cb = document.getElementById("hdrCountBadge");
+    if (cb) cb.textContent = items.length ? `${items.length}\uAC1C` : "";
     const fb = document.getElementById("fbadge");
     if (fb) fb.className = "fbadge" + (isFilterActive() ? " on" : "");
   }
@@ -2700,8 +2703,9 @@ function __inlineNotify(msg, type) {
     const ss = S.settings;
     const totalSubCols = st.groups.reduce((acc, gn) => acc + st.gsubs[gn].length, 0);
     const tableMinW = (ss.catW || 12) + (ss.subCatW || 72) + totalSubCols * (ss.colW || 130);
+    const catW = ss.catW || 12, subCatW = ss.subCatW || 72;
     let h = `<div class="mscroll"><table class="mtable" style="min-width:${tableMinW}px"><thead class="mx-thead-sticky"><tr>`;
-    h += `<th class="m-corner" rowspan="2"></th><th class="m-corner" rowspan="2"></th>`;
+    h += `<th class="m-corner" rowspan="2" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px"></th><th class="m-corner" rowspan="2" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px"></th>`;
     st.groups.forEach((gn) => {
       h += `<th class="m-ghd" colspan="${st.gsubs[gn].length}">${esc2(gn)}${showCnt ? badge(gCnt[gn] || 0) : ""}</th>`;
     });
@@ -2718,10 +2722,10 @@ function __inlineNotify(msg, type) {
       scA.forEach((scn, sci) => {
         h += "<tr>";
         if (sci === 0) {
-          h += `<td class="m-cathd" rowspan="${scA.length}">${esc2(cn)}${showCnt ? badge(catCnt[cn] || 0) : ""}</td>`;
+          h += `<td class="m-cathd" rowspan="${scA.length}" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px">${esc2(cn)}${showCnt ? badge(catCnt[cn] || 0) : ""}</td>`;
         }
         const scKey = `${cn}|||${scn}`;
-        h += `<td class="m-subcat">${esc2(scn || "\u2014")}${showCnt ? badge(scCnt[scKey] || 0) : ""}</td>`;
+        h += `<td class="m-subcat" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px">${esc2(scn || "\u2014")}${showCnt ? badge(scCnt[scKey] || 0) : ""}</td>`;
         st.groups.forEach((gn) => {
           st.gsubs[gn].forEach((sg) => {
             const ck = `${gn}|||${sg}|||${cn}|||${scn}`;
@@ -4727,7 +4731,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     if (S.view === "matrix") renderMatrix();
   }
   function adjCatW(d) {
-    S.settings.catW = Math.max(16, Math.min(80, S.settings.catW + d));
+    S.settings.catW = Math.max(40, Math.min(80, S.settings.catW + d));
     document.getElementById("dCatW").textContent = S.settings.catW + "px";
     save();
     applyVars();
@@ -4845,7 +4849,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       ondragstart="axisDragStart(event,'${field}',${i})" ondragover="axisDragOver(event,${i})"
       ondragleave="axisDragLeave(event)" ondrop="axisDrop(event,'${field}',${i})" ondragend="axisDragEnd()">
       <span class="col-handle" title="\uB4DC\uB798\uADF8\uD558\uC5EC \uC21C\uC11C \uBCC0\uACBD">\u283F</span>
-      <span style="font-size:.82rem;color:var(--text)">${esc(val)}</span>
+      <span style="font-size:.82rem;color:var(--text)">${esc2(val)}</span>
     </div>`).join("");
     S.settings[orderKey] = merged;
   }
@@ -4935,8 +4939,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       cardRadius: 6,
       cardGap: 4,
       colW: 130,
-      catW: 12,
-      subCatW: 72,
+      catW: 52,
+      subCatW: 80,
       cellFold: 3,
       matrixWidth: "fluid",
       panelPos: "left",
@@ -5561,7 +5565,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     updateAdminUI();
     scheduleCardAnim();
     (() => {
-      const ver = true ? "1.2.0" : "dev";
+      const ver = true ? "1.3.0" : "dev";
       const bid = true ? "20260412.local" : "local";
       const el = document.getElementById("buildNumberDisplay");
       if (el) el.textContent = `v${ver} (build ${bid})`;

@@ -1,11 +1,21 @@
 # featureMatrix-ServerAdmin
 
-기능 매트릭스 데이터를 브라우저에서 관리하고, Flask 서버를 통해 여러 사용자가 같은 데이터를 공유할 수 있게 만든 관리자 도구입니다.
+브라우저에서 기능 매트릭스를 관리하고, Flask 서버를 통해 여러 사용자가 같은 데이터를 공유할 수 있게 만든 관리자 도구입니다.
 
 이 저장소는 두 부분으로 나뉩니다.
 
-- `src/`: 관리자 UI 소스
-- `featureMatrix-server/`: 정적 파일 서빙 + 공유 데이터 API 서버
+- `src/`: 프런트엔드 소스
+- `featureMatrix-server/`: 정적 파일 서빙과 공유 데이터 API를 담당하는 Flask 서버
+
+## 주요 특징
+
+- 기능 항목 CRUD
+- 매트릭스, 리스트, 대시보드, 보드(칸반) 뷰
+- 텍스트 검색과 필드 기반 검색 (`owner:홍길동`, `status:완료`)
+- 서버 모드와 로컬 모드 지원
+- 항목 편집 락, 활동 로그, 관리자/편집자 권한 분리
+- JSON 백업, CSV/TSV 가져오기, TSV/XLS/HTML/MD ZIP 내보내기
+- 단일 HTML 번들 빌드
 
 ## 프로젝트 구조
 
@@ -14,47 +24,43 @@ featureMatrix-ServerAdmin/
 |-- src/
 |   |-- index.html
 |   |-- style.css
-|   |-- build.js            # 레거시 번들러 (정규식 기반)
-|   |-- build-esbuild.js    # esbuild 기반 번들러 (권장)
+|   |-- build.js
+|   |-- build-esbuild.js
 |   |-- package.json
 |   |-- app/
-|   |   |-- constants.js    # 상수, DATA_VERSION, 마이그레이션 정의
-|   |   |-- state.js        # 전역 상태, 저장/로드, apiFetch 유틸
-|   |   |-- admin.js        # 인증 (관리자/편집자)
-|   |   |-- theme.js        # 테마/색상
-|   |   |-- render.js       # 매트릭스·리스트 렌더, 고급 검색
-|   |   |-- modal.js        # 편집 모달
-|   |   |-- io.js           # Import/Export (TSV·XLS·HTML·MD·ZIP·JSON 백업)
-|   |   |-- settings.js     # 설정 UI
-|   |   |-- dashboard.js    # 대시보드 뷰
-|   |   `-- main.js         # 초기화, 이벤트, 폴링
+|   |   |-- admin.js
+|   |   |-- board.js
+|   |   |-- constants.js
+|   |   |-- dashboard.js
+|   |   |-- io.js
+|   |   |-- main.js
+|   |   |-- modal.js
+|   |   |-- render.js
+|   |   |-- settings.js
+|   |   |-- state.js
+|   |   `-- theme.js
 |   `-- dist/
-|       `-- index.html      # 빌드 결과물
+|       `-- index.html
 |-- featureMatrix-server/
 |   |-- server.py
-|   |-- config.json
-|   |-- data.json
-|   |-- activity.json
 |   |-- requirements.txt
 |   `-- static/
-|       |-- index.html
-|       `-- fonts/
-|-- Dockerfile              # 멀티스테이지 빌드 (Node.js → Python)
+|       `-- index.html
+|-- Dockerfile
 |-- docker-compose.yml
-|-- .dockerignore
-|-- .env.example
+|-- VERSION
 |-- implementation.md
 `-- README.md
 ```
 
-## 주요 동작
+## 동작 방식
 
-- `src/app/*.js`는 ES module 형태의 프런트엔드 코드입니다.
-- 빌드하면 단일 파일 번들인 `src/dist/index.html`이 생성되고 `featureMatrix-server/static/`으로 자동 복사됩니다.
-- `featureMatrix-server/server.py`는 정적 HTML을 서빙하고, 공유 데이터용 API를 제공합니다.
-- 서버 데이터는 `featureMatrix-server/data.json`에 저장되고, 활동 로그는 `featureMatrix-server/activity.json`에 저장됩니다.
+- 프런트엔드 코드는 `src/app/*.js`에 ES module 형태로 나뉘어 있습니다.
+- `npm run build`를 실행하면 `src/dist/index.html`이 생성되고, 자동으로 `featureMatrix-server/static/index.html`에 복사됩니다.
+- 서버는 `featureMatrix-server/server.py`에서 실행되며, 정적 HTML과 API를 함께 제공합니다.
+- 공유 데이터는 `data.json`, 활동 로그는 `activity.json`, 관리자 토큰은 `tokens.json`에 저장됩니다.
 
-## 개발 및 실행
+## 빠른 시작
 
 ### 1. Python 의존성 설치
 
@@ -62,9 +68,7 @@ featureMatrix-ServerAdmin/
 pip install -r featureMatrix-server/requirements.txt
 ```
 
-### 2. 프런트엔드 빌드
-
-**권장 — esbuild 번들러** (ES Module을 올바르게 처리, tree-shaking 지원):
+### 2. 프런트엔드 의존성 설치 및 빌드
 
 ```bash
 cd src
@@ -72,10 +76,11 @@ npm install
 npm run build
 ```
 
-**레거시 — 정규식 기반 번들러** (Node.js 외 추가 의존성 없음):
+대체 빌드:
 
 ```bash
-node src/build.js
+cd src
+npm run build:legacy
 ```
 
 빌드 결과:
@@ -89,42 +94,70 @@ node src/build.js
 python featureMatrix-server/server.py
 ```
 
-옵션 예시:
+예시:
 
 ```bash
 python featureMatrix-server/server.py --host 0.0.0.0 --port 5000
 python featureMatrix-server/server.py --host 0.0.0.0 --port 5000 --admin-password 1234
+python featureMatrix-server/server.py --host 0.0.0.0 --port 5000 --admin-password 1234 --editor-password 5678
 ```
 
-첫 실행 시 `featureMatrix-server/config.json`이 생성되며 API 키가 발급됩니다.
+실행 후 기본 접속 주소:
+
+- [http://localhost:5000](http://localhost:5000)
+
+## 사용 모드
+
+### 서버 모드
+
+- 여러 사용자가 같은 데이터를 공유합니다.
+- 관리자와 편집자 권한을 구분합니다.
+- 서버 폴링으로 다른 사용자의 변경 사항을 감지합니다.
+- 활동 로그와 편집 락을 사용합니다.
+
+### 로컬 모드
+
+- 브라우저 `localStorage`에만 저장합니다.
+- 단독 사용이나 임시 편집에 적합합니다.
+- 서버 권한과 활동 로그는 사용하지 않습니다.
 
 ## 주요 기능
 
 ### 데이터 관리
-- 기능 항목 CRUD (Key·이름·그룹·카테고리·우선순위·상태·담당자 등)
-- Undo / 변경 이력 조회
-- 전체 백업 JSON 내보내기 / 가져오기 (`expFullJSON` / `impFullJSON`)
-- TSV·XLS·HTML·MD ZIP 내보내기 및 CSV 가져오기
-- CSV/TSV 가져오기 시 필수 필드(`key`, `name`) 매핑 검증
 
-### 검색 / 필터
-- 일반 텍스트 전문 검색
-- 필드 지정 검색 문법: `owner:홍길동`, `status:완료`, `group:인증`, `priority:상` 등
-- 우선순위·상태·담당자·중요 여부 필터 패널
-- 필터 상태가 대시보드에도 반영됨
+- 기능 항목 추가, 수정, 삭제 처리, 완전 삭제
+- 우선순위, 상태, 담당자, 중요 여부 관리
+- Undo와 최근 변경 이력
+- 항목별 Markdown 내용 저장
 
-### 협업 (서버 모드)
-- 다른 사용자 변경 감지 폴링 (간격 설정 가능)
-- 항목별 편집 락 (5분 TTL — 편집창 비정상 종료 시 자동 해제)
-- 활동 로그 (관리자 전용)
+### 화면 구성
 
-### UI / 알림
-- 알림 타입: 기본·`success`·`warning`·`error` (색상 구분)
-- 대시보드: 히트맵, 그룹별 진척도, 담당자 현황, 최근 변경 타임라인
+- `Dashboard`: 통계, 그룹 진척도, 담당자 현황, 최근 변경 이력, 히트맵
+- `Matrix`: 그룹/카테고리 기반 매트릭스 뷰
+- `Board`: 상태별 칸반 보드
+- `List`: 정렬과 일괄 변경이 가능한 테이블 뷰
 
-### 데이터 안전성
-- `localStorage` 용량 초과 시 `warning` 알림
-- 스키마 버전(`DATA_VERSION`) 관리 — 로드 시 마이그레이션 자동 적용
+### 검색과 필터
+
+- 전체 텍스트 검색
+- 필드 기반 검색 구문
+- 우선순위, 상태, 담당자, 중요 여부, 삭제 여부 필터
+- 필터 상태를 대시보드와 다른 뷰에 함께 반영
+
+### 가져오기 / 내보내기
+
+- CSV/TSV 가져오기
+- 전체 JSON 백업 가져오기 / 내보내기
+- TSV, XLS, HTML, Markdown ZIP 내보내기
+
+## 저장 구조
+
+서버 모드에서는 모든 설정이 공유되지 않습니다.
+
+- 서버에 저장되는 것: `items`, `changeLog`, 일부 공유 설정
+- 브라우저 로컬에 저장되는 것: 표시 옵션, 필터, 테마, 서버 연결 정보, 사용자 이름 등 개인 설정
+
+서버 연결에 실패하면 로컬 캐시를 유지하면서 경고를 표시합니다.
 
 ## 서버 API
 
@@ -132,7 +165,7 @@ python featureMatrix-server/server.py --host 0.0.0.0 --port 5000 --admin-passwor
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| `POST` | `/api/auth` | 역할별 토큰 발급 (`role: "admin"` 또는 `"editor"`) |
+| `POST` | `/api/auth` | 관리자 또는 편집자 토큰 발급 |
 
 요청 예시:
 
@@ -145,135 +178,73 @@ python featureMatrix-server/server.py --host 0.0.0.0 --port 5000 --admin-passwor
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | `GET`  | `/api/data` | 공유 데이터 조회 |
-| `POST` | `/api/data` | 공유 데이터 저장 (`payload`, `editor`, `dataVersion` 포함) |
-| `GET`  | `/api/ping` | `serverTs`, 마지막 수정자, 편집 락 목록 반환 |
+| `POST` | `/api/data` | 공유 데이터 저장 |
+| `GET`  | `/api/ping` | `serverTs`, `lastEditor`, `lastEditTime`, `locks`, `hasEditorPw` 조회 |
 
 ### 활동 로그
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| `GET`  | `/api/log?limit=N` | 로그 조회 (관리자 토큰 필요) |
-| `POST` | `/api/log` | 로그 기록 |
+| `GET`  | `/api/log?limit=N` | 활동 로그 조회, 관리자 토큰 필요 |
+| `POST` | `/api/log` | 활동 로그 기록, 편집 권한 필요 |
 
 ### 편집 락
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| `POST` | `/api/lock`   | 항목 락 요청 |
-| `POST` | `/api/unlock` | 락 해제 |
-
-> 클라이언트는 락 후 5분이 지나면 자동으로 언락을 요청합니다.
+| `POST` | `/api/lock` | 항목 편집 락 요청 |
+| `POST` | `/api/unlock` | 항목 편집 락 해제 |
 
 ### 관리자 설정
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| `POST` | `/api/set-editor-password` | 편집자 비밀번호 변경 (관리자 전용) |
-
-## 작업 흐름
-
-프런트엔드 기능을 수정할 때는 보통 아래 순서로 작업하면 됩니다.
-
-1. `src/app/` 안에서 관련 모듈 수정
-2. `cd src && npm run build` (또는 `node src/build.js`)
-3. `featureMatrix-server/static/index.html` 반영 확인
-4. `python featureMatrix-server/server.py`로 로컬 서버 실행
-5. 브라우저에서 동작 확인
-
-## 스키마 마이그레이션
-
-아이템 필드가 추가·변경될 때는 `src/app/constants.js`를 수정합니다.
-
-```js
-// 버전 번호 올리기
-export const DATA_VERSION = 3;
-
-// 이전 버전 → 다음 버전 변환 함수 추가
-export const MIGRATIONS = {
-  1: item => ({ ...item, status: item.status ?? '', updatedAt: item.updatedAt ?? 0 }),
-  2: item => ({ ...item, newField: item.newField ?? '기본값' }),
-};
-```
-
-로드 시 저장된 버전부터 `DATA_VERSION`까지 마이그레이션이 자동 적용됩니다.
-
-## 참고 문서
-
-- [implementation.md](implementation.md): 코드 구조와 수정 포인트 정리
-
-## 주의사항
-
-- `featureMatrix-server/activity.json`은 실행 중 변경되는 데이터 파일입니다.
-- 현재 서버는 `serverTs` 충돌 감지 후 클라이언트에서 선택(내 것 유지 / 서버 것 적용)하는 방식입니다.
-- esbuild 번들러는 `cd src && npm install` 이후에 사용 가능합니다. 설치하지 않은 경우 `build-esbuild.js`가 자동으로 레거시 번들러(`build.js`)로 폴백합니다.
+| `POST` | `/api/set-editor-password` | 편집자 비밀번호 변경 |
 
 ## Docker
 
-루트에 멀티스테이지 `Dockerfile`과 `docker-compose.yml`이 포함되어 있습니다.
+루트의 `docker-compose.yml`은 로컬 빌드 대신 배포 이미지를 사용합니다.
 
 ### 빠른 시작
 
 ```bash
-# 1. 환경변수 파일 준비
-copy .env.example .env    # Windows CMD
-# cp .env.example .env    # bash / macOS / Linux
-
-# 2. .env 파일에서 ADMIN_PASSWORD 수정 (필수)
-
-# 3. 실행
-docker compose up --build -d
+copy .env.example .env
+docker compose up -d
 ```
 
-접속: `http://localhost:5000`
+`.env`에서 최소한 `ADMIN_PASSWORD`는 수정해야 합니다.
 
-데이터는 `./data` 폴더에 영속적으로 저장됩니다.
-
-### 환경변수 (.env)
+### 환경변수
 
 | 변수 | 필수 | 기본값 | 설명 |
 |------|------|--------|------|
-| `ADMIN_PASSWORD` | 필수 | — | 관리자 비밀번호 |
-| `EDITOR_PASSWORD` | 선택 | (없음) | 편집자 비밀번호 (미설정 시 편집자 모드 비활성) |
+| `ADMIN_PASSWORD` | 필수 | 없음 | 관리자 비밀번호 |
+| `EDITOR_PASSWORD` | 선택 | 빈 값 | 편집자 비밀번호 |
 | `PORT` | 선택 | `5000` | 호스트 포트 |
 
-### 직접 실행 (docker run)
+### 데이터 위치
+
+컨테이너 내부 데이터 경로:
+
+- `/app/data`
+
+기본 compose 설정에서는 로컬 `./data` 폴더가 여기에 마운트됩니다.
+
+### 로컬에서 이미지 직접 빌드
 
 ```bash
 docker build -t feature-matrix-admin .
-docker run -d \
-  -p 5000:5000 \
-  -e ADMIN_PASSWORD=1234 \
-  -e EDITOR_PASSWORD= \
-  -e FEATURE_MATRIX_DATA_DIR=/app/data \
-  -v "$(pwd)/data:/app/data" \
-  --name feature-matrix-admin \
-  feature-matrix-admin
+docker run -d -p 5000:5000 -e ADMIN_PASSWORD=1234 -e EDITOR_PASSWORD= -e FEATURE_MATRIX_DATA_DIR=/app/data -v "$(pwd)/data:/app/data" --name feature-matrix-admin feature-matrix-admin
 ```
 
-### 유용한 명령
+## 버전과 릴리스
 
-```bash
-docker compose logs -f    # 로그 확인
-docker compose down       # 중지 (데이터 유지)
-docker compose down -v    # 중지 + 볼륨 삭제
-```
+- 현재 앱 버전은 루트의 `VERSION` 파일을 기준으로 합니다.
+- 프런트 빌드 시 버전과 빌드 번호가 화면에 주입됩니다.
+- `release.js`는 버전 업데이트와 git tag/push 자동화를 위한 스크립트입니다.
 
-### Docker Desktop 설치 확인
+## 개발 메모
 
-Windows에서 Docker로 실행하려면 먼저 Docker Desktop이 정상 설치 및 실행 중이어야 합니다.
-
-1. Docker Desktop을 설치하고 실행합니다.
-2. 새 터미널을 열고 아래 명령이 동작하는지 확인합니다.
-
-```bash
-docker --version
-docker compose version
-```
-
-3. 엔진이 살아있는지 확인합니다.
-
-```bash
-docker ps
-```
-
-위 명령이 정상 동작하면 현재 프로젝트도 Docker로 실행할 준비가 된 상태입니다.
+- 프런트엔드 소스는 항상 `src/` 아래를 수정해야 합니다.
+- `featureMatrix-server/static/index.html`은 빌드 결과물이므로 직접 수정하지 않습니다.
+- 내부 구조와 모듈 책임은 [implementation.md](implementation.md)를 참고하세요.

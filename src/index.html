@@ -37,20 +37,29 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   <span id="stLow"   style="display:none">0</span>
   <span id="stImp"   style="display:none">0</span>
   <span id="stNew"   style="display:none">0</span>
-  <div class="hdr-mid"></div>
+  <div class="hdr-mid">
+    <div id="hdrSearchWrap" style="display:none;align-items:center;gap:8px;flex:1;min-width:0">
+      <div class="search-wrap">
+        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+      </div>
+      <span class="hdr-count-badge" id="hdrCountBadge"></span>
+    </div>
+  </div>
   <div class="hdr-actions">
-    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span>설정</span>
-    </button>
+    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
+    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="logout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="로그아웃">🔒</button>
     <button class="btn btn-g btn-sm hdr-btn" id="serverStatusBtn" title="서버 상태">
       <span id="serverStatusDot" style="width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;display:none;transition:background .3s"></span>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
       <span id="serverStatusLabel">서버</span>
     </button>
     <span id="storageModeBadge" style="display:none"></span>
-    <span id="adminBadge" style="display:none;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)" title="관리자 모드">🔑</span>
-    <button id="adminLogoutBtn" class="btn btn-g btn-sm" onclick="logout()" style="display:none;width:27px;padding:0;font-size:.82rem" title="로그아웃">🔒</button>
+    <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('settingsModal')" title="환경 설정 (Ctrl+,)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>설정</span>
+    </button>
     <button class="btn btn-g btn-sm hdr-btn" onclick="openModal('shortcutsModal')" title="단축키 (?)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
       <span>단축키</span>
@@ -94,14 +103,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     </button>
   </nav>
   <main class="content" id="contentArea">
-    <!-- 검색바: 매트릭스·리스트에서만 표시 -->
-    <div class="content-search" id="contentSearch" style="display:none">
-      <div class="search-wrap">
-        <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search-inp" id="searchInp" placeholder="검색 (기능명·Key·담당·경로)" oninput="onSearch(this.value)">
-        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
-      </div>
-    </div>
     <div id="dashboardView" style="display:none"></div>
     <div id="matrixView" class="mwrap fluid"></div>
     <div id="bulkBar" class="bulk-bar" style="display:none"></div>

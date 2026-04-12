@@ -3,7 +3,7 @@
 ══════════════════════════════════════════ */
 
 import { DEFAULT_LIST_COLS } from './constants.js';
-import { S, save, notify, today } from './state.js';
+import { S, save, notify, today, esc } from './state.js';
 import { applyVars, applyBlurSetting, updateDesignContent, renderThemeGrid, renderPrioStyleRows, renderPreviewCards } from './theme.js';
 import { renderAll, renderList, renderMatrix } from './render.js';
 import { dlBlob } from './io.js';
@@ -91,7 +91,7 @@ export function adjCardFont(d) { S.settings.cardFont    = Math.max(9, Math.min(1
 export function adjRadius(d)   { S.settings.cardRadius  = Math.max(0, Math.min(14,S.settings.cardRadius+d));  document.getElementById('dRadius').textContent   =S.settings.cardRadius+'px';  save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
 export function adjGap(d)      { S.settings.cardGap     = Math.max(0, Math.min(20,S.settings.cardGap+d));     document.getElementById('dGap').textContent      =S.settings.cardGap+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
 export function adjColW(d)     { S.settings.colW        = Math.max(80,Math.min(300,S.settings.colW+d));       document.getElementById('dColW').textContent     =S.settings.colW+'px';       save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-export function adjCatW(d)     { S.settings.catW        = Math.max(16,Math.min(80,S.settings.catW+d));        document.getElementById('dCatW').textContent     =S.settings.catW+'px';        save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
+export function adjCatW(d)     { S.settings.catW        = Math.max(40,Math.min(80,S.settings.catW+d));        document.getElementById('dCatW').textContent     =S.settings.catW+'px';        save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
 export function adjSubCatW(d)  { S.settings.subCatW     = Math.max(40,Math.min(200,S.settings.subCatW+d));    document.getElementById('dSubCatW').textContent  =S.settings.subCatW+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
 export function adjCellFold(d)      { S.settings.cellFold      = Math.max(0,  Math.min(20,  S.settings.cellFold+d));      document.getElementById('dCellFold').textContent      = S.settings.cellFold===0?'∞':S.settings.cellFold; save(); S.expandedCells=new Set(); if(S.view==='matrix')renderMatrix(); }
 export function adjChangeLogMax(d)  { S.settings.changeLogMax  = Math.max(10, Math.min(500, S.settings.changeLogMax+d));  document.getElementById('dChangeLogMax').textContent  = S.settings.changeLogMax; save(); }
@@ -227,7 +227,7 @@ export function resetSettings() {
   if (!confirm('설정을 기본값으로 초기화하겠습니까?')) return;
   Object.assign(S.settings, {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:12, subCatW:72, cellFold:3,
+    colW:130, catW:52, subCatW:80, cellFold:3,
     matrixWidth:'fluid', panelPos:'left', themeId:'sobuk',
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},

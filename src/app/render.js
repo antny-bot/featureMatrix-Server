@@ -185,8 +185,8 @@ function syncLayout() {
   if (v !== 'board' && window.hideBoardActionBar) window.hideBoardActionBar();
   const fp = document.getElementById('fpanel');
   if (fp) fp.classList.toggle('fp-hide', v === 'dashboard');
-  const cs = document.getElementById('contentSearch');
-  if (cs) cs.style.display = v === 'dashboard' ? 'none' : '';
+  const hs = document.getElementById('hdrSearchWrap');
+  if (hs) hs.style.display = v === 'dashboard' ? 'none' : 'flex';
   const contentEl = document.getElementById('contentArea');
   if (contentEl) contentEl.style.overflowY = v === 'board' ? 'hidden' : '';
 }
@@ -230,6 +230,8 @@ export function renderStats() {
   countUp('stTotal', items.length);
   countUp('stHigh', h); countUp('stMid', m); countUp('stLow', l);
   countUp('stImp', imp); countUp('stNew', nw);
+  const cb = document.getElementById('hdrCountBadge');
+  if (cb) cb.textContent = items.length ? `${items.length}개` : '';
   const fb = document.getElementById('fbadge');
   if (fb) fb.className = 'fbadge' + (isFilterActive() ? ' on' : '');
 }
@@ -276,8 +278,9 @@ export function renderMatrix() {
   const totalSubCols = st.groups.reduce((acc, gn) => acc + st.gsubs[gn].length, 0);
   const tableMinW = (ss.catW || 12) + (ss.subCatW || 72) + totalSubCols * (ss.colW || 130);
 
+  const catW = ss.catW || 12, subCatW = ss.subCatW || 72;
   let h = `<div class="mscroll"><table class="mtable" style="min-width:${tableMinW}px"><thead class="mx-thead-sticky"><tr>`;
-  h += `<th class="m-corner" rowspan="2"></th><th class="m-corner" rowspan="2"></th>`;
+  h += `<th class="m-corner" rowspan="2" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px"></th><th class="m-corner" rowspan="2" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px"></th>`;
   st.groups.forEach(gn => {
     h += `<th class="m-ghd" colspan="${st.gsubs[gn].length}">${esc(gn)}${showCnt ? badge(gCnt[gn]||0) : ''}</th>`;
   });
@@ -295,10 +298,10 @@ export function renderMatrix() {
     scA.forEach((scn, sci) => {
       h += '<tr>';
       if (sci === 0) {
-        h += `<td class="m-cathd" rowspan="${scA.length}">${esc(cn)}${showCnt ? badge(catCnt[cn]||0) : ''}</td>`;
+        h += `<td class="m-cathd" rowspan="${scA.length}" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px">${esc(cn)}${showCnt ? badge(catCnt[cn]||0) : ''}</td>`;
       }
       const scKey = `${cn}|||${scn}`;
-      h += `<td class="m-subcat">${esc(scn||'—')}${showCnt ? badge(scCnt[scKey]||0) : ''}</td>`;
+      h += `<td class="m-subcat" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px">${esc(scn||'—')}${showCnt ? badge(scCnt[scKey]||0) : ''}</td>`;
 
       st.groups.forEach(gn => {
         st.gsubs[gn].forEach(sg => {
