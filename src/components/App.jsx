@@ -10,6 +10,7 @@
 import { useEffect } from 'react';
 import Header from './Header.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
+import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 
 /* ── 앱 HTML 템플릿 (헤더 제외 — Header.jsx로 분리됨) ── */
 const APP_TEMPLATE = `
@@ -591,9 +592,11 @@ export default function App() {
   }, []); // 마운트 시 1회만 실행
 
   return (
-    <AuthProvider>
-      <Header />
-      <div dangerouslySetInnerHTML={{ __html: APP_TEMPLATE }} />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Header />
+        <div dangerouslySetInnerHTML={{ __html: APP_TEMPLATE }} />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

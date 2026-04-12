@@ -23242,10 +23242,11 @@ function __inlineNotify(msg, type) {
   function toggleTheme() {
     const html = document.documentElement;
     const isDark = html.getAttribute("data-theme") === "dark";
-    html.setAttribute("data-theme", isDark ? "light" : "dark");
-    document.getElementById("themeBtn").textContent = isDark ? "\u{1F319}" : "\u2600\uFE0F";
+    const next = !isDark;
+    html.setAttribute("data-theme", next ? "dark" : "light");
     applyVars();
     renderAll();
+    window.__themeRefresh?.(next);
   }
   function applyTheme(tid) {
     if (!THEMES[tid]) return;
@@ -23660,18 +23661,18 @@ function __inlineNotify(msg, type) {
 
   // node_modules/zustand/esm/react.mjs
   function useStore(api, selector = identity) {
-    const slice = import_react2.default.useSyncExternalStore(
+    const slice = import_react3.default.useSyncExternalStore(
       api.subscribe,
-      import_react2.default.useCallback(() => selector(api.getState()), [api, selector]),
-      import_react2.default.useCallback(() => selector(api.getInitialState()), [api, selector])
+      import_react3.default.useCallback(() => selector(api.getState()), [api, selector]),
+      import_react3.default.useCallback(() => selector(api.getInitialState()), [api, selector])
     );
-    import_react2.default.useDebugValue(slice);
+    import_react3.default.useDebugValue(slice);
     return slice;
   }
-  var import_react2, identity, createImpl, create;
+  var import_react3, identity, createImpl, create;
   var init_react = __esm({
     "node_modules/zustand/esm/react.mjs"() {
-      import_react2 = __toESM(require_react(), 1);
+      import_react3 = __toESM(require_react(), 1);
       init_vanilla();
       identity = (arg) => arg;
       createImpl = (createState) => {
@@ -27071,7 +27072,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react3 = __toESM(require_react());
+  var import_react4 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -27115,56 +27116,80 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     return (0, import_react.useContext)(AuthContext);
   }
 
-  // components/Header.jsx
+  // contexts/ThemeContext.jsx
+  var import_react2 = __toESM(require_react());
   var import_jsx_runtime2 = __toESM(require_jsx_runtime());
-  var ICON_SERVER = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2", y: "2", width: "20", height: "8", rx: "2" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2", y: "14", width: "20", height: "8", rx: "2" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "6", y1: "6", x2: "6.01", y2: "6" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "6", y1: "18", x2: "6.01", y2: "18" })
+  var ThemeContext = (0, import_react2.createContext)({ isDark: false });
+  function ThemeProvider({ children }) {
+    const [isDark, setIsDark] = (0, import_react2.useState)(
+      () => document.documentElement.getAttribute("data-theme") === "dark"
+    );
+    (0, import_react2.useEffect)(() => {
+      window.__themeRefresh = (dark) => setIsDark(!!dark);
+      return () => {
+        delete window.__themeRefresh;
+      };
+    }, []);
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ThemeContext.Provider, { value: { isDark }, children });
+  }
+  var useTheme = () => (0, import_react2.useContext)(ThemeContext);
+
+  // components/Header.jsx
+  var import_jsx_runtime3 = __toESM(require_jsx_runtime());
+  var ICON_SERVER = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("rect", { x: "2", y: "2", width: "20", height: "8", rx: "2" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("rect", { x: "2", y: "14", width: "20", height: "8", rx: "2" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "6", y1: "6", x2: "6.01", y2: "6" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "6", y1: "18", x2: "6.01", y2: "18" })
   ] });
-  var ICON_SETTINGS = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "12", cy: "12", r: "3" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" })
+  var ICON_SETTINGS = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: "12", cy: "12", r: "3" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" })
   ] });
-  var ICON_SHORTCUTS = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: "2", y: "6", width: "20", height: "12", rx: "2" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" })
+  var ICON_SHORTCUTS = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("rect", { x: "2", y: "6", width: "20", height: "12", rx: "2" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" })
   ] });
-  var ICON_THEME = /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", id: "themeBtnIcon", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "12", cy: "12", r: "5" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "12", y1: "1", x2: "12", y2: "3" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "12", y1: "21", x2: "12", y2: "23" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "4.22", y1: "4.22", x2: "5.64", y2: "5.64" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "18.36", y1: "18.36", x2: "19.78", y2: "19.78" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "1", y1: "12", x2: "3", y2: "12" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "21", y1: "12", x2: "23", y2: "12" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "4.22", y1: "19.78", x2: "5.64", y2: "18.36" }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "18.36", y1: "5.64", x2: "19.78", y2: "4.22" })
-  ] });
+  function IconSun() {
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", id: "themeBtnIcon", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: "12", cy: "12", r: "5" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "12", y1: "1", x2: "12", y2: "3" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "12", y1: "21", x2: "12", y2: "23" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "4.22", y1: "4.22", x2: "5.64", y2: "5.64" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "18.36", y1: "18.36", x2: "19.78", y2: "19.78" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "1", y1: "12", x2: "3", y2: "12" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "21", y1: "12", x2: "23", y2: "12" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "4.22", y1: "19.78", x2: "5.64", y2: "18.36" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "18.36", y1: "5.64", x2: "19.78", y2: "4.22" })
+    ] });
+  }
+  function IconMoon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", id: "themeBtnIcon", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" }) });
+  }
   function Header() {
     const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode: isServerMode2 } = useAuth();
+    const { isDark } = useTheme();
     const showAdminBadge = isAdmin2 && isServerMode2;
     const showLogoutBtn = (isAdmin2 || isEditor2) && isServerMode2;
     const logoutTitle = isAdmin2 ? "\uAD00\uB9AC\uC790 \uB85C\uADF8\uC544\uC6C3" : "\uD3B8\uC9D1\uC790 \uB85C\uADF8\uC544\uC6C3";
-    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("header", { className: "hdr", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "hdr-left", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "logo-kr", id: "dTitle", children: "featureMATRIX" }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "logo-sub", id: "dSub", children: "\uAE30\uB2A5\uC815\uC758 \uD234" })
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("header", { className: "hdr", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "hdr-left", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "logo-kr", id: "dTitle", children: "featureMATRIX" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "logo-sub", id: "dSub", children: "\uAE30\uB2A5\uC815\uC758 \uD234" })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stTotal", style: { display: "none" }, children: "0" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stHigh", style: { display: "none" }, children: "0" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stMid", style: { display: "none" }, children: "0" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stLow", style: { display: "none" }, children: "0" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stImp", style: { display: "none" }, children: "0" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "stNew", style: { display: "none" }, children: "0" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "hdr-mid", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { id: "hdrSearchWrap", style: { display: "none", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "search-wrap", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { className: "search-icon", width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: "11", cy: "11", r: "8" }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" })
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stTotal", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stHigh", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stMid", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stLow", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stImp", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stNew", style: { display: "none" }, children: "0" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "hdr-mid", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { id: "hdrSearchWrap", style: { display: "none", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "search-wrap", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { className: "search-icon", width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: "11", cy: "11", r: "8" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             "input",
             {
               className: "search-inp",
@@ -27173,12 +27198,12 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
               onInput: (e) => window.onSearch?.(e.target.value)
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "search-clear", id: "searchClear", onClick: () => window.clearSearch?.(), children: "\u2715" })
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "search-clear", id: "searchClear", onClick: () => window.clearSearch?.(), children: "\u2715" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "hdr-count-badge", id: "hdrCountBadge" })
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "hdr-count-badge", id: "hdrCountBadge" })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "hdr-actions", children: [
-        showAdminBadge && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "hdr-actions", children: [
+        showAdminBadge && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
           "span",
           {
             id: "adminBadge",
@@ -27187,7 +27212,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             children: "\u{1F511}"
           }
         ),
-        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
           "button",
           {
             id: "adminLogoutBtn",
@@ -27198,30 +27223,30 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             children: "\u{1F512}"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", id: "serverStatusBtn", title: "\uC11C\uBC84 \uC0C1\uD0DC", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "serverStatusDot", style: { width: "7px", height: "7px", borderRadius: "50%", background: "#aaa", flexShrink: 0, display: "none", transition: "background .3s" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", id: "serverStatusBtn", title: "\uC11C\uBC84 \uC0C1\uD0DC", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "serverStatusDot", style: { width: "7px", height: "7px", borderRadius: "50%", background: "#aaa", flexShrink: 0, display: "none", transition: "background .3s" } }),
           ICON_SERVER,
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "serverStatusLabel", children: "\uC11C\uBC84" })
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "serverStatusLabel", children: "\uC11C\uBC84" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { id: "storageModeBadge", style: { display: "none" } }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.openModal?.("settingsModal"), title: "\uD658\uACBD \uC124\uC815 (Ctrl+,)", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "storageModeBadge", style: { display: "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.openModal?.("settingsModal"), title: "\uD658\uACBD \uC124\uC815 (Ctrl+,)", children: [
           ICON_SETTINGS,
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\uC124\uC815" })
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "\uC124\uC815" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.openModal?.("shortcutsModal"), title: "\uB2E8\uCD95\uD0A4 (?)", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.openModal?.("shortcutsModal"), title: "\uB2E8\uCD95\uD0A4 (?)", children: [
           ICON_SHORTCUTS,
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\uB2E8\uCD95\uD0A4" })
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "\uB2E8\uCD95\uD0A4" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.toggleTheme?.(), id: "themeBtn", title: "\uD14C\uB9C8", children: [
-          ICON_THEME,
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\uD14C\uB9C8" })
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.toggleTheme?.(), id: "themeBtn", title: "\uD14C\uB9C8", children: [
+          isDark ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(IconSun, {}) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(IconMoon, {}),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: isDark ? "\uB77C\uC774\uD2B8" : "\uB2E4\uD06C" })
         ] })
       ] })
     ] });
   }
 
   // components/App.jsx
-  var import_jsx_runtime3 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime4 = __toESM(require_jsx_runtime());
   var APP_TEMPLATE = `
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
   <span id="updateBannerMsg">\u26A0 \uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.</span>
@@ -27796,21 +27821,21 @@ $$')" title="\uBE14\uB85D \uC218\uC2DD"   style="width:26px;padding:0">\u222B</b
 <div id="boardActionBar" class="board-action-bar"></div>
 `;
   function App() {
-    (0, import_react3.useEffect)(() => {
+    (0, import_react4.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] main.js \uCD08\uAE30\uD654 \uC2E4\uD328:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(AuthProvider, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Header, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } })
-    ] });
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Header, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } })
+    ] }) });
   }
 
   // main.jsx
-  var import_jsx_runtime4 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime5 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime4.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime5.jsx)(App, {}));
 })();
 /*! Bundled license information:
 

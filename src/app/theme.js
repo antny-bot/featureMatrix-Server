@@ -35,10 +35,12 @@ export function applyVars() {
 export function toggleTheme() {
   const html   = document.documentElement;
   const isDark = html.getAttribute('data-theme') === 'dark';
-  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  const next   = !isDark;
+  html.setAttribute('data-theme', next ? 'dark' : 'light');
   applyVars();
   window.__sobukRenderAll?.();
+  /* React ThemeContext 동기화 (Header.jsx 아이콘 전환) */
+  window.__themeRefresh?.(next);
 }
 
 export function applyTheme(tid) {
