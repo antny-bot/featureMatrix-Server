@@ -22844,7 +22844,6 @@ function __inlineNotify(msg, type) {
         // 변경 이력 (추가/수정/삭제 등)
         view: "matrix",
         searchQ: "",
-        expandedCells: /* @__PURE__ */ new Set(),
         filters: { priorities: [], statuses: [], showDeleted: false, importantOnly: false, owners: [] },
         display: { showOwner: true, showStar: true, showNewBadge: true, showCellCount: true, showUpdated: false, showStatus: true, showMdBadge: true, showQuickAdd: false },
         settings: {
@@ -22935,7 +22934,6 @@ function __inlineNotify(msg, type) {
         changeLog: [],
         view: "matrix",
         searchQ: "",
-        expandedCells: /* @__PURE__ */ new Set(),
         filters: {
           priorities: [],
           statuses: [],
@@ -23000,7 +22998,6 @@ function __inlineNotify(msg, type) {
         setItems: (items) => set({ items }),
         setView: (view) => set({ view }),
         setSearchQ: (searchQ) => set({ searchQ }),
-        setExpandedCells: (expandedCells) => set({ expandedCells }),
         setEditKey: (editKey) => set({ editKey }),
         setIsDragging: (isDragging) => set({ isDragging }),
         setServerStatus: (serverStatus) => set({ serverStatus }),
@@ -23792,12 +23789,10 @@ function __inlineNotify(msg, type) {
   }
   function expandCell(e, ck) {
     e.stopPropagation();
-    S.expandedCells.add(ck);
     syncToStore();
   }
   function collapseCell(e, ck) {
     e.stopPropagation();
-    S.expandedCells.delete(ck);
     syncToStore();
   }
   function renderCard(item, c, si = -1, overrides = {}) {
@@ -25730,7 +25725,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   function adjCellFold(d) {
     S.settings.cellFold = Math.max(0, Math.min(20, S.settings.cellFold + d));
     save();
-    S.expandedCells = /* @__PURE__ */ new Set();
     setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
@@ -26222,7 +26216,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       window.onSearch = (q) => {
         S.searchQ = q.trim();
         document.getElementById("searchClear").className = "search-clear" + (S.searchQ ? " on" : "");
-        S.expandedCells = /* @__PURE__ */ new Set();
         renderAll(true);
       };
       window.clearSearch = () => {
@@ -27371,13 +27364,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
               }, step: 10 }),
               /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Stepper, { label: "\uC140 \uC811\uAE30 \uAE30\uC900", value: settings.cellFold === 0 ? "\u221E" : settings.cellFold, sub: "0=\uD56D\uC0C1 \uD3BC\uCE68", onMinus: () => {
                 S.settings.cellFold = Math.max(0, Math.min(20, settings.cellFold - 1));
-                S.expandedCells = /* @__PURE__ */ new Set();
                 save();
                 syncSettings();
                 window.renderAll?.();
               }, onPlus: () => {
                 S.settings.cellFold = Math.max(0, Math.min(20, settings.cellFold + 1));
-                S.expandedCells = /* @__PURE__ */ new Set();
                 save();
                 syncSettings();
                 window.renderAll?.();
@@ -28018,6 +28009,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     const display = useAppStore((s) => s.display);
     const filters = useAppStore((s) => s.filters);
     const searchQ = useAppStore((s) => s.searchQ);
+    const cellFold = useAppStore((s) => s.settings.cellFold);
     const [container, setContainer] = (0, import_react8.useState)(null);
     const [expandedCells, setExpandedCells] = (0, import_react8.useState)(/* @__PURE__ */ new Set());
     (0, import_react8.useEffect)(() => {
@@ -28025,7 +28017,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     }, []);
     (0, import_react8.useEffect)(() => {
       setExpandedCells(/* @__PURE__ */ new Set());
-    }, [filters, searchQ]);
+    }, [filters, searchQ, cellFold]);
     (0, import_react8.useEffect)(() => {
       if (container) {
         container.className = `mwrap${settings.matrixWidth === "fluid" ? " fluid" : ""}`;

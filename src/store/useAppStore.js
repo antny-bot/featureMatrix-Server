@@ -20,7 +20,6 @@ const initialState = {
   changeLog: [],
   view: 'matrix',
   searchQ: '',
-  expandedCells: new Set(),
   filters: {
     priorities: [],
     statuses: [],
@@ -77,7 +76,6 @@ export const useAppStore = create((set, get) => ({
   setItems: (items) => set({ items }),
   setView: (view) => set({ view }),
   setSearchQ: (searchQ) => set({ searchQ }),
-  setExpandedCells: (expandedCells) => set({ expandedCells }),
   setEditKey: (editKey) => set({ editKey }),
   setIsDragging: (isDragging) => set({ isDragging }),
   setServerStatus: (serverStatus) => set({ serverStatus }),

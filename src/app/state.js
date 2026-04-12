@@ -10,7 +10,6 @@ export const S = {
   changeLog: [],           // 변경 이력 (추가/수정/삭제 등)
   view: 'matrix',
   searchQ: '',
-  expandedCells: new Set(),
   filters: { priorities:[], statuses:[], showDeleted:false, importantOnly:false, owners:[] },
   display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true, showQuickAdd:false },
   settings: {

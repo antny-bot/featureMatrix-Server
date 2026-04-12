@@ -57,7 +57,7 @@ export function adjGap(d)      { S.settings.cardGap    = Math.max(0, Math.min(20
 export function adjColW(d)     { S.settings.colW       = Math.max(80,Math.min(300,S.settings.colW+d));       save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
 export function adjCatW(d)     { S.settings.catW       = Math.max(40,Math.min(80, S.settings.catW+d));       save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
 export function adjSubCatW(d)  { S.settings.subCatW    = Math.max(40,Math.min(200,S.settings.subCatW+d));    save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
-export function adjCellFold(d) { S.settings.cellFold   = Math.max(0, Math.min(20, S.settings.cellFold+d));   save(); S.expandedCells=new Set(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
+export function adjCellFold(d) { S.settings.cellFold   = Math.max(0, Math.min(20, S.settings.cellFold+d));   save(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
 export function adjChangeLogMax(d) { S.settings.changeLogMax = Math.max(10,Math.min(500,S.settings.changeLogMax+d)); save(); setStore({ settings: { ...S.settings } }); }
 export function adjBoardFoldCount(d) {
   S.settings.boardFoldCount = Math.max(0, Math.min(30, (S.settings.boardFoldCount??6)+d));

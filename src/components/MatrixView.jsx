@@ -22,6 +22,7 @@ export default function MatrixView() {
   const display  = useAppStore(s => s.display);   // eslint-disable-line no-unused-vars
   const filters  = useAppStore(s => s.filters);
   const searchQ  = useAppStore(s => s.searchQ);
+  const cellFold = useAppStore(s => s.settings.cellFold);
 
   const [container,     setContainer]     = useState(null);
   const [expandedCells, setExpandedCells] = useState(new Set());
@@ -30,10 +31,10 @@ export default function MatrixView() {
     setContainer(document.getElementById('matrixView'));
   }, []);
 
-  /* 필터/검색 변경 시 펼침 셀 초기화 */
+  /* 필터/검색/셀접기기준 변경 시 펼침 셀 초기화 */
   useEffect(() => {
     setExpandedCells(new Set());
-  }, [filters, searchQ]);
+  }, [filters, searchQ, cellFold]);
 
   /* 컨테이너 className 동기화 (fluid/fixed) */
   useEffect(() => {

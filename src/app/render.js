@@ -347,8 +347,8 @@ export function buildMatrixHtml(expandedCells) {
 /* ── 매트릭스 렌더 — MatrixView.jsx React 포털로 위임, syncToStore()만 호출 ── */
 export function renderMatrix() { syncToStore(); }
 
-export function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    syncToStore(); }
-export function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); syncToStore(); }
+export function expandCell(e, ck)   { e.stopPropagation(); syncToStore(); }
+export function collapseCell(e, ck) { e.stopPropagation(); syncToStore(); }
 
 /* ── 카드 HTML ── */
 export function renderCard(item, c, si = -1, overrides = {}) {

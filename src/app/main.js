@@ -105,7 +105,6 @@ window.__sobukNotify = (msg, type = false) => {
 window.onSearch = q => {
   S.searchQ = q.trim();
   document.getElementById('searchClear').className = 'search-clear' + (S.searchQ ? ' on' : '');
-  S.expandedCells = new Set();
   renderAll(true);
 };
 window.clearSearch = () => { document.getElementById('searchInp').value = ''; window.onSearch(''); };
