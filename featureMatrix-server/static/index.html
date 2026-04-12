@@ -299,14 +299,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .board-col-cnt{font-size:.65rem;font-weight:400;background:var(--surface-3);color:var(--text-3);border-radius:10px;padding:1px 7px;margin-left:4px}
 .board-col-body{flex:1;overflow-y:auto;padding:4px 7px 10px;display:flex;flex-direction:column;gap:6px;min-height:80px}
 .board-col-body.drag-over{background:var(--accent-l);outline:2px dashed var(--accent);outline-offset:-3px}
-.board-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;transition:box-shadow .15s,transform .12s;position:relative}
-.board-card:hover{box-shadow:0 2px 8px var(--shadow);transform:translateY(-1px)}
-.board-card.selected{outline:2px solid var(--accent);outline-offset:1px;background:var(--accent-l)}
-.board-card.dragging{opacity:.45;transform:scale(.97)}
-.board-card-key{font-size:.58rem;color:var(--text-3);margin-bottom:2px}
-.board-card-name{font-size:.78rem;font-weight:600;color:var(--text);line-height:1.35;word-break:break-word}
-.board-card-meta{display:flex;align-items:center;gap:4px;margin-top:5px;flex-wrap:wrap}
-.board-card-group{font-size:.6rem;color:var(--text-3);background:var(--surface-2);border-radius:3px;padding:1px 5px}
+.mitem.board-selected,.mitem.mxsel{outline:2px solid var(--accent);outline-offset:1px;background:var(--accent-l) !important}
+.mitem.dragging{opacity:.45;transform:scale(.97)}
 .board-action-bar{display:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);border-radius:24px;padding:8px 16px;gap:10px;align-items:center;font-size:.75rem;box-shadow:0 4px 20px var(--shadow);z-index:300;white-space:nowrap}
 .board-action-bar.on{display:flex}
 .board-action-bar button{background:rgba(255,255,255,.15);border:none;color:inherit;border-radius:12px;padding:4px 12px;cursor:pointer;font-size:.72rem;transition:background .15s}
@@ -399,14 +393,17 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-eyebrow{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
 .db-title{font-size:1.85rem;font-weight:800;letter-spacing:-.03em;color:var(--text);line-height:1.2}
 
-/* 통계 카드 그리드 */
-.db-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-@media(max-width:900px){.db-cards{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.db-cards{grid-template-columns:1fr}}
+/* 통계 카드 그리드 — 전체기능 1개(large) + 상태 5개(mini) */
+.db-cards{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:12px}
+@media(max-width:1100px){.db-cards{grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr}}
+@media(max-width:800px){.db-cards{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.db-cards{grid-template-columns:repeat(2,1fr)}}
 
 .db-card{background:var(--surface-2);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:8px;transition:background .18s}
 .db-card:hover{background:var(--surface-3)}
 .db-card--primary{border-left:4px solid var(--accent)}
+.db-card--mini{padding:14px 16px}
+.db-card--mini .db-card-value{font-size:1.6rem}
 .db-card--theme{background:var(--db-theme-bg,var(--accent-l));border-left:4px solid var(--db-theme-c,var(--accent))}
 .db-card-label{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
 .db-card-value{font-size:2.2rem;font-weight:900;letter-spacing:-.03em;color:var(--text);line-height:1}
@@ -445,10 +442,10 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 @media(max-width:960px){.db-insight{grid-template-columns:1fr}}
 .db-insight-left{display:flex;flex-direction:column;gap:16px}
 /* 통합 2열 본문 레이아웃 */
-.db-body{display:grid;grid-template-columns:1fr 300px;gap:14px}
+.db-body{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
 @media(max-width:960px){.db-body{grid-template-columns:1fr}}
 .db-body-left{display:flex;flex-direction:column;gap:14px}
-.db-body-right{display:flex;flex-direction:column;gap:14px}
+.db-body-right{display:flex;flex-direction:column;gap:14px;overflow:hidden}
 /* 3열 카드 (좌측 열 안) */
 .db-cards-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:700px){.db-cards-3{grid-template-columns:1fr}}
@@ -1137,6 +1134,347 @@ function __inlineNotify(msg, type) {
 }
 
 (() => {
+  // node_modules/drag-drop-touch/DragDropTouch.js
+  var DragDropTouch;
+  (function(DragDropTouch_1) {
+    "use strict";
+    var DataTransfer = (function() {
+      function DataTransfer2() {
+        this._dropEffect = "move";
+        this._effectAllowed = "all";
+        this._data = {};
+      }
+      Object.defineProperty(DataTransfer2.prototype, "dropEffect", {
+        /**
+         * Gets or sets the type of drag-and-drop operation currently selected.
+         * The value must be 'none',  'copy',  'link', or 'move'.
+         */
+        get: function() {
+          return this._dropEffect;
+        },
+        set: function(value) {
+          this._dropEffect = value;
+        },
+        enumerable: true,
+        configurable: true
+      });
+      Object.defineProperty(DataTransfer2.prototype, "effectAllowed", {
+        /**
+         * Gets or sets the types of operations that are possible.
+         * Must be one of 'none', 'copy', 'copyLink', 'copyMove', 'link',
+         * 'linkMove', 'move', 'all' or 'uninitialized'.
+         */
+        get: function() {
+          return this._effectAllowed;
+        },
+        set: function(value) {
+          this._effectAllowed = value;
+        },
+        enumerable: true,
+        configurable: true
+      });
+      Object.defineProperty(DataTransfer2.prototype, "types", {
+        /**
+         * Gets an array of strings giving the formats that were set in the @see:dragstart event.
+         */
+        get: function() {
+          return Object.keys(this._data);
+        },
+        enumerable: true,
+        configurable: true
+      });
+      DataTransfer2.prototype.clearData = function(type) {
+        if (type != null) {
+          delete this._data[type];
+        } else {
+          this._data = null;
+        }
+      };
+      DataTransfer2.prototype.getData = function(type) {
+        return this._data[type] || "";
+      };
+      DataTransfer2.prototype.setData = function(type, value) {
+        this._data[type] = value;
+      };
+      DataTransfer2.prototype.setDragImage = function(img, offsetX, offsetY) {
+        var ddt = DragDropTouch2._instance;
+        ddt._imgCustom = img;
+        ddt._imgOffset = { x: offsetX, y: offsetY };
+      };
+      return DataTransfer2;
+    })();
+    DragDropTouch_1.DataTransfer = DataTransfer;
+    var DragDropTouch2 = (function() {
+      function DragDropTouch3() {
+        this._lastClick = 0;
+        if (DragDropTouch3._instance) {
+          throw "DragDropTouch instance already created.";
+        }
+        var supportsPassive = false;
+        document.addEventListener("test", function() {
+        }, {
+          get passive() {
+            supportsPassive = true;
+            return true;
+          }
+        });
+        if ("ontouchstart" in document) {
+          var d = document, ts = this._touchstart.bind(this), tm = this._touchmove.bind(this), te = this._touchend.bind(this), opt = supportsPassive ? { passive: false, capture: false } : false;
+          d.addEventListener("touchstart", ts, opt);
+          d.addEventListener("touchmove", tm, opt);
+          d.addEventListener("touchend", te);
+          d.addEventListener("touchcancel", te);
+        }
+      }
+      DragDropTouch3.getInstance = function() {
+        return DragDropTouch3._instance;
+      };
+      DragDropTouch3.prototype._touchstart = function(e) {
+        var _this = this;
+        if (this._shouldHandle(e)) {
+          if (Date.now() - this._lastClick < DragDropTouch3._DBLCLICK) {
+            if (this._dispatchEvent(e, "dblclick", e.target)) {
+              if (e.cancelable) {
+                e.preventDefault();
+              }
+              this._reset();
+              return;
+            }
+          }
+          this._reset();
+          var src = this._closestDraggable(e.target);
+          if (src) {
+            if (!this._dispatchEvent(e, "mousemove", e.target) && !this._dispatchEvent(e, "mousedown", e.target)) {
+              this._dragSource = src;
+              this._ptDown = this._getPoint(e);
+              this._lastTouch = e;
+              if (e.cancelable) {
+                e.preventDefault();
+              }
+              setTimeout(function() {
+                if (_this._dragSource == src && _this._img == null) {
+                  if (_this._dispatchEvent(e, "contextmenu", src)) {
+                    _this._reset();
+                  }
+                }
+              }, DragDropTouch3._CTXMENU);
+              if (DragDropTouch3._ISPRESSHOLDMODE) {
+                this._pressHoldInterval = setTimeout(function() {
+                  _this._isDragEnabled = true;
+                  _this._touchmove(e);
+                }, DragDropTouch3._PRESSHOLDAWAIT);
+              }
+            }
+          }
+        }
+      };
+      DragDropTouch3.prototype._touchmove = function(e) {
+        if (this._shouldCancelPressHoldMove(e)) {
+          this._reset();
+          return;
+        }
+        if (this._shouldHandleMove(e) || this._shouldHandlePressHoldMove(e)) {
+          var target = this._getTarget(e);
+          if (this._dispatchEvent(e, "mousemove", target)) {
+            this._lastTouch = e;
+            if (e.cancelable) {
+              e.preventDefault();
+            }
+            return;
+          }
+          if (this._dragSource && !this._img && this._shouldStartDragging(e)) {
+            this._dispatchEvent(e, "dragstart", this._dragSource);
+            this._createImage(e);
+            this._dispatchEvent(e, "dragenter", target);
+          }
+          if (this._img) {
+            this._lastTouch = e;
+            if (e.cancelable) {
+              e.preventDefault();
+            }
+            if (target != this._lastTarget) {
+              this._dispatchEvent(this._lastTouch, "dragleave", this._lastTarget);
+              this._dispatchEvent(e, "dragenter", target);
+              this._lastTarget = target;
+            }
+            this._moveImage(e);
+            this._isDropZone = this._dispatchEvent(e, "dragover", target);
+          }
+        }
+      };
+      DragDropTouch3.prototype._touchend = function(e) {
+        if (this._shouldHandle(e)) {
+          if (this._dispatchEvent(this._lastTouch, "mouseup", e.target)) {
+            if (e.cancelable) {
+              e.preventDefault();
+            }
+            return;
+          }
+          if (!this._img) {
+            this._dragSource = null;
+            this._dispatchEvent(this._lastTouch, "click", e.target);
+            this._lastClick = Date.now();
+          }
+          this._destroyImage();
+          if (this._dragSource) {
+            if (e.type.indexOf("cancel") < 0 && this._isDropZone) {
+              this._dispatchEvent(this._lastTouch, "drop", this._lastTarget);
+            }
+            this._dispatchEvent(this._lastTouch, "dragend", this._dragSource);
+            this._reset();
+          }
+        }
+      };
+      DragDropTouch3.prototype._shouldHandle = function(e) {
+        return e && !e.defaultPrevented && e.touches && e.touches.length < 2;
+      };
+      DragDropTouch3.prototype._shouldHandleMove = function(e) {
+        return !DragDropTouch3._ISPRESSHOLDMODE && this._shouldHandle(e);
+      };
+      DragDropTouch3.prototype._shouldHandlePressHoldMove = function(e) {
+        return DragDropTouch3._ISPRESSHOLDMODE && this._isDragEnabled && e && e.touches && e.touches.length;
+      };
+      DragDropTouch3.prototype._shouldCancelPressHoldMove = function(e) {
+        return DragDropTouch3._ISPRESSHOLDMODE && !this._isDragEnabled && this._getDelta(e) > DragDropTouch3._PRESSHOLDMARGIN;
+      };
+      DragDropTouch3.prototype._shouldStartDragging = function(e) {
+        var delta = this._getDelta(e);
+        return delta > DragDropTouch3._THRESHOLD || DragDropTouch3._ISPRESSHOLDMODE && delta >= DragDropTouch3._PRESSHOLDTHRESHOLD;
+      };
+      DragDropTouch3.prototype._reset = function() {
+        this._destroyImage();
+        this._dragSource = null;
+        this._lastTouch = null;
+        this._lastTarget = null;
+        this._ptDown = null;
+        this._isDragEnabled = false;
+        this._isDropZone = false;
+        this._dataTransfer = new DataTransfer();
+        clearInterval(this._pressHoldInterval);
+      };
+      DragDropTouch3.prototype._getPoint = function(e, page) {
+        if (e && e.touches) {
+          e = e.touches[0];
+        }
+        return { x: page ? e.pageX : e.clientX, y: page ? e.pageY : e.clientY };
+      };
+      DragDropTouch3.prototype._getDelta = function(e) {
+        if (DragDropTouch3._ISPRESSHOLDMODE && !this._ptDown) {
+          return 0;
+        }
+        var p = this._getPoint(e);
+        return Math.abs(p.x - this._ptDown.x) + Math.abs(p.y - this._ptDown.y);
+      };
+      DragDropTouch3.prototype._getTarget = function(e) {
+        var pt = this._getPoint(e), el = document.elementFromPoint(pt.x, pt.y);
+        while (el && getComputedStyle(el).pointerEvents == "none") {
+          el = el.parentElement;
+        }
+        return el;
+      };
+      DragDropTouch3.prototype._createImage = function(e) {
+        if (this._img) {
+          this._destroyImage();
+        }
+        var src = this._imgCustom || this._dragSource;
+        this._img = src.cloneNode(true);
+        this._copyStyle(src, this._img);
+        this._img.style.top = this._img.style.left = "-9999px";
+        if (!this._imgCustom) {
+          var rc = src.getBoundingClientRect(), pt = this._getPoint(e);
+          this._imgOffset = { x: pt.x - rc.left, y: pt.y - rc.top };
+          this._img.style.opacity = DragDropTouch3._OPACITY.toString();
+        }
+        this._moveImage(e);
+        document.body.appendChild(this._img);
+      };
+      DragDropTouch3.prototype._destroyImage = function() {
+        if (this._img && this._img.parentElement) {
+          this._img.parentElement.removeChild(this._img);
+        }
+        this._img = null;
+        this._imgCustom = null;
+      };
+      DragDropTouch3.prototype._moveImage = function(e) {
+        var _this = this;
+        requestAnimationFrame(function() {
+          if (_this._img) {
+            var pt = _this._getPoint(e, true), s = _this._img.style;
+            s.position = "absolute";
+            s.pointerEvents = "none";
+            s.zIndex = "999999";
+            s.left = Math.round(pt.x - _this._imgOffset.x) + "px";
+            s.top = Math.round(pt.y - _this._imgOffset.y) + "px";
+          }
+        });
+      };
+      DragDropTouch3.prototype._copyProps = function(dst, src, props) {
+        for (var i = 0; i < props.length; i++) {
+          var p = props[i];
+          dst[p] = src[p];
+        }
+      };
+      DragDropTouch3.prototype._copyStyle = function(src, dst) {
+        DragDropTouch3._rmvAtts.forEach(function(att) {
+          dst.removeAttribute(att);
+        });
+        if (src instanceof HTMLCanvasElement) {
+          var cSrc = src, cDst = dst;
+          cDst.width = cSrc.width;
+          cDst.height = cSrc.height;
+          cDst.getContext("2d").drawImage(cSrc, 0, 0);
+        }
+        var cs = getComputedStyle(src);
+        for (var i = 0; i < cs.length; i++) {
+          var key = cs[i];
+          if (key.indexOf("transition") < 0) {
+            dst.style[key] = cs[key];
+          }
+        }
+        dst.style.pointerEvents = "none";
+        for (var i = 0; i < src.children.length; i++) {
+          this._copyStyle(src.children[i], dst.children[i]);
+        }
+      };
+      DragDropTouch3.prototype._dispatchEvent = function(e, type, target) {
+        if (e && target) {
+          var evt = document.createEvent("Event"), t = e.touches ? e.touches[0] : e;
+          evt.initEvent(type, true, true);
+          evt.button = 0;
+          evt.which = evt.buttons = 1;
+          this._copyProps(evt, e, DragDropTouch3._kbdProps);
+          this._copyProps(evt, t, DragDropTouch3._ptProps);
+          evt.dataTransfer = this._dataTransfer;
+          target.dispatchEvent(evt);
+          return evt.defaultPrevented;
+        }
+        return false;
+      };
+      DragDropTouch3.prototype._closestDraggable = function(e) {
+        for (; e; e = e.parentElement) {
+          if (e.hasAttribute("draggable") && e.draggable) {
+            return e;
+          }
+        }
+        return null;
+      };
+      return DragDropTouch3;
+    })();
+    DragDropTouch2._instance = new DragDropTouch2();
+    DragDropTouch2._THRESHOLD = 5;
+    DragDropTouch2._OPACITY = 0.5;
+    DragDropTouch2._DBLCLICK = 500;
+    DragDropTouch2._CTXMENU = 900;
+    DragDropTouch2._ISPRESSHOLDMODE = false;
+    DragDropTouch2._PRESSHOLDAWAIT = 400;
+    DragDropTouch2._PRESSHOLDMARGIN = 25;
+    DragDropTouch2._PRESSHOLDTHRESHOLD = 0;
+    DragDropTouch2._rmvAtts = "id,class,style,draggable".split(",");
+    DragDropTouch2._kbdProps = "altKey,ctrlKey,metaKey,shiftKey".split(",");
+    DragDropTouch2._ptProps = "pageX,pageY,clientX,clientY,screenX,screenY".split(",");
+    DragDropTouch_1.DragDropTouch = DragDropTouch2;
+  })(DragDropTouch || (DragDropTouch = {}));
+
   // app/constants.js
   var SK = "sobukMXv6";
   var UNDO_MAX = 20;
@@ -2141,6 +2479,30 @@ function __inlineNotify(msg, type) {
     return f.priorities.length > 0 || f.statuses && f.statuses.length > 0 || f.importantOnly || f.owners.length > 0 || f.showDeleted || !!S.searchQ;
   };
   var bulkSel = { active: false, keys: /* @__PURE__ */ new Set() };
+  var mxSel = /* @__PURE__ */ new Set();
+  function _mxCards(key) {
+    return document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`);
+  }
+  function mxCardClick(e, key) {
+    if (e.shiftKey) {
+      if (mxSel.has(key)) {
+        mxSel.delete(key);
+        _mxCards(key).forEach((c) => c.classList.remove("mxsel"));
+      } else {
+        mxSel.add(key);
+        _mxCards(key).forEach((c) => c.classList.add("mxsel"));
+      }
+    } else {
+      mxSel.forEach((k) => _mxCards(k).forEach((c) => c.classList.remove("mxsel")));
+      mxSel.clear();
+      mxSel.add(key);
+      _mxCards(key).forEach((c) => c.classList.add("mxsel"));
+    }
+  }
+  function mxClearSel() {
+    mxSel.forEach((k) => _mxCards(k).forEach((c) => c.classList.remove("mxsel")));
+    mxSel.clear();
+  }
   var SEARCH_FIELD_MAP = {
     owner: "owner",
     \uB2F4\uB2F9: "owner",
@@ -2363,7 +2725,7 @@ function __inlineNotify(msg, type) {
             data-g="${eattr(gn)}" data-sg="${eattr(sg)}" data-c="${eattr(cn)}" data-sc="${eattr(scn)}"
             ondragenter="onDE(event)" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onDrop(event)">`;
             show.forEach((it, ii) => {
-              h += renderCard(it, c, doCardAnim ? ii : -1);
+              h += renderCard(it, c, doCardAnim ? ii : -1, { onclick: `mxCardClick(event,'${eattr(it.key)}')`, ondblclick: `openEditOrMd('${eattr(it.key)}')`, extraClass: mxSel.has(it.key) ? "mxsel" : "" });
             });
             if (hidden > 0)
               h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">\u25BC ${hidden}\uAC1C \uB354\uBCF4\uAE30</button>`;
@@ -2392,7 +2754,7 @@ function __inlineNotify(msg, type) {
     S.expandedCells.delete(ck);
     renderMatrix();
   }
-  function renderCard(item, c, si = -1) {
+  function renderCard(item, c, si = -1, overrides = {}) {
     const pk = getPK(item.priority), pkC = pk[0].toUpperCase() + pk.slice(1);
     const pHex = c[`p${pkC}`] || "#888";
     const pBg = c[`p${pkC}Bg`] || "#eee";
@@ -2414,11 +2776,17 @@ function __inlineNotify(msg, type) {
     <button class="card-act-btn" title="\uD3B8\uC9D1"    onclick="openEditModal('${eattr(item.key)}')">\u270F</button>
     <button class="card-act-btn" title="\uBCF5\uC81C"    onclick="duplicateItem('${eattr(item.key)}')">\u29C9</button>
   </div>`;
-    return `<div class="mitem${isDel ? " item-del" : ""}${lockInfo && lockInfo.user !== myName ? " item-locked" : ""}" draggable="true" data-key="${eattr(item.key)}"
+    const extraClass = overrides.extraClass ? " " + overrides.extraClass : "";
+    const idAttr = overrides.id ? ` id="${overrides.id}"` : "";
+    const dragStart = overrides.ondragstart ?? `onDS(event,'${eattr(item.key)}')`;
+    const dragEnd = overrides.ondragend ?? "onDEnd(event)";
+    const clickHandler = overrides.onclick ?? `openEditOrMd('${eattr(item.key)}')`;
+    const dblClick = overrides.ondblclick ? ` ondblclick="${overrides.ondblclick}"` : "";
+    return `<div class="mitem${isDel ? " item-del" : ""}${lockInfo && lockInfo.user !== myName ? " item-locked" : ""}${extraClass}" draggable="true" data-key="${eattr(item.key)}"${idAttr}
     style="${css}${delay}"
-    ondragstart="onDS(event,'${eattr(item.key)}')" ondragend="onDEnd(event)"
+    ondragstart="${dragStart}" ondragend="${dragEnd}"
     onmouseover="startTT(event,'${eattr(item.key)}')" onmouseout="clearTT()"
-    onclick="openEditOrMd('${eattr(item.key)}')"
+    onclick="${clickHandler}"${dblClick}
     oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${actions}
   <div class="item-hd">
     <span class="item-key">${esc2(item.key)}</span>
@@ -2554,6 +2922,7 @@ function __inlineNotify(msg, type) {
     renderList();
   }
   function switchView(v) {
+    if (v !== "matrix") mxClearSel();
     S.view = v;
     syncLayout();
     if (v === "matrix") {
@@ -2778,21 +3147,12 @@ function __inlineNotify(msg, type) {
         <div class="db-card-value">${total.toLocaleString()}</div>
         <div class="db-card-sub">\uC911\uC694 <strong>${imp}</strong>\uAC1C \uD3EC\uD568</div>
       </div>
-      <div class="db-card">
-        <div class="db-card-label">\uB300\uAE30</div>
-        <div class="db-card-value" style="color:var(--text-3)">${statusCount["\uB300\uAE30"]}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount["\uB300\uAE30"] / total * 100) : 0}%</div>
-      </div>
-      <div class="db-card">
-        <div class="db-card-label">\uC9C4\uD589\uC911</div>
-        <div class="db-card-value" style="color:var(--accent)">${statusCount["\uC9C4\uD589\uC911"]}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount["\uC9C4\uD589\uC911"] / total * 100) : 0}%</div>
-      </div>
-      <div class="db-card">
-        <div class="db-card-label">\uC644\uB8CC</div>
-        <div class="db-card-value" style="color:var(--success)">${statusCount["\uC644\uB8CC"]}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount["\uC644\uB8CC"] / total * 100) : 0}%</div>
-      </div>
+      ${STATUS_OPTS.map((st) => `
+      <div class="db-card db-card--mini">
+        <div class="db-card-label">${esc2(st)}</div>
+        <div class="db-card-value db-card-value--mini" style="color:${STATUS_ACCENT[st]}">${statusCount[st]}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount[st] / total * 100) : 0}%</div>
+      </div>`).join("")}
     </div>`;
     const buildInsightSection = () => `
     <div class="db-panel">
@@ -2920,6 +3280,13 @@ function __inlineNotify(msg, type) {
         });
       });
     }
+    requestAnimationFrame(() => {
+      const bodyLeft = el.querySelector(".db-body-left");
+      const bodyRight = el.querySelector(".db-body-right");
+      if (bodyLeft && bodyRight) {
+        bodyRight.style.maxHeight = bodyLeft.offsetHeight + "px";
+      }
+    });
   }
 
   // app/modal.js
@@ -3392,11 +3759,22 @@ function __inlineNotify(msg, type) {
     clearTT();
     S.dragKey = key;
     e.dataTransfer.effectAllowed = "move";
-    setTimeout(() => e.currentTarget.classList.add("dragging"), 0);
+    if (mxSel.size > 0 && !mxSel.has(key)) {
+      mxSel.forEach((k) => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`).forEach((c) => c.classList.remove("mxsel")));
+      mxSel.clear();
+      mxSel.add(key);
+      setTimeout(() => document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`).forEach((c) => {
+        c.classList.add("mxsel");
+        c.classList.add("dragging");
+      }), 0);
+    } else {
+      if (mxSel.size === 0) mxSel.add(key);
+      setTimeout(() => mxSel.forEach((k) => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`).forEach((c) => c.classList.add("dragging"))), 0);
+    }
   }
   function onDEnd(e) {
     S.isDragging = false;
-    e.currentTarget.classList.remove("dragging");
+    document.querySelectorAll(".mitem.dragging").forEach((c) => c.classList.remove("dragging"));
     if (S.dragCell) {
       S.dragCell.classList.remove("dov");
       S.dragCell = null;
@@ -3426,20 +3804,28 @@ function __inlineNotify(msg, type) {
     cell.classList.remove("dov");
     S.dragCell = null;
     if (!S.dragKey) return;
-    const item = findItem(S.dragKey);
-    if (!item) return;
+    const keysToMove = mxSel.size > 0 ? new Set(mxSel) : /* @__PURE__ */ new Set([S.dragKey]);
+    const g = cell.getAttribute("data-g") === "(\uBBF8\uBD84\uB958)" ? "" : cell.getAttribute("data-g");
+    const sg = cell.getAttribute("data-sg");
+    const c = cell.getAttribute("data-c") === "(\uBBF8\uBD84\uB958)" ? "" : cell.getAttribute("data-c");
+    const sc = cell.getAttribute("data-sc");
     pushUndo();
-    const from = `${item.group || "(\uBBF8\uBD84\uB958)"}/${item.category || "(\uBBF8\uBD84\uB958)"}`;
-    item.group = cell.getAttribute("data-g") === "(\uBBF8\uBD84\uB958)" ? "" : cell.getAttribute("data-g");
-    item.subGroup = cell.getAttribute("data-sg");
-    item.category = cell.getAttribute("data-c") === "(\uBBF8\uBD84\uB958)" ? "" : cell.getAttribute("data-c");
-    item.subCategory = cell.getAttribute("data-sc");
-    const to = `${item.group || "(\uBBF8\uBD84\uB958)"}/${item.category || "(\uBBF8\uBD84\uB958)"}`;
-    logActivity("\uC774\uB3D9", `${item.key} ${item.name}: ${from} \u2192 ${to}`);
+    keysToMove.forEach((k) => {
+      const item = findItem(k);
+      if (!item) return;
+      const from = `${item.group || "(\uBBF8\uBD84\uB958)"}/${item.category || "(\uBBF8\uBD84\uB958)"}`;
+      item.group = g;
+      item.subGroup = sg;
+      item.category = c;
+      item.subCategory = sc;
+      const to = `${item.group || "(\uBBF8\uBD84\uB958)"}/${item.category || "(\uBBF8\uBD84\uB958)"}`;
+      logActivity("\uC774\uB3D9", `${item.key} ${item.name}: ${from} \u2192 ${to}`);
+    });
+    mxSel.clear();
     S.dragKey = null;
     save();
     renderAll();
-    notify("\uC774\uB3D9 \uC644\uB8CC.");
+    notify(keysToMove.size > 1 ? `${keysToMove.size}\uAC1C \uC774\uB3D9 \uC644\uB8CC.` : "\uC774\uB3D9 \uC644\uB8CC.");
   }
   function startTT(e, key) {
     if (S.isDragging) return;
@@ -4061,6 +4447,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     const el = document.getElementById("boardView");
     if (!el) return;
     const items = isFilterActive() ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
+    const c = getColors();
     const byCol = Object.fromEntries(STATUS_OPTS.map((k) => [k, []]));
     items.forEach((it) => {
       if (byCol[it.status]) byCol[it.status].push(it);
@@ -4078,58 +4465,41 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             ondragover="boardDragOver(event,'${eattr(colKey)}')"
             ondragleave="boardDragLeave(event,'${eattr(colKey)}')"
             ondrop="boardDrop(event,'${eattr(colKey)}')">
-            ${byCol[colKey].map((it) => renderBoardCard(it)).join("")}
+            ${byCol[colKey].map((it) => renderCard(it, c, -1, {
+      id: `bcard-${it.key}`,
+      extraClass: _boardSel.has(it.key) ? "board-selected" : "",
+      onclick: `boardCardClick(event,'${eattr(it.key)}')`,
+      ondblclick: `boardCardDblClick('${eattr(it.key)}')`,
+      ondragstart: `boardCardDragStart(event,'${eattr(it.key)}')`,
+      ondragend: "boardCardDragEnd()"
+    })).join("")}
           </div>
         </div>
       `).join("")}
     </div>`;
     renderBoardActionBar();
   }
-  function renderBoardCard(it) {
-    const sel = _boardSel.has(it.key);
-    const owner = normOwner(it.owner);
-    const ownerHtml = owner ? `<span class="owner-dot" style="background:${getOwnerColor2(owner)}"></span><span style="font-size:.6rem;color:var(--text-3)">${esc2(owner)}</span>` : "";
-    const pColor = { "\uC0C1": "var(--p-high,var(--danger))", "\uC911": "var(--p-mid,var(--accent))", "\uD558": "var(--text-3)" }[it.priority] || "var(--text-3)";
-    const metaHtml = it.group || ownerHtml ? `<div class="board-card-meta">
-        ${it.group ? `<span class="board-card-group">${esc2(it.group)}${it.subGroup ? " / " + esc2(it.subGroup) : ""}</span>` : ""}
-        ${ownerHtml}
-       </div>` : "";
-    return `
-    <div class="board-card${sel ? " selected" : ""}"
-      id="bcard-${eattr(it.key)}"
-      draggable="true"
-      onclick="boardCardClick(event,'${eattr(it.key)}')"
-      ondblclick="boardCardDblClick('${eattr(it.key)}')"
-      ondragstart="boardCardDragStart(event,'${eattr(it.key)}')"
-      ondragend="boardCardDragEnd(event)">
-      <div class="board-card-key">${esc2(it.key)}${it.priority ? `<span style="color:${pColor};font-weight:700;margin-left:4px">${esc2(it.priority)}</span>` : ""}</div>
-      <div class="board-card-name">${esc2(it.name)}</div>
-      ${metaHtml}
-    </div>`;
-  }
   function boardCardClick(e, key) {
     if (e.shiftKey) {
       const card = document.getElementById("bcard-" + key);
       if (_boardSel.has(key)) {
         _boardSel.delete(key);
-        card?.classList.remove("selected");
+        card?.classList.remove("board-selected");
       } else {
         _boardSel.add(key);
-        card?.classList.add("selected");
+        card?.classList.add("board-selected");
       }
     } else {
-      _boardSel.forEach((k) => document.getElementById("bcard-" + k)?.classList.remove("selected"));
+      _boardSel.forEach((k) => document.getElementById("bcard-" + k)?.classList.remove("board-selected"));
       _boardSel.clear();
-      if (!e.defaultPrevented) {
-        _boardSel.add(key);
-        document.getElementById("bcard-" + key)?.classList.add("selected");
-      }
+      _boardSel.add(key);
+      document.getElementById("bcard-" + key)?.classList.add("board-selected");
     }
     renderBoardActionBar();
   }
   function boardCardDblClick(key) {
     _boardSel.clear();
-    openEditModal(key);
+    window.openEditModal?.(key);
   }
   function _moveItems(keys, toStatus) {
     pushUndo();
@@ -4167,7 +4537,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     }
   }
   function boardClearSel() {
-    _boardSel.forEach((k) => document.getElementById("bcard-" + k)?.classList.remove("selected"));
+    _boardSel.forEach((k) => document.getElementById("bcard-" + k)?.classList.remove("board-selected"));
     _boardSel.clear();
     renderBoardActionBar();
   }
@@ -4175,10 +4545,10 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     _dragKey = key;
     e.dataTransfer.effectAllowed = "move";
     if (_boardSel.size > 0 && !_boardSel.has(key)) {
-      _boardSel.forEach((k) => document.getElementById("bcard-" + k)?.classList.remove("selected"));
+      _boardSel.forEach((k) => document.getElementById("bcard-" + k)?.classList.remove("board-selected"));
       _boardSel.clear();
       _boardSel.add(key);
-      document.getElementById("bcard-" + key)?.classList.add("selected");
+      document.getElementById("bcard-" + key)?.classList.add("board-selected");
     } else if (_boardSel.size === 0) {
       _boardSel.add(key);
     }
@@ -4188,7 +4558,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   }
   function boardCardDragEnd() {
     _dragKey = null;
-    document.querySelectorAll(".board-card.dragging").forEach((c) => c.classList.remove("dragging"));
+    document.querySelectorAll(".board-card.dragging, .mitem.dragging").forEach((c) => c.classList.remove("dragging"));
   }
   function boardDragOver(e, colKey) {
     e.preventDefault();
@@ -4586,6 +4956,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     sortL,
     expandCell,
     collapseCell,
+    mxCardClick,
+    mxClearSel,
     bulkToggle,
     bulkToggleAll,
     bulkClear,
@@ -4867,6 +5239,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       ["editModal", "importModal", "settingsModal", "shortcutsModal", "userNameModal", "adminAuthModal", "diffModal"].forEach(closeModal);
       clearTT();
       window.closeCtxMenu?.();
+      mxClearSel();
       return;
     }
     if (e.key === "/" && !isInput) {
@@ -5023,11 +5396,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       const actionColor = { "\uC811\uC18D": "var(--accent)", "\uCD94\uAC00": "var(--success)", "\uC218\uC815": "var(--text)", "\uC0AD\uC81C": "var(--warning)", "\uC644\uC804\uC0AD\uC81C": "var(--danger)", "\uC774\uB3D9": "var(--text-2)", "\uB418\uB3CC\uB9AC\uAE30": "var(--text-3)", "\uC77C\uAD04\uBCC0\uACBD": "var(--accent)" };
       body.innerHTML = '<table style="width:100%;border-collapse:collapse"><thead><tr style="position:sticky;top:0;background:var(--surface)"><th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">\uC2DC\uAC01</th><th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">\uC0AC\uC6A9\uC790</th><th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">\uC561\uC158</th><th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">\uB0B4\uC6A9</th></tr></thead><tbody>' + json.entries.map((e) => {
         const d = new Date(e.ts);
-        const timeStr = d.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" }) + " " + d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+        const timeStr = d.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" }) + " " + d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
         const col = actionColor[e.action] || "var(--text)";
         return `<tr style="border-bottom:1px solid var(--border)">
           <td style="padding:5px 10px;font-size:.7rem;color:var(--text-3);white-space:nowrap">${timeStr}</td>
-          <td style="padding:5px 10px;font-size:.75rem;font-weight:600">${e.user || "\uC775\uBA85"}</td>
+          <td style="padding:5px 10px;font-size:.75rem;font-weight:600">${e.user || "\uC775\uBA85"}${e.ip ? `<span style="font-size:.65rem;font-weight:400;color:var(--text-3);margin-left:4px">(${e.ip})</span>` : ""}</td>
           <td style="padding:5px 10px;font-size:.72rem;font-weight:700;color:${col};white-space:nowrap">${e.action}</td>
           <td style="padding:5px 10px;font-size:.72rem;color:var(--text-2)">${e.detail || ""}</td>
         </tr>`;
@@ -5166,7 +5539,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     updateAdminUI();
     scheduleCardAnim();
     (() => {
-      const ver = true ? "1.0.2" : "dev";
+      const ver = true ? "1.1.0" : "dev";
       const bid = true ? "20260412.local" : "local";
       const el = document.getElementById("buildNumberDisplay");
       if (el) el.textContent = `v${ver} (build ${bid})`;

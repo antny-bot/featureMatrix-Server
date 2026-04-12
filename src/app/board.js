@@ -2,10 +2,10 @@
    board.js — 보드(칸반) 뷰
 ══════════════════════════════════════════ */
 
-import { S, esc, eattr, normOwner, getOwnerColor, save, pushUndo } from './state.js';
+import { S, esc, eattr, save, pushUndo } from './state.js';
 import { STATUS_OPTS, STATUS_LBL, STATUS_ACCENT } from './constants.js';
-import { openEditModal } from './modal.js';
-import { renderAll, getFiltered, isFilterActive } from './render.js';
+import { renderAll, getFiltered, isFilterActive, renderCard } from './render.js';
+import { getColors } from './theme.js';
 
 let _boardSel = new Set();
 let _dragKey  = null;
@@ -16,6 +16,7 @@ export function renderBoard() {
   if (!el) return;
 
   const items = isFilterActive() ? getFiltered() : S.items.filter(it => it.isDelete !== 'Y');
+  const c     = getColors();
 
   const byCol = Object.fromEntries(STATUS_OPTS.map(k => [k, []]));
   items.forEach(it => {
@@ -35,7 +36,14 @@ export function renderBoard() {
             ondragover="boardDragOver(event,'${eattr(colKey)}')"
             ondragleave="boardDragLeave(event,'${eattr(colKey)}')"
             ondrop="boardDrop(event,'${eattr(colKey)}')">
-            ${byCol[colKey].map(it => renderBoardCard(it)).join('')}
+            ${byCol[colKey].map(it => renderCard(it, c, -1, {
+              id:          `bcard-${it.key}`,
+              extraClass:  _boardSel.has(it.key) ? 'board-selected' : '',
+              onclick:     `boardCardClick(event,'${eattr(it.key)}')`,
+              ondblclick:  `boardCardDblClick('${eattr(it.key)}')`,
+              ondragstart: `boardCardDragStart(event,'${eattr(it.key)}')`,
+              ondragend:   'boardCardDragEnd()',
+            })).join('')}
           </div>
         </div>
       `).join('')}
@@ -44,53 +52,24 @@ export function renderBoard() {
   renderBoardActionBar();
 }
 
-function renderBoardCard(it) {
-  const sel   = _boardSel.has(it.key);
-  const owner = normOwner(it.owner);
-  const ownerHtml = owner
-    ? `<span class="owner-dot" style="background:${getOwnerColor(owner)}"></span><span style="font-size:.6rem;color:var(--text-3)">${esc(owner)}</span>`
-    : '';
-  const pColor = { '상':'var(--p-high,var(--danger))', '중':'var(--p-mid,var(--accent))', '하':'var(--text-3)' }[it.priority] || 'var(--text-3)';
-  const metaHtml = (it.group || ownerHtml)
-    ? `<div class="board-card-meta">
-        ${it.group ? `<span class="board-card-group">${esc(it.group)}${it.subGroup ? ' / ' + esc(it.subGroup) : ''}</span>` : ''}
-        ${ownerHtml}
-       </div>`
-    : '';
-  return `
-    <div class="board-card${sel ? ' selected' : ''}"
-      id="bcard-${eattr(it.key)}"
-      draggable="true"
-      onclick="boardCardClick(event,'${eattr(it.key)}')"
-      ondblclick="boardCardDblClick('${eattr(it.key)}')"
-      ondragstart="boardCardDragStart(event,'${eattr(it.key)}')"
-      ondragend="boardCardDragEnd(event)">
-      <div class="board-card-key">${esc(it.key)}${it.priority ? `<span style="color:${pColor};font-weight:700;margin-left:4px">${esc(it.priority)}</span>` : ''}</div>
-      <div class="board-card-name">${esc(it.name)}</div>
-      ${metaHtml}
-    </div>`;
-}
-
 /* ── 선택: Shift → 다중, 일반 클릭 → 토글 단일 ── */
 export function boardCardClick(e, key) {
   if (e.shiftKey) {
     const card = document.getElementById('bcard-' + key);
-    if (_boardSel.has(key)) { _boardSel.delete(key); card?.classList.remove('selected'); }
-    else                    { _boardSel.add(key);    card?.classList.add('selected');    }
+    if (_boardSel.has(key)) { _boardSel.delete(key); card?.classList.remove('board-selected'); }
+    else                    { _boardSel.add(key);    card?.classList.add('board-selected');    }
   } else {
-    _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('selected'));
+    _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('board-selected'));
     _boardSel.clear();
-    if (!e.defaultPrevented) {
-      _boardSel.add(key);
-      document.getElementById('bcard-' + key)?.classList.add('selected');
-    }
+    _boardSel.add(key);
+    document.getElementById('bcard-' + key)?.classList.add('board-selected');
   }
   renderBoardActionBar();
 }
 
 export function boardCardDblClick(key) {
   _boardSel.clear();
-  openEditModal(key);
+  window.openEditModal?.(key);
 }
 
 /* ── 카드 이동 공통 ── */
@@ -130,7 +109,7 @@ export function hideBoardActionBar() {
 }
 
 export function boardClearSel() {
-  _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('selected'));
+  _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('board-selected'));
   _boardSel.clear();
   renderBoardActionBar();
 }
@@ -140,10 +119,10 @@ export function boardCardDragStart(e, key) {
   _dragKey = key;
   e.dataTransfer.effectAllowed = 'move';
   if (_boardSel.size > 0 && !_boardSel.has(key)) {
-    _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('selected'));
+    _boardSel.forEach(k => document.getElementById('bcard-' + k)?.classList.remove('board-selected'));
     _boardSel.clear();
     _boardSel.add(key);
-    document.getElementById('bcard-' + key)?.classList.add('selected');
+    document.getElementById('bcard-' + key)?.classList.add('board-selected');
   } else if (_boardSel.size === 0) {
     _boardSel.add(key);
   }
@@ -154,7 +133,7 @@ export function boardCardDragStart(e, key) {
 
 export function boardCardDragEnd() {
   _dragKey = null;
-  document.querySelectorAll('.board-card.dragging').forEach(c => c.classList.remove('dragging'));
+  document.querySelectorAll('.board-card.dragging, .mitem.dragging').forEach(c => c.classList.remove('dragging'));
 }
 
 export function boardDragOver(e, colKey) {

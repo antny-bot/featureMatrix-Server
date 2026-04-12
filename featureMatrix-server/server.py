@@ -243,6 +243,23 @@ def get_log():
         limit = 100
     return jsonify({'ok': True, 'entries': list(reversed(entries))[:limit]})
 
+# ── IP 마스킹 헬퍼 ─────────────────────────────────────────
+def mask_ip(ip: str) -> str:
+    """IPv4: 앞 두 옥텟 마스킹 후 반환 (*.*.x.y). 그 외: 빈 문자열."""
+    if not ip:
+        return ''
+    parts = ip.split('.')
+    if len(parts) == 4:
+        return f'*.*.{parts[2]}.{parts[3]}'
+    return ''
+
+def get_client_ip() -> str:
+    """X-Forwarded-For 우선, 없으면 remote_addr 사용."""
+    forwarded = request.headers.get('X-Forwarded-For', '')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.remote_addr or ''
+
 # ── POST /api/log ─── 활동 로그 기록 (편집자 이상) ────────
 @app.route('/api/log', methods=['POST'])
 def post_log():
@@ -253,6 +270,7 @@ def post_log():
         'action': body.get('action', ''),
         'detail': body.get('detail', ''),
         'user':   body.get('user', '익명'),
+        'ip':     mask_ip(get_client_ip()),
         'ts':     body.get('ts', int(time.time() * 1000))
     }
     entries = read_activity()

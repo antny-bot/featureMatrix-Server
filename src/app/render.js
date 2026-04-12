@@ -61,6 +61,30 @@ export const isFilterActive = () => {
 /* 벌크 선택 상태 */
 export const bulkSel = { active: false, keys: new Set() };
 
+/* 매트릭스 선택 상태 */
+export const mxSel = new Set();
+
+function _mxCards(key) {
+  return document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`);
+}
+
+export function mxCardClick(e, key) {
+  if (e.shiftKey) {
+    if (mxSel.has(key)) { mxSel.delete(key); _mxCards(key).forEach(c => c.classList.remove('mxsel')); }
+    else                { mxSel.add(key);    _mxCards(key).forEach(c => c.classList.add('mxsel'));    }
+  } else {
+    mxSel.forEach(k => _mxCards(k).forEach(c => c.classList.remove('mxsel')));
+    mxSel.clear();
+    mxSel.add(key);
+    _mxCards(key).forEach(c => c.classList.add('mxsel'));
+  }
+}
+
+export function mxClearSel() {
+  mxSel.forEach(k => _mxCards(k).forEach(c => c.classList.remove('mxsel')));
+  mxSel.clear();
+}
+
 /* 필드 별칭 → 아이템 키 매핑 */
 const SEARCH_FIELD_MAP = {
   owner: 'owner', 담당: 'owner',
@@ -282,7 +306,7 @@ export function renderMatrix() {
           h += `<td class="m-cell${doCardAnim ? ' anim-card-entrance' : ''}" style="background:var(--bg)"
             data-g="${eattr(gn)}" data-sg="${eattr(sg)}" data-c="${eattr(cn)}" data-sc="${eattr(scn)}"
             ondragenter="onDE(event)" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onDrop(event)">`;
-          show.forEach((it, ii) => { h += renderCard(it, c, doCardAnim ? ii : -1); });
+          show.forEach((it, ii) => { h += renderCard(it, c, doCardAnim ? ii : -1, { onclick: `mxCardClick(event,'${eattr(it.key)}')`, ondblclick: `openEditOrMd('${eattr(it.key)}')`, extraClass: mxSel.has(it.key) ? 'mxsel' : '' }); });
           if (hidden > 0)
             h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">▼ ${hidden}개 더보기</button>`;
           if (isExp && ci.length > fold && fold > 0)
@@ -306,7 +330,7 @@ export function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(c
 export function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); renderMatrix(); }
 
 /* ── 카드 HTML ── */
-export function renderCard(item, c, si = -1) {
+export function renderCard(item, c, si = -1, overrides = {}) {
   const pk    = getPK(item.priority), pkC = pk[0].toUpperCase() + pk.slice(1);
   const pHex  = c[`p${pkC}`]   || '#888';
   const pBg   = c[`p${pkC}Bg`] || '#eee';
@@ -339,11 +363,17 @@ export function renderCard(item, c, si = -1) {
     <button class="card-act-btn" title="편집"    onclick="openEditModal('${eattr(item.key)}')">✏</button>
     <button class="card-act-btn" title="복제"    onclick="duplicateItem('${eattr(item.key)}')">⧉</button>
   </div>`;
-  return `<div class="mitem${isDel?' item-del':''}${lockInfo && lockInfo.user !== myName ? ' item-locked' : ''}" draggable="true" data-key="${eattr(item.key)}"
+  const extraClass   = overrides.extraClass  ? ' ' + overrides.extraClass : '';
+  const idAttr       = overrides.id          ? ` id="${overrides.id}"` : '';
+  const dragStart    = overrides.ondragstart ?? `onDS(event,'${eattr(item.key)}')`;
+  const dragEnd      = overrides.ondragend   ?? 'onDEnd(event)';
+  const clickHandler = overrides.onclick     ?? `openEditOrMd('${eattr(item.key)}')`;
+  const dblClick     = overrides.ondblclick  ? ` ondblclick="${overrides.ondblclick}"` : '';
+  return `<div class="mitem${isDel?' item-del':''}${lockInfo && lockInfo.user !== myName ? ' item-locked' : ''}${extraClass}" draggable="true" data-key="${eattr(item.key)}"${idAttr}
     style="${css}${delay}"
-    ondragstart="onDS(event,'${eattr(item.key)}')" ondragend="onDEnd(event)"
+    ondragstart="${dragStart}" ondragend="${dragEnd}"
     onmouseover="startTT(event,'${eattr(item.key)}')" onmouseout="clearTT()"
-    onclick="openEditOrMd('${eattr(item.key)}')"
+    onclick="${clickHandler}"${dblClick}
     oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${actions}
   <div class="item-hd">
     <span class="item-key">${esc(item.key)}</span>
@@ -455,6 +485,7 @@ export function sortL(k) {
 }
 
 export function switchView(v) {
+  if (v !== 'matrix') mxClearSel();
   S.view = v;
   syncLayout();
   if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }

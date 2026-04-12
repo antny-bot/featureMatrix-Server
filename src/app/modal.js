@@ -7,7 +7,7 @@
 ══════════════════════════════════════════ */
 
 import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, logActivity, pushChangeLog, lockItem, unlockItem } from './state.js';
-import { renderAll, scheduleCardAnim } from './render.js';
+import { renderAll, scheduleCardAnim, mxSel } from './render.js';
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS } from './constants.js';
 import { requireAdmin, requireEditor, isEditor } from './admin.js';
 
@@ -439,8 +439,23 @@ export function expSingleMd() {
 }
 
 /* ── 드래그 & 드롭 ── */
-export function onDS(e, key)  { S.isDragging=true; clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move'; setTimeout(()=>e.currentTarget.classList.add('dragging'),0); }
-export function onDEnd(e)     { S.isDragging=false; e.currentTarget.classList.remove('dragging'); if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;} }
+export function onDS(e, key) {
+  S.isDragging=true; clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move';
+  if (mxSel.size > 0 && !mxSel.has(key)) {
+    mxSel.forEach(k => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => c.classList.remove('mxsel')));
+    mxSel.clear();
+    mxSel.add(key);
+    setTimeout(() => document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => { c.classList.add('mxsel'); c.classList.add('dragging'); }), 0);
+  } else {
+    if (mxSel.size === 0) mxSel.add(key);
+    setTimeout(() => mxSel.forEach(k => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => c.classList.add('dragging'))), 0);
+  }
+}
+export function onDEnd(e) {
+  S.isDragging=false;
+  document.querySelectorAll('.mitem.dragging').forEach(c => c.classList.remove('dragging'));
+  if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;}
+}
 export function onDE(e)       { e.preventDefault(); if(S.dragCell&&S.dragCell!==e.currentTarget)S.dragCell.classList.remove('dov'); S.dragCell=e.currentTarget; e.currentTarget.classList.add('dov'); }
 export function onDO(e)       { e.preventDefault(); e.dataTransfer.dropEffect='move'; }
 export function onDL(e)       { const rel=e.relatedTarget; if(rel&&e.currentTarget.contains(rel))return; if(e.currentTarget===S.dragCell){e.currentTarget.classList.remove('dov');S.dragCell=null;} }
@@ -449,16 +464,21 @@ export function onDrop(e) {
   const cell = e.currentTarget;
   cell.classList.remove('dov'); S.dragCell=null;
   if (!S.dragKey) return;
-  const item = findItem(S.dragKey); if (!item) return;
+  const keysToMove = mxSel.size > 0 ? new Set(mxSel) : new Set([S.dragKey]);
+  const g  = cell.getAttribute('data-g')==='(미분류)' ? '' : cell.getAttribute('data-g');
+  const sg = cell.getAttribute('data-sg');
+  const c  = cell.getAttribute('data-c')==='(미분류)' ? '' : cell.getAttribute('data-c');
+  const sc = cell.getAttribute('data-sc');
   pushUndo();
-  const from = `${item.group||'(미분류)'}/${item.category||'(미분류)'}`;
-  item.group       = cell.getAttribute('data-g')==='(미분류)' ? '' : cell.getAttribute('data-g');
-  item.subGroup    = cell.getAttribute('data-sg');
-  item.category    = cell.getAttribute('data-c')==='(미분류)' ? '' : cell.getAttribute('data-c');
-  item.subCategory = cell.getAttribute('data-sc');
-  const to = `${item.group||'(미분류)'}/${item.category||'(미분류)'}`;
-  logActivity('이동', `${item.key} ${item.name}: ${from} → ${to}`);
-  S.dragKey=null; save(); renderAll(); notify('이동 완료.');
+  keysToMove.forEach(k => {
+    const item = findItem(k); if (!item) return;
+    const from = `${item.group||'(미분류)'}/${item.category||'(미분류)'}`;
+    item.group = g; item.subGroup = sg; item.category = c; item.subCategory = sc;
+    const to = `${item.group||'(미분류)'}/${item.category||'(미분류)'}`;
+    logActivity('이동', `${item.key} ${item.name}: ${from} → ${to}`);
+  });
+  mxSel.clear();
+  S.dragKey=null; save(); renderAll(); notify(keysToMove.size > 1 ? `${keysToMove.size}개 이동 완료.` : '이동 완료.');
 }
 
 /* ── 툴팁 ── */

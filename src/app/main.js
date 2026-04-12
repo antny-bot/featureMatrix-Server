@@ -2,6 +2,7 @@
    main.js — 초기화, 키보드, 필터 이벤트, window 바인딩
 ══════════════════════════════════════════ */
 
+import 'drag-drop-touch'; // 터치 디바이스 드래그앤드롭 폴리필
 import { DEMO } from './constants.js';
 import { renderDashboard, setHmView } from './dashboard.js';
 import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
@@ -20,7 +21,7 @@ import { renderAll, renderStats, renderMatrix, renderList,
          renderOwnerChips, renderPrioChips, renderStatusChips,
          switchView, sortL, expandCell, collapseCell,
          bulkToggle, bulkToggleAll, bulkClear, renderBulkBar, bulkSel,
-         scheduleCardAnim } from './render.js';
+         scheduleCardAnim, mxCardClick, mxClearSel } from './render.js';
 import { openModal, closeModal, openEditModal, openAddModal, openAddInCell,
          saveItem, hardDelete, duplicateItem, quickToggleDel,
          openEditOrMd, openMdModal, copyPath,
@@ -49,6 +50,7 @@ Object.assign(window, {
   toggleTheme, applyTheme, setPreset, setCustomColor, onCP, onHex, onHexKey, adjBW,
   renderPrioStyleRows, renderPreviewCards, updateDesignContent, renderThemeGrid,
   renderAll, switchView, sortL, expandCell, collapseCell,
+  mxCardClick, mxClearSel,
   bulkToggle, bulkToggleAll, bulkClear, renderBulkBar,
   openModal, closeModal, openEditModal, openAddModal, openAddInCell,
   saveItem, hardDelete, duplicateItem, quickToggleDel,
@@ -237,7 +239,7 @@ document.addEventListener('keydown', e => {
       unlockItem(S.editKey);
     }
     ['editModal','importModal','settingsModal','shortcutsModal','userNameModal','adminAuthModal','diffModal'].forEach(closeModal);
-    clearTT(); window.closeCtxMenu?.(); return;
+    clearTT(); window.closeCtxMenu?.(); mxClearSel(); return;
   }
   if (e.key === '/' && !isInput) { e.preventDefault(); document.getElementById('searchInp').focus(); return; }
   if (isInput) return;
@@ -392,11 +394,11 @@ window.loadInlineActivityLog = async () => {
       '</tr></thead><tbody>' +
       json.entries.map(e => {
         const d = new Date(e.ts);
-        const timeStr = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+        const timeStr = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
         const col = actionColor[e.action] || 'var(--text)';
         return `<tr style="border-bottom:1px solid var(--border)">
           <td style="padding:5px 10px;font-size:.7rem;color:var(--text-3);white-space:nowrap">${timeStr}</td>
-          <td style="padding:5px 10px;font-size:.75rem;font-weight:600">${e.user||'익명'}</td>
+          <td style="padding:5px 10px;font-size:.75rem;font-weight:600">${e.user||'익명'}${e.ip ? `<span style="font-size:.65rem;font-weight:400;color:var(--text-3);margin-left:4px">(${e.ip})</span>` : ''}</td>
           <td style="padding:5px 10px;font-size:.72rem;font-weight:700;color:${col};white-space:nowrap">${e.action}</td>
           <td style="padding:5px 10px;font-size:.72rem;color:var(--text-2)">${e.detail||''}</td>
         </tr>`;

@@ -191,21 +191,12 @@ export function renderDashboard() {
         <div class="db-card-value">${total.toLocaleString()}</div>
         <div class="db-card-sub">중요 <strong>${imp}</strong>개 포함</div>
       </div>
-      <div class="db-card">
-        <div class="db-card-label">대기</div>
-        <div class="db-card-value" style="color:var(--text-3)">${statusCount['대기']}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['대기']/total*100) : 0}%</div>
-      </div>
-      <div class="db-card">
-        <div class="db-card-label">진행중</div>
-        <div class="db-card-value" style="color:var(--accent)">${statusCount['진행중']}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['진행중']/total*100) : 0}%</div>
-      </div>
-      <div class="db-card">
-        <div class="db-card-label">완료</div>
-        <div class="db-card-value" style="color:var(--success)">${statusCount['완료']}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount['완료']/total*100) : 0}%</div>
-      </div>
+      ${STATUS_OPTS.map(st => `
+      <div class="db-card db-card--mini">
+        <div class="db-card-label">${esc(st)}</div>
+        <div class="db-card-value db-card-value--mini" style="color:${STATUS_ACCENT[st]}">${statusCount[st]}</div>
+        <div class="db-card-sub">${total > 0 ? Math.round(statusCount[st]/total*100) : 0}%</div>
+      </div>`).join('')}
     </div>`;
 
   const buildInsightSection = () => `
@@ -352,4 +343,13 @@ export function renderDashboard() {
       });
     });
   }
+
+  /* 우측 패널(최근 변경) 높이를 좌측 컬럼 하단에 맞춤 */
+  requestAnimationFrame(() => {
+    const bodyLeft  = el.querySelector('.db-body-left');
+    const bodyRight = el.querySelector('.db-body-right');
+    if (bodyLeft && bodyRight) {
+      bodyRight.style.maxHeight = bodyLeft.offsetHeight + 'px';
+    }
+  });
 }
