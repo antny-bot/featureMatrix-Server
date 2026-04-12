@@ -4,7 +4,7 @@
 
 이 저장소는 두 부분으로 나뉩니다.
 
-- `src/`: 프런트엔드 소스
+- `src/`: 프런트엔드 소스 (React 19 + Zustand v5 + 바닐라 JS 하이브리드)
 - `featureMatrix-server/`: 정적 파일 서빙과 공유 데이터 API를 담당하는 Flask 서버
 
 ## 주요 특징
@@ -24,7 +24,6 @@ featureMatrix-ServerAdmin/
 |-- src/
 |   |-- index.html
 |   |-- style.css
-|   |-- build.js
 |   |-- build-esbuild.js
 |   |-- package.json
 |   |-- app/
@@ -39,6 +38,17 @@ featureMatrix-ServerAdmin/
 |   |   |-- settings.js
 |   |   |-- state.js
 |   |   `-- theme.js
+|   |-- components/
+|   |   |-- App.jsx
+|   |   |-- Header.jsx
+|   |   |-- DashboardView.jsx
+|   |   |-- SettingsPanel.jsx
+|   |   |-- BoardView.jsx
+|   |   |-- MatrixView.jsx
+|   |   |-- ListView.jsx
+|   |   `-- ItemModal.jsx
+|   |-- store/
+|   |   `-- useAppStore.js
 |   `-- dist/
 |       `-- index.html
 |-- featureMatrix-server/
@@ -55,7 +65,9 @@ featureMatrix-ServerAdmin/
 
 ## 동작 방식
 
-- 프런트엔드 코드는 `src/app/*.js`에 ES module 형태로 나뉘어 있습니다.
+- 프런트엔드는 React 19 + Zustand v5와 바닐라 JS를 함께 사용하는 하이브리드 구조입니다.
+- `src/app/*.js`에 바닐라 JS 로직이 있고, `src/components/*.jsx`에 React 컴포넌트가 있습니다.
+- React 컴포넌트는 `createPortal`로 기존 DOM 컨테이너에 주입되며, Zustand 스토어가 상태 동기화를 담당합니다.
 - `npm run build`를 실행하면 `src/dist/index.html`이 생성되고, 자동으로 `featureMatrix-server/static/index.html`에 복사됩니다.
 - 서버는 `featureMatrix-server/server.py`에서 실행되며, 정적 HTML과 API를 함께 제공합니다.
 - 공유 데이터는 `data.json`, 활동 로그는 `activity.json`, 관리자 토큰은 `tokens.json`에 저장됩니다.
@@ -74,13 +86,6 @@ pip install -r featureMatrix-server/requirements.txt
 cd src
 npm install
 npm run build
-```
-
-대체 빌드:
-
-```bash
-cd src
-npm run build:legacy
 ```
 
 빌드 결과:
@@ -239,7 +244,7 @@ docker run -d -p 5000:5000 -e ADMIN_PASSWORD=1234 -e EDITOR_PASSWORD= -e FEATURE
 
 ## 버전과 릴리스
 
-- 현재 앱 버전은 루트의 `VERSION` 파일을 기준으로 합니다.
+- 현재 앱 버전은 루트의 `VERSION` 파일을 기준으로 합니다. (현재: v1.3.1)
 - 프런트 빌드 시 버전과 빌드 번호가 화면에 주입됩니다.
 - `release.js`는 버전 업데이트와 git tag/push 자동화를 위한 스크립트입니다.
 
@@ -247,4 +252,5 @@ docker run -d -p 5000:5000 -e ADMIN_PASSWORD=1234 -e EDITOR_PASSWORD= -e FEATURE
 
 - 프런트엔드 소스는 항상 `src/` 아래를 수정해야 합니다.
 - `featureMatrix-server/static/index.html`은 빌드 결과물이므로 직접 수정하지 않습니다.
+- React 컴포넌트를 추가하거나 수정한 뒤에는 반드시 `npm run build`를 실행해야 합니다.
 - 내부 구조와 모듈 책임은 [implementation.md](implementation.md)를 참고하세요.

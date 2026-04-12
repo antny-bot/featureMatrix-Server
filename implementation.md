@@ -19,18 +19,29 @@ featureMatrix-ServerAdmin/
 │  ├─ package.json
 │  ├─ dist/
 │  │  └─ index.html
-│  └─ app/
-│     ├─ admin.js
-│     ├─ board.js
-│     ├─ constants.js
-│     ├─ dashboard.js
-│     ├─ io.js
-│     ├─ main.js
-│     ├─ modal.js
-│     ├─ render.js
-│     ├─ settings.js
-│     ├─ state.js
-│     └─ theme.js
+│  ├─ app/
+│  │  ├─ admin.js
+│  │  ├─ board.js
+│  │  ├─ constants.js
+│  │  ├─ dashboard.js
+│  │  ├─ io.js
+│  │  ├─ main.js
+│  │  ├─ modal.js
+│  │  ├─ render.js
+│  │  ├─ settings.js
+│  │  ├─ state.js
+│  │  └─ theme.js
+│  ├─ components/
+│  │  ├─ App.jsx
+│  │  ├─ Header.jsx
+│  │  ├─ DashboardView.jsx
+│  │  ├─ SettingsPanel.jsx
+│  │  ├─ BoardView.jsx
+│  │  ├─ MatrixView.jsx
+│  │  ├─ ListView.jsx
+│  │  └─ ItemModal.jsx
+│  └─ store/
+│     └─ useAppStore.js
 ├─ featureMatrix-server/
 │  ├─ server.py
 │  ├─ requirements.txt
@@ -52,11 +63,41 @@ featureMatrix-ServerAdmin/
 
 ### 프런트엔드
 
-- 순수 HTML/CSS/JavaScript 기반이다.
+- **React 19 + Zustand v5** 하이브리드 구조다.
 - `src/app/main.js`가 런타임 진입점이다.
-- 앱 상태는 `src/app/state.js`의 전역 객체 `S`에 모인다.
+- `src/components/App.jsx`가 React 루트 컴포넌트다. `index.html`의 `#app` 컨테이너에 마운트된다.
+- 앱 상태는 두 군데에 존재한다.
+  - `src/app/state.js`의 전역 객체 `S`: 바닐라 JS 레거시 상태
+  - `src/store/useAppStore.js`의 Zustand 스토어: React 컴포넌트가 구독하는 상태
+- `syncToStore()`가 `S` → Zustand 방향으로 동기화한다. 반대 방향 동기화는 없다.
 - 대부분의 UI 이벤트는 인라인 HTML 이벤트와 `window` 바인딩을 통해 호출된다.
 - 빌드 결과는 단일 HTML 파일이다.
+
+### React 포털 전략
+
+React 컴포넌트 중 일부는 기존 바닐라 JS DOM 구조 안의 특정 컨테이너에 `createPortal`로 주입된다. 이 방식으로 바닐라 JS가 관리하는 레이아웃을 그대로 유지하면서 해당 영역만 React로 렌더링한다.
+
+| 컴포넌트 | 포털 대상 |
+|----------|-----------|
+| `Header.jsx` | `#header` |
+| `DashboardView.jsx` | `.dbwrap` |
+| `SettingsPanel.jsx` | `.settings-body` |
+| `BoardView.jsx` | `.bwrap` |
+| `MatrixView.jsx` | `#matrixView` |
+| `ListView.jsx` | `#listView` |
+| `ItemModal.jsx` | `#editModal` |
+
+### 브릿지 패턴
+
+바닐라 JS 모듈이 React 상태를 조작해야 할 때는 `window.__xxx` 함수 또는 CustomEvent를 통해 간접 호출한다.
+
+대표적인 브릿지:
+
+- `window.__editModalBridge(mode, key)` — 편집 모달 열기
+- `window.switchEditTab(tab)` — 편집 모달 탭 전환
+- `window.expandCell(e, ck)` / `window.collapseCell(e, ck)` — 매트릭스 셀 펼침/접기
+- `window.__listViewRefresh()` — 리스트 뷰 강제 리렌더 (bulkSel 변경 시)
+- `boardSelChange` CustomEvent — 보드 선택 상태 동기화
 
 ### 서버
 
@@ -65,26 +106,11 @@ featureMatrix-ServerAdmin/
 - 인증은 관리자/편집자 토큰 기반이다.
 - 편집 락은 메모리에서 관리하고, 데이터와 로그는 JSON 파일로 저장한다.
 
-## 프런트엔드 모듈 책임
+## 상태 관리 구조
 
-### `src/app/constants.js`
+### `src/app/state.js` — 전역 객체 `S`
 
-- 데이터 스키마 버전 `DATA_VERSION`
-- 마이그레이션 맵 `MIGRATIONS`
-- 상태값, 테마, 기본 컬럼 정의
-- 데모 데이터 `DEMO`
-
-현재 기준 상태 옵션:
-
-- `대기`
-- `시작가능`
-- `진행중`
-- `검토중`
-- `완료`
-
-### `src/app/state.js`
-
-핵심 상태와 저장 로직이 모여 있는 중심 파일이다.
+바닐라 JS 레거시 상태 중심 파일이다. 대부분의 데이터 조작은 아직 이 파일을 통해 이루어진다.
 
 주요 책임:
 
@@ -109,7 +135,24 @@ featureMatrix-ServerAdmin/
 - `settings`
 - `sort`
 - `editKey`
-- `importData`
+
+`S.expandedCells`는 제거됨. 매트릭스 셀 펼침 상태는 `MatrixView.jsx`의 `useState`로 관리한다.
+
+### `src/store/useAppStore.js` — Zustand 스토어
+
+React 컴포넌트가 구독하는 상태 스토어다. `S`와 같은 구조를 유지한다.
+
+- `syncToStore()`를 통해 `S` → Zustand 방향으로 동기화된다.
+- `setStore(patch)` / `getStore()`로 React 외부에서도 접근 가능하다.
+- `syncFromS(S)` 브릿지로 `S` 전체를 한 번에 동기화할 수 있다.
+
+React 컴포넌트 사용 예:
+
+```js
+const items    = useAppStore(s => s.items);
+const settings = useAppStore(s => s.settings);
+const setView  = useAppStore(s => s.setView);
+```
 
 #### 저장 정책
 
@@ -162,6 +205,27 @@ featureMatrix-ServerAdmin/
 
 이 구조 때문에 서버 모드에서도 개인 설정은 브라우저별로 유지된다.
 
+## 프런트엔드 모듈 책임
+
+### `src/app/constants.js`
+
+- 데이터 스키마 버전 `DATA_VERSION`
+- 마이그레이션 맵 `MIGRATIONS`
+- 상태값, 테마, 기본 컬럼 정의
+- 데모 데이터 `DEMO`
+
+현재 기준 상태 옵션:
+
+- `대기`
+- `시작가능`
+- `진행중`
+- `검토중`
+- `완료`
+
+### `src/app/state.js`
+
+위 [상태 관리 구조](#상태-관리-구조) 참조.
+
 ### `src/app/admin.js`
 
 - 서버 모드 인증 처리
@@ -178,12 +242,13 @@ featureMatrix-ServerAdmin/
 
 ### `src/app/render.js`
 
-- 매트릭스 뷰 렌더링
-- 리스트 뷰 렌더링
-- 필터 적용
-- 카드 렌더링
-- 일괄 선택과 일괄 변경 UI
-- 통계 카드 일부 렌더링
+- `buildMatrixHtml(expandedCells)` — 순수 함수, `MatrixView.jsx`에서 호출
+- `buildListHtml()` — 순수 함수, `ListView.jsx`에서 호출
+- `renderMatrix()` — `syncToStore()` 호출 후 React 리렌더에 위임
+- `renderList()` — `syncToStore()` + `window.__listViewRefresh?.()` 호출
+- 필터 적용 (`getFilteredItems`)
+- 카드 렌더링 (`renderCard`)
+- 일괄 선택 UI
 
 검색은 단순 텍스트와 `field:value` 문법을 함께 처리한다.
 
@@ -196,8 +261,9 @@ featureMatrix-ServerAdmin/
 
 ### `src/app/board.js`
 
-- 상태별 보드 뷰 렌더링
-- 카드 다중 선택
+- 상태별 보드 뷰 렌더링 (카드 HTML 생성)
+- `_boardSel` 모듈 변수로 선택 상태 관리 (Zustand 외부 — DOM classList 직접 조작)
+- `boardSelChange` CustomEvent로 `BoardView.jsx`에 선택 상태 통지
 - 드래그 앤 드롭 기반 상태 변경
 - 상태 이동 액션 바
 
@@ -205,13 +271,13 @@ featureMatrix-ServerAdmin/
 
 ### `src/app/modal.js`
 
-- 항목 추가/수정 모달
-- Markdown 편집
+- 편집 모달 열기 (`openEditModal`, `openAddModal`) → `window.__editModalBridge` 호출
+- Markdown 편집 브릿지 → `window.switchMdView`, `window.onMdInput` 등 위임
 - 삭제, 복제, 상태 변경
 - 컨텍스트 메뉴
 - 드래그 후처리
 
-아이템 필드가 늘어나면 이 파일 수정 영향이 크다.
+실제 모달 UI는 `ItemModal.jsx`가 담당한다.
 
 ### `src/app/io.js`
 
@@ -222,10 +288,9 @@ featureMatrix-ServerAdmin/
 
 ### `src/app/settings.js`
 
-- 설정 모달의 각 섹션 동기화
+- 설정 조정 함수들 (`adjCellFold`, `adjColW` 등) — `setStore` 호출로 Zustand 즉시 반영
 - 축 순서 편집
 - 리스트 컬럼 표시/순서 제어
-- 폰트, 간격, 카드, 매트릭스 폭 관련 설정 조정
 
 ### `src/app/theme.js`
 
@@ -250,6 +315,65 @@ featureMatrix-ServerAdmin/
 - 대시보드 섹션 순서 드래그
 
 새 기능을 추가할 때 실제 로직은 다른 파일에 넣고, 이 파일에는 연결만 두는 편이 안전하다.
+
+## React 컴포넌트 책임
+
+### `src/components/App.jsx`
+
+- React 루트 컴포넌트
+- `ThemeContext` 제공
+- `AuthContext` 제공
+- 모든 자식 컴포넌트 마운트
+
+### `src/components/Header.jsx`
+
+- 상단 헤더 영역 (`#header` 포털)
+- 뷰 전환 탭, 검색창, 필터 버튼
+- 서버 연결 상태 배지
+- Zustand `view`, `searchQ`, `serverStatus` 구독
+
+### `src/components/DashboardView.jsx`
+
+- 대시보드 컨테이너 (`.dbwrap` 포털)
+- `dashboard.js`의 `renderDashboard()` HTML을 `dangerouslySetInnerHTML`로 주입
+- Zustand 변경 시 자동 리렌더
+
+### `src/components/SettingsPanel.jsx`
+
+- 설정 패널 (`.settings-body` 포털)
+- 폰트, 간격, 카드, 매트릭스, 보드 관련 Stepper UI
+- 리스트 컬럼 표시/순서 편집
+- Zustand `settings`, `display` 구독
+
+### `src/components/BoardView.jsx`
+
+- 보드 컨테이너 (`.bwrap` 포털)
+- 컬럼별 카드 HTML을 `dangerouslySetInnerHTML`로 렌더링
+- `boardSelChange` CustomEvent로 선택 상태 수신
+- `foldCount === 0`이면 항상 펼침 (더 보기 버튼 없음)
+- 더 보기/접기 버튼은 `cell-more-btn` 클래스로 카드 목록 내부에 인라인 렌더링
+- Zustand `settings.boardFoldCount` 변경 시 자동 리렌더
+
+### `src/components/MatrixView.jsx`
+
+- 매트릭스 컨테이너 (`#matrixView` 포털)
+- `expandedCells` Set을 `useState`로 로컬 관리
+- `buildMatrixHtml(expandedCells)` 순수 함수 호출 → `dangerouslySetInnerHTML`
+- 필터/검색/`cellFold` 변경 시 `expandedCells` 자동 초기화
+- `window.expandCell` / `window.collapseCell` 브릿지 노출 (클릭 시 React 상태 세터 호출)
+
+### `src/components/ListView.jsx`
+
+- 리스트 컨테이너 (`#listView` 포털)
+- `buildListHtml()` 순수 함수 호출 → `dangerouslySetInnerHTML`
+- `window.__listViewRefresh` 브릿지로 외부 강제 리렌더 가능 (bulkSel 변경 시)
+
+### `src/components/ItemModal.jsx`
+
+- 항목 추가/편집 모달 (`#editModal` 포털)
+- 탭 전환, Markdown 편집/미리보기, 통계를 React 상태로 관리
+- 폼 입력 필드는 uncontrolled (`id="fKey"`, `id="fName"` 등) — 바닐라 JS `saveItem()`이 `document.getElementById`로 읽음
+- `window.__editModalBridge(mode, key)` 브릿지로 모달 초기화
 
 ## 서버 구현
 
@@ -348,7 +472,7 @@ export const DATA_VERSION = 2;
 새 필드를 추가할 때는 보통 함께 봐야 한다.
 
 - `src/app/constants.js`
-- `src/app/modal.js`
+- `src/app/modal.js` + `src/components/ItemModal.jsx`
 - `src/app/render.js`
 - `src/app/io.js`
 - 데모 데이터나 초기화 로직
@@ -359,7 +483,7 @@ export const DATA_VERSION = 2;
 
 역할:
 
-- `main.js`를 엔트리로 ES module 번들링
+- `main.js`를 엔트리로 ES module 번들링 (JSX 포함)
 - `style.css`를 HTML에 인라인 삽입
 - 버전 정보 주입
 - 결과를 `src/dist/index.html`에 기록
@@ -380,7 +504,7 @@ export const DATA_VERSION = 2;
 
 - 정규식 기반 문자열 치환 방식
 - ES module 문법을 제거해 단일 HTML로 합침
-- `board.js`는 포함하지 않으므로 현재 구조 기준으로 최신 기능 빌드에는 적합하지 않다
+- JSX와 React를 지원하지 않으므로 현재 구조 기준으로 사용할 수 없다
 
 실사용 빌드는 `npm run build` 기준으로 맞추는 편이 안전하다.
 
@@ -404,12 +528,19 @@ export const DATA_VERSION = 2;
 
 ### 프런트엔드 기능 수정
 
-1. 상태가 바뀌는지 확인
+1. 상태가 `S`에 있는지 Zustand에 있는지 확인
 2. `save()` 호출이 필요한지 확인
-3. 어느 뷰를 다시 그려야 하는지 확인
-4. HTML 인라인 이벤트가 쓰이면 `window` 바인딩 필요 여부 확인
-5. 서버 모드와 로컬 모드 둘 다 깨지지 않는지 확인
-6. `cd src && npm run build` 실행
+3. `syncToStore()` 또는 `setStore()`로 Zustand 동기화 필요 여부 확인
+4. 어느 뷰를 다시 그려야 하는지 확인
+5. HTML 인라인 이벤트가 쓰이면 `window` 바인딩 필요 여부 확인
+6. 서버 모드와 로컬 모드 둘 다 깨지지 않는지 확인
+7. `cd src && npm run build` 실행
+
+### React 컴포넌트 수정
+
+- Zustand 상태를 추가하려면 `useAppStore.js` `initialState`와 `S` 둘 다 수정해야 한다.
+- 바닐라 JS → React 방향 호출은 반드시 `window.__xxx` 브릿지나 CustomEvent를 통한다.
+- `dangerouslySetInnerHTML`로 렌더링된 DOM 내 이벤트는 인라인 `onclick="..."` 형태로 `window` 바인딩 함수를 직접 호출한다.
 
 ### 서버 응답 변경
 
@@ -420,20 +551,23 @@ export const DATA_VERSION = 2;
 ### 새 필드 추가
 
 1. 스키마와 마이그레이션 정의
-2. 편집 UI 반영
-3. 렌더링 반영
-4. import/export 반영
+2. `ItemModal.jsx` 편집 UI 반영
+3. 렌더링 반영 (`render.js`, `board.js` 등)
+4. import/export 반영 (`io.js`)
 5. 데모 데이터와 기본값 검토
 
 ## 추천 진입 파일
 
 - 전체 흐름: `src/app/main.js`
 - 상태/저장: `src/app/state.js`
+- Zustand 스토어: `src/store/useAppStore.js`
+- React 루트: `src/components/App.jsx`
 - 인증: `src/app/admin.js`
-- 매트릭스/리스트 렌더링: `src/app/render.js`
-- 보드 뷰: `src/app/board.js`
-- 대시보드: `src/app/dashboard.js`
-- 편집 모달: `src/app/modal.js`
+- 매트릭스/리스트 렌더링: `src/app/render.js` + `src/components/MatrixView.jsx` / `ListView.jsx`
+- 보드 뷰: `src/app/board.js` + `src/components/BoardView.jsx`
+- 대시보드: `src/app/dashboard.js` + `src/components/DashboardView.jsx`
+- 편집 모달: `src/app/modal.js` + `src/components/ItemModal.jsx`
+- 설정 패널: `src/app/settings.js` + `src/components/SettingsPanel.jsx`
 - 가져오기/내보내기: `src/app/io.js`
 - 서버 API: `featureMatrix-server/server.py`
 
@@ -441,8 +575,8 @@ export const DATA_VERSION = 2;
 
 이 프로젝트의 핵심은 다음 세 가지다.
 
-1. `state.js` 중심의 전역 상태 관리
-2. `main.js`를 통한 화면 연결과 `window` 바인딩
+1. `state.js`의 `S`와 Zustand 스토어가 `syncToStore()`로 단방향 동기화되는 하이브리드 상태 관리
+2. 바닐라 JS DOM 구조를 유지하면서 `createPortal`로 React를 주입하는 점진적 전환 전략
 3. 서버 공유 데이터와 로컬 개인 설정의 분리
 
-변경 범위가 조금만 넓어져도 저장, 렌더링, 권한, 빌드 결과가 함께 얽히므로 한 파일만 보고 수정하면 놓치기 쉽다.
+변경 범위가 조금만 넓어져도 저장, 렌더링, 권한, 빌드 결과가 함께 얽히므로 한 파일만 보고 수정하면 놓치기 쉽다. 특히 `S`를 수정했는데 React 컴포넌트가 반응하지 않는다면 `syncToStore()` 또는 `setStore()` 호출이 빠진 것을 먼저 확인한다.
