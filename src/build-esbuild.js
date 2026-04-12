@@ -64,14 +64,21 @@ async function build() {
   console.log(`📦 버전: v${version}  빌드: ${buildId}  커밋: ${gitHash}`);
 
   /* ── 1. esbuild 로 JS 번들 생성 ── */
+  // main.jsx(React) 우선, 없으면 기존 main.js fallback
+  const entryJs  = path.join(ROOT, 'app/main.js');
+  const entryJsx = path.join(ROOT, 'main.jsx');
+  const entry = fs.existsSync(entryJsx) ? entryJsx : entryJs;
+
   const bundleResult = await esbuild.build({
-    entryPoints: [path.join(ROOT, 'app/main.js')],
+    entryPoints: [entry],
     bundle: true,
     write: false,          // 메모리에서 결과 받기
     format: 'iife',        // 즉시실행함수 래핑 → 전역 오염 없음
     target: ['es2020'],
     treeShaking: true,
     logLevel: 'info',
+    jsx: 'automatic',            // React 17+ 자동 runtime (import 불필요)
+    jsxImportSource: 'react',
     define: {
       // 빌드 시점 버전 정보 주입 (런타임에서 new Date() 사용 금지)
       __APP_VERSION__: JSON.stringify(version),
