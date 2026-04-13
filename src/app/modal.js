@@ -420,23 +420,31 @@ export function expSingleMd() {
 }
 
 /* ── 드래그 & 드롭 ── */
+function notifyMxSelection() {
+  window.dispatchEvent(new CustomEvent('mxSelChange', { detail: { sel: [...mxSel] } }));
+}
+
+function notifyMxDrag(keys = []) {
+  window.dispatchEvent(new CustomEvent('mxDragState', { detail: { keys: [...keys] } }));
+}
+
 export function onDS(e, key) {
   S.isDragging=true; setStore({ isDragging: true }); clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move';
   if (mxSel.size > 0 && !mxSel.has(key)) {
-    mxSel.forEach(k => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => c.classList.remove('mxsel')));
     mxSel.clear();
     mxSel.add(key);
-    setTimeout(() => document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => { c.classList.add('mxsel'); c.classList.add('dragging'); }), 0);
   } else {
     if (mxSel.size === 0) mxSel.add(key);
-    setTimeout(() => mxSel.forEach(k => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => c.classList.add('dragging'))), 0);
   }
+  notifyMxSelection();
+  notifyMxDrag(mxSel);
   const lockedKeys = getLockedByOther(mxSel);
   if (lockedKeys.length) {
     const locks = getStore().editLocks || {};
     const lockedBy = locks[lockedKeys[0]]?.user || '다른 사용자';
     notify(`${lockedBy}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
     S.isDragging=false; setStore({ isDragging: false }); S.dragKey=null;
+    notifyMxDrag();
     e.preventDefault();
     return;
   }
@@ -447,7 +455,7 @@ export function onDEnd(e) {
   unlockKeys(keys);
   S.isDragging=false; setStore({ isDragging: false });
   S.dragKey=null;
-  document.querySelectorAll('.mitem.dragging').forEach(c => c.classList.remove('dragging'));
+  notifyMxDrag();
   if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;}
 }
 export function onDE(e)       { e.preventDefault(); if(S.dragCell&&S.dragCell!==e.currentTarget)S.dragCell.classList.remove('dov'); S.dragCell=e.currentTarget; e.currentTarget.classList.add('dov'); }

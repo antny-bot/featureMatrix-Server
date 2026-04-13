@@ -78,6 +78,7 @@ export default function MatrixView() {
   const [container, setContainer] = useState(null);
   const [expandedCells, setExpandedCells] = useState(new Set());
   const [selectedKeys, setSelectedKeys] = useState(() => new Set(mxSel));
+  const [dragKeys, setDragKeys] = useState(() => new Set());
 
   useEffect(() => {
     setContainer(document.getElementById('matrixView'));
@@ -120,6 +121,12 @@ export default function MatrixView() {
     const handler = event => setSelectedKeys(new Set(event.detail.sel));
     window.addEventListener('mxSelChange', handler);
     return () => window.removeEventListener('mxSelChange', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = event => setDragKeys(new Set(event.detail.keys || []));
+    window.addEventListener('mxDragState', handler);
+    return () => window.removeEventListener('mxDragState', handler);
   }, []);
 
   const filteredItems = useMemo(() => getFiltered(), [items, filters, searchQ, settings, display, editLocks, previews]);
@@ -214,7 +221,10 @@ export default function MatrixView() {
                               item={item}
                               colors={colors}
                               animationIndex={-1}
-                              extraClass={selectedKeys.has(item.key) ? 'mxsel' : ''}
+                              extraClass={[
+                                selectedKeys.has(item.key) ? 'mxsel' : '',
+                                dragKeys.has(item.key) ? 'dragging' : '',
+                              ].filter(Boolean).join(' ')}
                               onClick={event => {
                                 window.mxCardClick?.(event, item.key);
                                 setSelectedKeys(new Set(mxSel));
