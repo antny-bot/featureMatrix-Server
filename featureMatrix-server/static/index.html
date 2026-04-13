@@ -18385,18 +18385,7 @@ function __inlineNotify(msg, type) {
   }
   function syncLayout() {
     const v = S.view;
-    const navMap = { dashboard: "navD", matrix: "navM", board: "navB", list: "navL" };
-    ["navD", "navM", "navB", "navL"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.className = "nav-item" + (navMap[v] === id ? " on" : "");
-    });
-    ["dashboardView", "matrixView", "boardView", "listView"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = id === v + "View" ? "" : "none";
-    });
     if (v !== "board" && window.hideBoardActionBar) window.hideBoardActionBar();
-    const contentEl = document.getElementById("contentArea");
-    if (contentEl) contentEl.style.overflowY = v === "board" ? "hidden" : "";
   }
   function renderAll(withFade = false) {
     syncLayout();
@@ -18493,6 +18482,7 @@ function __inlineNotify(msg, type) {
   function switchView(v) {
     if (v !== "matrix") mxClearSel();
     S.view = v;
+    setStore({ view: S.view });
     syncLayout();
     renderBulkBar();
     if (v === "matrix") renderMatrix();
@@ -23711,6 +23701,7 @@ function __inlineNotify(msg, type) {
   }
 
   // components/NavigationSide.jsx
+  init_useAppStore();
   var import_jsx_runtime15 = __toESM(require_jsx_runtime());
   function DashboardIcon() {
     return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
@@ -23777,6 +23768,7 @@ function __inlineNotify(msg, type) {
   }
   function NavigationSide() {
     const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode: isServerMode2 } = useAuth();
+    const view = useAppStore((s) => s.view);
     const loginState = isAdmin2 ? { label: "\uAD00\uB9AC\uC790", icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(AdminIcon, {}), active: true } : isEditor2 ? { label: "\uD3B8\uC9D1\uC790", icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(EditorIcon, {}), active: true } : { label: "\uB85C\uADF8\uC778", icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(LoginIcon, {}), active: false };
     return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("nav", { className: "nav-side", id: "navSide", children: [
       /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
@@ -23786,6 +23778,7 @@ function __inlineNotify(msg, type) {
           title: "\uB300\uC2DC\uBCF4\uB4DC",
           label: "\uB300\uC2DC\uBCF4\uB4DC",
           icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(DashboardIcon, {}),
+          active: view === "dashboard",
           onClick: () => window.switchView?.("dashboard")
         }
       ),
@@ -23796,7 +23789,7 @@ function __inlineNotify(msg, type) {
           title: "\uB9E4\uD2B8\uB9AD\uC2A4",
           label: "\uB9E4\uD2B8\uB9AD\uC2A4",
           icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(MatrixIcon, {}),
-          active: true,
+          active: view === "matrix",
           onClick: () => window.switchView?.("matrix")
         }
       ),
@@ -23807,6 +23800,7 @@ function __inlineNotify(msg, type) {
           title: "\uBCF4\uB4DC",
           label: "\uBCF4\uB4DC",
           icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(BoardIcon, {}),
+          active: view === "board",
           onClick: () => window.switchView?.("board")
         }
       ),
@@ -23817,6 +23811,7 @@ function __inlineNotify(msg, type) {
           title: "\uB9AC\uC2A4\uD2B8",
           label: "\uB9AC\uC2A4\uD2B8",
           icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ListIcon, {}),
+          active: view === "list",
           onClick: () => window.switchView?.("list")
         }
       ),
@@ -24185,14 +24180,15 @@ function __inlineNotify(msg, type) {
   var import_jsx_runtime18 = __toESM(require_jsx_runtime());
   function LayoutShell() {
     const panelPos = useAppStore((s) => s.settings.panelPos);
+    const view = useAppStore((s) => s.view);
     return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: `layout${panelPos === "right" ? " pr" : ""}`, id: "layout", children: [
       /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(NavigationSide, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("main", { className: "content", id: "contentArea", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "dashboardView", style: { display: "none" } }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "matrixView", className: "mwrap fluid" }),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("main", { className: "content", id: "contentArea", style: { overflowY: view === "board" ? "hidden" : void 0 }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "dashboardView", style: { display: view === "dashboard" ? "" : "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "matrixView", className: "mwrap fluid", style: { display: view === "matrix" ? "" : "none" } }),
         /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(BulkActionBar, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "boardView", className: "bwrap", style: { display: "none" } }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "listView", className: "lwrap", style: { display: "none" } })
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "boardView", className: "bwrap", style: { display: view === "board" ? "" : "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "listView", className: "lwrap", style: { display: view === "list" ? "" : "none" } })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(FilterPanel, {})
     ] });

@@ -180,21 +180,10 @@ export function buildStruct(items) {
   return { groups, gsubs, cats, csubs };
 }
 
-/* ── nav-side / fpanel 상태 동기화 ── */
+/* ── legacy layout side effects ── */
 function syncLayout() {
   const v = S.view;
-  const navMap = { dashboard: 'navD', matrix: 'navM', board: 'navB', list: 'navL' };
-  ['navD', 'navM', 'navB', 'navL'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.className = 'nav-item' + (navMap[v] === id ? ' on' : '');
-  });
-  ['dashboardView', 'matrixView', 'boardView', 'listView'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = id === v + 'View' ? '' : 'none';
-  });
   if (v !== 'board' && window.hideBoardActionBar) window.hideBoardActionBar();
-  const contentEl = document.getElementById('contentArea');
-  if (contentEl) contentEl.style.overflowY = v === 'board' ? 'hidden' : '';
 }
 
 /* ── 전체 렌더 ── */
@@ -282,6 +271,7 @@ export function sortL(k) {
 export function switchView(v) {
   if (v !== 'matrix') mxClearSel();
   S.view = v;
+  setStore({ view: S.view });
   syncLayout();
   renderBulkBar();
   if (v === 'matrix') renderMatrix();

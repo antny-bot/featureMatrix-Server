@@ -1,3 +1,6 @@
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { useAppStore } from '../store/useAppStore.js';
+
 function DashboardIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -85,6 +88,7 @@ function NavButton({ id, title, label, icon, active = false, onClick, className 
 
 export default function NavigationSide() {
   const { isAdmin, isEditor, isServerMode } = useAuth();
+  const view = useAppStore(s => s.view);
   const loginState = isAdmin
     ? { label: '관리자', icon: <AdminIcon />, active: true }
     : isEditor
@@ -98,6 +102,7 @@ export default function NavigationSide() {
         title="대시보드"
         label="대시보드"
         icon={<DashboardIcon />}
+        active={view === 'dashboard'}
         onClick={() => window.switchView?.('dashboard')}
       />
       <NavButton
@@ -105,7 +110,7 @@ export default function NavigationSide() {
         title="매트릭스"
         label="매트릭스"
         icon={<MatrixIcon />}
-        active
+        active={view === 'matrix'}
         onClick={() => window.switchView?.('matrix')}
       />
       <NavButton
@@ -113,6 +118,7 @@ export default function NavigationSide() {
         title="보드"
         label="보드"
         icon={<BoardIcon />}
+        active={view === 'board'}
         onClick={() => window.switchView?.('board')}
       />
       <NavButton
@@ -120,6 +126,7 @@ export default function NavigationSide() {
         title="리스트"
         label="리스트"
         icon={<ListIcon />}
+        active={view === 'list'}
         onClick={() => window.switchView?.('list')}
       />
       <div className="nav-spacer" />
@@ -135,4 +142,3 @@ export default function NavigationSide() {
     </nav>
   );
 }
-import { useAuth } from '../contexts/AuthContext.jsx';
