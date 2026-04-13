@@ -135,27 +135,15 @@ window.onOwnerChip = inp => {
 };
 
 window.applyFilters = () => {
-  S.filters.showDeleted   = document.getElementById('togDel').checked;
-  S.filters.importantOnly = document.getElementById('togImp').checked;
   save(); renderAll(true);
 };
 
 window.resetFilters = () => {
   S.filters = {priorities:[], statuses:[], showDeleted:false, importantOnly:false, owners:[]};
-  document.getElementById('togDel').checked = false;
-  document.getElementById('togImp').checked = false;
   save(); renderAll(true);
 };
 
 window.onDispTgl = () => {
-  S.display.showOwner     = document.getElementById('togOwner').checked;
-  S.display.showStar      = document.getElementById('togStar').checked;
-  S.display.showNewBadge  = document.getElementById('togNew').checked;
-  S.display.showCellCount = document.getElementById('togCnt').checked;
-  S.display.showUpdated   = document.getElementById('togUpd').checked;
-  S.display.showStatus    = document.getElementById('togStatus').checked;
-  S.display.showMdBadge   = document.getElementById('togMd').checked;
-  S.display.showQuickAdd  = document.getElementById('togQuickAdd')?.checked ?? false;
   save(); renderAll();
 };
 

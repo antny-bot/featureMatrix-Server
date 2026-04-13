@@ -41,10 +41,10 @@ function FilterSection({ title, children }) {
   );
 }
 
-function Toggle({ id, label, defaultChecked = false, onChange }) {
+function Toggle({ id, label, checked = false, onChange }) {
   return (
     <label className="tgl">
-      <input id={id} type="checkbox" defaultChecked={defaultChecked} onChange={onChange} />
+      <input id={id} type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} />
       <span className="tgl-track" />
       <span className="tgl-lbl">{label}</span>
     </label>
@@ -187,7 +187,20 @@ function OwnerChips() {
 }
 
 export default function FilterPanel() {
-  const displayToggle = () => window.onDispTgl?.();
+  const filters = useAppStore(s => s.filters);
+  const display = useAppStore(s => s.display);
+
+  const setFilter = (key, value) => {
+    S.filters[key] = value;
+    syncFilters();
+  };
+
+  const setDisplay = (key, value) => {
+    S.display[key] = value;
+    save();
+    setStore({ display: { ...S.display } });
+    window.renderAll?.();
+  };
 
   return (
     <aside className="fpanel" id="fpanel">
@@ -235,8 +248,8 @@ export default function FilterPanel() {
 
         <FilterSection title="표시 조건">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-            <Toggle id="togDel" label="삭제 포함" onChange={() => window.applyFilters?.()} />
-            <Toggle id="togImp" label="중요만 보기" onChange={() => window.applyFilters?.()} />
+            <Toggle id="togDel" label="삭제 포함" checked={filters.showDeleted} onChange={value => setFilter('showDeleted', value)} />
+            <Toggle id="togImp" label="중요만 보기" checked={filters.importantOnly} onChange={value => setFilter('importantOnly', value)} />
           </div>
         </FilterSection>
 
@@ -254,9 +267,9 @@ export default function FilterPanel() {
             >
               식별
             </div>
-            <Toggle id="togOwner" label="담당" defaultChecked onChange={displayToggle} />
-            <Toggle id="togStar" label="★ 중요" defaultChecked onChange={displayToggle} />
-            <Toggle id="togNew" label="N 신규 배지" defaultChecked onChange={displayToggle} />
+            <Toggle id="togOwner" label="담당" checked={display.showOwner} onChange={value => setDisplay('showOwner', value)} />
+            <Toggle id="togStar" label="★ 중요" checked={display.showStar} onChange={value => setDisplay('showStar', value)} />
+            <Toggle id="togNew" label="N 신규 배지" checked={display.showNewBadge} onChange={value => setDisplay('showNewBadge', value)} />
             <div
               style={{
                 fontSize: '.62rem',
@@ -269,8 +282,8 @@ export default function FilterPanel() {
             >
               상태
             </div>
-            <Toggle id="togStatus" label="진행상태 뱃지" defaultChecked onChange={displayToggle} />
-            <Toggle id="togMd" label="MD 뱃지" defaultChecked onChange={displayToggle} />
+            <Toggle id="togStatus" label="진행상태 뱃지" checked={display.showStatus} onChange={value => setDisplay('showStatus', value)} />
+            <Toggle id="togMd" label="MD 뱃지" checked={display.showMdBadge} onChange={value => setDisplay('showMdBadge', value)} />
             <div
               style={{
                 fontSize: '.62rem',
@@ -283,9 +296,9 @@ export default function FilterPanel() {
             >
               보조
             </div>
-            <Toggle id="togCnt" label="셀 카운터" defaultChecked onChange={displayToggle} />
-            <Toggle id="togUpd" label="수정일" onChange={displayToggle} />
-            <Toggle id="togQuickAdd" label="빠른 추가 버튼" onChange={displayToggle} />
+            <Toggle id="togCnt" label="셀 카운터" checked={display.showCellCount} onChange={value => setDisplay('showCellCount', value)} />
+            <Toggle id="togUpd" label="수정일" checked={display.showUpdated} onChange={value => setDisplay('showUpdated', value)} />
+            <Toggle id="togQuickAdd" label="빠른 추가 버튼" checked={display.showQuickAdd} onChange={value => setDisplay('showQuickAdd', value)} />
           </div>
         </FilterSection>
 

@@ -20715,27 +20715,15 @@ function __inlineNotify(msg, type) {
         renderAll(true);
       };
       window.applyFilters = () => {
-        S.filters.showDeleted = document.getElementById("togDel").checked;
-        S.filters.importantOnly = document.getElementById("togImp").checked;
         save();
         renderAll(true);
       };
       window.resetFilters = () => {
         S.filters = { priorities: [], statuses: [], showDeleted: false, importantOnly: false, owners: [] };
-        document.getElementById("togDel").checked = false;
-        document.getElementById("togImp").checked = false;
         save();
         renderAll(true);
       };
       window.onDispTgl = () => {
-        S.display.showOwner = document.getElementById("togOwner").checked;
-        S.display.showStar = document.getElementById("togStar").checked;
-        S.display.showNewBadge = document.getElementById("togNew").checked;
-        S.display.showCellCount = document.getElementById("togCnt").checked;
-        S.display.showUpdated = document.getElementById("togUpd").checked;
-        S.display.showStatus = document.getElementById("togStatus").checked;
-        S.display.showMdBadge = document.getElementById("togMd").checked;
-        S.display.showQuickAdd = document.getElementById("togQuickAdd")?.checked ?? false;
         save();
         renderAll();
       };
@@ -23795,9 +23783,9 @@ function __inlineNotify(msg, type) {
       /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "fsep" })
     ] });
   }
-  function Toggle({ id, label, defaultChecked = false, onChange }) {
+  function Toggle({ id, label, checked = false, onChange }) {
     return /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("label", { className: "tgl", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("input", { id, type: "checkbox", defaultChecked, onChange }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("input", { id, type: "checkbox", checked, onChange: (event) => onChange(event.target.checked) }),
       /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "tgl-track" }),
       /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "tgl-lbl", children: label })
     ] });
@@ -23912,7 +23900,18 @@ function __inlineNotify(msg, type) {
     }) });
   }
   function FilterPanel() {
-    const displayToggle = () => window.onDispTgl?.();
+    const filters = useAppStore((s) => s.filters);
+    const display = useAppStore((s) => s.display);
+    const setFilter = (key, value2) => {
+      S.filters[key] = value2;
+      syncFilters();
+    };
+    const setDisplay = (key, value2) => {
+      S.display[key] = value2;
+      save();
+      setStore({ display: { ...S.display } });
+      window.renderAll?.();
+    };
     return /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("aside", { className: "fpanel", id: "fpanel", children: [
       /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
         "button",
@@ -23953,8 +23952,8 @@ function __inlineNotify(msg, type) {
         /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(FilterSection, { title: "\uC9C4\uD589\uC0C1\uD0DC", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(StatusChips, {}) }),
         /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(FilterSection, { title: "\uB2F4\uB2F9", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(OwnerChips, {}) }),
         /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(FilterSection, { title: "\uD45C\uC2DC \uC870\uAC74", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "7px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togDel", label: "\uC0AD\uC81C \uD3EC\uD568", onChange: () => window.applyFilters?.() }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togImp", label: "\uC911\uC694\uB9CC \uBCF4\uAE30", onChange: () => window.applyFilters?.() })
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togDel", label: "\uC0AD\uC81C \uD3EC\uD568", checked: filters.showDeleted, onChange: (value2) => setFilter("showDeleted", value2) }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togImp", label: "\uC911\uC694\uB9CC \uBCF4\uAE30", checked: filters.importantOnly, onChange: (value2) => setFilter("importantOnly", value2) })
         ] }) }),
         /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(FilterSection, { title: "\uCE74\uB4DC \uD45C\uC2DC", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "3px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
@@ -23971,9 +23970,9 @@ function __inlineNotify(msg, type) {
               children: "\uC2DD\uBCC4"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togOwner", label: "\uB2F4\uB2F9", defaultChecked: true, onChange: displayToggle }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togStar", label: "\u2605 \uC911\uC694", defaultChecked: true, onChange: displayToggle }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togNew", label: "N \uC2E0\uADDC \uBC30\uC9C0", defaultChecked: true, onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togOwner", label: "\uB2F4\uB2F9", checked: display.showOwner, onChange: (value2) => setDisplay("showOwner", value2) }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togStar", label: "\u2605 \uC911\uC694", checked: display.showStar, onChange: (value2) => setDisplay("showStar", value2) }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togNew", label: "N \uC2E0\uADDC \uBC30\uC9C0", checked: display.showNewBadge, onChange: (value2) => setDisplay("showNewBadge", value2) }),
           /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
             "div",
             {
@@ -23988,8 +23987,8 @@ function __inlineNotify(msg, type) {
               children: "\uC0C1\uD0DC"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togStatus", label: "\uC9C4\uD589\uC0C1\uD0DC \uBC43\uC9C0", defaultChecked: true, onChange: displayToggle }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togMd", label: "MD \uBC43\uC9C0", defaultChecked: true, onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togStatus", label: "\uC9C4\uD589\uC0C1\uD0DC \uBC43\uC9C0", checked: display.showStatus, onChange: (value2) => setDisplay("showStatus", value2) }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togMd", label: "MD \uBC43\uC9C0", checked: display.showMdBadge, onChange: (value2) => setDisplay("showMdBadge", value2) }),
           /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
             "div",
             {
@@ -24004,9 +24003,9 @@ function __inlineNotify(msg, type) {
               children: "\uBCF4\uC870"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togCnt", label: "\uC140 \uCE74\uC6B4\uD130", defaultChecked: true, onChange: displayToggle }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togUpd", label: "\uC218\uC815\uC77C", onChange: displayToggle }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togQuickAdd", label: "\uBE60\uB978 \uCD94\uAC00 \uBC84\uD2BC", onChange: displayToggle })
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togCnt", label: "\uC140 \uCE74\uC6B4\uD130", checked: display.showCellCount, onChange: (value2) => setDisplay("showCellCount", value2) }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togUpd", label: "\uC218\uC815\uC77C", checked: display.showUpdated, onChange: (value2) => setDisplay("showUpdated", value2) }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Toggle, { id: "togQuickAdd", label: "\uBE60\uB978 \uCD94\uAC00 \uBC84\uD2BC", checked: display.showQuickAdd, onChange: (value2) => setDisplay("showQuickAdd", value2) })
         ] }) }),
         /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "undo-fab", id: "undoFab", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
           "button",
