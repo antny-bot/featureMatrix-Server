@@ -99,11 +99,6 @@ export default function SettingsPanel() {
               <Stepper label="카테고리 폭"         value={`${settings.catW}px`}                                     onMinus={() => { S.settings.catW   = Math.max(40, Math.min(80, settings.catW-4));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.catW   = Math.max(40, Math.min(80, settings.catW+4));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={4} />
               <Stepper label="서브카테고리 폭"     value={`${settings.subCatW}px`}                                  onMinus={() => { S.settings.subCatW= Math.max(40, Math.min(200,settings.subCatW-4));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.subCatW= Math.max(40, Math.min(200,settings.subCatW+4));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={4} />
             </div>
-            {/* 숨김 DOM — vanilla JS 호환용 */}
-            <span id="mwF" style={{ display: 'none' }}></span>
-            <span id="mwX" style={{ display: 'none' }}></span>
-            <span id="ppL" style={{ display: 'none' }}></span>
-            <span id="ppR" style={{ display: 'none' }}></span>
             <div className="sec-ttl" style={{ marginTop: '12px' }}>빌드 정보</div>
             <div className="srow">
               <div><div className="slbl">빌드 넘버</div></div>

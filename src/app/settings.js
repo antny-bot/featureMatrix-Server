@@ -36,7 +36,7 @@ export function previewTitle() {
 }
 
 /* ── 레이아웃 ── */
-export function setMW(v)   { S.settings.matrixWidth=v; document.getElementById('mwF').className='rbtn'+(v==='fluid'?' on':''); document.getElementById('mwX').className='rbtn'+(v==='fixed'?' on':''); save(); if(S.view==='matrix')renderMatrix(); }
+export function setMW(v)   { S.settings.matrixWidth=v; save(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
 export function setPPos(v) { S.settings.panelPos=v; save(); setStore({ settings: { ...S.settings } }); }
 
 /* ── Stepper 설정값 조절 ── */

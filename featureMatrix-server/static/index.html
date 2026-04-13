@@ -20196,9 +20196,8 @@ function __inlineNotify(msg, type) {
   }
   function setMW(v) {
     S.settings.matrixWidth = v;
-    document.getElementById("mwF").className = "rbtn" + (v === "fluid" ? " on" : "");
-    document.getElementById("mwX").className = "rbtn" + (v === "fixed" ? " on" : "");
     save();
+    setStore({ settings: { ...S.settings } });
     if (S.view === "matrix") renderMatrix();
   }
   function setPPos(v) {
