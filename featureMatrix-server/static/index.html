@@ -20779,10 +20779,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               saveItem();
             } else {
               unlockItem(S.editKey);
-              ov.classList.remove("on");
+              closeModal("editModal");
             }
           } else {
-            ov.classList.remove("on");
+            closeModal(ov.id);
           }
         });
       });

@@ -226,10 +226,10 @@ document.querySelectorAll('.ov').forEach(ov => {
         saveItem(); // 기능명 있으면 저장 후 닫힘
       } else {
         unlockItem(S.editKey);
-        ov.classList.remove('on');
+        closeModal('editModal');
       }
     } else {
-      ov.classList.remove('on');
+      closeModal(ov.id);
     }
   });
 });
