@@ -17,6 +17,7 @@ import MatrixView from './MatrixView.jsx';
 import ListView from './ListView.jsx';
 import LayoutShell from './LayoutShell.jsx';
 import UpdateBanner from './UpdateBanner.jsx';
+import AppOverlays from './AppOverlays.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
@@ -287,8 +288,41 @@ const APP_TEMPLATE = `
 <div id="boardActionBar" class="board-action-bar"></div>
 `;
 
-const LEGACY_MODAL_TEMPLATE = APP_TEMPLATE.slice(
-  APP_TEMPLATE.indexOf('<div class="ov" id="editModal"')
+function removeElementById(html, id) {
+  const startMatch = new RegExp(`<div\\b[^>]*id="${id}"[^>]*>`).exec(html);
+  if (!startMatch) return html;
+
+  const start = startMatch.index;
+  const tagRe = /<\/?div\b[^>]*>/g;
+  tagRe.lastIndex = start;
+
+  let depth = 0;
+  let match;
+  while ((match = tagRe.exec(html))) {
+    if (match[0].startsWith('</')) depth -= 1;
+    else depth += 1;
+
+    if (depth === 0) {
+      return html.slice(0, start) + html.slice(tagRe.lastIndex);
+    }
+  }
+
+  return html;
+}
+
+const LEGACY_MODAL_TEMPLATE = [
+  'exportModal',
+  'shortcutsModal',
+  'userNameModal',
+  'loginModal',
+  'adminAuthModal',
+  'diffModal',
+  'ftt',
+  'notif',
+  'boardActionBar',
+].reduce(
+  (html, id) => removeElementById(html, id),
+  APP_TEMPLATE.slice(APP_TEMPLATE.indexOf('<div class="ov" id="editModal"'))
 );
 
 /* ── React App 컴포넌트 ── */
@@ -311,6 +345,7 @@ export default function App() {
           <UpdateBanner />
           <LayoutShell />
           <div dangerouslySetInnerHTML={{ __html: LEGACY_MODAL_TEMPLATE }} />
+          <AppOverlays />
           <ErrorBoundary level="view" label="보드 뷰">
             <BoardView />
           </ErrorBoundary>
