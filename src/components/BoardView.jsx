@@ -23,6 +23,8 @@ import { S, esc, eattr } from '../app/state.js';
 /* ── 메인 컴포넌트 ── */
 export default function BoardView() {
   const items    = useAppStore(s => s.items);   // 데이터 변경 시 리렌더 트리거
+  const editLocks = useAppStore(s => s.editLocks); // 동시 편집 락 변경 시 리렌더 트리거
+  const previews  = useAppStore(s => s.previews);  // 편집 미리보기 변경 시 리렌더 트리거
   const foldCount = useAppStore(s => s.settings.boardFoldCount ?? 6);
 
   /* portal containers: dangerouslySetInnerHTML 마운트 후 존재 */

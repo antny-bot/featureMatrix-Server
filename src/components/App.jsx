@@ -15,6 +15,8 @@ import SettingsPanel from './SettingsPanel.jsx';
 import ItemModal from './ItemModal.jsx';
 import MatrixView from './MatrixView.jsx';
 import ListView from './ListView.jsx';
+import LayoutShell from './LayoutShell.jsx';
+import UpdateBanner from './UpdateBanner.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
@@ -285,6 +287,10 @@ const APP_TEMPLATE = `
 <div id="boardActionBar" class="board-action-bar"></div>
 `;
 
+const LEGACY_MODAL_TEMPLATE = APP_TEMPLATE.slice(
+  APP_TEMPLATE.indexOf('<div class="ov" id="editModal"')
+);
+
 /* ── React App 컴포넌트 ── */
 export default function App() {
   useEffect(() => {
@@ -302,7 +308,9 @@ export default function App() {
           <ErrorBoundary level="view" label="헤더">
             <Header />
           </ErrorBoundary>
-          <div dangerouslySetInnerHTML={{ __html: APP_TEMPLATE }} />
+          <UpdateBanner />
+          <LayoutShell />
+          <div dangerouslySetInnerHTML={{ __html: LEGACY_MODAL_TEMPLATE }} />
           <ErrorBoundary level="view" label="보드 뷰">
             <BoardView />
           </ErrorBoundary>

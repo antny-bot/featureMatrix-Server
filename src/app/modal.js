@@ -10,7 +10,33 @@ import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, log
 import { renderAll, scheduleCardAnim, mxSel } from './render.js';
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS } from './constants.js';
 import { requireAdmin, requireEditor, isEditor } from './admin.js';
-import { setStore } from '../store/useAppStore.js';
+import { setStore, getStore } from '../store/useAppStore.js';
+import { emitSave } from './socket.js';
+
+function broadcastItemSaved(item) {
+  if (S.settings.storageMode !== 'server' || !item) return;
+  emitSave(item.key, S.settings.userName || 'anonymous', { ...item });
+}
+
+function currentUser() {
+  return S.settings.userName || 'anonymous';
+}
+
+function getLockedByOther(keys) {
+  const locks = getStore().editLocks || {};
+  const user = currentUser();
+  return [...keys].filter(key => locks[key] && locks[key].user !== user);
+}
+
+function lockKeys(keys) {
+  if (S.settings.storageMode !== 'server') return;
+  keys.forEach(key => lockItem(key));
+}
+
+function unlockKeys(keys) {
+  if (S.settings.storageMode !== 'server') return;
+  keys.forEach(key => unlockItem(key));
+}
 
 export function openModal(id) {
   const el = document.getElementById(id);
@@ -197,12 +223,8 @@ export function openEditModal(key) {
   document.getElementById('fIsImp').checked = item.isImportant === 'Y';
   document.getElementById('fIsDel').checked = item.isDelete    === 'Y';
   window.__editModalBridge?.('edit', key);
-  // 편집 중 락 등록 (서버 모드)
-  lockItem(key).then(res => {
-    if (res?.locked && res?.lockedBy) {
-      notify(`⚠ ${res.lockedBy}님이 편집 중입니다.`, true);
-    }
-  });
+  // 편집 중 락 등록 (서버 모드) — 충돌 알림은 lock_denied 이벤트로 처리
+  lockItem(key);
   openModal('editModal');
 }
 
@@ -292,7 +314,7 @@ export function saveItem() {
     notify('기능이 추가되었습니다.');
     scheduleCardAnim();
   }
-  closeModal('editModal'); unlockItem(S.editKey); setStore({ editKey: null }); S.editKey = null; save(); renderAll();
+  closeModal('editModal'); unlockItem(S.editKey); setStore({ editKey: null }); S.editKey = null; save(); broadcastItemSaved(ni); renderAll();
 }
 
 export function hardDelete() {
@@ -417,9 +439,22 @@ export function onDS(e, key) {
     if (mxSel.size === 0) mxSel.add(key);
     setTimeout(() => mxSel.forEach(k => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => c.classList.add('dragging'))), 0);
   }
+  const lockedKeys = getLockedByOther(mxSel);
+  if (lockedKeys.length) {
+    const locks = getStore().editLocks || {};
+    const lockedBy = locks[lockedKeys[0]]?.user || '다른 사용자';
+    notify(`${lockedBy}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
+    S.isDragging=false; setStore({ isDragging: false }); S.dragKey=null;
+    e.preventDefault();
+    return;
+  }
+  lockKeys(mxSel);
 }
 export function onDEnd(e) {
+  const keys = mxSel.size > 0 ? new Set(mxSel) : (S.dragKey ? new Set([S.dragKey]) : new Set());
+  unlockKeys(keys);
   S.isDragging=false; setStore({ isDragging: false });
+  S.dragKey=null;
   document.querySelectorAll('.mitem.dragging').forEach(c => c.classList.remove('dragging'));
   if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;}
 }
@@ -445,7 +480,12 @@ export function onDrop(e) {
     logActivity('이동', `${item.key} ${item.name}: ${from} → ${to}`);
   });
   mxSel.clear();
-  S.dragKey=null; save(); renderAll(); notify(keysToMove.size > 1 ? `${keysToMove.size}개 이동 완료.` : '이동 완료.');
+  S.dragKey=null; save();
+  keysToMove.forEach(k => {
+    broadcastItemSaved(findItem(k));
+    unlockItem(k);
+  });
+  renderAll(); notify(keysToMove.size > 1 ? `${keysToMove.size}개 이동 완료.` : '이동 완료.');
 }
 
 /* ── 툴팁 ── */

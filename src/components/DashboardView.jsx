@@ -14,6 +14,7 @@ import { animOk } from '../app/render.js';
 
 export default function DashboardView() {
   const items    = useAppStore(s => s.items);   // 데이터 변경 시 리렌더 트리거
+  const changeLog = useAppStore(s => s.changeLog); // 최근 변경 이력 변경 시 리렌더 트리거
   const settings = useAppStore(s => s.settings); // settings 변경 시 리렌더 트리거
 
   const [container, setContainer] = useState(null);

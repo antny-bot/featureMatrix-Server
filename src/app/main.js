@@ -293,7 +293,13 @@ window.__onLockDenied = (key, lockedBy) => {
   notify(`🔒 ${lockedBy}님이 편집 중입니다. 잠시 후 다시 시도하세요.`, 'warning');
 };
 window.__onItemSaved = (key, user, item) => {
-  if (S.view !== 'dashboard') renderAll();
+  if (item && key) {
+    const idx = S.items.findIndex(it => it.key === key);
+    if (idx === -1) S.items.push(item);
+    else S.items[idx] = { ...S.items[idx], ...item };
+    setStore({ items: S.items });
+  }
+  renderAll();
 };
 window.__onPreviewChanged = () => {
   // 미리보기 변경 시 카드 re-render (렌더 비용 최소화 위해 debounce 없이 직접)

@@ -18,6 +18,8 @@ import { buildMatrixHtml } from '../app/render.js';
 export default function MatrixView() {
   /* Zustand 구독: 데이터/설정/표시 변경 시 리렌더 트리거 */
   const items    = useAppStore(s => s.items);     // eslint-disable-line no-unused-vars
+  const editLocks = useAppStore(s => s.editLocks); // eslint-disable-line no-unused-vars
+  const previews  = useAppStore(s => s.previews);  // eslint-disable-line no-unused-vars
   const settings = useAppStore(s => s.settings);  // eslint-disable-line no-unused-vars
   const display  = useAppStore(s => s.display);   // eslint-disable-line no-unused-vars
   const filters  = useAppStore(s => s.filters);

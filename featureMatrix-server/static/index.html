@@ -17533,6 +17533,9 @@ function __inlineNotify(msg, type) {
   function emitPreview(key, user, preview) {
     _emit("editing_preview", { key, user, preview });
   }
+  function emitSave(key, user, item) {
+    _emit("save_item", { key, user, item });
+  }
   var _socket, _pendingQueue;
   var init_socket3 = __esm({
     "app/socket.js"() {
@@ -18532,6 +18535,7 @@ function __inlineNotify(msg, type) {
   function syncToStore() {
     setStore({
       items: S.items,
+      changeLog: S.changeLog,
       view: S.view,
       searchQ: S.searchQ,
       filters: { ...S.filters },
@@ -18878,7 +18882,11 @@ function __inlineNotify(msg, type) {
         p.name && p.name !== item.name ? `<div>\uAE30\uB2A5\uBA85: <b>${esc2(p.name)}</b></div>` : "",
         p.priority && p.priority !== item.priority ? `<div>\uC6B0\uC120\uC21C\uC704: <b>${esc2(p.priority)}</b></div>` : "",
         p.status && p.status !== item.status ? `<div>\uC0C1\uD0DC: <b>${esc2(p.status)}</b></div>` : "",
-        p.owner && p.owner !== item.owner ? `<div>\uB2F4\uB2F9\uC790: <b>${esc2(p.owner)}</b></div>` : ""
+        p.owner && p.owner !== item.owner ? `<div>\uB2F4\uB2F9\uC790: <b>${esc2(p.owner)}</b></div>` : "",
+        p.group && p.group !== item.group ? `<div>\uADF8\uB8F9: <b>${esc2(p.group)}</b></div>` : "",
+        p.subGroup && p.subGroup !== item.subGroup ? `<div>\uC11C\uBE0C\uADF8\uB8F9: <b>${esc2(p.subGroup)}</b></div>` : "",
+        p.category && p.category !== item.category ? `<div>\uCE74\uD14C\uACE0\uB9AC: <b>${esc2(p.category)}</b></div>` : "",
+        p.subCategory && p.subCategory !== item.subCategory ? `<div>\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC: <b>${esc2(p.subCategory)}</b></div>` : ""
       ].filter(Boolean).join("");
       if (!rows) return "";
       return `<div class="edit-preview-overlay"><div style="font-weight:700;margin-bottom:4px">\u270F ${esc2(lockInfo.user)} \uD3B8\uC9D1 \uC911</div>${rows}</div>`;
@@ -19053,46 +19061,13 @@ function __inlineNotify(msg, type) {
     }
   }
   function renderPrioChips() {
-    const el = document.getElementById("prioChips");
-    if (!el) return;
-    const c = getColors();
-    el.innerHTML = [{ val: "\uC0C1", pk: "high" }, { val: "\uC911", pk: "mid" }, { val: "\uD558", pk: "low" }].map((pd) => {
-      const ck = S.filters.priorities.includes(pd.val);
-      const pkC = pd.pk[0].toUpperCase() + pd.pk.slice(1);
-      const col = c[`p${pkC}`] || "#888";
-      const bg = c[`p${pkC}Bg`] || "#eee";
-      const style = ck ? `color:${col};background:${bg};border-color:${col};border-width:2px;` : `color:var(--text-2);background:var(--surface-2);border-color:var(--border-2);`;
-      return `<label class="pchip" style="${style}"><input type="checkbox" value="${pd.val}" ${ck ? "checked" : ""} onchange="onPrioChip(this)">${pd.val}</label>`;
-    }).join("");
+    syncToStore();
   }
   function renderStatusChips() {
-    const el = document.getElementById("statusChips");
-    if (!el) return;
-    const counts = {};
-    S.items.forEach((it) => {
-      if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
-    });
-    el.innerHTML = STATUS_OPTS.map((st) => {
-      const on2 = (S.filters.statuses || []).includes(st);
-      const { col, bg } = STATUS_CHIP_COLORS[st] || { col: "#888", bg: "#eee" };
-      const style = on2 ? `color:${col};background:${bg};border-color:${col};` : `color:${col};border-color:var(--border-2);`;
-      const cnt = counts[st] || 0;
-      return `<label class="pchip" style="${style}font-size:.7rem;cursor:pointer;margin-bottom:3px">
-      <input type="checkbox" value="${st}" ${on2 ? "checked" : ""} style="position:absolute;opacity:0;width:0;height:0" onchange="onStatusChipCb(this)">
-      ${st}${cnt ? `<span style="font-size:.6rem;opacity:.7;margin-left:3px">${cnt}</span>` : ""}
-    </label>`;
-    }).join("");
+    syncToStore();
   }
   function renderOwnerChips() {
-    const el = document.getElementById("ownerChips");
-    if (!el) return;
-    el.innerHTML = getUniqSorted("owner", S.items).map((o) => {
-      const on2 = S.filters.owners.includes(o);
-      const color = getOwnerColor2(o);
-      const dotStyle = `background:${color};width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0`;
-      const chipStyle = on2 ? `border-color:${color};color:${color};background:var(--surface);` : "";
-      return `<label class="owner-chip${on2 ? " chip-on" : ""}" style="${chipStyle}"><input type="checkbox" value="${eattr(o)}" ${on2 ? "checked" : ""} onchange="onOwnerChip(this)"><span style="${dotStyle}"></span>${esc2(o)}</label>`;
-    }).join("");
+    syncToStore();
   }
   function updateDL() {
     const setDL = (id, vals) => {
@@ -19143,6 +19118,26 @@ function __inlineNotify(msg, type) {
   });
 
   // app/modal.js
+  function broadcastItemSaved(item) {
+    if (S.settings.storageMode !== "server" || !item) return;
+    emitSave(item.key, S.settings.userName || "anonymous", { ...item });
+  }
+  function currentUser() {
+    return S.settings.userName || "anonymous";
+  }
+  function getLockedByOther(keys) {
+    const locks = getStore().editLocks || {};
+    const user = currentUser();
+    return [...keys].filter((key) => locks[key] && locks[key].user !== user);
+  }
+  function lockKeys(keys) {
+    if (S.settings.storageMode !== "server") return;
+    keys.forEach((key) => lockItem(key));
+  }
+  function unlockKeys(keys) {
+    if (S.settings.storageMode !== "server") return;
+    keys.forEach((key) => unlockItem(key));
+  }
   function openModal(id) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -19316,11 +19311,7 @@ function __inlineNotify(msg, type) {
     document.getElementById("fIsImp").checked = item.isImportant === "Y";
     document.getElementById("fIsDel").checked = item.isDelete === "Y";
     window.__editModalBridge?.("edit", key);
-    lockItem(key).then((res) => {
-      if (res?.locked && res?.lockedBy) {
-        notify(`\u26A0 ${res.lockedBy}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC785\uB2C8\uB2E4.`, true);
-      }
-    });
+    lockItem(key);
     openModal("editModal");
   }
   function openAddModal() {
@@ -19418,6 +19409,7 @@ function __inlineNotify(msg, type) {
     setStore({ editKey: null });
     S.editKey = null;
     save();
+    broadcastItemSaved(ni);
     renderAll();
   }
   function hardDelete() {
@@ -19564,10 +19556,25 @@ function __inlineNotify(msg, type) {
       if (mxSel.size === 0) mxSel.add(key);
       setTimeout(() => mxSel.forEach((k) => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`).forEach((c) => c.classList.add("dragging"))), 0);
     }
+    const lockedKeys = getLockedByOther(mxSel);
+    if (lockedKeys.length) {
+      const locks = getStore().editLocks || {};
+      const lockedBy = locks[lockedKeys[0]]?.user || "\uB2E4\uB978 \uC0AC\uC6A9\uC790";
+      notify(`${lockedBy}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC778 \uD56D\uBAA9\uC740 \uC774\uB3D9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`, "warning");
+      S.isDragging = false;
+      setStore({ isDragging: false });
+      S.dragKey = null;
+      e.preventDefault();
+      return;
+    }
+    lockKeys(mxSel);
   }
   function onDEnd(e) {
+    const keys = mxSel.size > 0 ? new Set(mxSel) : S.dragKey ? /* @__PURE__ */ new Set([S.dragKey]) : /* @__PURE__ */ new Set();
+    unlockKeys(keys);
     S.isDragging = false;
     setStore({ isDragging: false });
+    S.dragKey = null;
     document.querySelectorAll(".mitem.dragging").forEach((c) => c.classList.remove("dragging"));
     if (S.dragCell) {
       S.dragCell.classList.remove("dov");
@@ -19618,6 +19625,10 @@ function __inlineNotify(msg, type) {
     mxSel.clear();
     S.dragKey = null;
     save();
+    keysToMove.forEach((k) => {
+      broadcastItemSaved(findItem(k));
+      unlockItem(k);
+    });
     renderAll();
     notify(keysToMove.size > 1 ? `${keysToMove.size}\uAC1C \uC774\uB3D9 \uC644\uB8CC.` : "\uC774\uB3D9 \uC644\uB8CC.");
   }
@@ -19664,6 +19675,7 @@ function __inlineNotify(msg, type) {
       init_constants();
       init_admin();
       init_useAppStore();
+      init_socket3();
       closeModal = (id) => document.getElementById(id)?.classList.remove("on");
       _ctxMenu = null;
       window.closeCtxMenu = closeCtxMenu;
@@ -20613,6 +20625,26 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   function bcEl(key) {
     return document.getElementById("bcard-" + key);
   }
+  function currentUser2() {
+    return S.settings.userName || "anonymous";
+  }
+  function getLockedByOther2(keys) {
+    const locks = getStore().editLocks || {};
+    const user = currentUser2();
+    return [...keys].filter((key) => locks[key] && locks[key].user !== user);
+  }
+  function lockKeys2(keys) {
+    if (S.settings.storageMode !== "server") return;
+    keys.forEach((key) => lockItem(key));
+  }
+  function unlockKeys2(keys) {
+    if (S.settings.storageMode !== "server") return;
+    keys.forEach((key) => unlockItem(key));
+  }
+  function broadcastItemSaved2(item) {
+    if (S.settings.storageMode !== "server" || !item) return;
+    emitSave(item.key, currentUser2(), { ...item });
+  }
   function boardCardClick(e, key) {
     if (e.shiftKey) {
       if (_boardSel.has(key)) _boardSel.delete(key);
@@ -20633,16 +20665,34 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       __inlineNotify("\uD3B8\uC9D1 \uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.", true);
       return;
     }
+    const lockedKeys = getLockedByOther2(keys);
+    if (lockedKeys.length) {
+      const locks = getStore().editLocks || {};
+      const lockedBy = locks[lockedKeys[0]]?.user || "\uB2E4\uB978 \uC0AC\uC6A9\uC790";
+      notify(`${lockedBy}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC778 \uD56D\uBAA9\uC740 \uC774\uB3D9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`, "warning");
+      return;
+    }
+    lockKeys2(keys);
     pushUndo();
+    const movedItems = [];
     S.items.forEach((it) => {
       if (keys.has(it.key)) {
+        const fromStatus = it.status || "";
         it.status = toStatus;
-        pushChangeLog("\uC0C1\uD0DC\uBCC0\uACBD", it.key, it.name, { status: toStatus, owner: it.owner });
+        if (fromStatus !== toStatus) {
+          pushChangeLog("\uC0C1\uD0DC\uBCC0\uACBD", it.key, it.name, { status: toStatus, owner: it.owner });
+          logActivity("\uC774\uB3D9", `${it.key} ${it.name}: ${fromStatus || "\uC0C1\uD0DC\uC5C6\uC74C"} \u2192 ${toStatus || "\uC0C1\uD0DC\uC5C6\uC74C"}`);
+        }
+        movedItems.push(it);
       }
     });
     _boardSel.clear();
     notifySel();
     save();
+    movedItems.forEach((item) => {
+      broadcastItemSaved2(item);
+      unlockItem(item.key);
+    });
     renderAll();
   }
   function boardMoveSelected(toStatus) {
@@ -20668,11 +20718,23 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       _boardSel.add(key);
       notifySel();
     }
+    const lockedKeys = getLockedByOther2(_boardSel);
+    if (lockedKeys.length) {
+      const locks = getStore().editLocks || {};
+      const lockedBy = locks[lockedKeys[0]]?.user || "\uB2E4\uB978 \uC0AC\uC6A9\uC790";
+      notify(`${lockedBy}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC778 \uD56D\uBAA9\uC740 \uC774\uB3D9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`, "warning");
+      e.preventDefault();
+      _dragKey = null;
+      return;
+    }
+    lockKeys2(_boardSel);
     setTimeout(() => {
       _boardSel.forEach((k) => bcEl(k)?.classList.add("dragging"));
     }, 0);
   }
   function boardCardDragEnd() {
+    const keys = _boardSel.size > 0 ? new Set(_boardSel) : _dragKey ? /* @__PURE__ */ new Set([_dragKey]) : /* @__PURE__ */ new Set();
+    unlockKeys2(keys);
     _dragKey = null;
     document.querySelectorAll(".board-card.dragging, .mitem.dragging").forEach((el) => el.classList.remove("dragging"));
   }
@@ -20696,6 +20758,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       init_state();
       init_constants();
       init_render();
+      init_socket3();
+      init_useAppStore();
       _dragKey = null;
       _boardSel = /* @__PURE__ */ new Set();
     }
@@ -21540,7 +21604,13 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         notify(`\u{1F512} ${lockedBy}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC785\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694.`, "warning");
       };
       window.__onItemSaved = (key, user, item) => {
-        if (S.view !== "dashboard") renderAll();
+        if (item && key) {
+          const idx = S.items.findIndex((it) => it.key === key);
+          if (idx === -1) S.items.push(item);
+          else S.items[idx] = { ...S.items[idx], ...item };
+          setStore({ items: S.items });
+        }
+        renderAll();
       };
       window.__onPreviewChanged = () => {
         if (S.view !== "dashboard") renderAll();
@@ -21927,6 +21997,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_jsx_runtime4 = __toESM(require_jsx_runtime());
   function BoardView() {
     const items = useAppStore((s) => s.items);
+    const editLocks2 = useAppStore((s) => s.editLocks);
+    const previews = useAppStore((s) => s.previews);
     const foldCount = useAppStore((s) => s.settings.boardFoldCount ?? 6);
     const [boardContainer, setBoardContainer] = (0, import_react4.useState)(null);
     const [barContainer, setBarContainer] = (0, import_react4.useState)(null);
@@ -22321,6 +22393,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_jsx_runtime5 = __toESM(require_jsx_runtime());
   function DashboardView() {
     const items = useAppStore((s) => s.items);
+    const changeLog = useAppStore((s) => s.changeLog);
     const settings = useAppStore((s) => s.settings);
     const [container, setContainer] = (0, import_react5.useState)(null);
     const [hmView, setHmView] = (0, import_react5.useState)("cat");
@@ -22864,28 +22937,34 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         const user = getStore().settings?.userName || "\uC775\uBA85";
         const preview = {
           name: document.getElementById("fName")?.value || "",
-          priority: document.getElementById("fPriority")?.value || "",
+          priority: document.getElementById("fPri")?.value || "",
           status: document.getElementById("fStatus")?.value || "",
           owner: document.getElementById("fOwner")?.value || "",
-          desc: document.getElementById("fDesc")?.value || ""
+          desc: document.getElementById("fDesc")?.value || "",
+          group: document.getElementById("fGroup")?.value || "",
+          subGroup: document.getElementById("fSubGroup")?.value || "",
+          category: document.getElementById("fCat")?.value || "",
+          subCategory: document.getElementById("fSubCat")?.value || ""
         };
         emitPreview(key, user, preview);
       }, 300);
     }, []);
     const attachInputListeners = (0, import_react7.useCallback)(() => {
-      const ids = ["fName", "fPriority", "fStatus", "fOwner", "fDesc", "fMdContent"];
-      inputListeners.current.forEach(({ el, fn }) => el.removeEventListener("input", fn));
+      const ids = ["fName", "fPri", "fStatus", "fOwner", "fDesc", "fGroup", "fSubGroup", "fCat", "fSubCat", "fMdContent"];
+      inputListeners.current.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
       inputListeners.current = [];
       ids.forEach((id) => {
         const el = document.getElementById(id);
         if (el) {
           el.addEventListener("input", schedulePreview);
-          inputListeners.current.push({ el, fn: schedulePreview });
+          el.addEventListener("change", schedulePreview);
+          inputListeners.current.push({ el, type: "input", fn: schedulePreview });
+          inputListeners.current.push({ el, type: "change", fn: schedulePreview });
         }
       });
     }, [schedulePreview]);
     const detachInputListeners = (0, import_react7.useCallback)(() => {
-      inputListeners.current.forEach(({ el, fn }) => el.removeEventListener("input", fn));
+      inputListeners.current.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
       inputListeners.current = [];
       clearTimeout(previewTimerRef.current);
     }, []);
@@ -23189,6 +23268,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_jsx_runtime8 = __toESM(require_jsx_runtime());
   function MatrixView() {
     const items = useAppStore((s) => s.items);
+    const editLocks2 = useAppStore((s) => s.editLocks);
+    const previews = useAppStore((s) => s.previews);
     const settings = useAppStore((s) => s.settings);
     const display = useAppStore((s) => s.display);
     const filters = useAppStore((s) => s.filters);
@@ -23269,9 +23350,446 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     );
   }
 
+  // components/NavigationSide.jsx
+  var import_jsx_runtime10 = __toESM(require_jsx_runtime());
+  function DashboardIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "3", y: "3", width: "7", height: "7", rx: "1" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "14", y: "3", width: "7", height: "7", rx: "1" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "3", y: "14", width: "7", height: "7", rx: "1" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "14", y: "14", width: "7", height: "7", rx: "1" })
+    ] });
+  }
+  function MatrixIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("line", { x1: "3", y1: "9", x2: "21", y2: "9" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("line", { x1: "9", y1: "9", x2: "9", y2: "21" })
+    ] });
+  }
+  function BoardIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "3", y: "3", width: "4", height: "18", rx: "1" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "10", y: "3", width: "4", height: "18", rx: "1" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "17", y: "3", width: "4", height: "18", rx: "1" })
+    ] });
+  }
+  function ListIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("line", { x1: "8", y1: "6", x2: "21", y2: "6" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("line", { x1: "8", y1: "12", x2: "21", y2: "12" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("line", { x1: "8", y1: "18", x2: "21", y2: "18" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("circle", { cx: "4", cy: "6", r: "1.2", fill: "currentColor" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("circle", { cx: "4", cy: "12", r: "1.2", fill: "currentColor" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("circle", { cx: "4", cy: "18", r: "1.2", fill: "currentColor" })
+    ] });
+  }
+  function LoginIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("svg", { width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("rect", { x: "3", y: "11", width: "18", height: "11", rx: "2" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" })
+    ] });
+  }
+  function NavButton({ id, title, label, icon, active = false, onClick, className = "", style }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(
+      "button",
+      {
+        className: `nav-item${active ? " on" : ""}${className ? ` ${className}` : ""}`,
+        id,
+        onClick,
+        title,
+        style,
+        children: [
+          icon,
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { children: label })
+        ]
+      }
+    );
+  }
+  function NavigationSide() {
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("nav", { className: "nav-side", id: "navSide", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        NavButton,
+        {
+          id: "navD",
+          title: "\uB300\uC2DC\uBCF4\uB4DC",
+          label: "\uB300\uC2DC\uBCF4\uB4DC",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(DashboardIcon, {}),
+          onClick: () => window.switchView?.("dashboard")
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        NavButton,
+        {
+          id: "navM",
+          title: "\uB9E4\uD2B8\uB9AD\uC2A4",
+          label: "\uB9E4\uD2B8\uB9AD\uC2A4",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(MatrixIcon, {}),
+          active: true,
+          onClick: () => window.switchView?.("matrix")
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        NavButton,
+        {
+          id: "navB",
+          title: "\uBCF4\uB4DC",
+          label: "\uBCF4\uB4DC",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(BoardIcon, {}),
+          onClick: () => window.switchView?.("board")
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        NavButton,
+        {
+          id: "navL",
+          title: "\uB9AC\uC2A4\uD2B8",
+          label: "\uB9AC\uC2A4\uD2B8",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(ListIcon, {}),
+          onClick: () => window.switchView?.("list")
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "nav-spacer" }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        NavButton,
+        {
+          id: "navLogin",
+          title: "\uB85C\uADF8\uC778",
+          label: "\uB85C\uADF8\uC778",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(LoginIcon, {}),
+          className: "nav-login",
+          style: { display: "none" },
+          onClick: () => window.openLoginModal?.()
+        }
+      )
+    ] });
+  }
+
+  // components/FilterPanel.jsx
+  init_constants();
+  init_render();
+  init_state();
+  init_theme();
+  init_useAppStore();
+  var import_jsx_runtime11 = __toESM(require_jsx_runtime());
+  var PRIORITY_CHIPS = [
+    { val: "\uC0C1", pk: "high" },
+    { val: "\uC911", pk: "mid" },
+    { val: "\uD558", pk: "low" }
+  ];
+  function ToggleIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("svg", { width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("line", { x1: "3", y1: "6", x2: "21", y2: "6" }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("line", { x1: "3", y1: "12", x2: "21", y2: "12" }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("line", { x1: "3", y1: "18", x2: "21", y2: "18" })
+    ] });
+  }
+  function UndoIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("polyline", { points: "1 4 1 10 7 10" }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("path", { d: "M3.51 15a9 9 0 1 0 .49-3.5" })
+    ] });
+  }
+  function FilterSection({ title, children }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(import_jsx_runtime11.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "fsec", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "fsec-ttl", children: title }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "fsec-body", children })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "fsep" })
+    ] });
+  }
+  function Toggle({ id, label, defaultChecked = false, onChange }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { className: "tgl", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { id, type: "checkbox", defaultChecked, onChange }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "tgl-track" }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "tgl-lbl", children: label })
+    ] });
+  }
+  function syncFilters() {
+    save();
+    setStore({ filters: { ...S.filters } });
+    window.renderAll?.(true);
+  }
+  function PriorityChips() {
+    useAppStore((s) => s.filters.priorities);
+    useAppStore((s) => s.settings.customColors);
+    useAppStore((s) => s.settings.themeId);
+    const colors = getColors();
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "pchips", id: "prioChips", children: PRIORITY_CHIPS.map(({ val, pk }) => {
+      const checked = S.filters.priorities.includes(val);
+      const key = pk[0].toUpperCase() + pk.slice(1);
+      const col = colors[`p${key}`] || "#888";
+      const bg = colors[`p${key}Bg`] || "#eee";
+      const style = checked ? { color: col, background: bg, borderColor: col, borderWidth: "2px" } : { color: "var(--text-2)", background: "var(--surface-2)", borderColor: "var(--border-2)" };
+      return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { className: "pchip", style, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          "input",
+          {
+            type: "checkbox",
+            value: val,
+            checked,
+            onChange: (e) => {
+              const idx = S.filters.priorities.indexOf(val);
+              if (e.target.checked && idx === -1) S.filters.priorities.push(val);
+              else if (!e.target.checked && idx !== -1) S.filters.priorities.splice(idx, 1);
+              syncFilters();
+            }
+          }
+        ),
+        val
+      ] }, val);
+    }) });
+  }
+  function StatusChips() {
+    useAppStore((s) => s.items);
+    useAppStore((s) => s.filters);
+    const counts = {};
+    const countItems = isFilterActive() ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
+    countItems.forEach((it) => {
+      if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
+    });
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { id: "statusChips", style: { display: "flex", flexWrap: "wrap", gap: "3px" }, children: STATUS_OPTS.map((status) => {
+      const checked = (S.filters.statuses || []).includes(status);
+      const { col, bg } = STATUS_CHIP_COLORS[status] || { col: "#888", bg: "#eee" };
+      const style = checked ? { color: col, background: bg, borderColor: col, fontSize: ".7rem", cursor: "pointer", marginBottom: "3px" } : { color: col, borderColor: "var(--border-2)", fontSize: ".7rem", cursor: "pointer", marginBottom: "3px" };
+      return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { className: "pchip", style, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          "input",
+          {
+            type: "checkbox",
+            value: status,
+            checked,
+            style: { position: "absolute", opacity: 0, width: 0, height: 0 },
+            onChange: (e) => {
+              if (!S.filters.statuses) S.filters.statuses = [];
+              const idx = S.filters.statuses.indexOf(status);
+              if (e.target.checked && idx === -1) S.filters.statuses.push(status);
+              else if (!e.target.checked && idx !== -1) S.filters.statuses.splice(idx, 1);
+              syncFilters();
+            }
+          }
+        ),
+        status,
+        !!counts[status] && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { style: { fontSize: ".6rem", opacity: 0.7, marginLeft: "3px" }, children: counts[status] })
+      ] }, status);
+    }) });
+  }
+  function OwnerChips() {
+    useAppStore((s) => s.items);
+    useAppStore((s) => s.filters.owners);
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "owner-chips", id: "ownerChips", children: getUniqSorted("owner", S.items).map((owner) => {
+      const normalized = normOwner(owner);
+      const checked = S.filters.owners.includes(normalized);
+      const color = getOwnerColor2(owner);
+      const chipStyle = checked ? { borderColor: color, color, background: "var(--surface)" } : void 0;
+      return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { className: `owner-chip${checked ? " chip-on" : ""}`, style: chipStyle, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          "input",
+          {
+            type: "checkbox",
+            value: owner,
+            checked,
+            onChange: (e) => {
+              const idx = S.filters.owners.indexOf(normalized);
+              if (e.target.checked && idx === -1) S.filters.owners.push(normalized);
+              else if (!e.target.checked && idx !== -1) S.filters.owners.splice(idx, 1);
+              syncFilters();
+            }
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          "span",
+          {
+            style: {
+              background: color,
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              display: "inline-block",
+              flexShrink: 0
+            }
+          }
+        ),
+        owner
+      ] }, owner);
+    }) });
+  }
+  function FilterPanel() {
+    const displayToggle = () => window.onDispTgl?.();
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("aside", { className: "fpanel", id: "fpanel", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        "button",
+        {
+          className: "fpanel-toggle",
+          id: "fpanelToggle",
+          onClick: () => window.togglePanel?.(),
+          title: "\uD544\uD130 \uD328\uB110 (F)",
+          children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ToggleIcon, {})
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "fpinner", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            "span",
+            {
+              style: {
+                fontSize: ".64rem",
+                fontWeight: 700,
+                letterSpacing: ".06em",
+                textTransform: "uppercase",
+                color: "var(--text-3)"
+              },
+              children: "\uD544\uD130"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            "button",
+            {
+              className: "btn btn-g btn-sm",
+              onClick: () => window.resetFilters?.(),
+              style: { height: "20px", padding: "0 6px", fontSize: ".65rem" },
+              children: "\uCD08\uAE30\uD654"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FilterSection, { title: "\uC6B0\uC120\uC21C\uC704", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(PriorityChips, {}) }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FilterSection, { title: "\uC9C4\uD589\uC0C1\uD0DC", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StatusChips, {}) }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FilterSection, { title: "\uB2F4\uB2F9", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(OwnerChips, {}) }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FilterSection, { title: "\uD45C\uC2DC \uC870\uAC74", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "7px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togDel", label: "\uC0AD\uC81C \uD3EC\uD568", onChange: () => window.applyFilters?.() }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togImp", label: "\uC911\uC694\uB9CC \uBCF4\uAE30", onChange: () => window.applyFilters?.() })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(FilterSection, { title: "\uCE74\uB4DC \uD45C\uC2DC", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "3px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            "div",
+            {
+              style: {
+                fontSize: ".62rem",
+                fontWeight: 700,
+                letterSpacing: ".04em",
+                color: "var(--text-3)",
+                textTransform: "uppercase",
+                margin: "4px 0 2px"
+              },
+              children: "\uC2DD\uBCC4"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togOwner", label: "\uB2F4\uB2F9", defaultChecked: true, onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togStar", label: "\u2605 \uC911\uC694", defaultChecked: true, onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togNew", label: "N \uC2E0\uADDC \uBC30\uC9C0", defaultChecked: true, onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            "div",
+            {
+              style: {
+                fontSize: ".62rem",
+                fontWeight: 700,
+                letterSpacing: ".04em",
+                color: "var(--text-3)",
+                textTransform: "uppercase",
+                margin: "6px 0 2px"
+              },
+              children: "\uC0C1\uD0DC"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togStatus", label: "\uC9C4\uD589\uC0C1\uD0DC \uBC43\uC9C0", defaultChecked: true, onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togMd", label: "MD \uBC43\uC9C0", defaultChecked: true, onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            "div",
+            {
+              style: {
+                fontSize: ".62rem",
+                fontWeight: 700,
+                letterSpacing: ".04em",
+                color: "var(--text-3)",
+                textTransform: "uppercase",
+                margin: "6px 0 2px"
+              },
+              children: "\uBCF4\uC870"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togCnt", label: "\uC140 \uCE74\uC6B4\uD130", defaultChecked: true, onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togUpd", label: "\uC218\uC815\uC77C", onChange: displayToggle }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { id: "togQuickAdd", label: "\uBE60\uB978 \uCD94\uAC00 \uBC84\uD2BC", onChange: displayToggle })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "undo-fab", id: "undoFab", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(
+          "button",
+          {
+            className: "btn btn-s",
+            onClick: () => window.doUndo?.(),
+            title: "\uC2E4\uD589 \uCDE8\uC18C (Z)",
+            style: { gap: "6px", width: "100%" },
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(UndoIcon, {}),
+              "\uB418\uB3CC\uB9AC\uAE30"
+            ]
+          }
+        ) })
+      ] })
+    ] });
+  }
+
+  // components/LayoutShell.jsx
+  var import_jsx_runtime12 = __toESM(require_jsx_runtime());
+  function LayoutShell() {
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "layout", id: "layout", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(NavigationSide, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("main", { className: "content", id: "contentArea", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "dashboardView", style: { display: "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "matrixView", className: "mwrap fluid" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "bulkBar", className: "bulk-bar", style: { display: "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "boardView", className: "bwrap", style: { display: "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "listView", className: "lwrap", style: { display: "none" } })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(FilterPanel, {})
+    ] });
+  }
+
+  // components/UpdateBanner.jsx
+  var import_jsx_runtime13 = __toESM(require_jsx_runtime());
+  function UpdateBanner() {
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(
+      "div",
+      {
+        id: "updateBanner",
+        style: {
+          display: "none",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px",
+          padding: "7px 16px",
+          background: "var(--warning-bg)",
+          borderBottom: "1px solid var(--warning)",
+          fontSize: ".8rem",
+          color: "var(--warning)"
+        },
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { id: "updateBannerMsg", children: "\uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4." }),
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+            "button",
+            {
+              className: "btn btn-s btn-sm",
+              onClick: () => window.reloadFromServer?.(),
+              style: { borderColor: "var(--warning)", color: "var(--warning)" },
+              children: "\uC9C0\uAE08 \uC0C8\uB85C\uACE0\uCE68"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+            "button",
+            {
+              className: "btn btn-g btn-sm",
+              onClick: () => document.getElementById("updateBanner")?.classList.remove("on"),
+              children: "\uB098\uC911\uC5D0"
+            }
+          )
+        ]
+      }
+    );
+  }
+
   // components/ErrorBoundary.jsx
   var import_react10 = __toESM(require_react());
-  var import_jsx_runtime10 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime14 = __toESM(require_jsx_runtime());
   var ErrorBoundary = class extends import_react10.Component {
     constructor(props) {
       super(props);
@@ -23291,7 +23809,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       if (!this.state.hasError) return this.props.children;
       const { level = "view", label = "\uC601\uC5ED" } = this.props;
       if (level === "app") {
-        return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { style: {
+        return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { style: {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -23302,11 +23820,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           background: "var(--bg)",
           color: "var(--text)"
         }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { style: { fontSize: "2rem" }, children: "\u26A0" }),
-          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { style: { fontSize: "1rem", fontWeight: 700 }, children: "\uC571\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4" }),
-          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { style: { fontSize: ".8rem", color: "var(--text-3)", maxWidth: "400px", textAlign: "center" }, children: this.state.error?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958" }),
-          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { style: { fontSize: "2rem" }, children: "\u26A0" }),
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { style: { fontSize: "1rem", fontWeight: 700 }, children: "\uC571\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4" }),
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { style: { fontSize: ".8rem", color: "var(--text-3)", maxWidth: "400px", textAlign: "center" }, children: this.state.error?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958" }),
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
               "button",
               {
                 onClick: () => this.handleReset(),
@@ -23314,7 +23832,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                 children: "\uB2E4\uC2DC \uC2DC\uB3C4"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
               "button",
               {
                 onClick: () => window.location.reload(),
@@ -23325,7 +23843,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           ] })
         ] });
       }
-      return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { style: {
+      return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { style: {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -23337,12 +23855,12 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         fontSize: ".8rem",
         textAlign: "center"
       }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { style: { fontSize: "1.2rem" }, children: "\u26A0" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { style: { fontSize: "1.2rem" }, children: "\u26A0" }),
+        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { children: [
           label,
           " \uB80C\uB354\uB9C1 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4"
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
           "button",
           {
             onClick: () => this.handleReset(),
@@ -23355,7 +23873,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   };
 
   // components/App.jsx
-  var import_jsx_runtime11 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime15 = __toESM(require_jsx_runtime());
   var APP_TEMPLATE = `
 <div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
   <span id="updateBannerMsg">\u26A0 \uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.</span>
@@ -23620,28 +24138,33 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
 </div>
 <div id="boardActionBar" class="board-action-bar"></div>
 `;
+  var LEGACY_MODAL_TEMPLATE = APP_TEMPLATE.slice(
+    APP_TEMPLATE.indexOf('<div class="ov" id="editModal"')
+  );
   function App() {
     (0, import_react11.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] main.js \uCD08\uAE30\uD654 \uC2E4\uD328:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(AuthProvider, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Header, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { dangerouslySetInnerHTML: { __html: APP_TEMPLATE } }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(BoardView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(DashboardView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ErrorBoundary, { level: "modal", label: "\uC124\uC815", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SettingsPanel, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ErrorBoundary, { level: "modal", label: "\uD3B8\uC9D1 \uBAA8\uB2EC", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ItemModal, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ErrorBoundary, { level: "view", label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(MatrixView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ErrorBoundary, { level: "view", label: "\uB9AC\uC2A4\uD2B8 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ListView, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Header, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(UpdateBanner, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(LayoutShell, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { dangerouslySetInnerHTML: { __html: LEGACY_MODAL_TEMPLATE } }),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(BoardView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(DashboardView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ErrorBoundary, { level: "modal", label: "\uC124\uC815", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(SettingsPanel, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ErrorBoundary, { level: "modal", label: "\uD3B8\uC9D1 \uBAA8\uB2EC", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ItemModal, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ErrorBoundary, { level: "view", label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(MatrixView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ErrorBoundary, { level: "view", label: "\uB9AC\uC2A4\uD2B8 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(ListView, {}) })
     ] }) }) });
   }
 
   // main.jsx
-  var import_jsx_runtime12 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime16 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime12.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime16.jsx)(App, {}));
 })();
 /*! Bundled license information:
 

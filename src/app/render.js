@@ -2,7 +2,7 @@
    render.js — 매트릭스·리스트 렌더, 통계, 필터 UI
 ══════════════════════════════════════════ */
 
-import { STATUS_CLS, STATUS_LBL, STATUS_OPTS, STATUS_CHIP_COLORS, FLABELS } from './constants.js';
+import { STATUS_CLS, STATUS_LBL, FLABELS } from './constants.js';
 import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate } from './state.js';
 import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
 import { isAdmin, isEditor } from './admin.js';
@@ -15,14 +15,15 @@ const getPreviews   = () => getStore().previews   || {};
 /* ── Zustand 동기화: renderAll() 후 React 컴포넌트에 S 상태 반영 ── */
 function syncToStore() {
   setStore({
-    items:    S.items,
-    view:     S.view,
-    searchQ:  S.searchQ,
-    filters:  { ...S.filters },
-    display:  { ...S.display },
-    settings: { ...S.settings },
-    sort:     { ...S.sort },
-    editKey:  S.editKey,
+    items:     S.items,
+    changeLog: S.changeLog,
+    view:      S.view,
+    searchQ:   S.searchQ,
+    filters:   { ...S.filters },
+    display:   { ...S.display },
+    settings:  { ...S.settings },
+    sort:      { ...S.sort },
+    editKey:   S.editKey,
   });
 }
 
@@ -395,6 +396,10 @@ export function renderCard(item, c, si = -1, overrides = {}) {
       p.priority && p.priority !== item.priority ? `<div>우선순위: <b>${esc(p.priority)}</b></div>` : '',
       p.status   && p.status   !== item.status   ? `<div>상태: <b>${esc(p.status)}</b></div>` : '',
       p.owner    && p.owner    !== item.owner    ? `<div>담당자: <b>${esc(p.owner)}</b></div>` : '',
+      p.group    && p.group    !== item.group    ? `<div>그룹: <b>${esc(p.group)}</b></div>` : '',
+      p.subGroup && p.subGroup !== item.subGroup ? `<div>서브그룹: <b>${esc(p.subGroup)}</b></div>` : '',
+      p.category && p.category !== item.category ? `<div>카테고리: <b>${esc(p.category)}</b></div>` : '',
+      p.subCategory && p.subCategory !== item.subCategory ? `<div>서브카테고리: <b>${esc(p.subCategory)}</b></div>` : '',
     ].filter(Boolean).join('');
     if (!rows) return '';
     return `<div class="edit-preview-overlay"><div style="font-weight:700;margin-bottom:4px">✏ ${esc(lockInfo.user)} 편집 중</div>${rows}</div>`;
@@ -549,54 +554,15 @@ export function switchView(v) {
 
 /* ── 필터 UI ── */
 export function renderPrioChips() {
-  const el = document.getElementById('prioChips');
-  if (!el) return;
-  const c = getColors();
-  el.innerHTML = [{val:'상',pk:'high'},{val:'중',pk:'mid'},{val:'하',pk:'low'}].map(pd => {
-    const ck  = S.filters.priorities.includes(pd.val);
-    const pkC = pd.pk[0].toUpperCase() + pd.pk.slice(1);
-    const col = c[`p${pkC}`]   || '#888';
-    const bg  = c[`p${pkC}Bg`] || '#eee';
-    const style = ck
-      ? `color:${col};background:${bg};border-color:${col};border-width:2px;`
-      : `color:var(--text-2);background:var(--surface-2);border-color:var(--border-2);`;
-    return `<label class="pchip" style="${style}"><input type="checkbox" value="${pd.val}" ${ck?'checked':''} onchange="onPrioChip(this)">${pd.val}</label>`;
-  }).join('');
+  syncToStore();
 }
 
 export function renderStatusChips() {
-  const el = document.getElementById('statusChips');
-  if (!el) return;
-  const counts = {};
-  S.items.forEach(it => {
-    if (it.status) counts[it.status] = (counts[it.status] || 0) + 1;
-  });
-  el.innerHTML = STATUS_OPTS.map(st => {
-    const on  = (S.filters.statuses||[]).includes(st);
-    const { col, bg } = STATUS_CHIP_COLORS[st] || { col:'#888', bg:'#eee' };
-    const style = on
-      ? `color:${col};background:${bg};border-color:${col};`
-      : `color:${col};border-color:var(--border-2);`;
-    const cnt = counts[st] || 0;
-    return `<label class="pchip" style="${style}font-size:.7rem;cursor:pointer;margin-bottom:3px">
-      <input type="checkbox" value="${st}" ${on?'checked':''} style="position:absolute;opacity:0;width:0;height:0" onchange="onStatusChipCb(this)">
-      ${st}${cnt ? `<span style="font-size:.6rem;opacity:.7;margin-left:3px">${cnt}</span>` : ''}
-    </label>`;
-  }).join('');
+  syncToStore();
 }
 
 export function renderOwnerChips() {
-  const el = document.getElementById('ownerChips');
-  if (!el) return;
-  el.innerHTML = getUniqSorted('owner', S.items).map(o => {
-    const on    = S.filters.owners.includes(o);
-    const color = getOwnerColor(o);
-    const dotStyle = `background:${color};width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0`;
-    const chipStyle = on
-      ? `border-color:${color};color:${color};background:var(--surface);`
-      : '';
-    return `<label class="owner-chip${on?' chip-on':''}" style="${chipStyle}"><input type="checkbox" value="${eattr(o)}" ${on?'checked':''} onchange="onOwnerChip(this)"><span style="${dotStyle}"></span>${esc(o)}</label>`;
-  }).join('');
+  syncToStore();
 }
 
 export function updateDL() {

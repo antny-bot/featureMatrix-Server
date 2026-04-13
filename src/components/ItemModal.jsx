@@ -40,10 +40,14 @@ export default function ItemModal() {
       const user = getStore().settings?.userName || '익명';
       const preview = {
         name:     document.getElementById('fName')?.value     || '',
-        priority: document.getElementById('fPriority')?.value || '',
+        priority: document.getElementById('fPri')?.value      || '',
         status:   document.getElementById('fStatus')?.value   || '',
         owner:    document.getElementById('fOwner')?.value    || '',
         desc:     document.getElementById('fDesc')?.value     || '',
+        group:       document.getElementById('fGroup')?.value    || '',
+        subGroup:    document.getElementById('fSubGroup')?.value || '',
+        category:    document.getElementById('fCat')?.value      || '',
+        subCategory: document.getElementById('fSubCat')?.value   || '',
       };
       emitPreview(key, user, preview);
     }, 300);
@@ -51,21 +55,23 @@ export default function ItemModal() {
 
   /* 모달 내 입력 필드에 리스너 attach */
   const attachInputListeners = useCallback(() => {
-    const ids = ['fName', 'fPriority', 'fStatus', 'fOwner', 'fDesc', 'fMdContent'];
-    inputListeners.current.forEach(({ el, fn }) => el.removeEventListener('input', fn));
+    const ids = ['fName', 'fPri', 'fStatus', 'fOwner', 'fDesc', 'fGroup', 'fSubGroup', 'fCat', 'fSubCat', 'fMdContent'];
+    inputListeners.current.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
     inputListeners.current = [];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener('input', schedulePreview);
-        inputListeners.current.push({ el, fn: schedulePreview });
+        el.addEventListener('change', schedulePreview);
+        inputListeners.current.push({ el, type: 'input', fn: schedulePreview });
+        inputListeners.current.push({ el, type: 'change', fn: schedulePreview });
       }
     });
   }, [schedulePreview]);
 
   /* 입력 리스너 정리 */
   const detachInputListeners = useCallback(() => {
-    inputListeners.current.forEach(({ el, fn }) => el.removeEventListener('input', fn));
+    inputListeners.current.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
     inputListeners.current = [];
     clearTimeout(previewTimerRef.current);
   }, []);
