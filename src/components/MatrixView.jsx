@@ -79,6 +79,7 @@ export default function MatrixView() {
   const [expandedCells, setExpandedCells] = useState(new Set());
   const [selectedKeys, setSelectedKeys] = useState(() => new Set(mxSel));
   const [dragKeys, setDragKeys] = useState(() => new Set());
+  const [dropCellKey, setDropCellKey] = useState(null);
 
   useEffect(() => {
     setContainer(document.getElementById('matrixView'));
@@ -127,6 +128,12 @@ export default function MatrixView() {
     const handler = event => setDragKeys(new Set(event.detail.keys || []));
     window.addEventListener('mxDragState', handler);
     return () => window.removeEventListener('mxDragState', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = event => setDropCellKey(event.detail.cellKey || null);
+    window.addEventListener('mxDropCellChange', handler);
+    return () => window.removeEventListener('mxDropCellChange', handler);
   }, []);
 
   const filteredItems = useMemo(() => getFiltered(), [items, filters, searchQ, settings, display, editLocks, previews]);
@@ -203,7 +210,7 @@ export default function MatrixView() {
 
                       return (
                         <td
-                          className="m-cell"
+                          className={`m-cell${dropCellKey === cellKey ? ' dov' : ''}`}
                           style={{ background: 'var(--bg)' }}
                           data-g={group}
                           data-sg={subGroup}

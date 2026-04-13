@@ -19045,6 +19045,18 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function notifyMxDrag(keys = []) {
     window.dispatchEvent(new CustomEvent("mxDragState", { detail: { keys: [...keys] } }));
   }
+  function getCellKeyFromEl(cell) {
+    if (!cell) return null;
+    return [
+      cell.getAttribute("data-g"),
+      cell.getAttribute("data-sg"),
+      cell.getAttribute("data-c"),
+      cell.getAttribute("data-sc")
+    ].join("|||");
+  }
+  function notifyMxDropCell(cell) {
+    window.dispatchEvent(new CustomEvent("mxDropCellChange", { detail: { cellKey: getCellKeyFromEl(cell) } }));
+  }
   function onDS(e, key) {
     S.isDragging = true;
     setStore({ isDragging: true });
@@ -19080,16 +19092,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     setStore({ isDragging: false });
     S.dragKey = null;
     notifyMxDrag();
-    if (S.dragCell) {
-      S.dragCell.classList.remove("dov");
-      S.dragCell = null;
-    }
+    S.dragCell = null;
+    notifyMxDropCell(null);
   }
   function onDE(e) {
     e.preventDefault();
-    if (S.dragCell && S.dragCell !== e.currentTarget) S.dragCell.classList.remove("dov");
     S.dragCell = e.currentTarget;
-    e.currentTarget.classList.add("dov");
+    notifyMxDropCell(S.dragCell);
   }
   function onDO(e) {
     e.preventDefault();
@@ -19099,15 +19108,15 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const rel = e.relatedTarget;
     if (rel && e.currentTarget.contains(rel)) return;
     if (e.currentTarget === S.dragCell) {
-      e.currentTarget.classList.remove("dov");
       S.dragCell = null;
+      notifyMxDropCell(null);
     }
   }
   function onDrop(e) {
     e.preventDefault();
     const cell = e.currentTarget;
-    cell.classList.remove("dov");
     S.dragCell = null;
+    notifyMxDropCell(null);
     if (!S.dragKey) return;
     const keysToMove = mxSel.size > 0 ? new Set(mxSel) : /* @__PURE__ */ new Set([S.dragKey]);
     const g = cell.getAttribute("data-g") === "(\uBBF8\uBD84\uB958)" ? "" : cell.getAttribute("data-g");
@@ -23353,6 +23362,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const [expandedCells, setExpandedCells] = (0, import_react12.useState)(/* @__PURE__ */ new Set());
     const [selectedKeys, setSelectedKeys] = (0, import_react12.useState)(() => new Set(mxSel));
     const [dragKeys, setDragKeys] = (0, import_react12.useState)(() => /* @__PURE__ */ new Set());
+    const [dropCellKey, setDropCellKey] = (0, import_react12.useState)(null);
     (0, import_react12.useEffect)(() => {
       setContainer(document.getElementById("matrixView"));
     }, []);
@@ -23395,6 +23405,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       const handler = (event) => setDragKeys(new Set(event.detail.keys || []));
       window.addEventListener("mxDragState", handler);
       return () => window.removeEventListener("mxDragState", handler);
+    }, []);
+    (0, import_react12.useEffect)(() => {
+      const handler = (event) => setDropCellKey(event.detail.cellKey || null);
+      window.addEventListener("mxDropCellChange", handler);
+      return () => window.removeEventListener("mxDropCellChange", handler);
     }, []);
     const filteredItems = (0, import_react12.useMemo)(() => getFiltered(), [items, filters, searchQ, settings, display, editLocks2, previews]);
     const matrix = (0, import_react12.useMemo)(() => getMatrixData(filteredItems), [filteredItems]);
@@ -23455,7 +23470,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(
                 "td",
                 {
-                  className: "m-cell",
+                  className: `m-cell${dropCellKey === cellKey ? " dov" : ""}`,
                   style: { background: "var(--bg)" },
                   "data-g": group,
                   "data-sg": subGroup,

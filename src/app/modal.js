@@ -428,6 +428,20 @@ function notifyMxDrag(keys = []) {
   window.dispatchEvent(new CustomEvent('mxDragState', { detail: { keys: [...keys] } }));
 }
 
+function getCellKeyFromEl(cell) {
+  if (!cell) return null;
+  return [
+    cell.getAttribute('data-g'),
+    cell.getAttribute('data-sg'),
+    cell.getAttribute('data-c'),
+    cell.getAttribute('data-sc'),
+  ].join('|||');
+}
+
+function notifyMxDropCell(cell) {
+  window.dispatchEvent(new CustomEvent('mxDropCellChange', { detail: { cellKey: getCellKeyFromEl(cell) } }));
+}
+
 export function onDS(e, key) {
   S.isDragging=true; setStore({ isDragging: true }); clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move';
   if (mxSel.size > 0 && !mxSel.has(key)) {
@@ -456,15 +470,16 @@ export function onDEnd(e) {
   S.isDragging=false; setStore({ isDragging: false });
   S.dragKey=null;
   notifyMxDrag();
-  if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;}
+  S.dragCell=null;
+  notifyMxDropCell(null);
 }
-export function onDE(e)       { e.preventDefault(); if(S.dragCell&&S.dragCell!==e.currentTarget)S.dragCell.classList.remove('dov'); S.dragCell=e.currentTarget; e.currentTarget.classList.add('dov'); }
+export function onDE(e)       { e.preventDefault(); S.dragCell=e.currentTarget; notifyMxDropCell(S.dragCell); }
 export function onDO(e)       { e.preventDefault(); e.dataTransfer.dropEffect='move'; }
-export function onDL(e)       { const rel=e.relatedTarget; if(rel&&e.currentTarget.contains(rel))return; if(e.currentTarget===S.dragCell){e.currentTarget.classList.remove('dov');S.dragCell=null;} }
+export function onDL(e)       { const rel=e.relatedTarget; if(rel&&e.currentTarget.contains(rel))return; if(e.currentTarget===S.dragCell){S.dragCell=null; notifyMxDropCell(null);} }
 export function onDrop(e) {
   e.preventDefault();
   const cell = e.currentTarget;
-  cell.classList.remove('dov'); S.dragCell=null;
+  S.dragCell=null; notifyMxDropCell(null);
   if (!S.dragKey) return;
   const keysToMove = mxSel.size > 0 ? new Set(mxSel) : new Set([S.dragKey]);
   const g  = cell.getAttribute('data-g')==='(미분류)' ? '' : cell.getAttribute('data-g');
