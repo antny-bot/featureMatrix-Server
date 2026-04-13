@@ -22092,310 +22092,351 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   // components/DashboardView.jsx
   var import_react_dom2 = __toESM(require_react_dom());
   var import_react5 = __toESM(require_react());
-  init_useAppStore();
-
-  // app/dashboard.js
-  init_state();
   init_constants();
   init_render();
-  function buildHeatmap(all, groups, cats, hmView) {
-    const STATUSES = STATUS_OPTS;
-    if (hmView === "cat") {
-      if (groups.length === 0 || cats.length === 0)
-        return `<div class="db-empty">\uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
-      const hmData = {};
-      let hmMax = 0;
-      all.forEach((it) => {
-        if (!it.group || !it.category) return;
-        const k = `${it.group}||${it.category}`;
-        hmData[k] = (hmData[k] || 0) + 1;
-        if (hmData[k] > hmMax) hmMax = hmData[k];
-      });
-      return `<div class="db-hm-wrap">
-      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
-        <div class="db-hm-corner"></div>
-        ${groups.map((g) => `<div class="db-hm-col-hd" title="${esc2(g)}">${esc2(g)}</div>`).join("")}
-        ${cats.map((c) => `
-          <div class="db-hm-row-hd" title="${esc2(c)}">${esc2(c)}</div>
-          ${groups.map((g) => {
-        const cnt = hmData[`${g}||${c}`] || 0;
-        const op = hmMax > 0 ? cnt === 0 ? 0.06 : 0.15 + cnt / hmMax * 0.85 : 0.06;
-        return `<div class="db-hm-cell" style="--op:${op.toFixed(2)}" title="${esc2(g)} \xD7 ${esc2(c)}: ${cnt}\uAC1C">${cnt > 0 ? cnt : ""}</div>`;
-      }).join("")}
-        `).join("")}
-      </div>
-      <div class="db-hm-legend">
-        <span class="db-hm-legend-lbl">\uBC00\uB3C4:</span>
-        <div class="db-hm-legend-bar">
-          ${[0.06, 0.3, 0.55, 0.8, 1].map((op) => `<div class="db-hm-legend-seg" style="--op:${op}"></div>`).join("")}
-        </div>
-        <span class="db-hm-legend-lbl">\uB192\uC74C</span>
-      </div>
-    </div>`;
-    } else {
-      if (groups.length === 0)
-        return `<div class="db-empty">\uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
-      const hmData = {};
-      let hmMax = 0;
-      all.forEach((it) => {
-        if (!it.group || !it.status) return;
-        const k = `${it.group}||${it.status}`;
-        hmData[k] = (hmData[k] || 0) + 1;
-        if (hmData[k] > hmMax) hmMax = hmData[k];
-      });
-      return `<div class="db-hm-wrap">
-      <div class="db-hm-grid" style="grid-template-columns:auto repeat(${groups.length},1fr)">
-        <div class="db-hm-corner"></div>
-        ${groups.map((g) => `<div class="db-hm-col-hd" title="${esc2(g)}">${esc2(g)}</div>`).join("")}
-        ${STATUSES.map((st) => `
-          <div class="db-hm-row-hd" title="${esc2(st)}" style="color:${STATUS_ACCENT[st] || "var(--text-3)"};font-weight:700">${esc2(st)}</div>
-          ${groups.map((g) => {
-        const cnt = hmData[`${g}||${st}`] || 0;
-        const op = hmMax > 0 ? cnt === 0 ? 0.06 : 0.15 + cnt / hmMax * 0.85 : 0.06;
-        return `<div class="db-hm-cell db-hm-cell--status-${st}" style="--op:${op.toFixed(2)}" title="${esc2(g)} \xD7 ${esc2(st)}: ${cnt}\uAC1C">${cnt > 0 ? cnt : ""}</div>`;
-      }).join("")}
-        `).join("")}
-      </div>
-      <div class="db-hm-legend">
-        <span class="db-hm-legend-lbl">\uBC00\uB3C4:</span>
-        <div class="db-hm-legend-bar">
-          ${[0.06, 0.3, 0.55, 0.8, 1].map((op) => `<div class="db-hm-legend-seg" style="--op:${op}"></div>`).join("")}
-        </div>
-        <span class="db-hm-legend-lbl">\uB192\uC74C</span>
-      </div>
-    </div>`;
-    }
-  }
-  function buildGroupProgress(all, groups) {
-    if (groups.length === 0) return `<div class="db-empty">\uADF8\uB8F9 \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>`;
-    return groups.map((g) => {
-      const items = all.filter((it) => it.group === g);
-      const total = items.length;
-      if (total === 0) return "";
-      const sc = Object.fromEntries(STATUS_OPTS.map((st) => [st, 0]));
-      items.forEach((it) => {
-        if (sc[it.status] !== void 0) sc[it.status]++;
-      });
-      const donePct = Math.round((sc["\uC644\uB8CC"] || 0) / total * 100);
-      const segments = STATUS_OPTS.filter((s) => sc[s] > 0).map(
-        (s) => `<div class="db-gp-seg" style="width:${(sc[s] / total * 100).toFixed(1)}%;background:${STATUS_ACCENT[s]}"
-        title="${s} ${sc[s]}\uAC1C (${Math.round(sc[s] / total * 100)}%)"></div>`
-      ).join("");
-      const legend = STATUS_OPTS.filter((s) => sc[s] > 0).map(
-        (s) => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${STATUS_ACCENT[s]}"></span>${s} ${sc[s]}</span>`
-      ).join("");
-      return `
-    <div class="db-gp-row">
-      <div class="db-gp-info">
-        <span class="db-gp-name" title="${esc2(g)}">${esc2(g)}</span>
-        <span class="db-gp-total">${total}\uAC1C</span>
-      </div>
-      <div class="db-gp-bar-area">
-        <div class="db-gp-bar-wrap">
-          <div class="db-gp-track">${segments}</div>
-          <span class="db-gp-pct" style="color:${donePct >= 100 ? "var(--success)" : "var(--text-2)"}">${donePct}%</span>
-        </div>
-        <div class="db-gp-legend">${legend}</div>
-      </div>
-    </div>`;
-    }).filter(Boolean).join("");
-  }
-  function buildDashboardHtml(hmView = "cat") {
+  init_state();
+  init_useAppStore();
+  var import_jsx_runtime5 = __toESM(require_jsx_runtime());
+  var SECTION_DEFAULTS = ["stats", "insight", "heatmap"];
+  var SECTION_KEYS = new Set(SECTION_DEFAULTS);
+  var LEGEND_OPACITY = [0.06, 0.3, 0.55, 0.8, 1];
+  function getDashboardData() {
     const filterOn = isFilterActive();
     const all = filterOn ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
     const total = all.length;
-    let high = 0, mid = 0, low = 0, imp = 0, done = 0;
-    const statusCount = Object.fromEntries(STATUS_OPTS.map((st) => [st, 0]));
+    const statusCount = Object.fromEntries(STATUS_OPTS.map((status) => [status, 0]));
     const ownerMap = {};
-    all.forEach((it) => {
-      if (it.priority === "\uC0C1") high++;
-      else if (it.priority === "\uC911") mid++;
-      else low++;
-      if (it.isImportant === "Y") imp++;
-      if (it.status === "\uC644\uB8CC") done++;
-      if (statusCount[it.status] !== void 0) statusCount[it.status]++;
-      const o = normOwner(it.owner);
-      if (!ownerMap[o]) ownerMap[o] = { total: 0, high: 0, mid: 0, low: 0, status: {} };
-      ownerMap[o].total++;
-      ownerMap[o][getPK(it.priority)]++;
-      if (it.status) ownerMap[o].status[it.status] = (ownerMap[o].status[it.status] || 0) + 1;
+    let imp = 0;
+    let done = 0;
+    all.forEach((item) => {
+      if (item.isImportant === "Y") imp += 1;
+      if (item.status === "\uC644\uB8CC") done += 1;
+      if (statusCount[item.status] !== void 0) statusCount[item.status] += 1;
+      const owner = normOwner(item.owner);
+      if (!ownerMap[owner]) {
+        ownerMap[owner] = { total: 0, high: 0, mid: 0, low: 0, status: {} };
+      }
+      ownerMap[owner].total += 1;
+      ownerMap[owner][getPK(item.priority)] += 1;
+      if (item.status) ownerMap[owner].status[item.status] = (ownerMap[owner].status[item.status] || 0) + 1;
     });
-    const pct = total > 0 ? Math.round(done / total * 100) : 0;
-    const allGroups = [...new Set(all.map((it) => it.group).filter(Boolean))];
-    const allCats = [...new Set(all.map((it) => it.category).filter(Boolean))];
-    const orderG = S.settings.groupOrder.filter((g) => allGroups.includes(g));
-    const extraG = allGroups.filter((g) => !orderG.includes(g));
-    const groups = [...orderG, ...extraG];
-    const orderC = S.settings.catOrder.filter((c) => allCats.includes(c));
-    const extraC = allCats.filter((c) => !orderC.includes(c));
-    const cats = [...orderC, ...extraC];
-    const recentMax = S.settings.changeLogMax || 50;
-    const recent = (S.changeLog || []).slice(0, recentMax);
+    const allGroups = [...new Set(all.map((item) => item.group).filter(Boolean))];
+    const allCats = [...new Set(all.map((item) => item.category).filter(Boolean))];
+    const orderedGroups = S.settings.groupOrder.filter((group) => allGroups.includes(group));
+    const groups = [...orderedGroups, ...allGroups.filter((group) => !orderedGroups.includes(group))];
+    const orderedCats = S.settings.catOrder.filter((cat) => allCats.includes(cat));
+    const cats = [...orderedCats, ...allCats.filter((cat) => !orderedCats.includes(cat))];
+    const sections = (S.settings.dbSections || SECTION_DEFAULTS).filter((section) => SECTION_KEYS.has(section));
+    const recent = (S.changeLog || []).slice(0, S.settings.changeLogMax || 50);
     const owners = Object.entries(ownerMap).sort((a, b) => {
       if (b[1].total !== a[1].total) return b[1].total - a[1].total;
       if (b[1].high !== a[1].high) return b[1].high - a[1].high;
       return (b[1].status["\uC644\uB8CC"] || 0) - (a[1].status["\uC644\uB8CC"] || 0);
     }).slice(0, 10);
-    const sections = (S.settings.dbSections || ["stats", "insight", "heatmap"]).filter((s) => ["stats", "insight", "heatmap"].includes(s));
-    const heroName = S.settings.dbHeroName || "\uD504\uB85C\uC81D\uD2B8 \uD604\uD669";
-    const buildStatsSection = () => `
-    <div class="db-cards">
-      <div class="db-card db-card--theme">
-        <div class="db-card-label">\uC804\uCCB4 \uAE30\uB2A5</div>
-        <div class="db-card-value">${total.toLocaleString()}</div>
-        <div class="db-card-sub">\uC911\uC694 <strong>${imp}</strong>\uAC1C \uD3EC\uD568</div>
-      </div>
-      ${STATUS_OPTS.map((st) => `
-      <div class="db-card db-card--mini">
-        <div class="db-card-label">${esc2(st)}</div>
-        <div class="db-card-value db-card-value--mini" style="color:${STATUS_ACCENT[st]}">${statusCount[st]}</div>
-        <div class="db-card-sub">${total > 0 ? Math.round(statusCount[st] / total * 100) : 0}%</div>
-      </div>`).join("")}
-    </div>`;
-    const buildInsightSection = () => `
-    <div class="db-panel">
-      <div class="db-panel-hd">
-        <div class="db-panel-title">\uADF8\uB8F9\uBCC4 \uC9C4\uCC99\uB3C4</div>
-        <div class="db-panel-sub">\uB300\uAE30 \xB7 \uC2DC\uC791\uAC00\uB2A5 \xB7 \uC9C4\uD589\uC911 \xB7 \uAC80\uD1A0\uC911 \xB7 \uC644\uB8CC \uBE44\uC728</div>
-      </div>
-      <div class="db-gp-list">${buildGroupProgress(all, groups)}</div>
-    </div>
-    <div class="db-panel">
-      <div class="db-panel-hd">
-        <div class="db-panel-title">\uB2F4\uB2F9\uBCC4 \uAE30\uB2A5 \uD604\uD669</div>
-      </div>
-      ${owners.length === 0 ? `<div class="db-empty">\uB2F4\uB2F9\uC790 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4</div>` : `<div class="db-owners-unified">
-            <div class="db-owners-hdr">
-              <div class="db-owner-info"></div>
-              <div class="db-owners-bar-hdr" style="flex:1">\uC9C4\uD589\uC0C1\uD0DC</div>
-              <div class="db-owners-bar-hdr" style="text-align:right;min-width:100px">\uC6B0\uC120\uC21C\uC704</div>
-            </div>
-            ${owners.map(([owner, cnt]) => {
-      const t = cnt.total;
-      const stLeg = STATUS_OPTS.filter((s) => cnt.status[s] > 0).map((s) => `<span class="db-gp-leg-item"><span class="db-gp-leg-dot" style="background:${STATUS_ACCENT[s]}"></span>${s} ${cnt.status[s]}</span>`).join("");
-      const prioText = [
-        cnt.high > 0 ? `<span style="color:var(--p-high,var(--danger));font-weight:700">\uC0C1 ${cnt.high}</span>` : "",
-        cnt.mid > 0 ? `<span style="color:var(--p-mid,var(--accent))">\uC911 ${cnt.mid}</span>` : "",
-        cnt.low > 0 ? `<span style="color:var(--text-3)">\uD558 ${cnt.low}</span>` : ""
-      ].filter(Boolean).join('<span style="color:var(--border-2);margin:0 2px">|</span>');
-      return `
-              <div class="db-owner-row-unified">
-                <div class="db-owner-info">
-                  <span class="db-owner-dot" style="background:${getOwnerColor2(owner)}"></span>
-                  <span class="db-owner-name">${esc2(owner)}</span>
-                  <span class="db-owner-total">${t}</span>
-                </div>
-                <div class="db-owner-bar-wrap" style="flex:1">
-                  <div class="db-bar-track">
-                    ${STATUS_OPTS.map((s) => `<div class="db-owner-seg" style="width:${t > 0 ? ((cnt.status[s] || 0) / t * 100).toFixed(1) : 0}%;background:${STATUS_ACCENT[s]}" title="${s} ${cnt.status[s] || 0}"></div>`).join("")}
-                  </div>
-                  ${stLeg ? `<div class="db-gp-legend db-owner-legend">${stLeg}</div>` : ""}
-                </div>
-                <div style="min-width:100px;text-align:right;font-size:.7rem;display:flex;align-items:center;justify-content:flex-end;gap:3px;flex-shrink:0">${prioText || '<span style="color:var(--text-3)">-</span>'}</div>
-              </div>`;
-    }).join("")}
-          </div>`}
-    </div>`;
-    const buildHeatmapSection = () => `
-    <div class="db-panel db-heatmap-panel">
-      <div class="db-panel-hd" style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="db-panel-title">\uAE30\uB2A5 \uBD84\uD3EC \uD788\uD2B8\uB9F5</div>
-          <div class="db-panel-sub">${hmView === "cat" ? "\uADF8\uB8F9 \xD7 \uCE74\uD14C\uACE0\uB9AC" : "\uADF8\uB8F9 \xD7 \uC0C1\uD0DC"} \uAD50\uCC28 \uBC00\uB3C4</div>
-        </div>
-        <div class="db-hm-tabs">
-          <button class="db-hm-tab${hmView === "cat" ? " on" : ""}" onclick="setHmView('cat')">\uADF8\uB8F9\xD7\uCE74\uD14C\uACE0\uB9AC</button>
-          <button class="db-hm-tab${hmView === "status" ? " on" : ""}" onclick="setHmView('status')">\uADF8\uB8F9\xD7\uC0C1\uD0DC</button>
-        </div>
-      </div>
-      ${buildHeatmap(all, groups, cats, hmView)}
-    </div>`;
-    const sectionBuilders = { stats: buildStatsSection, insight: buildInsightSection, heatmap: buildHeatmapSection };
-    const bodySection = `
-  <div class="db-body" data-anim-idx="1">
-    <div class="db-body-left">
-      ${sections.map((s) => sectionBuilders[s] ? sectionBuilders[s]() : "").join("")}
-    </div>
-
-    <div class="db-body-right">
-      <div class="db-panel db-timeline-panel">
-        <div class="db-panel-hd">
-          <div class="db-panel-title">\uCD5C\uADFC \uBCC0\uACBD</div>
-          <div class="db-panel-sub">\uCD94\uAC00\xB7\uC218\uC815\xB7\uC0AD\uC81C \uAE30\uC900</div>
-        </div>
-        ${recent.length === 0 ? `<div class="db-empty">\uBCC0\uACBD \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>` : `<div class="db-timeline">
-              ${recent.map((it, i) => {
-      const actionColor = { "\uCD94\uAC00": "var(--success)", "\uC218\uC815": "var(--accent)", "\uC0AD\uC81C\uCC98\uB9AC": "var(--warning)", "\uC0AD\uC81C\uBCF5\uC6D0": "var(--text-3)", "\uC644\uC804\uC0AD\uC81C": "var(--danger)", "\uC0C1\uD0DC\uBCC0\uACBD": "var(--accent)" }[it.action] || "var(--text-3)";
-      const isDeleted = it.action === "\uC644\uC804\uC0AD\uC81C" || it.action === "\uC0AD\uC81C\uCC98\uB9AC";
-      return `
-                <div class="db-tl-item">
-                  <div class="db-tl-line-wrap">
-                    <div class="db-tl-dot" style="background:${actionColor}"></div>
-                    ${i < recent.length - 1 ? '<div class="db-tl-line"></div>' : ""}
-                  </div>
-                  <div class="db-tl-body">
-                    <div class="db-tl-time">${fmtDate(it.ts)}</div>
-                    <div class="db-tl-name${isDeleted ? " db-tl-name--del" : ""}" ${isDeleted ? "" : `onclick="openEditModal('${esc2(it.key)}')"`}>${esc2(it.name || it.key)}</div>
-                    <div class="db-tl-meta">
-                      <span class="db-tl-action" style="color:${actionColor}">${esc2(it.action)}</span>
-                      ${it.owner ? `<span class="db-tl-owner" style="color:${getOwnerColor2(it.owner)}">${esc2(it.owner)}</span>` : ""}
-                      ${it.user ? `<span class="db-tl-status">${esc2(it.user)}</span>` : ""}
-                    </div>
-                  </div>
-                </div>`;
-    }).join("")}
-            </div>
-            <button class="db-more-btn" onclick="switchView('list')">\uC804\uCCB4 \uBAA9\uB85D \uBCF4\uAE30 \u2192</button>`}
-      </div>
-    </div>
-  </div>`;
-    const filterBanner = filterOn ? `<div style="margin-top:8px;font-size:.75rem;background:var(--accent-l);color:var(--accent);border-radius:6px;padding:4px 10px;display:inline-block">
-        \u{1F50D} \uD544\uD130 \uC801\uC6A9\uB428 \u2014 <button onclick="resetFilters()" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;font-size:inherit;padding:0">\uC804\uCCB4 \uBCF4\uAE30</button>
-       </div>` : "";
-    return `
-<div class="db-wrap">
-  <div class="db-hero" data-anim-idx="0">
-    <div>
-      <div class="db-eyebrow">Mission Control</div>
-      <h2 class="db-title">${esc2(heroName)}</h2>
-      ${filterBanner}
-    </div>
-  </div>
-  ${bodySection}
-</div>`;
+    return {
+      all,
+      cats,
+      done,
+      filterOn,
+      groups,
+      heroName: S.settings.dbHeroName || "\uD504\uB85C\uC81D\uD2B8 \uD604\uD669",
+      imp,
+      owners,
+      recent,
+      sections,
+      statusCount,
+      total
+    };
   }
-
-  // components/DashboardView.jsx
-  init_render();
-  var import_jsx_runtime5 = __toESM(require_jsx_runtime());
+  function Empty({ children }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-empty", children });
+  }
+  function StatusLegend({ counts }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-gp-legend", children: STATUS_OPTS.filter((status) => counts[status] > 0).map((status) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "db-gp-leg-item", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-gp-leg-dot", style: { background: STATUS_ACCENT[status] } }),
+      status,
+      " ",
+      counts[status]
+    ] }, status)) });
+  }
+  function StatsSection({ data }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-cards", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-card db-card--theme", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-card-label", children: "\uC804\uCCB4 \uAE30\uB2A5" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-card-value", children: data.total.toLocaleString() }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-card-sub", children: [
+          "\uC911\uC694 ",
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("strong", { children: data.imp }),
+          "\uAC1C \uD3EC\uD568"
+        ] })
+      ] }),
+      STATUS_OPTS.map((status) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-card db-card--mini", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-card-label", children: status }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-card-value db-card-value--mini", style: { color: STATUS_ACCENT[status] }, children: data.statusCount[status] }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-card-sub", children: [
+          data.total > 0 ? Math.round(data.statusCount[status] / data.total * 100) : 0,
+          "%"
+        ] })
+      ] }, status))
+    ] });
+  }
+  function GroupProgress({ data }) {
+    if (data.groups.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Empty, { children: "\uADF8\uB8F9 \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4" });
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-gp-list", children: data.groups.map((group) => {
+      const items = data.all.filter((item) => item.group === group);
+      const total = items.length;
+      if (total === 0) return null;
+      const counts = Object.fromEntries(STATUS_OPTS.map((status) => [status, 0]));
+      items.forEach((item) => {
+        if (counts[item.status] !== void 0) counts[item.status] += 1;
+      });
+      const donePct = Math.round((counts["\uC644\uB8CC"] || 0) / total * 100);
+      return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-gp-row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-gp-info", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-gp-name", title: group, children: group }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "db-gp-total", children: [
+            total,
+            "\uAC1C"
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-gp-bar-area", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-gp-bar-wrap", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-gp-track", children: STATUS_OPTS.filter((status) => counts[status] > 0).map((status) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "div",
+              {
+                className: "db-gp-seg",
+                style: {
+                  width: `${(counts[status] / total * 100).toFixed(1)}%`,
+                  background: STATUS_ACCENT[status]
+                },
+                title: `${status} ${counts[status]}\uAC1C (${Math.round(counts[status] / total * 100)}%)`
+              },
+              status
+            )) }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "db-gp-pct", style: { color: donePct >= 100 ? "var(--success)" : "var(--text-2)" }, children: [
+              donePct,
+              "%"
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(StatusLegend, { counts })
+        ] })
+      ] }, group);
+    }) });
+  }
+  function OwnersPanel({ owners }) {
+    if (owners.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Empty, { children: "\uB2F4\uB2F9\uC790 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4" });
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-owners-unified", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-owners-hdr", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-owner-info" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-owners-bar-hdr", style: { flex: 1 }, children: "\uC9C4\uD589\uC0C1\uD0DC" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-owners-bar-hdr", style: { textAlign: "right", minWidth: "100px" }, children: "\uC6B0\uC120\uC21C\uC704" })
+      ] }),
+      owners.map(([owner, counts]) => {
+        const total = counts.total;
+        const prios = [
+          counts.high > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { style: { color: "var(--p-high,var(--danger))", fontWeight: 700 }, children: [
+            "\uC0C1 ",
+            counts.high
+          ] }, "high"),
+          counts.mid > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { style: { color: "var(--p-mid,var(--accent))" }, children: [
+            "\uC911 ",
+            counts.mid
+          ] }, "mid"),
+          counts.low > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { style: { color: "var(--text-3)" }, children: [
+            "\uD558 ",
+            counts.low
+          ] }, "low")
+        ].filter(Boolean);
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-owner-row-unified", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-owner-info", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-owner-dot", style: { background: getOwnerColor2(owner) } }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-owner-name", children: owner }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-owner-total", children: total })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-owner-bar-wrap", style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-bar-track", children: STATUS_OPTS.map((status) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "div",
+              {
+                className: "db-owner-seg",
+                style: {
+                  width: `${total > 0 ? ((counts.status[status] || 0) / total * 100).toFixed(1) : 0}%`,
+                  background: STATUS_ACCENT[status]
+                },
+                title: `${status} ${counts.status[status] || 0}`
+              },
+              status
+            )) }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(StatusLegend, { counts: counts.status })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { minWidth: "100px", textAlign: "right", fontSize: ".7rem", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "3px", flexShrink: 0 }, children: prios.length ? prios.reduce((acc, node, idx) => {
+            if (idx > 0) acc.push(/* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { style: { color: "var(--border-2)", margin: "0 2px" }, children: "|" }, `sep-${idx}`));
+            acc.push(node);
+            return acc;
+          }, []) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { style: { color: "var(--text-3)" }, children: "-" }) })
+        ] }, owner);
+      })
+    ] });
+  }
+  function InsightSection({ data }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-panel", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-panel-hd", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-panel-title", children: "\uADF8\uB8F9\uBCC4 \uC9C4\uCC99\uB3C4" }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-panel-sub", children: "\uB300\uAE30 \xB7 \uC2DC\uC791\uAC00\uB2A5 \xB7 \uC9C4\uD589\uC911 \xB7 \uAC80\uD1A0\uC911 \xB7 \uC644\uB8CC \uBE44\uC728" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(GroupProgress, { data })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-panel", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-panel-hd", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-panel-title", children: "\uB2F4\uB2F9\uBCC4 \uAE30\uB2A5 \uD604\uD669" }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(OwnersPanel, { owners: data.owners })
+      ] })
+    ] });
+  }
+  function HeatmapGrid({ data, hmView }) {
+    const rows = hmView === "cat" ? data.cats : STATUS_OPTS;
+    if (data.groups.length === 0 || rows.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Empty, { children: "\uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4" });
+    const heatmap = {};
+    let max = 0;
+    data.all.forEach((item) => {
+      const rowKey = hmView === "cat" ? item.category : item.status;
+      if (!item.group || !rowKey) return;
+      const key = `${item.group}||${rowKey}`;
+      heatmap[key] = (heatmap[key] || 0) + 1;
+      if (heatmap[key] > max) max = heatmap[key];
+    });
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-hm-wrap", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-hm-grid", style: { gridTemplateColumns: `auto repeat(${data.groups.length},1fr)` }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-hm-corner" }),
+        data.groups.map((group) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-hm-col-hd", title: group, children: group }, group)),
+        rows.map((row) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { display: "contents" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+            "div",
+            {
+              className: "db-hm-row-hd",
+              title: row,
+              style: hmView === "status" ? { color: STATUS_ACCENT[row] || "var(--text-3)", fontWeight: 700 } : void 0,
+              children: row
+            }
+          ),
+          data.groups.map((group) => {
+            const count = heatmap[`${group}||${row}`] || 0;
+            const opacity = max > 0 ? count === 0 ? 0.06 : 0.15 + count / max * 0.85 : 0.06;
+            return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "div",
+              {
+                className: `db-hm-cell${hmView === "status" ? ` db-hm-cell--status-${row}` : ""}`,
+                style: { "--op": opacity.toFixed(2) },
+                title: `${group} \xD7 ${row}: ${count}\uAC1C`,
+                children: count > 0 ? count : ""
+              },
+              `${group}:${row}`
+            );
+          })
+        ] }, row))
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-hm-legend", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-hm-legend-lbl", children: "\uBC00\uB3C4:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-hm-legend-bar", children: LEGEND_OPACITY.map((opacity) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-hm-legend-seg", style: { "--op": opacity } }, opacity)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-hm-legend-lbl", children: "\uB192\uC74C" })
+      ] })
+    ] });
+  }
+  function HeatmapSection({ data, hmView, setHmView }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-panel db-heatmap-panel", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-panel-hd", style: { display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-panel-title", children: "\uAE30\uB2A5 \uBD84\uD3EC \uD788\uD2B8\uB9F5" }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-panel-sub", children: [
+            hmView === "cat" ? "\uADF8\uB8F9 \xD7 \uCE74\uD14C\uACE0\uB9AC" : "\uADF8\uB8F9 \xD7 \uC0C1\uD0DC",
+            " \uAD50\uCC28 \uBC00\uB3C4"
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-hm-tabs", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { className: `db-hm-tab${hmView === "cat" ? " on" : ""}`, onClick: () => setHmView("cat"), children: "\uADF8\uB8F9\xD7\uCE74\uD14C\uACE0\uB9AC" }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { className: `db-hm-tab${hmView === "status" ? " on" : ""}`, onClick: () => setHmView("status"), children: "\uADF8\uB8F9\xD7\uC0C1\uD0DC" })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HeatmapGrid, { data, hmView })
+    ] });
+  }
+  function Timeline({ recent }) {
+    if (recent.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Empty, { children: "\uBCC0\uACBD \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4" });
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-timeline", children: recent.map((entry, index) => {
+        const actionColor = {
+          \uCD94\uAC00: "var(--success)",
+          \uC218\uC815: "var(--accent)",
+          \uC0AD\uC81C\uCC98\uB9AC: "var(--warning)",
+          \uC0AD\uC81C\uBCF5\uC6D0: "var(--text-3)",
+          \uC644\uC804\uC0AD\uC81C: "var(--danger)",
+          \uC0C1\uD0DC\uBCC0\uACBD: "var(--accent)"
+        }[entry.action] || "var(--text-3)";
+        const isDeleted = entry.action === "\uC644\uC804\uC0AD\uC81C" || entry.action === "\uC0AD\uC81C\uCC98\uB9AC";
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-tl-item", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-tl-line-wrap", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-tl-dot", style: { background: actionColor } }),
+            index < recent.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-tl-line" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-tl-body", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-tl-time", children: fmtDate(entry.ts) }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "div",
+              {
+                className: `db-tl-name${isDeleted ? " db-tl-name--del" : ""}`,
+                onClick: isDeleted ? void 0 : () => window.openEditModal?.(entry.key),
+                children: entry.name || entry.key
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-tl-meta", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-tl-action", style: { color: actionColor }, children: entry.action }),
+              entry.owner && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-tl-owner", style: { color: getOwnerColor2(entry.owner) }, children: entry.owner }),
+              entry.user && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "db-tl-status", children: entry.user })
+            ] })
+          ] })
+        ] }, `${entry.ts}:${entry.key}:${index}`);
+      }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { className: "db-more-btn", onClick: () => window.switchView?.("list"), children: "\uC804\uCCB4 \uBAA9\uB85D \uBCF4\uAE30 \u2192" })
+    ] });
+  }
+  function Section({ section, data, hmView, setHmView }) {
+    if (section === "stats") return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(StatsSection, { data });
+    if (section === "insight") return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(InsightSection, { data });
+    if (section === "heatmap") return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HeatmapSection, { data, hmView, setHmView });
+    return null;
+  }
   function DashboardView() {
     const items = useAppStore((s) => s.items);
     const changeLog = useAppStore((s) => s.changeLog);
     const settings = useAppStore((s) => s.settings);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
     const [container, setContainer] = (0, import_react5.useState)(null);
     const [hmView, setHmView] = (0, import_react5.useState)("cat");
+    const [renderTick, forceRender] = (0, import_react5.useState)(0);
     (0, import_react5.useEffect)(() => {
       setContainer(document.getElementById("dashboardView"));
     }, []);
     (0, import_react5.useEffect)(() => {
-      window.setHmView = (v) => setHmView(v);
+      window.setHmView = (value2) => setHmView(value2);
+      window.renderDashboard = () => forceRender((tick) => tick + 1);
       return () => {
         delete window.setHmView;
+        delete window.renderDashboard;
       };
     }, []);
     (0, import_react5.useEffect)(() => {
       if (!container) return;
       if (animOk()) {
-        container.querySelectorAll("[data-anim-idx]").forEach((sec) => {
-          const idx = parseInt(sec.dataset.animIdx, 10);
-          sec.style.opacity = "0";
-          sec.style.transform = "translateY(12px)";
-          sec.style.transition = "none";
+        container.querySelectorAll("[data-anim-idx]").forEach((section) => {
+          const idx = parseInt(section.dataset.animIdx, 10);
+          section.style.opacity = "0";
+          section.style.transform = "translateY(12px)";
+          section.style.transition = "none";
           requestAnimationFrame(() => {
             setTimeout(() => {
-              sec.style.transition = "opacity .32s ease, transform .32s ease";
-              sec.style.opacity = "1";
-              sec.style.transform = "translateY(0)";
+              section.style.transition = "opacity .32s ease, transform .32s ease";
+              section.style.opacity = "1";
+              section.style.transform = "translateY(0)";
             }, idx * 80);
           });
         });
@@ -22404,14 +22445,44 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         const bodyLeft = container.querySelector(".db-body-left");
         const bodyRight = container.querySelector(".db-body-right");
         if (bodyLeft && bodyRight) {
-          bodyRight.style.maxHeight = bodyLeft.offsetHeight + "px";
+          bodyRight.style.maxHeight = `${bodyLeft.offsetHeight}px`;
         }
       });
     });
+    const data = (0, import_react5.useMemo)(
+      () => getDashboardData(),
+      [items, changeLog, settings, filters, searchQ, renderTick]
+    );
     if (!container) return null;
-    const html = buildDashboardHtml(hmView);
     return (0, import_react_dom2.createPortal)(
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { dangerouslySetInnerHTML: { __html: html } }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-wrap", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-hero", "data-anim-idx": "0", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-eyebrow", children: "Mission Control" }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h2", { className: "db-title", children: data.heroName }),
+          data.filterOn && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { marginTop: "8px", fontSize: ".75rem", background: "var(--accent-l)", color: "var(--accent)", borderRadius: "6px", padding: "4px 10px", display: "inline-block" }, children: [
+            "\u{1F50D} \uD544\uD130 \uC801\uC6A9 \uC911",
+            " ",
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              "button",
+              {
+                onClick: () => window.resetFilters?.(),
+                style: { background: "none", border: "none", color: "inherit", cursor: "pointer", textDecoration: "underline", fontSize: "inherit", padding: 0 },
+                children: "\uC804\uCCB4 \uBCF4\uAE30"
+              }
+            )
+          ] })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-body", "data-anim-idx": "1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-body-left", children: data.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Section, { section, data, hmView, setHmView }, section)) }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-body-right", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-panel db-timeline-panel", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "db-panel-hd", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-panel-title", children: "\uCD5C\uADFC \uBCC0\uACBD" }),
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "db-panel-sub", children: "\uCD94\uAC00\xB7\uC218\uC815\xB7\uC0AD\uC81C \uAE30\uC900" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Timeline, { recent: data.recent })
+          ] }) })
+        ] })
+      ] }),
       container
     );
   }
