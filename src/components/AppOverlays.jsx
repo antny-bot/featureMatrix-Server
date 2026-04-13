@@ -107,7 +107,6 @@ export default function AppOverlays() {
       <DiffModal />
       <OverlayMenus />
       <NotificationToast />
-      <div id="boardActionBar" className="board-action-bar" />
     </>
   );
 }

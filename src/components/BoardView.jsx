@@ -39,7 +39,7 @@ export default function BoardView() {
 
   useEffect(() => {
     setBoardContainer(document.getElementById('boardView'));
-    setBarContainer(document.getElementById('boardActionBar'));
+    setBarContainer(document.body);
   }, []);
 
   /* boardSelChange 이벤트 수신 */
@@ -142,7 +142,7 @@ export default function BoardView() {
 
   /* ── 액션바 포털 ── */
   const barPortal = createPortal(
-    <BoardActionBar boardSel={boardSel} container={barContainer} />,
+    <BoardActionBar boardSel={boardSel} />,
     barContainer
   );
 
@@ -150,15 +150,9 @@ export default function BoardView() {
 }
 
 /* ── 액션바 ── */
-function BoardActionBar({ boardSel, container }) {
-  useEffect(() => {
-    container.classList.toggle('on', boardSel.length > 0);
-  }, [boardSel.length, container]);
-
-  if (boardSel.length === 0) return null;
-
+function BoardActionBar({ boardSel }) {
   return (
-    <>
+    <div id="boardActionBar" className={`board-action-bar${boardSel.length > 0 ? ' on' : ''}`}>
       <span>{boardSel.length}개 선택</span>
       {STATUS_OPTS.map(st => (
         <button key={st} onClick={() => window.boardMoveSelected?.(st)}>
@@ -166,6 +160,6 @@ function BoardActionBar({ boardSel, container }) {
         </button>
       ))}
       <button className="bar-close" onClick={() => window.boardClearSel?.()}>✕</button>
-    </>
+    </div>
   );
 }
