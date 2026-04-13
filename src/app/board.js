@@ -20,7 +20,10 @@ function notifySel() {
   window.dispatchEvent(new CustomEvent('boardSelChange', { detail: { sel: [..._boardSel] } }));
 }
 
-function bcEl(key) { return document.getElementById('bcard-' + key); }
+function notifyDrag(keys = []) {
+  window.dispatchEvent(new CustomEvent('boardDragState', { detail: { keys: [...keys] } }));
+}
+
 
 function currentUser() {
   return S.settings.userName || 'anonymous';
@@ -132,18 +135,14 @@ export function boardCardDragStart(e, key) {
     return;
   }
   lockKeys(_boardSel);
-  /* dragging 클래스: React 리렌더 이후에 붙어야 유지됨 (onDS와 동일 패턴) */
-  setTimeout(() => {
-    _boardSel.forEach(k => bcEl(k)?.classList.add('dragging'));
-  }, 0);
+  notifyDrag(_boardSel);
 }
 
 export function boardCardDragEnd() {
   const keys = _boardSel.size > 0 ? new Set(_boardSel) : (_dragKey ? new Set([_dragKey]) : new Set());
   unlockKeys(keys);
   _dragKey = null;
-  document.querySelectorAll('.board-card.dragging, .mitem.dragging')
-    .forEach(el => el.classList.remove('dragging'));
+  notifyDrag();
 }
 
 export function boardDragOver(e, colKey) {

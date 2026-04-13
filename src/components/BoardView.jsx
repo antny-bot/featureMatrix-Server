@@ -37,6 +37,7 @@ export default function BoardView() {
 
   /* 선택 상태: board.js CustomEvent로 수신 */
   const [boardSel, setBoardSel] = useState([]);
+  const [dragKeys, setDragKeys] = useState([]);
 
   useEffect(() => {
     setBoardContainer(document.getElementById('boardView'));
@@ -48,6 +49,12 @@ export default function BoardView() {
     const handler = (e) => setBoardSel(e.detail.sel);
     window.addEventListener('boardSelChange', handler);
     return () => window.removeEventListener('boardSelChange', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => setDragKeys(e.detail.keys || []);
+    window.addEventListener('boardDragState', handler);
+    return () => window.removeEventListener('boardDragState', handler);
   }, []);
 
   /* 컬럼 펼침/접기 브릿지 */
@@ -73,6 +80,7 @@ export default function BoardView() {
 
   /* 선택 Set — FeatureCard extraClass 적용 (mxSel 패턴과 동일) */
   const selSet = new Set(boardSel);
+  const dragSet = new Set(dragKeys);
 
   /* ── 보드 컬럼 포털 (.board-cols 자체를 portal root로 → wrapper div 없음) ── */
   const boardPortal = createPortal(
@@ -124,7 +132,10 @@ export default function BoardView() {
                   item={item}
                   colors={c}
                   id={`bcard-${item.key}`}
-                  extraClass={selSet.has(item.key) ? 'board-selected' : ''}
+                  extraClass={[
+                    selSet.has(item.key) ? 'board-selected' : '',
+                    dragSet.has(item.key) ? 'dragging' : '',
+                  ].filter(Boolean).join(' ')}
                   onClick={event => window.boardCardClick?.(event, item.key)}
                   onDoubleClick={() => window.boardCardDblClick?.(item.key)}
                   onDragStart={event => window.boardCardDragStart?.(event, item.key)}

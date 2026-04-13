@@ -20028,8 +20028,8 @@ function __inlineNotify(msg, type) {
   function notifySel() {
     window.dispatchEvent(new CustomEvent("boardSelChange", { detail: { sel: [..._boardSel] } }));
   }
-  function bcEl(key) {
-    return document.getElementById("bcard-" + key);
+  function notifyDrag(keys = []) {
+    window.dispatchEvent(new CustomEvent("boardDragState", { detail: { keys: [...keys] } }));
   }
   function currentUser2() {
     return S.settings.userName || "anonymous";
@@ -20134,15 +20134,13 @@ function __inlineNotify(msg, type) {
       return;
     }
     lockKeys2(_boardSel);
-    setTimeout(() => {
-      _boardSel.forEach((k) => bcEl(k)?.classList.add("dragging"));
-    }, 0);
+    notifyDrag(_boardSel);
   }
   function boardCardDragEnd() {
     const keys = _boardSel.size > 0 ? new Set(_boardSel) : _dragKey ? /* @__PURE__ */ new Set([_dragKey]) : /* @__PURE__ */ new Set();
     unlockKeys2(keys);
     _dragKey = null;
-    document.querySelectorAll(".board-card.dragging, .mitem.dragging").forEach((el) => el.classList.remove("dragging"));
+    notifyDrag();
   }
   function boardDragOver(e, colKey) {
     e.preventDefault();
