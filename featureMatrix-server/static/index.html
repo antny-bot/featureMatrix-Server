@@ -20481,12 +20481,6 @@ function __inlineNotify(msg, type) {
     syncServerSettingsUI();
     updateAdminUI();
     scheduleCardAnim();
-    (() => {
-      const ver = true ? "2.0.0" : "dev";
-      const bid = true ? "20260414.local" : "local";
-      const el = document.getElementById("buildNumberDisplay");
-      if (el) el.textContent = `v${ver} (build ${bid})`;
-    })();
     S.view = "dashboard";
     renderAll();
     updateUndoFab();

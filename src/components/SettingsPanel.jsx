@@ -29,6 +29,8 @@ export default function SettingsPanel() {
   const display  = useAppStore(s => s.display);
   const filters  = useAppStore(s => s.filters);
   const { isAdmin } = useAuth();
+  const appVersion = (typeof __APP_VERSION__ !== 'undefined') ? __APP_VERSION__ : 'dev';
+  const buildId = (typeof __BUILD_ID__ !== 'undefined') ? __BUILD_ID__ : 'local';
 
   const [container, setContainer] = useState(null);
   const [activeTab, setActiveTab] = useState('sg');
@@ -105,7 +107,7 @@ export default function SettingsPanel() {
             <div className="sec-ttl" style={{ marginTop: '12px' }}>빌드 정보</div>
             <div className="srow">
               <div><div className="slbl">빌드 넘버</div></div>
-              <span id="buildNumberDisplay" style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text-2)', fontFamily: 'monospace' }}>-</span>
+              <span id="buildNumberDisplay" style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text-2)', fontFamily: 'monospace' }}>{`v${appVersion} (build ${buildId})`}</span>
             </div>
           </div>
         )}

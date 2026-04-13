@@ -430,13 +430,6 @@ async function init() {
   syncServerSettingsUI();
   updateAdminUI();
   scheduleCardAnim();
-  // 빌드번호 표시 (빌드 시점에 주입된 상수 사용, 런타임 생성 금지)
-  (() => {
-    const ver = (typeof __APP_VERSION__ !== 'undefined') ? __APP_VERSION__ : 'dev';
-    const bid = (typeof __BUILD_ID__    !== 'undefined') ? __BUILD_ID__    : 'local';
-    const el = document.getElementById('buildNumberDisplay');
-    if (el) el.textContent = `v${ver} (build ${bid})`;
-  })();
   S.view = 'dashboard';
   renderAll();
   updateUndoFab();
