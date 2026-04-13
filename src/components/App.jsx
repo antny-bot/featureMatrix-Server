@@ -17,6 +17,7 @@ import MatrixView from './MatrixView.jsx';
 import ListView from './ListView.jsx';
 import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
+import ErrorBoundary from './ErrorBoundary.jsx';
 
 /* ── 앱 HTML 템플릿 (헤더 제외 — Header.jsx로 분리됨) ── */
 const APP_TEMPLATE = `
@@ -295,17 +296,33 @@ export default function App() {
   }, []); // 마운트 시 1회만 실행
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Header />
-        <div dangerouslySetInnerHTML={{ __html: APP_TEMPLATE }} />
-        <BoardView />
-        <DashboardView />
-        <SettingsPanel />
-        <ItemModal />
-        <MatrixView />
-        <ListView />
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary level="app" label="앱">
+      <ThemeProvider>
+        <AuthProvider>
+          <ErrorBoundary level="view" label="헤더">
+            <Header />
+          </ErrorBoundary>
+          <div dangerouslySetInnerHTML={{ __html: APP_TEMPLATE }} />
+          <ErrorBoundary level="view" label="보드 뷰">
+            <BoardView />
+          </ErrorBoundary>
+          <ErrorBoundary level="view" label="대시보드">
+            <DashboardView />
+          </ErrorBoundary>
+          <ErrorBoundary level="modal" label="설정">
+            <SettingsPanel />
+          </ErrorBoundary>
+          <ErrorBoundary level="modal" label="편집 모달">
+            <ItemModal />
+          </ErrorBoundary>
+          <ErrorBoundary level="view" label="매트릭스 뷰">
+            <MatrixView />
+          </ErrorBoundary>
+          <ErrorBoundary level="view" label="리스트 뷰">
+            <ListView />
+          </ErrorBoundary>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
