@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { S, save } from '../app/state.js';
 import { setStore } from '../store/useAppStore.js';
 import { applyVars } from '../app/theme.js';
+import ActivityLogPanel from './ActivityLogPanel.jsx';
 import SettingsColumnsPanel from './SettingsColumnsPanel.jsx';
 import SettingsDesignPanel from './SettingsDesignPanel.jsx';
 
@@ -189,29 +190,14 @@ export default function SettingsPanel() {
 
         {/* ── 로그 탭 ── */}
         {activeTab === 'slog' && (
-          <div>
-            <div className="srow">
-              <div><div className="slbl">최근 변경 이력 보관 수</div><div className="ssub">10~500개, 초과분은 자동 삭제</div></div>
-              <div className="stepper">
-                <button className="stepbtn" onClick={() => { S.settings.changeLogMax = Math.max(10,Math.min(500,(settings.changeLogMax??50)-10)); save(); syncSettings(); }}>−</button>
-                <span>{settings.changeLogMax ?? 50}</span>
-                <button className="stepbtn" onClick={() => { S.settings.changeLogMax = Math.max(10,Math.min(500,(settings.changeLogMax??50)+10)); save(); syncSettings(); }}>+</button>
-              </div>
-            </div>
-            <div className="sec-ttl" style={{ marginTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>활동 로그</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '.7rem', color: 'var(--text-3)' }}>최근</span>
-                <input type="number" id="logLimitInp" defaultValue="100" min="10" max="1000"
-                  style={{ width: '50px', height: '22px', fontSize: '.72rem', textAlign: 'center', padding: '0 4px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--surface-2)', color: 'var(--text)' }} />
-                <span style={{ fontSize: '.7rem', color: 'var(--text-3)' }}>개</span>
-                <button className="btn btn-g btn-sm" style={{ fontSize: '.68rem' }} onClick={() => window.loadInlineActivityLog?.()}>↺ 새로고침</button>
-              </div>
-            </div>
-            <div id="inlineLogBody" style={{ height: '320px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '.78rem' }}>
-              <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-3)' }}>탭을 열면 자동으로 불러옵니다.</div>
-            </div>
-          </div>
+          <ActivityLogPanel
+            changeLogMax={settings.changeLogMax}
+            onChangeLogMax={delta => {
+              S.settings.changeLogMax = Math.max(10, Math.min(500, (settings.changeLogMax ?? 50) + delta));
+              save();
+              syncSettings();
+            }}
+          />
         )}
 
         {/* ── 관리자 탭 ── */}

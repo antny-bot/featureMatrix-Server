@@ -4,9 +4,9 @@
 
 import 'drag-drop-touch'; // 터치 디바이스 드래그앤드롭 폴리필
 import { DEMO } from './constants.js';
-import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
+import { S, save, load, doUndo, updateUndoFab, pushUndo, genKey,
          pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
-         loadFromServer, saveToServer, logActivity, notify, apiFetch, fmtDate,
+         loadFromServer, saveToServer, logActivity, notify, fmtDate,
          lockItem, unlockItem, updateLocks, editLocks } from './state.js';
 import { initSocket, disconnectSocket, isSocketConnected } from './socket.js';
 import { setStore } from '../store/useAppStore.js';
@@ -184,33 +184,7 @@ window.bulkSetOwner = () => {
 };
 
 window.openDiffModal = () => {
-  const stack = getUndoHistory();
-  const el = document.getElementById('diffModal');
-  if (!el) return;
-  const body = document.getElementById('diffBody');
-  if (!stack.length) {
-    body.innerHTML = '<div style="color:var(--text-3);font-size:.85rem;text-align:center;padding:20px">변경 이력이 없습니다.</div>';
-    el.classList.add('on'); return;
-  }
-  const prev = JSON.parse(stack[stack.length - 1]);
-  const cur  = S.items;
-  const curMap  = {}; cur.forEach(i  => curMap[i.key]  = i);
-  const prevMap = {}; prev.forEach(i => prevMap[i.key] = i);
-  const rows = [];
-  cur.forEach(it => {
-    const old = prevMap[it.key];
-    if (!old) { rows.push(`<tr><td class="dk">${esc(it.key)}</td><td colspan="3" style="color:var(--success);font-size:.78rem">신규 추가</td></tr>`); return; }
-    const diffs = [];
-    ['name','priority','status','owner','group','category'].forEach(f => {
-      if ((old[f]||'') !== (it[f]||'')) diffs.push(`<span style="color:var(--text-3)">${f}:</span> <s style="color:var(--danger)">${esc(old[f]||'—')}</s> → <b style="color:var(--success)">${esc(it[f]||'—')}</b>`);
-    });
-    if (diffs.length) rows.push(`<tr><td class="dk" style="vertical-align:top">${esc(it.key)}</td><td style="font-size:.78rem;line-height:1.8">${diffs.join('<br>')}</td></tr>`);
-  });
-  prev.forEach(it => { if (!curMap[it.key]) rows.push(`<tr><td class="dk">${esc(it.key)}</td><td colspan="3" style="color:var(--danger);font-size:.78rem">삭제됨 (${esc(it.name)})</td></tr>`); });
-  body.innerHTML = rows.length
-    ? `<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:5px 8px;font-size:.72rem;color:var(--text-3);border-bottom:1px solid var(--border)">Key</th><th style="text-align:left;padding:5px 8px;font-size:.72rem;color:var(--text-3);border-bottom:1px solid var(--border)">변경 내용</th></tr></thead><tbody>${rows.join('')}</tbody></table>`
-    : '<div style="color:var(--text-3);font-size:.85rem;text-align:center;padding:20px">마지막 저장 이후 변경 없음</div>';
-  el.classList.add('on');
+  window.__reactOpenDiffModal?.();
 };
 
 window.quickCellAdd = (g, sg, cat, sc, input) => {
@@ -418,41 +392,7 @@ window.syncEditorPwStatus = async () => {
 };
 
 window.loadInlineActivityLog = async () => {
-  const body = document.getElementById('inlineLogBody');
-  if (!body) return;
-  body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">불러오는 중...</div>';
-  try {
-    const limit = parseInt(document.getElementById('logLimitInp')?.value || '100', 10) || 100;
-    const json = await apiFetch(`/api/log?limit=${limit}`);
-    if (!json.entries?.length) { body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-3)">로그가 없습니다.</div>'; return; }
-    const actionColor = { '접속':'var(--accent)','추가':'var(--success)','수정':'var(--text)','삭제':'var(--warning)','완전삭제':'var(--danger)','이동':'var(--text-2)','되돌리기':'var(--text-3)','일괄변경':'var(--accent)' };
-    body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
-      '<thead><tr style="position:sticky;top:0;background:var(--surface)">' +
-      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">시각</th>' +
-      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">사용자</th>' +
-      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">액션</th>' +
-      '<th style="padding:6px 10px;font-size:.68rem;color:var(--text-3);border-bottom:1px solid var(--border);text-align:left">내용</th>' +
-      '</tr></thead><tbody>' +
-      json.entries.map(e => {
-        const d = new Date(e.ts);
-        const timeStr = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
-        const col = actionColor[e.action] || 'var(--text)';
-        return `<tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:5px 10px;font-size:.7rem;color:var(--text-3);white-space:nowrap">${timeStr}</td>
-          <td style="padding:5px 10px;font-size:.75rem;font-weight:600">${e.user||'익명'}${e.ip ? `<span style="font-size:.65rem;font-weight:400;color:var(--text-3);margin-left:4px">(${e.ip})</span>` : ''}</td>
-          <td style="padding:5px 10px;font-size:.72rem;font-weight:700;color:${col};white-space:nowrap">${e.action}</td>
-          <td style="padding:5px 10px;font-size:.72rem;color:var(--text-2)">${e.detail||''}</td>
-        </tr>`;
-      }).join('') + '</tbody></table>';
-  } catch(err) {
-    if (err.status === 403) {
-      sessionStorage.removeItem('fmAdminToken');
-      updateAdminUI();
-      body.innerHTML = '<div style="padding:16px;color:var(--danger)">세션이 만료됐습니다. 관리자 재인증이 필요합니다.</div>';
-    } else {
-      body.innerHTML = '<div style="padding:16px;color:var(--danger)">서버에 연결할 수 없습니다.</div>';
-    }
-  }
+  await window.__reactLoadInlineActivityLog?.();
 };
 function setServerStatus(status) {
   const dot   = document.getElementById('serverStatusDot');

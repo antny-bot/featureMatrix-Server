@@ -2,6 +2,7 @@ import ExportModal from './ExportModal.jsx';
 import ImportModal from './ImportModal.jsx';
 import LoginModal from './LoginModal.jsx';
 import ShortcutsModal from './ShortcutsModal.jsx';
+import DiffModal from './DiffModal.jsx';
 
 function UserNameModal() {
   return (
@@ -25,23 +26,6 @@ function UserNameModal() {
         <div className="mfoot">
           <button className="btn btn-g btn-sm" onClick={() => window.saveUserNamePopup?.(true)}>나중에</button>
           <button className="btn btn-p btn-sm" onClick={() => window.saveUserNamePopup?.()}>확인</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DiffModal() {
-  return (
-    <div className="ov" id="diffModal">
-      <div className="mbox" style={{ width: '640px' }}>
-        <div className="mhd">
-          <span className="mtitle">변경 이력 (마지막 Undo 기준)</span>
-          <button className="mclose" onClick={() => window.closeModal?.('diffModal')}>✕</button>
-        </div>
-        <div className="mbody" id="diffBody" style={{ fontSize: '.82rem' }} />
-        <div className="mfoot">
-          <button className="btn btn-s" onClick={() => window.closeModal?.('diffModal')}>닫기</button>
         </div>
       </div>
     </div>
