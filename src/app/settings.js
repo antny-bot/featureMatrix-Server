@@ -118,7 +118,7 @@ export function resetData() {
   if (!confirm('모든 데이터를 초기화하겠습니까?')) return;
   S.items = JSON.parse(JSON.stringify(DEMO));
   save(); renderAll();
-  document.getElementById('settingsModal')?.classList.remove('on');
+  window.closeModal?.('settingsModal');
   notify('데이터가 초기화되었습니다.');
 }
 
