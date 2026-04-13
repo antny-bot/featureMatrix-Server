@@ -1,9 +1,23 @@
+import { useEffect, useState } from 'react';
+
 export default function UpdateBanner() {
+  const [banner, setBanner] = useState({ visible: false, message: '다른 사용자가 데이터를 변경했습니다.' });
+
+  useEffect(() => {
+    window.__showUpdateBanner = message => setBanner({ visible: true, message: message || '다른 사용자가 데이터를 변경했습니다.' });
+    window.__hideUpdateBanner = () => setBanner(current => ({ ...current, visible: false }));
+    return () => {
+      delete window.__showUpdateBanner;
+      delete window.__hideUpdateBanner;
+    };
+  }, []);
+
   return (
     <div
       id="updateBanner"
+      className={banner.visible ? 'on' : ''}
       style={{
-        display: 'none',
+        display: banner.visible ? 'flex' : 'none',
         alignItems: 'center',
         justifyContent: 'center',
         gap: '10px',
@@ -14,7 +28,7 @@ export default function UpdateBanner() {
         color: 'var(--warning)',
       }}
     >
-      <span id="updateBannerMsg">다른 사용자가 데이터를 변경했습니다.</span>
+      <span id="updateBannerMsg">{banner.message}</span>
       <button
         className="btn btn-s btn-sm"
         onClick={() => window.reloadFromServer?.()}
@@ -24,7 +38,7 @@ export default function UpdateBanner() {
       </button>
       <button
         className="btn btn-g btn-sm"
-        onClick={() => document.getElementById('updateBanner')?.classList.remove('on')}
+        onClick={() => window.__hideUpdateBanner?.()}
       >
         나중에
       </button>

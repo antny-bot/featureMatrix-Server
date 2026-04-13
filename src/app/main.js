@@ -84,24 +84,14 @@ Object.assign(window, {
 /* ── AuthContext용 S 브릿지 ── */
 window.__S = S;
 
-/* ── notify 인라인 ── */
+/* ── notify 브릿지 ── */
 window.__sobukRenderAll = () => renderAll();
 /** @param {string} msg @param {boolean|'success'|'warning'|'error'} type */
-window.__sobukNotify = (msg, type = false) => {
-  const el = document.getElementById('notif');
-  if (!el) return;
-  el.textContent = msg;
-  const bgMap = {
-    error:   'var(--danger)',
-    warning: 'var(--warning, #D97706)',
-    success: 'var(--success, #16A34A)',
+if (!window.__sobukNotify) {
+  window.__sobukNotify = (msg, type = false) => {
+    window.__pendingNotify = { msg, type };
   };
-  // 하위 호환: true → error
-  const key = type === true ? 'error' : type;
-  el.style.background = bgMap[key] || 'var(--text)';
-  el.classList.add('on');
-  setTimeout(() => el.classList.remove('on'), 2400);
-};
+}
 
 /* ── 검색 ── */
 window.onSearch = q => {
@@ -293,14 +283,9 @@ function startPolling() {
         if (changed && S.view !== 'dashboard') renderAll();
       }
       if (result.serverTs > lastServerTs) {
-        const banner = document.getElementById('updateBanner');
-        if (banner) {
-          const editor = result.lastEditor || '누군가';
-          const ago    = result.lastEditTime ? fmtDate(result.lastEditTime) : '';
-          const msgEl  = document.getElementById('updateBannerMsg');
-          if (msgEl) msgEl.textContent = `⚠ ${editor}${ago ? ('이' === editor.slice(-1) ? '가' : '이') + ' ' + ago + '에' : '가'} 데이터를 변경했습니다.`;
-          banner.classList.add('on');
-        }
+        const editor = result.lastEditor || '누군가';
+        const ago    = result.lastEditTime ? fmtDate(result.lastEditTime) : '';
+        window.__showUpdateBanner?.(`⚠ ${editor}${ago ? ('이' === editor.slice(-1) ? '가' : '이') + ' ' + ago + '에' : '가'} 데이터를 변경했습니다.`);
       }
     } else {
       setServerStatus('error');
@@ -311,7 +296,7 @@ function startPolling() {
 
 window.reloadFromServer = async () => {
   await loadFromServer();
-  document.getElementById('updateBanner')?.classList.remove('on');
+  window.__hideUpdateBanner?.();
   S.items.forEach(it => {
     if (it.mdContent === undefined) it.mdContent = '';
     if (it.status    === undefined) it.status    = '';

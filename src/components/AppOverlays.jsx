@@ -6,6 +6,48 @@ import DiffModal from './DiffModal.jsx';
 import OverlayMenus from './OverlayMenus.jsx';
 import { useEffect, useRef, useState } from 'react';
 
+function NotificationToast() {
+  const [toast, setToast] = useState({ visible: false, message: '', type: false });
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    const showToast = (message, type = false) => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setToast({ visible: true, message, type });
+      timerRef.current = setTimeout(() => {
+        setToast(current => ({ ...current, visible: false }));
+        timerRef.current = null;
+      }, 2400);
+    };
+    window.__sobukNotify = showToast;
+    if (window.__pendingNotify) {
+      showToast(window.__pendingNotify.msg, window.__pendingNotify.type);
+      delete window.__pendingNotify;
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      delete window.__sobukNotify;
+    };
+  }, []);
+
+  const key = toast.type === true ? 'error' : toast.type;
+  const background = {
+    error: 'var(--danger)',
+    warning: 'var(--warning, #D97706)',
+    success: 'var(--success, #16A34A)',
+  }[key] || 'var(--text)';
+
+  return (
+    <div
+      className={`notif${toast.visible ? ' on' : ''}`}
+      id="notif"
+      style={{ background }}
+    >
+      {toast.message}
+    </div>
+  );
+}
+
 function UserNameModal() {
   const [name, setName] = useState('');
   const inputRef = useRef(null);
@@ -64,7 +106,7 @@ export default function AppOverlays() {
       <div className="ov" id="adminAuthModal" style={{ display: 'none' }} />
       <DiffModal />
       <OverlayMenus />
-      <div className="notif" id="notif" />
+      <NotificationToast />
       <div id="boardActionBar" className="board-action-bar" />
     </>
   );
