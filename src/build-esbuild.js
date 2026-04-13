@@ -97,43 +97,12 @@ async function build() {
 
   let jsBundle = bundleResult.outputFiles[0].text;
 
-  /* ── 2. window 브릿지 → 직접 호출 교체 ── */
-  jsBundle = jsBundle
-    .replace(/window\.__sobukRenderAll\?\.\(\)/g, 'renderAll()')
-    .replace(/window\.__sobukNotify\?\.\(([^)]*)\)/g, '__inlineNotify($1)');
-
-  /* ── 3. notify 브릿지 → 인라인 notify ── */
-  jsBundle = jsBundle.replace(
-    /const notify\s*=\s*\([^)]*\)\s*=>\s*window\.__sobukNotify\?\.\([^)]*\)/,
-    'const notify = (msg, type = false) => __inlineNotify(msg, type)'
-  );
-
-  /* ── 4. window 브릿지 등록 제거 ── */
-  jsBundle = jsBundle
-    .replace(/window\.__sobukRenderAll\s*=\s*\(\)\s*=>\s*renderAll\(\)\s*;/g, '')
-    .replace(/window\.__sobukNotify\s*=[\s\S]*?setTimeout[\s\S]*?2400\)\s*;\s*\};/, '');
-
-  /* ── 5. </script> 이스케이프 ── */
+  /* ── 2. </script> 이스케이프 ── */
   const safeScript = jsBundle.replace(/<\/script>/gi, '<\\/script>');
 
-  /* ── 6. 인라인 notify 함수 prepend ── */
-  const notifyInline = `
-/* ── 인라인 notify (번들 전용) ── */
-function __inlineNotify(msg, type) {
-  var bgMap = { error: 'var(--danger)', warning: 'var(--warning, #D97706)', success: 'var(--success, #16A34A)' };
-  var el = document.getElementById('notif');
-  if (!el) return;
-  el.textContent = msg;
-  var key = type === true ? 'error' : type;
-  el.style.background = bgMap[key] || 'var(--text)';
-  el.classList.add('on');
-  setTimeout(function() { el.classList.remove('on'); }, 2400);
-}
-`;
+  const fullScript = safeScript;
 
-  const fullScript = notifyInline + '\n' + safeScript;
-
-  /* ── 7. HTML 읽기 & 치환 ── */
+  /* ── 3. HTML 읽기 & 치환 ── */
   const css  = fs.readFileSync(path.join(ROOT, 'style.css'), 'utf8');
   let html   = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
@@ -147,7 +116,7 @@ function __inlineNotify(msg, type) {
     () => `<script>\n'use strict';\n${fullScript}\n</script>`
   );
 
-  /* ── 8. 출력 ── */
+  /* ── 4. 출력 ── */
   const outPath = path.join(DIST, 'index.html');
   fs.writeFileSync(outPath, html, 'utf8');
 
@@ -157,7 +126,7 @@ function __inlineNotify(msg, type) {
   console.log(`   버전: v${version} (build ${buildId})`);
   console.log(`   서버 없이 더블클릭으로 실행 가능`);
 
-  /* ── 9. 서버 static 자동 복사 ── */
+  /* ── 5. 서버 static 자동 복사 ── */
   const serverStatic = path.join(ROOT, '..', 'featureMatrix-server', 'static');
   if (fs.existsSync(serverStatic)) {
     const dest = path.join(serverStatic, 'index.html');
