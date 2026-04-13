@@ -58,6 +58,13 @@ export default function SettingsPanel() {
 
   /* ── 탭 클릭 핸들러 ── */
   const switchTab = (tab) => setActiveTab(tab);
+  const updateSharedSetting = (key, value) => {
+    S.settings[key] = value;
+    if (key === 'title') document.title = value || 'featureMATRIX';
+    save();
+    syncSettings();
+    if (key === 'dbHeroName' && S.view === 'dashboard') window.renderDashboard?.();
+  };
 
   return createPortal(
     <div className="mbox" style={{ width: '760px' }}>
@@ -177,16 +184,16 @@ export default function SettingsPanel() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
               <div className="srow" style={{ borderBottom: 'none', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
                 <div className="slbl">헤더 타이틀</div>
-                <input className="inp" id="sTitle" style={{ height: '28px', fontSize: '.8rem' }} onInput={() => window.previewTitle?.()} />
+                <input className="inp" id="sTitle" value={settings.title || ''} style={{ height: '28px', fontSize: '.8rem' }} onChange={event => updateSharedSetting('title', event.target.value)} />
               </div>
               <div className="srow" style={{ borderBottom: 'none', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
                 <div className="slbl">서브 타이틀</div>
-                <input className="inp" id="sSub" style={{ height: '28px', fontSize: '.8rem' }} onInput={() => window.previewTitle?.()} />
+                <input className="inp" id="sSub" value={settings.subtitle || ''} style={{ height: '28px', fontSize: '.8rem' }} onChange={event => updateSharedSetting('subtitle', event.target.value)} />
               </div>
             </div>
             <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px' }}>
               <div><div className="slbl">대시보드 히어로 제목</div><div className="ssub">대시보드 상단에 표시할 프로젝트명</div></div>
-              <input className="inp" id="dbHeroName" placeholder="프로젝트 현황" style={{ height: '28px', fontSize: '.82rem' }} onInput={() => window.saveDbSettings?.()} />
+              <input className="inp" id="dbHeroName" value={settings.dbHeroName || ''} placeholder="프로젝트 현황" style={{ height: '28px', fontSize: '.82rem' }} onChange={event => updateSharedSetting('dbHeroName', event.target.value)} />
             </div>
             <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', marginTop: '4px' }}>
               <div><div className="slbl">대시보드 섹션 순서</div><div className="ssub">드래그하거나 ▲▼ 버튼으로 순서를 변경하세요</div></div>

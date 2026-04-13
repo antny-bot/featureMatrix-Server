@@ -20187,10 +20187,10 @@ function __inlineNotify(msg, type) {
     document.title = S.settings.title || "featureMATRIX";
     updateAdminUI();
   }
-  function previewTitle() {
-    S.settings.title = document.getElementById("sTitle")?.value ?? S.settings.title;
-    S.settings.subtitle = document.getElementById("sSub")?.value ?? S.settings.subtitle;
-    document.title = S.settings.title;
+  function previewTitle(next = {}) {
+    if (next.title !== void 0) S.settings.title = next.title;
+    if (next.subtitle !== void 0) S.settings.subtitle = next.subtitle;
+    document.title = S.settings.title || "featureMATRIX";
     save();
     setStore({ settings: { ...S.settings } });
   }

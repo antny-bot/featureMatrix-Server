@@ -27,10 +27,10 @@ export function syncSettingsUI() {
 }
 
 /* ── 타이틀 미리보기 ── */
-export function previewTitle() {
-  S.settings.title    = document.getElementById('sTitle')?.value ?? S.settings.title;
-  S.settings.subtitle = document.getElementById('sSub')?.value   ?? S.settings.subtitle;
-  document.title = S.settings.title;
+export function previewTitle(next = {}) {
+  if (next.title !== undefined) S.settings.title = next.title;
+  if (next.subtitle !== undefined) S.settings.subtitle = next.subtitle;
+  document.title = S.settings.title || 'featureMATRIX';
   save();
   setStore({ settings: { ...S.settings } }); // Header.jsx가 Zustand에서 title 읽음
 }

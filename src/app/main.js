@@ -375,7 +375,6 @@ function syncServerSettingsUI() {
 
 /* ── 대시보드 설정 저장/UI 동기화 ── */
 window.saveDbSettings = () => {
-  S.settings.dbHeroName = document.getElementById('dbHeroName')?.value || '';
   save();
   setStore({ settings: { ...S.settings } });
   if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
