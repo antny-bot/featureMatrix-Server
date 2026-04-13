@@ -1,4 +1,5 @@
 import ExportModal from './ExportModal.jsx';
+import ImportModal from './ImportModal.jsx';
 import LoginModal from './LoginModal.jsx';
 import ShortcutsModal from './ShortcutsModal.jsx';
 
@@ -50,6 +51,7 @@ function DiffModal() {
 export default function AppOverlays() {
   return (
     <>
+      <ImportModal />
       <ExportModal />
       <ShortcutsModal />
       <UserNameModal />

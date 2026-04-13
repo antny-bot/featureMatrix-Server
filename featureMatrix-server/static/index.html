@@ -23830,25 +23830,178 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     ] }) });
   }
 
-  // components/LoginModal.jsx
+  // components/ImportModal.jsx
   var import_jsx_runtime15 = __toESM(require_jsx_runtime());
-  function LoginModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "ov", id: "loginModal", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mbox", style: { width: "360px" }, children: [
+  function ImportModal() {
+    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "ov", id: "importModal", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mbox", style: { width: "600px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mhd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "mtitle", children: "\u{1F510} \uB85C\uADF8\uC778" }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "mclose", onClick: () => window.closeLoginModal?.(), children: "\u2715" })
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "mtitle", children: "\u{1F4E5} \uB370\uC774\uD130 \uAC00\uC838\uC624\uAE30" }),
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("importModal"), children: "\u2715" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "mbody", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "10px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uC5ED\uD560" }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("select", { className: "inp", id: "loginRoleSelect", style: { height: "38px", fontSize: ".82rem", paddingTop: 0, paddingBottom: 0 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("option", { value: "editor", children: "\uD3B8\uC9D1\uC790" }),
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("option", { value: "admin", children: "\uAD00\uB9AC\uC790" })
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mbody", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { id: "impStep1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(
+            "div",
+            {
+              className: "drop-zone",
+              id: "dropZone",
+              onClick: (e) => {
+                if (e.target.id !== "csvFile") document.getElementById("csvFile")?.click();
+              },
+              onDragOver: (e) => window.dzOver?.(e),
+              onDragLeave: () => window.dzLeave?.(),
+              onDrop: (e) => window.dzDrop?.(e),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+                  "input",
+                  {
+                    type: "file",
+                    id: "csvFile",
+                    accept: ".csv,.tsv,.txt",
+                    onClick: (e) => e.stopPropagation(),
+                    onChange: (e) => window.csvFileSel?.(e)
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { fontSize: "1.3rem", marginBottom: "5px" }, children: "\u{1F4C2}" }),
+                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { children: "\uD30C\uC77C \uB4DC\uB798\uADF8 \uB610\uB294 \uD074\uB9AD" }),
+                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { fontSize: ".7rem", marginTop: "2px", color: "var(--text-3)" }, children: ".csv / .tsv \xB7 Tab \uAD6C\uBD84\uC790" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { marginTop: "8px", fontSize: ".74rem", color: "var(--text-3)" }, children: "\uB610\uB294 \uBD99\uC5EC\uB123\uAE30:" }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+            "textarea",
+            {
+              className: "txta",
+              id: "csvPaste",
+              placeholder: "\uD5E4\uB354 \uD3EC\uD568 Tab-separated \uB370\uC774\uD130",
+              style: {
+                marginTop: "5px",
+                minHeight: "80px",
+                fontFamily: "monospace",
+                fontSize: ".7rem"
+              }
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { display: "flex", gap: "6px", marginTop: "7px" }, children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.analyzeCSV?.(), children: "\u{1F50D} \uBD84\uC11D\uD558\uAE30" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { marginTop: "14px", paddingTop: "12px", borderTop: "1px solid var(--border)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "exp-sec-ttl", children: "MD \uD30C\uC77C \uC77C\uAD04 \uAC00\uC838\uC624\uAE30" }),
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { fontSize: ".74rem", color: "var(--text-3)", marginBottom: "8px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+                "code",
+                {
+                  style: {
+                    fontFamily: "monospace",
+                    background: "var(--surface-2)",
+                    padding: "1px 4px",
+                    borderRadius: "3px"
+                  },
+                  children: "{key}_{\uAE30\uB2A5\uBA85}.md"
+                }
+              ),
+              " \uD30C\uC77C\uC744 \uBCF5\uC218 \uC120\uD0DD\uD558\uBA74 key\uB85C \uC790\uB3D9 \uB9E4\uD551"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+              "button",
+              {
+                className: "btn btn-s btn-sm",
+                onClick: () => document.getElementById("mdImpInp")?.click(),
+                children: "\u{1F4C2} MD \uD30C\uC77C \uC120\uD0DD"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+              "input",
+              {
+                type: "file",
+                id: "mdImpInp",
+                accept: ".md",
+                multiple: true,
+                style: { display: "none" },
+                onChange: (e) => window.impMdFiles?.(e)
+              }
+            )
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uC774\uB984" }),
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { id: "impStep2", style: { display: "none" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { style: { fontSize: ".82rem", fontWeight: 600, color: "var(--text)" }, children: "\uCEEC\uB7FC \uB9E4\uD551 \uD655\uC778" }),
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.backToStep1?.(), children: "\u2190 \uB4A4\uB85C" })
+          ] }),
           /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+            "div",
+            {
+              id: "mapStatus",
+              style: {
+                fontSize: ".78rem",
+                color: "var(--text-2)",
+                marginBottom: "8px",
+                padding: "7px 10px",
+                background: "var(--accent-l)",
+                borderRadius: "7px",
+                borderLeft: "3px solid var(--accent)"
+              }
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(
+            "div",
+            {
+              style: {
+                maxHeight: "260px",
+                overflowY: "auto",
+                border: "1px solid var(--border)",
+                borderRadius: "7px",
+                background: "var(--surface)"
+              },
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "5px 8px",
+                      background: "var(--surface-2)",
+                      borderBottom: "2px solid var(--border)"
+                    },
+                    children: [
+                      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "110px" }, children: "\uC18C\uBCF5 \uD544\uB4DC" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", flex: 1 }, children: "CSV \uCEEC\uB7FC" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "100px" }, children: "\uBBF8\uB9AC\uBCF4\uAE30" })
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { id: "mapRows" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "10px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.doImport?.(false), children: "\u2B07 \uAC00\uC838\uC624\uAE30" }),
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.doImport?.(true), children: "\uBCD1\uD569 \uCD94\uAC00" })
+          ] })
+        ] })
+      ] })
+    ] }) });
+  }
+
+  // components/LoginModal.jsx
+  var import_jsx_runtime16 = __toESM(require_jsx_runtime());
+  function LoginModal() {
+    return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "ov", id: "loginModal", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mbox", style: { width: "360px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mhd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "mtitle", children: "\u{1F510} \uB85C\uADF8\uC778" }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "mclose", onClick: () => window.closeLoginModal?.(), children: "\u2715" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "mbody", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "10px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uC5ED\uD560" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("select", { className: "inp", id: "loginRoleSelect", style: { height: "38px", fontSize: ".82rem", paddingTop: 0, paddingBottom: 0 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "editor", children: "\uD3B8\uC9D1\uC790" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "admin", children: "\uAD00\uB9AC\uC790" })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uC774\uB984" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
             "input",
             {
               className: "inp",
@@ -23861,9 +24014,9 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uBE44\uBC00\uBC88\uD638" }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uBE44\uBC00\uBC88\uD638" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
             "input",
             {
               className: "inp",
@@ -23877,17 +24030,17 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { id: "loginErr", style: { color: "var(--danger)", fontSize: ".78rem", minHeight: "16px" } })
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { id: "loginErr", style: { color: "var(--danger)", fontSize: ".78rem", minHeight: "16px" } })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mfoot", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.closeLoginModal?.(), children: "\uCDE8\uC18C" }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.submitLogin?.(), children: "\uB85C\uADF8\uC778" })
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mfoot", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.closeLoginModal?.(), children: "\uCDE8\uC18C" }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.submitLogin?.(), children: "\uB85C\uADF8\uC778" })
       ] })
     ] }) });
   }
 
   // components/ShortcutsModal.jsx
-  var import_jsx_runtime16 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime17 = __toESM(require_jsx_runtime());
   var SHORTCUTS = [
     { keys: ["N"], label: "\uAE30\uB2A5 \uCD94\uAC00" },
     { keys: ["F"], label: "\uD544\uD130 \uD328\uB110 \uD1A0\uAE00" },
@@ -23905,31 +24058,31 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     { keys: ["Esc"], label: "\uCC3D \uB2EB\uAE30" }
   ];
   function ShortcutsModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "ov", id: "shortcutsModal", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mbox", style: { width: "400px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mhd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "mtitle", children: "\u2328 \uB2E8\uCD95\uD0A4" }),
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("shortcutsModal"), children: "\u2715" })
+    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "ov", id: "shortcutsModal", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mbox", style: { width: "400px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mhd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "mtitle", children: "\u2328 \uB2E8\uCD95\uD0A4" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("shortcutsModal"), children: "\u2715" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "mbody", children: SHORTCUTS.map(({ keys, label }) => /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "sc-row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { style: { display: "flex", gap: "3px" }, children: keys.map((key) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "kbd", children: key }, key)) }),
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { style: { fontSize: ".8125rem", color: "var(--text-2)" }, children: label })
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "mbody", children: SHORTCUTS.map(({ keys, label }) => /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "sc-row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { style: { display: "flex", gap: "3px" }, children: keys.map((key) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "kbd", children: key }, key)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { style: { fontSize: ".8125rem", color: "var(--text-2)" }, children: label })
       ] }, `${keys.join("+")}:${label}`)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.closeModal?.("shortcutsModal"), children: "\uB2EB\uAE30" }) })
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.closeModal?.("shortcutsModal"), children: "\uB2EB\uAE30" }) })
     ] }) });
   }
 
   // components/AppOverlays.jsx
-  var import_jsx_runtime17 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime18 = __toESM(require_jsx_runtime());
   function UserNameModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "ov", id: "userNameModal", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mbox", style: { width: "380px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "mhd", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "mtitle", children: "\u{1F44B} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694" }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mbody", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("p", { style: { fontSize: ".85rem", color: "var(--text-2)", marginBottom: "14px", lineHeight: 1.7 }, children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ov", id: "userNameModal", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mbox", style: { width: "380px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "mhd", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "mtitle", children: "\u{1F44B} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694" }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mbody", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("p", { style: { fontSize: ".85rem", color: "var(--text-2)", marginBottom: "14px", lineHeight: 1.7 }, children: [
           "\uB2E4\uB978 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uB204\uAC00 \uC218\uC815\uD588\uB294\uC9C0 \uD45C\uC2DC\uD569\uB2C8\uB2E4.",
-          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("br", {}),
-          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { style: { color: "var(--text-3)", fontSize: ".78rem" }, children: "\uC124\uC815 > \uC11C\uBC84 \uD0ED\uC5D0\uC11C \uC5B8\uC81C\uB4E0 \uBCC0\uACBD\uD560 \uC218 \uC788\uC5B4\uC694." })
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("br", {}),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { style: { color: "var(--text-3)", fontSize: ".78rem" }, children: "\uC124\uC815 > \uC11C\uBC84 \uD0ED\uC5D0\uC11C \uC5B8\uC81C\uB4E0 \uBCC0\uACBD\uD560 \uC218 \uC788\uC5B4\uC694." })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
           "input",
           {
             className: "inp",
@@ -23942,39 +24095,40 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mfoot", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.saveUserNamePopup?.(true), children: "\uB098\uC911\uC5D0" }),
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveUserNamePopup?.(), children: "\uD655\uC778" })
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mfoot", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.saveUserNamePopup?.(true), children: "\uB098\uC911\uC5D0" }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveUserNamePopup?.(), children: "\uD655\uC778" })
       ] })
     ] }) });
   }
   function DiffModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "ov", id: "diffModal", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mbox", style: { width: "640px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mhd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "mtitle", children: "\uBCC0\uACBD \uC774\uB825 (\uB9C8\uC9C0\uB9C9 Undo \uAE30\uC900)" }),
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("diffModal"), children: "\u2715" })
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ov", id: "diffModal", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mbox", style: { width: "640px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mhd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "mtitle", children: "\uBCC0\uACBD \uC774\uB825 (\uB9C8\uC9C0\uB9C9 Undo \uAE30\uC900)" }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("diffModal"), children: "\u2715" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "mbody", id: "diffBody", style: { fontSize: ".82rem" } }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "btn btn-s", onClick: () => window.closeModal?.("diffModal"), children: "\uB2EB\uAE30" }) })
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "mbody", id: "diffBody", style: { fontSize: ".82rem" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "btn btn-s", onClick: () => window.closeModal?.("diffModal"), children: "\uB2EB\uAE30" }) })
     ] }) });
   }
   function AppOverlays() {
-    return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(import_jsx_runtime17.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(ExportModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(ShortcutsModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(UserNameModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(LoginModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "ov", id: "adminAuthModal", style: { display: "none" } }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(DiffModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "ftt", id: "ftt" }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "notif", id: "notif" }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { id: "boardActionBar", className: "board-action-bar" })
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(import_jsx_runtime18.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(ImportModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(ExportModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(ShortcutsModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(UserNameModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(LoginModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ov", id: "adminAuthModal", style: { display: "none" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DiffModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ftt", id: "ftt" }),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "notif", id: "notif" }),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "boardActionBar", className: "board-action-bar" })
     ] });
   }
 
   // components/ErrorBoundary.jsx
   var import_react10 = __toESM(require_react());
-  var import_jsx_runtime18 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime19 = __toESM(require_jsx_runtime());
   var ErrorBoundary = class extends import_react10.Component {
     constructor(props) {
       super(props);
@@ -23994,7 +24148,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       if (!this.state.hasError) return this.props.children;
       const { level = "view", label = "\uC601\uC5ED" } = this.props;
       if (level === "app") {
-        return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { style: {
+        return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { style: {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -24005,11 +24159,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           background: "var(--bg)",
           color: "var(--text)"
         }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { style: { fontSize: "2rem" }, children: "\u26A0" }),
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { style: { fontSize: "1rem", fontWeight: 700 }, children: "\uC571\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4" }),
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { style: { fontSize: ".8rem", color: "var(--text-3)", maxWidth: "400px", textAlign: "center" }, children: this.state.error?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958" }),
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: "2rem" }, children: "\u26A0" }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: "1rem", fontWeight: 700 }, children: "\uC571\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4" }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: ".8rem", color: "var(--text-3)", maxWidth: "400px", textAlign: "center" }, children: this.state.error?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958" }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
               "button",
               {
                 onClick: () => this.handleReset(),
@@ -24017,7 +24171,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                 children: "\uB2E4\uC2DC \uC2DC\uB3C4"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
               "button",
               {
                 onClick: () => window.location.reload(),
@@ -24028,7 +24182,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           ] })
         ] });
       }
-      return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { style: {
+      return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { style: {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -24040,12 +24194,12 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         fontSize: ".8rem",
         textAlign: "center"
       }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { style: { fontSize: "1.2rem" }, children: "\u26A0" }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: "1.2rem" }, children: "\u26A0" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { children: [
           label,
           " \uB80C\uB354\uB9C1 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4"
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
           "button",
           {
             onClick: () => this.handleReset(),
@@ -24058,327 +24212,36 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   };
 
   // components/App.jsx
-  var import_jsx_runtime19 = __toESM(require_jsx_runtime());
-  var APP_TEMPLATE = `
-<div id="updateBanner" style="display:none;align-items:center;justify-content:center;gap:10px;padding:7px 16px;background:var(--warning-bg);border-bottom:1px solid var(--warning);font-size:.8rem;color:var(--warning)">
-  <span id="updateBannerMsg">\u26A0 \uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.</span>
-  <button class="btn btn-s btn-sm" onclick="reloadFromServer()" style="border-color:var(--warning);color:var(--warning)">\uC9C0\uAE08 \uC0C8\uB85C\uACE0\uCE68</button>
-  <button class="btn btn-g btn-sm" onclick="document.getElementById('updateBanner').classList.remove('on')">\uB098\uC911\uC5D0</button>
-</div>
-
-<div class="layout" id="layout">
-  <!-- \uC67C\uCABD \uB124\uBE44\uAC8C\uC774\uC158 \uC0AC\uC774\uB4DC\uBC14 -->
-  <nav class="nav-side" id="navSide">
-    <button class="nav-item" id="navD" onclick="switchView('dashboard')" title="\uB300\uC2DC\uBCF4\uB4DC">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span>\uB300\uC2DC\uBCF4\uB4DC</span>
-    </button>
-    <button class="nav-item on" id="navM" onclick="switchView('matrix')" title="\uB9E4\uD2B8\uB9AD\uC2A4">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
-      <span>\uB9E4\uD2B8\uB9AD\uC2A4</span>
-    </button>
-    <button class="nav-item" id="navB" onclick="switchView('board')" title="\uBCF4\uB4DC">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="4" height="18" rx="1"/><rect x="10" y="3" width="4" height="18" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>
-      <span>\uBCF4\uB4DC</span>
-    </button>
-    <button class="nav-item" id="navL" onclick="switchView('list')" title="\uB9AC\uC2A4\uD2B8">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>
-      <span>\uB9AC\uC2A4\uD2B8</span>
-    </button>
-    <div class="nav-spacer"></div>
-    <button class="nav-item nav-login" id="navLogin" onclick="openLoginModal()" title="\uB85C\uADF8\uC778" style="display:none">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span>\uB85C\uADF8\uC778</span>
-    </button>
-  </nav>
-  <main class="content" id="contentArea">
-    <div id="dashboardView" style="display:none"></div>
-    <div id="matrixView" class="mwrap fluid"></div>
-    <div id="bulkBar" class="bulk-bar" style="display:none"></div>
-    <div id="boardView"  class="bwrap" style="display:none"></div>
-    <div id="listView"   class="lwrap" style="display:none"></div>
-  </main>
-  <!-- \uC624\uB978\uCABD \uD544\uD130 \uD328\uB110 (\uB9E4\uD2B8\uB9AD\uC2A4\xB7\uB9AC\uC2A4\uD2B8\uC5D0\uC11C\uB9CC \uD45C\uC2DC) -->
-  <aside class="fpanel" id="fpanel">
-    <!-- \uC0BC\uC120 \uD1A0\uAE00 \uBC84\uD2BC (\uD56D\uC0C1 \uD45C\uC2DC) -->
-    <button class="fpanel-toggle" id="fpanelToggle" onclick="togglePanel()" title="\uD544\uD130 \uD328\uB110 (F)">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
-    <div class="fpinner">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <span style="font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)">\uD544\uD130</span>
-        <button class="btn btn-g btn-sm" onclick="resetFilters()" style="height:20px;padding:0 6px;font-size:.65rem">\uCD08\uAE30\uD654</button>
-      </div>
-      <div class="fsec"><div class="fsec-ttl">\uC6B0\uC120\uC21C\uC704</div><div class="fsec-body"><div class="pchips" id="prioChips"></div></div></div>
-      <div class="fsep"></div>
-      <div class="fsec">
-        <div class="fsec-ttl">\uC9C4\uD589\uC0C1\uD0DC</div>
-        <div class="fsec-body"><div id="statusChips" style="display:flex;flex-wrap:wrap;gap:3px"></div></div>
-      </div>
-      <div class="fsep"></div>
-      <div class="fsec">
-        <div class="fsec-ttl">\uB2F4\uB2F9</div>
-        <div class="fsec-body"><div class="owner-chips" id="ownerChips"></div></div>
-      </div>
-      <div class="fsep"></div>
-      <div class="fsec">
-        <div class="fsec-ttl">\uD45C\uC2DC \uC870\uAC74</div>
-        <div class="fsec-body" style="display:flex;flex-direction:column;gap:7px">
-          <label class="tgl"><input type="checkbox" id="togDel" onchange="applyFilters()"><span class="tgl-track"></span><span class="tgl-lbl">\uC0AD\uC81C \uD3EC\uD568</span></label>
-          <label class="tgl"><input type="checkbox" id="togImp" onchange="applyFilters()"><span class="tgl-track"></span><span class="tgl-lbl">\uC911\uC694\uB9CC \uBCF4\uAE30</span></label>
-        </div>
-      </div>
-      <div class="fsep"></div>
-      <div class="fsec">
-        <div class="fsec-ttl">\uCE74\uB4DC \uD45C\uC2DC</div>
-        <div class="fsec-body" style="display:flex;flex-direction:column;gap:3px">
-          <div style="font-size:.62rem;font-weight:700;letter-spacing:.04em;color:var(--text-3);text-transform:uppercase;margin:4px 0 2px">\uC2DD\uBCC4</div>
-          <label class="tgl"><input type="checkbox" id="togOwner" checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">\uB2F4\uB2F9</span></label>
-          <label class="tgl"><input type="checkbox" id="togStar"  checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">\u2605 \uC911\uC694</span></label>
-          <label class="tgl"><input type="checkbox" id="togNew"   checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">N \uC2E0\uADDC \uBC30\uC9C0</span></label>
-          <div style="font-size:.62rem;font-weight:700;letter-spacing:.04em;color:var(--text-3);text-transform:uppercase;margin:6px 0 2px">\uC0C1\uD0DC</div>
-          <label class="tgl"><input type="checkbox" id="togStatus" checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">\uC9C4\uD589\uC0C1\uD0DC \uBC43\uC9C0</span></label>
-          <label class="tgl"><input type="checkbox" id="togMd"     checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">MD \uBC43\uC9C0</span></label>
-          <div style="font-size:.62rem;font-weight:700;letter-spacing:.04em;color:var(--text-3);text-transform:uppercase;margin:6px 0 2px">\uBCF4\uC870</div>
-          <label class="tgl"><input type="checkbox" id="togCnt"      checked onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">\uC140 \uCE74\uC6B4\uD130</span></label>
-          <label class="tgl"><input type="checkbox" id="togUpd"            onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">\uC218\uC815\uC77C</span></label>
-          <label class="tgl"><input type="checkbox" id="togQuickAdd"       onchange="onDispTgl()"><span class="tgl-track"></span><span class="tgl-lbl">\uBE60\uB978 \uCD94\uAC00 \uBC84\uD2BC</span></label>
-        </div>
-      </div>
-      <div class="fsep"></div>
-      <div class="undo-fab" id="undoFab">
-        <button class="btn btn-s" onclick="doUndo()" title="\uC2E4\uD589 \uCDE8\uC18C (Z)" style="gap:6px;width:100%">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-          \uB418\uB3CC\uB9AC\uAE30
-        </button>
-      </div>
-    </div>
-  </aside>
-</div>
-
-<!-- \uD3B8\uC9D1 \uBAA8\uB2EC \u2014 ItemModal.jsx React \uD3EC\uD138 -->
+  var import_jsx_runtime20 = __toESM(require_jsx_runtime());
+  var LEGACY_PORTAL_ROOTS = `
 <div class="ov" id="editModal"></div>
-
-<!-- Import \uBAA8\uB2EC -->
-<div class="ov" id="importModal">
-  <div class="mbox" style="width:600px">
-    <div class="mhd"><span class="mtitle">\u{1F4E5} \uB370\uC774\uD130 \uAC00\uC838\uC624\uAE30</span><button class="mclose" onclick="closeModal('importModal')">\u2715</button></div>
-    <div class="mbody">
-      <div id="impStep1">
-        <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvFile').click()" ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">
-          <input type="file" id="csvFile" accept=".csv,.tsv,.txt" onchange="csvFileSel(event)">
-          <div style="font-size:1.3rem;margin-bottom:5px">\u{1F4C2}</div>
-          <div>\uD30C\uC77C \uB4DC\uB798\uADF8 \uB610\uB294 \uD074\uB9AD</div>
-          <div style="font-size:.7rem;margin-top:2px;color:var(--text-3)">.csv / .tsv \xB7 Tab \uAD6C\uBD84\uC790</div>
-        </div>
-        <div style="margin-top:8px;font-size:.74rem;color:var(--text-3)">\uB610\uB294 \uBD99\uC5EC\uB123\uAE30:</div>
-        <textarea class="txta" id="csvPaste" placeholder="\uD5E4\uB354 \uD3EC\uD568 Tab-separated \uB370\uC774\uD130" style="margin-top:5px;min-height:80px;font-family:monospace;font-size:.7rem"></textarea>
-        <div style="display:flex;gap:6px;margin-top:7px"><button class="btn btn-p btn-sm" onclick="analyzeCSV()">\u{1F50D} \uBD84\uC11D\uD558\uAE30</button></div>
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-          <div class="exp-sec-ttl">MD \uD30C\uC77C \uC77C\uAD04 \uAC00\uC838\uC624\uAE30</div>
-          <div style="font-size:.74rem;color:var(--text-3);margin-bottom:8px"><code style="font-family:monospace;background:var(--surface-2);padding:1px 4px;border-radius:3px">{key}_{\uAE30\uB2A5\uBA85}.md</code> \uD30C\uC77C\uC744 \uBCF5\uC218 \uC120\uD0DD\uD558\uBA74 key\uB85C \uC790\uB3D9 \uB9E4\uD551</div>
-          <button class="btn btn-s btn-sm" onclick="document.getElementById('mdImpInp').click()">\u{1F4C2} MD \uD30C\uC77C \uC120\uD0DD</button>
-          <input type="file" id="mdImpInp" accept=".md" multiple style="display:none" onchange="impMdFiles(event)">
-        </div>
-      </div>
-      <div id="impStep2" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <span style="font-size:.82rem;font-weight:600;color:var(--text)">\uCEEC\uB7FC \uB9E4\uD551 \uD655\uC778</span>
-          <button class="btn btn-g btn-sm" onclick="backToStep1()">\u2190 \uB4A4\uB85C</button>
-        </div>
-        <div id="mapStatus" style="font-size:.78rem;color:var(--text-2);margin-bottom:8px;padding:7px 10px;background:var(--accent-l);border-radius:7px;border-left:3px solid var(--accent)"></div>
-        <div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
-          <div style="display:flex;align-items:center;padding:5px 8px;background:var(--surface-2);border-bottom:2px solid var(--border)">
-            <span style="font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--text-3);min-width:110px">\uC18C\uBCF5 \uD544\uB4DC</span>
-            <span style="font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--text-3);flex:1">CSV \uCEEC\uB7FC</span>
-            <span style="font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--text-3);min-width:100px">\uBBF8\uB9AC\uBCF4\uAE30</span>
-          </div>
-          <div id="mapRows"></div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:10px">
-          <button class="btn btn-p btn-sm" onclick="doImport(false)">\u2B07 \uAC00\uC838\uC624\uAE30</button>
-          <button class="btn btn-s btn-sm" onclick="doImport(true)">\uBCD1\uD569 \uCD94\uAC00</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Export \uBAA8\uB2EC -->
-<div class="ov" id="exportModal">
-  <div class="mbox" style="width:460px">
-    <div class="mhd"><span class="mtitle">\u{1F4E4} \uB370\uC774\uD130 \uB0B4\uBCF4\uB0B4\uAE30</span><button class="mclose" onclick="closeModal('exportModal')">\u2715</button></div>
-    <div class="mbody">
-      <div style="margin-bottom:14px"><div class="exp-sec-ttl">CSV / TSV</div><div style="display:flex;gap:6px"><button class="btn btn-s btn-sm" onclick="expClip()">\u{1F4CB} \uD074\uB9BD\uBCF4\uB4DC</button><button class="btn btn-s btn-sm" onclick="expTSV()">\u2B07 TSV</button></div></div>
-      <div style="margin-bottom:14px"><div class="exp-sec-ttl">Excel</div><div style="display:flex;gap:6px"><button class="btn btn-s btn-sm" onclick="expXLS()">\u{1F4CA} .xls \uB2E4\uC6B4\uB85C\uB4DC</button></div></div>
-      <div>
-        <div class="exp-sec-ttl">HTML \uB9E4\uD2B8\uB9AD\uC2A4</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;cursor:pointer"><input type="radio" name="htmlW" value="fluid" checked> \uAC00\uBCC0\uD3ED</label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;cursor:pointer"><input type="radio" name="htmlW" value="fixed"> \uACE0\uC815\uD3ED</label>
-        </div>
-        <button class="btn btn-s btn-sm" onclick="expHTML()">\u{1F310} HTML \uB0B4\uBCF4\uB0B4\uAE30</button>
-      </div>
-      <div style="margin-top:14px">
-        <div class="exp-sec-ttl">\uB9C8\uD06C\uB2E4\uC6B4 \uC77C\uAD04</div>
-        <div style="font-size:.74rem;color:var(--text-3);margin-bottom:6px">MD \uB0B4\uC6A9\uC774 \uC791\uC131\uB41C \uD56D\uBAA9\uB9CC \uD3EC\uD568\uB429\uB2C8\uB2E4.</div>
-        <button class="btn btn-s btn-sm" onclick="expMdZip()">\u{1F4E6} MD ZIP \uB0B4\uBCF4\uB0B4\uAE30</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- \uC124\uC815 \uBAA8\uB2EC -->
 <div class="ov" id="settingsModal"></div>
-
-<!-- \uB2E8\uCD95\uD0A4 \uBAA8\uB2EC -->
-<div class="ov" id="shortcutsModal">
-  <div class="mbox" style="width:400px">
-    <div class="mhd"><span class="mtitle">\u2328 \uB2E8\uCD95\uD0A4</span><button class="mclose" onclick="closeModal('shortcutsModal')">\u2715</button></div>
-    <div class="mbody">
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">N</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uAE30\uB2A5 \uCD94\uAC00</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">F</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uD544\uD130 \uD328\uB110 \uD1A0\uAE00</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">/</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uAC80\uC0C9 \uD3EC\uCEE4\uC2A4</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">D</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uB300\uC2DC\uBCF4\uB4DC \uBDF0</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">M</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">B</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uBCF4\uB4DC \uBDF0</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">L</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uB9AC\uC2A4\uD2B8 \uBDF0</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Z</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uC2E4\uD589 \uCDE8\uC18C</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">\uC6B0\uD074\uB9AD</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uCE74\uB4DC \uCEE8\uD14D\uC2A4\uD2B8 \uBA54\uB274</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">\uC0C1\uD0DC\uBC43\uC9C0 \uD074\uB9AD</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uBE60\uB978 \uC0C1\uD0DC \uBCC0\uACBD</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">I</span></div><span style="font-size:.8125rem;color:var(--text-2)">CSV/TSV \uAC00\uC838\uC624\uAE30</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">E</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uB370\uC774\uD130 \uB0B4\uBCF4\uB0B4\uAE30</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Ctrl</span><span class="kbd">,</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uD658\uACBD \uC124\uC815</span></div>
-      <div class="sc-row"><div style="display:flex;gap:3px"><span class="kbd">Esc</span></div><span style="font-size:.8125rem;color:var(--text-2)">\uCC3D \uB2EB\uAE30</span></div>
-    </div>
-    <div class="mfoot"><button class="btn btn-p btn-sm" onclick="closeModal('shortcutsModal')">\uB2EB\uAE30</button></div>
-  </div>
-</div>
-
-<div class="ftt" id="ftt"></div>
-<div class="notif" id="notif"></div>
-
-<!-- \uC0AC\uC6A9\uC790 \uC774\uB984 \uC785\uB825 \uD31D\uC5C5 -->
-<div class="ov" id="userNameModal">
-  <div class="mbox" style="width:380px">
-    <div class="mhd"><span class="mtitle">\u{1F464} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694</span></div>
-    <div class="mbody">
-      <p style="font-size:.85rem;color:var(--text-2);margin-bottom:14px;line-height:1.7">\uB2E4\uB978 \uD300\uC6D0\uC5D0\uAC8C \uB204\uAC00 \uC218\uC815\uD588\uB294\uC9C0 \uD45C\uC2DC\uB429\uB2C8\uB2E4.<br><span style="color:var(--text-3);font-size:.78rem">\uC124\uC815 &gt; \uC11C\uBC84 \uD0ED\uC5D0\uC11C \uC5B8\uC81C\uB4E0 \uBCC0\uACBD\uD560 \uC218 \uC788\uC5B4\uC694.</span></p>
-      <input class="inp" id="userNamePopupInp" placeholder="\uC774\uB984 \uC785\uB825 (\uC608: \uD64D\uAE38\uB3D9)" style="margin-bottom:6px"
-        onkeydown="if(event.key==='Enter')saveUserNamePopup()">
-    </div>
-    <div class="mfoot">
-      <button class="btn btn-g btn-sm" onclick="saveUserNamePopup(true)">\uB098\uC911\uC5D0</button>
-      <button class="btn btn-p btn-sm" onclick="saveUserNamePopup()">\uD655\uC778</button>
-    </div>
-  </div>
-</div>
-
-<!-- \uB85C\uADF8\uC778 \uBAA8\uB2EC -->
-<div class="ov" id="loginModal">
-  <div class="mbox" style="width:360px">
-    <div class="mhd"><span class="mtitle">\u{1F511} \uB85C\uADF8\uC778</span><button class="mclose" onclick="closeLoginModal()">\u2715</button></div>
-    <div class="mbody">
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div>
-          <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">\uC5ED\uD560</label>
-          <select class="inp" id="loginRoleSelect" style="height:38px;font-size:.82rem;padding-top:0;padding-bottom:0">
-            <option value="editor">\uD3B8\uC9D1\uC790</option>
-            <option value="admin">\uAD00\uB9AC\uC790</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">\uC774\uB984</label>
-          <input class="inp" id="loginNameInp" placeholder="\uD64D\uAE38\uB3D9" style="height:32px;font-size:.82rem"
-            onkeydown="if(event.key==='Enter')document.getElementById('loginPwInp').focus()">
-        </div>
-        <div>
-          <label style="font-size:.78rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">\uBE44\uBC00\uBC88\uD638</label>
-          <input class="inp" id="loginPwInp" type="password" placeholder="\uBE44\uBC00\uBC88\uD638 (\uBBF8\uC124\uC815 \uC2DC \uBE44\uC6CC\uB450\uC138\uC694)"
-            style="height:32px;font-size:.82rem"
-            onkeydown="if(event.key==='Enter')submitLogin()">
-        </div>
-        <div id="loginErr" style="color:var(--danger);font-size:.78rem;min-height:16px"></div>
-      </div>
-    </div>
-    <div class="mfoot">
-      <button class="btn btn-g btn-sm" onclick="closeLoginModal()">\uCDE8\uC18C</button>
-      <button class="btn btn-p btn-sm" onclick="submitLogin()">\uB85C\uADF8\uC778</button>
-    </div>
-  </div>
-</div>
-
-<!-- \uAD00\uB9AC\uC790 \uC778\uC99D \uBAA8\uB2EC (\uD558\uC704 \uD638\uD658 \u2014 loginModal\uB85C \uB300\uCCB4\uB428, DOM \uC720\uC9C0) -->
-<div class="ov" id="adminAuthModal" style="display:none!important"></div>
-
-<!-- Diff \uBDF0 \uBAA8\uB2EC -->
-<div class="ov" id="diffModal">
-  <div class="mbox" style="width:640px">
-    <div class="mhd"><span class="mtitle">\uBCC0\uACBD \uC774\uB825 (\uB9C8\uC9C0\uB9C9 Undo \uAE30\uC900)</span><button class="mclose" onclick="closeModal('diffModal')">\u2715</button></div>
-    <div class="mbody" id="diffBody" style="font-size:.82rem"></div>
-    <div class="mfoot">
-      <button class="btn btn-s" onclick="closeModal('diffModal')">\uB2EB\uAE30</button>
-    </div>
-  </div>
-</div>
-<div id="boardActionBar" class="board-action-bar"></div>
 `;
-  function removeElementById(html, id) {
-    const startMatch = new RegExp(`<div\\b[^>]*id="${id}"[^>]*>`).exec(html);
-    if (!startMatch) return html;
-    const start = startMatch.index;
-    const tagRe = /<\/?div\b[^>]*>/g;
-    tagRe.lastIndex = start;
-    let depth = 0;
-    let match;
-    while (match = tagRe.exec(html)) {
-      if (match[0].startsWith("</")) depth -= 1;
-      else depth += 1;
-      if (depth === 0) {
-        return html.slice(0, start) + html.slice(tagRe.lastIndex);
-      }
-    }
-    return html;
-  }
-  var LEGACY_MODAL_TEMPLATE = [
-    "exportModal",
-    "shortcutsModal",
-    "userNameModal",
-    "loginModal",
-    "adminAuthModal",
-    "diffModal",
-    "ftt",
-    "notif",
-    "boardActionBar"
-  ].reduce(
-    (html, id) => removeElementById(html, id),
-    APP_TEMPLATE.slice(APP_TEMPLATE.indexOf('<div class="ov" id="editModal"'))
-  );
   function App() {
     (0, import_react11.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
-        console.error("[App] main.js \uCD08\uAE30\uD654 \uC2E4\uD328:", err);
+        console.error("[App] failed to initialize legacy bridge:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(AuthProvider, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Header, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(UpdateBanner, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(LayoutShell, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { dangerouslySetInnerHTML: { __html: LEGACY_MODAL_TEMPLATE } }),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(AppOverlays, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(BoardView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(DashboardView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ErrorBoundary, { level: "modal", label: "\uC124\uC815", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(SettingsPanel, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ErrorBoundary, { level: "modal", label: "\uD3B8\uC9D1 \uBAA8\uB2EC", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ItemModal, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ErrorBoundary, { level: "view", label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(MatrixView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ErrorBoundary, { level: "view", label: "\uB9AC\uC2A4\uD2B8 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ListView, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Header, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(UpdateBanner, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(LayoutShell, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { dangerouslySetInnerHTML: { __html: LEGACY_PORTAL_ROOTS } }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(AppOverlays, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(BoardView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(DashboardView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "modal", label: "\uC124\uC815", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(SettingsPanel, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "modal", label: "\uD3B8\uC9D1 \uBAA8\uB2EC", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ItemModal, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(MatrixView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uB9AC\uC2A4\uD2B8 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ListView, {}) })
     ] }) }) });
   }
 
   // main.jsx
-  var import_jsx_runtime20 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime21 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime20.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime21.jsx)(App, {}));
 })();
 /*! Bundled license information:
 

@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════
    SettingsPanel.jsx — 환경 설정 모달 React 컴포넌트
 
-   portal root: #settingsModal (App.jsx APP_TEMPLATE의 빈 컨테이너)
+   portal root: #settingsModal (App.jsx LEGACY_PORTAL_ROOTS의 빈 컨테이너)
    탭 상태: React useState (activeTab)
    설정값: Zustand store에서 직접 읽음 → syncSettingsUI() 불필요
    복잡한 서브에디터(colEditor, themeGrid 등): 여전히 vanilla innerHTML,
