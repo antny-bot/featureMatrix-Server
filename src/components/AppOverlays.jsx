@@ -4,8 +4,25 @@ import LoginModal from './LoginModal.jsx';
 import ShortcutsModal from './ShortcutsModal.jsx';
 import DiffModal from './DiffModal.jsx';
 import OverlayMenus from './OverlayMenus.jsx';
+import { useEffect, useRef, useState } from 'react';
 
 function UserNameModal() {
+  const [name, setName] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    window.__reactOpenUserNameModal = () => {
+      setName('');
+      window.openModal?.('userNameModal');
+      setTimeout(() => inputRef.current?.focus(), 120);
+    };
+    window.__reactGetUserNamePopup = () => name.trim();
+    return () => {
+      delete window.__reactOpenUserNameModal;
+      delete window.__reactGetUserNamePopup;
+    };
+  }, [name]);
+
   return (
     <div className="ov" id="userNameModal">
       <div className="mbox" style={{ width: '380px' }}>
@@ -19,6 +36,9 @@ function UserNameModal() {
           <input
             className="inp"
             id="userNamePopupInp"
+            ref={inputRef}
+            value={name}
+            onChange={event => setName(event.target.value)}
             placeholder="이름 입력"
             style={{ marginBottom: '6px' }}
             onKeyDown={e => { if (e.key === 'Enter') window.saveUserNamePopup?.(); }}

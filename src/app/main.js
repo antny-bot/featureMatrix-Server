@@ -358,12 +358,7 @@ window.saveServerSettings = async (nextSettings = null) => {
 function showUserNamePopup() {
   if (S.settings.storageMode !== 'server') return;
   if (S.settings.userName) return; // 이미 이름 있으면 생략
-  const modal = document.getElementById('userNameModal');
-  if (modal) {
-    document.getElementById('userNamePopupInp').value = '';
-    modal.classList.add('on');
-    setTimeout(() => document.getElementById('userNamePopupInp').focus(), 120);
-  }
+  window.__reactOpenUserNameModal?.();
 }
 
 window.syncEditorPwStatus = async () => {
@@ -467,7 +462,7 @@ async function init() {
 
   // 서버 모드에서 이름 없으면 팝업
   if (S.settings.storageMode === 'server' && !S.settings.userName) {
-    setTimeout(() => openModal('userNameModal'), 600);
+    setTimeout(() => window.__reactOpenUserNameModal?.(), 600);
   }
 
   // 필터 패널 섹션 접기/펼치기
@@ -480,11 +475,12 @@ init();
 /* ── 사용자 이름 팝업 저장 ── */
 window.saveUserNamePopup = (skip = false) => {
   if (!skip) {
-    const name = document.getElementById('userNamePopupInp')?.value.trim();
+    const name = window.__reactGetUserNamePopup?.() || '';
     if (name) {
       S.settings.userName = name;
       save();
       syncServerSettingsUI();
+      setStore({ settings: { ...S.settings } });
     }
   }
   closeModal('userNameModal');

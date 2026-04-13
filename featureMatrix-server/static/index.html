@@ -20521,7 +20521,7 @@ function __inlineNotify(msg, type) {
     startPolling();
     logActivity("\uC811\uC18D", `${S.items.length}\uAC1C \uD56D\uBAA9`);
     if (S.settings.storageMode === "server" && !S.settings.userName) {
-      setTimeout(() => openModal("userNameModal"), 600);
+      setTimeout(() => window.__reactOpenUserNameModal?.(), 600);
     }
     document.querySelectorAll("#fpanel .fsec-ttl").forEach((ttl) => {
       ttl.addEventListener("click", () => ttl.closest(".fsec").classList.toggle("sec-collapsed"));
@@ -20962,11 +20962,12 @@ function __inlineNotify(msg, type) {
       init();
       window.saveUserNamePopup = (skip = false) => {
         if (!skip) {
-          const name = document.getElementById("userNamePopupInp")?.value.trim();
+          const name = window.__reactGetUserNamePopup?.() || "";
           if (name) {
             S.settings.userName = name;
             save();
             syncServerSettingsUI();
+            setStore({ settings: { ...S.settings } });
           }
         }
         closeModal("userNameModal");
@@ -20978,7 +20979,7 @@ function __inlineNotify(msg, type) {
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react19 = __toESM(require_react());
+  var import_react20 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -24824,8 +24825,23 @@ ${sample}
   }
 
   // components/AppOverlays.jsx
+  var import_react18 = __toESM(require_react());
   var import_jsx_runtime26 = __toESM(require_jsx_runtime());
   function UserNameModal() {
+    const [name, setName] = (0, import_react18.useState)("");
+    const inputRef = (0, import_react18.useRef)(null);
+    (0, import_react18.useEffect)(() => {
+      window.__reactOpenUserNameModal = () => {
+        setName("");
+        window.openModal?.("userNameModal");
+        setTimeout(() => inputRef.current?.focus(), 120);
+      };
+      window.__reactGetUserNamePopup = () => name.trim();
+      return () => {
+        delete window.__reactOpenUserNameModal;
+        delete window.__reactGetUserNamePopup;
+      };
+    }, [name]);
     return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "ov", id: "userNameModal", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "mbox", style: { width: "380px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "mhd", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "mtitle", children: "\u{1F44B} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694" }) }),
       /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "mbody", children: [
@@ -24839,6 +24855,9 @@ ${sample}
           {
             className: "inp",
             id: "userNamePopupInp",
+            ref: inputRef,
+            value: name,
+            onChange: (event) => setName(event.target.value),
             placeholder: "\uC774\uB984 \uC785\uB825",
             style: { marginBottom: "6px" },
             onKeyDown: (e) => {
@@ -24869,9 +24888,9 @@ ${sample}
   }
 
   // components/ErrorBoundary.jsx
-  var import_react18 = __toESM(require_react());
+  var import_react19 = __toESM(require_react());
   var import_jsx_runtime27 = __toESM(require_jsx_runtime());
-  var ErrorBoundary = class extends import_react18.Component {
+  var ErrorBoundary = class extends import_react19.Component {
     constructor(props) {
       super(props);
       this.state = { hasError: false, error: null };
@@ -24956,7 +24975,7 @@ ${sample}
   // components/App.jsx
   var import_jsx_runtime28 = __toESM(require_jsx_runtime());
   function App() {
-    (0, import_react19.useEffect)(() => {
+    (0, import_react20.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] failed to initialize legacy bridge:", err);
       });
