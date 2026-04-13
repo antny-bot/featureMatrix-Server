@@ -195,13 +195,11 @@ export function renderAll(withFade = false) {
     syncToStore();
   };
   if (withFade && animOk('filter')) {
-    const area = document.getElementById('contentArea');
-    area.classList.add('fading');
+    setStore({ fadeState: 'fading' });
     setTimeout(() => {
       doRender();
-      area.classList.remove('fading');
-      area.classList.add('fading-in');
-      setTimeout(() => area.classList.remove('fading-in'), 200);
+      setStore({ fadeState: 'fading-in' });
+      setTimeout(() => setStore({ fadeState: '' }), 200);
     }, 150);
   } else { doRender(); }
 }

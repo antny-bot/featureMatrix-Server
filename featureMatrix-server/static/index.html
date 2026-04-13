@@ -17463,6 +17463,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         dragKey: null,
         dragCell: null,
         undoDepth: 0,
+        fadeState: "",
         // 서버 동기화 상태
         serverTs: 0,
         isLoading: false,
@@ -17487,6 +17488,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             setEditKey: (editKey) => set({ editKey }),
             setIsDragging: (isDragging) => set({ isDragging }),
             setUndoDepth: (undoDepth) => set({ undoDepth }),
+            setFadeState: (fadeState) => set({ fadeState }),
             setServerStatus: (serverStatus) => set({ serverStatus }),
             setIsLoading: (isLoading) => set({ isLoading }),
             setWsStatus: (wsStatus) => set({ wsStatus }),
@@ -18376,13 +18378,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       syncToStore();
     };
     if (withFade && animOk("filter")) {
-      const area = document.getElementById("contentArea");
-      area.classList.add("fading");
+      setStore({ fadeState: "fading" });
       setTimeout(() => {
         doRender();
-        area.classList.remove("fading");
-        area.classList.add("fading-in");
-        setTimeout(() => area.classList.remove("fading-in"), 200);
+        setStore({ fadeState: "fading-in" });
+        setTimeout(() => setStore({ fadeState: "" }), 200);
       }, 150);
     } else {
       doRender();
@@ -24174,9 +24174,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function LayoutShell() {
     const panelPos = useAppStore((s) => s.settings.panelPos);
     const view = useAppStore((s) => s.view);
+    const fadeState = useAppStore((s) => s.fadeState);
     return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: `layout${panelPos === "right" ? " pr" : ""}`, id: "layout", children: [
       /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(NavigationSide, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("main", { className: "content", id: "contentArea", style: { overflowY: view === "board" ? "hidden" : void 0 }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("main", { className: `content${fadeState ? ` ${fadeState}` : ""}`, id: "contentArea", style: { overflowY: view === "board" ? "hidden" : void 0 }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "dashboardView", style: { display: view === "dashboard" ? "" : "none" } }),
         /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "matrixView", className: "mwrap fluid", style: { display: view === "matrix" ? "" : "none" } }),
         /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(BulkActionBar, {}),
