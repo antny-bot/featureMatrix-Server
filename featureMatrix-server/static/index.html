@@ -19078,55 +19078,16 @@ function __inlineNotify(msg, type) {
     notify(it.isDelete === "Y" ? "\uC0AD\uC81C \uCC98\uB9AC\uB428." : "\uC0AD\uC81C \uBCF5\uC6D0\uB428.");
   }
   function closeCtxMenu() {
-    _ctxMenu?.remove();
-    _ctxMenu = null;
+    window.__reactCloseCtxMenu?.();
   }
   function openCtxMenu(e, key) {
-    e.preventDefault();
-    e.stopPropagation();
-    closeCtxMenu();
-    const it = findItem(key);
-    if (!it) return;
-    const menu = document.createElement("div");
-    menu.className = "ctx-menu";
-    menu.innerHTML = `
-    <button class="ctx-item" onclick="closeCtxMenu();openEditModal('${eattr(key)}')">\u270F\uFE0F \uD3B8\uC9D1</button>
-    <button class="ctx-item" onclick="closeCtxMenu();openEditOrMd('${eattr(key)}')">\u{1F4DD} \uB9C8\uD06C\uB2E4\uC6B4 \uC5F4\uAE30</button>
-    <button class="ctx-item" onclick="closeCtxMenu();duplicateItem('${eattr(key)}')">\u29C9 \uBCF5\uC81C</button>
-    <div class="ctx-sep"></div>
-    <button class="ctx-item danger" onclick="closeCtxMenu();quickToggleDel('${eattr(key)}')">${it.isDelete === "Y" ? "\u21A9 \uC0AD\uC81C \uBCF5\uC6D0" : "\u2715 \uC0AD\uC81C \uCC98\uB9AC"}</button>
-  `;
-    const x = Math.min(e.clientX, window.innerWidth - 160);
-    const y = Math.min(e.clientY, window.innerHeight - 180);
-    menu.style.left = x + "px";
-    menu.style.top = y + "px";
-    document.body.appendChild(menu);
-    _ctxMenu = menu;
-    setTimeout(() => document.addEventListener("click", closeCtxMenu, { once: true }), 0);
+    window.__reactOpenCtxMenu?.(e, key);
   }
   function closeStatusMenu() {
-    _statusMenu?.remove();
-    _statusMenu = null;
+    window.__reactCloseStatusMenu?.();
   }
   function openStatusMenu(e, key) {
-    e.stopPropagation();
-    closeStatusMenu();
-    closeCtxMenu();
-    const it = findItem(key);
-    if (!it) return;
-    const menu = document.createElement("div");
-    menu.className = "status-quick-menu";
-    const opts = [["", "\u2014 \uC5C6\uC74C"], ...STATUS_OPTS.map((s) => [s, s])];
-    menu.innerHTML = opts.map(
-      ([v, lbl]) => `<button class="status-quick-item${it.status === v ? " on" : ""}" onclick="setItemStatus('${eattr(key)}','${v}')">${lbl}</button>`
-    ).join("");
-    const x = Math.min(e.clientX, window.innerWidth - 120);
-    const y = Math.min(e.clientY + 4, window.innerHeight - 160);
-    menu.style.left = x + "px";
-    menu.style.top = y + "px";
-    document.body.appendChild(menu);
-    _statusMenu = menu;
-    setTimeout(() => document.addEventListener("click", closeStatusMenu, { once: true }), 0);
+    window.__reactOpenStatusMenu?.(e, key);
   }
   function setItemStatus(key, status) {
     closeStatusMenu();
@@ -19259,28 +19220,10 @@ function __inlineNotify(msg, type) {
     notify(keysToMove.size > 1 ? `${keysToMove.size}\uAC1C \uC774\uB3D9 \uC644\uB8CC.` : "\uC774\uB3D9 \uC644\uB8CC.");
   }
   function startTT(e, key) {
-    if (S.isDragging) return;
-    clearTT();
-    const item = findItem(key);
-    if (!item || !item.desc && !item.mdContent) return;
-    const mx = e.clientX, my = e.clientY;
-    S.ttTimer = setTimeout(() => {
-      if (S.isDragging) return;
-      const tt = document.getElementById("ftt");
-      tt.innerHTML = `<div class="tt-key">${esc(item.key)}</div><div class="tt-name">${esc(item.name)}</div>${(item.desc || "").replace(/\n/g, "<br>")}
-      ${item.owner ? `<div style="margin-top:4px;font-size:.69rem;color:var(--text-3)">\uB2F4\uB2F9: ${esc(normOwner(item.owner))}</div>` : ""}
-      ${item.mdContent ? '<div style="margin-top:4px;font-size:.68rem;color:var(--accent)">\u{1F4C4} MD \u2014 \uD074\uB9AD\uD558\uBA74 \uC5F4\uB9BC</div>' : ""}`;
-      tt.style.left = `${Math.min(mx + 14, window.innerWidth - 300)}px`;
-      tt.style.top = `${Math.min(my + 14, window.innerHeight - 150)}px`;
-      tt.classList.add("on");
-    }, 900);
+    window.__reactStartTT?.(e, key);
   }
   function clearTT() {
-    if (S.ttTimer) {
-      clearTimeout(S.ttTimer);
-      S.ttTimer = null;
-    }
-    document.getElementById("ftt")?.classList.remove("on");
+    window.__reactClearTT?.();
   }
   function copyPath(p) {
     navigator.clipboard?.writeText(p).then(() => notify("\uACBD\uB85C \uBCF5\uC0AC\uB428.")).catch(() => notify("\uBCF5\uC0AC \uC2E4\uD328", true));
@@ -19293,7 +19236,7 @@ function __inlineNotify(msg, type) {
     Object.assign(document.createElement("a"), { href: url2, download: filename }).click();
     URL.revokeObjectURL(url2);
   }
-  var closeModal, _ctxMenu, _statusMenu;
+  var closeModal;
   var init_modal = __esm({
     "app/modal.js"() {
       init_state();
@@ -19303,9 +19246,7 @@ function __inlineNotify(msg, type) {
       init_useAppStore();
       init_socket3();
       closeModal = (id) => document.getElementById(id)?.classList.remove("on");
-      _ctxMenu = null;
       window.closeCtxMenu = closeCtxMenu;
-      _statusMenu = null;
       window.openStatusMenu = openStatusMenu;
       window.setItemStatus = setItemStatus;
     }
@@ -21153,7 +21094,7 @@ function __inlineNotify(msg, type) {
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react16 = __toESM(require_react());
+  var import_react17 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -24617,18 +24558,144 @@ ${sample}
     ] }) });
   }
 
-  // components/AppOverlays.jsx
+  // components/OverlayMenus.jsx
+  var import_react15 = __toESM(require_react());
+  init_constants();
+  init_modal();
+  init_state();
   var import_jsx_runtime24 = __toESM(require_jsx_runtime());
+  function OverlayMenus() {
+    const [contextMenu, setContextMenu] = (0, import_react15.useState)(null);
+    const [statusMenu, setStatusMenu] = (0, import_react15.useState)(null);
+    const [tooltip, setTooltip] = (0, import_react15.useState)(null);
+    const tooltipTimer = (0, import_react15.useRef)(null);
+    const clearTooltip = () => {
+      if (tooltipTimer.current) {
+        clearTimeout(tooltipTimer.current);
+        tooltipTimer.current = null;
+      }
+      setTooltip(null);
+    };
+    (0, import_react15.useEffect)(() => {
+      window.__reactOpenCtxMenu = (event, key) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const item = findItem(key);
+        if (!item) return;
+        setStatusMenu(null);
+        setContextMenu({
+          key,
+          isDeleted: item.isDelete === "Y",
+          x: Math.min(event.clientX, window.innerWidth - 160),
+          y: Math.min(event.clientY, window.innerHeight - 180)
+        });
+      };
+      window.__reactCloseCtxMenu = () => setContextMenu(null);
+      window.__reactOpenStatusMenu = (event, key) => {
+        event.stopPropagation();
+        const item = findItem(key);
+        if (!item) return;
+        setContextMenu(null);
+        setStatusMenu({
+          key,
+          currentStatus: item.status || "",
+          x: Math.min(event.clientX, window.innerWidth - 120),
+          y: Math.min(event.clientY + 4, window.innerHeight - 160)
+        });
+      };
+      window.__reactCloseStatusMenu = () => setStatusMenu(null);
+      window.__reactStartTT = (event, key) => {
+        if (S.isDragging) return;
+        clearTooltip();
+        const item = findItem(key);
+        if (!item || !item.desc && !item.mdContent) return;
+        const x = Math.min(event.clientX + 14, window.innerWidth - 300);
+        const y = Math.min(event.clientY + 14, window.innerHeight - 150);
+        tooltipTimer.current = setTimeout(() => {
+          if (S.isDragging) return;
+          setTooltip({ item, x, y });
+        }, 900);
+      };
+      window.__reactClearTT = clearTooltip;
+      return () => {
+        delete window.__reactOpenCtxMenu;
+        delete window.__reactCloseCtxMenu;
+        delete window.__reactOpenStatusMenu;
+        delete window.__reactCloseStatusMenu;
+        delete window.__reactStartTT;
+        delete window.__reactClearTT;
+        clearTooltip();
+      };
+    }, []);
+    (0, import_react15.useEffect)(() => {
+      if (!contextMenu && !statusMenu) return void 0;
+      const closeMenus = () => {
+        setContextMenu(null);
+        setStatusMenu(null);
+      };
+      const timer = setTimeout(() => document.addEventListener("click", closeMenus, { once: true }), 0);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener("click", closeMenus);
+      };
+    }, [contextMenu, statusMenu]);
+    const runContextAction = (action) => {
+      setContextMenu(null);
+      action();
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)(import_jsx_runtime24.Fragment, { children: [
+      contextMenu && /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "ctx-menu", style: { left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }, onClick: (event) => event.stopPropagation(), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("button", { className: "ctx-item", onClick: () => runContextAction(() => openEditModal(contextMenu.key)), children: "\u270F\uFE0F \uD3B8\uC9D1" }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("button", { className: "ctx-item", onClick: () => runContextAction(() => openEditOrMd(contextMenu.key)), children: "\u{1F4DD} \uB9C8\uD06C\uB2E4\uC6B4 \uC5F4\uAE30" }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("button", { className: "ctx-item", onClick: () => runContextAction(() => duplicateItem(contextMenu.key)), children: "\u29C9 \uBCF5\uC81C" }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "ctx-sep" }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("button", { className: "ctx-item danger", onClick: () => runContextAction(() => quickToggleDel(contextMenu.key)), children: contextMenu.isDeleted ? "\u21A9 \uC0AD\uC81C \uBCF5\uC6D0" : "\u2715 \uC0AD\uC81C \uCC98\uB9AC" })
+      ] }),
+      statusMenu && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "status-quick-menu", style: { left: `${statusMenu.x}px`, top: `${statusMenu.y}px` }, onClick: (event) => event.stopPropagation(), children: [["", "\u2014 \uC5C6\uC74C"], ...STATUS_OPTS.map((status) => [status, status])].map(([value2, label]) => /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+        "button",
+        {
+          className: `status-quick-item${statusMenu.currentStatus === value2 ? " on" : ""}`,
+          onClick: () => {
+            setStatusMenu(null);
+            setItemStatus(statusMenu.key, value2);
+          },
+          children: label
+        },
+        value2 || "none"
+      )) }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+        "div",
+        {
+          className: `ftt${tooltip ? " on" : ""}`,
+          id: "ftt",
+          style: tooltip ? { left: `${tooltip.x}px`, top: `${tooltip.y}px` } : void 0,
+          children: tooltip && /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)(import_jsx_runtime24.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "tt-key", children: tooltip.item.key }),
+            /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "tt-name", children: tooltip.item.name }),
+            tooltip.item.desc && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { style: { whiteSpace: "pre-line" }, children: tooltip.item.desc }),
+            tooltip.item.owner && /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { style: { marginTop: "4px", fontSize: ".69rem", color: "var(--text-3)" }, children: [
+              "\uB2F4\uB2F9: ",
+              normOwner(tooltip.item.owner)
+            ] }),
+            tooltip.item.mdContent && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { style: { marginTop: "4px", fontSize: ".68rem", color: "var(--accent)" }, children: "\u{1F4C4} MD \u2014 \uD074\uB9AD\uD558\uBA74 \uC5F4\uB9BC" })
+          ] })
+        }
+      )
+    ] });
+  }
+
+  // components/AppOverlays.jsx
+  var import_jsx_runtime25 = __toESM(require_jsx_runtime());
   function UserNameModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "ov", id: "userNameModal", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "mbox", style: { width: "380px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "mhd", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "mtitle", children: "\u{1F44B} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694" }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "mbody", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("p", { style: { fontSize: ".85rem", color: "var(--text-2)", marginBottom: "14px", lineHeight: 1.7 }, children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "ov", id: "userNameModal", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "mbox", style: { width: "380px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "mhd", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "mtitle", children: "\u{1F44B} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694" }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "mbody", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("p", { style: { fontSize: ".85rem", color: "var(--text-2)", marginBottom: "14px", lineHeight: 1.7 }, children: [
           "\uB2E4\uB978 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uB204\uAC00 \uC218\uC815\uD588\uB294\uC9C0 \uD45C\uC2DC\uD569\uB2C8\uB2E4.",
-          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("br", {}),
-          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { style: { color: "var(--text-3)", fontSize: ".78rem" }, children: "\uC124\uC815 > \uC11C\uBC84 \uD0ED\uC5D0\uC11C \uC5B8\uC81C\uB4E0 \uBCC0\uACBD\uD560 \uC218 \uC788\uC5B4\uC694." })
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("br", {}),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { style: { color: "var(--text-3)", fontSize: ".78rem" }, children: "\uC124\uC815 > \uC11C\uBC84 \uD0ED\uC5D0\uC11C \uC5B8\uC81C\uB4E0 \uBCC0\uACBD\uD560 \uC218 \uC788\uC5B4\uC694." })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
           "input",
           {
             className: "inp",
@@ -24641,31 +24708,31 @@ ${sample}
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "mfoot", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.saveUserNamePopup?.(true), children: "\uB098\uC911\uC5D0" }),
-        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveUserNamePopup?.(), children: "\uD655\uC778" })
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "mfoot", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.saveUserNamePopup?.(true), children: "\uB098\uC911\uC5D0" }),
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveUserNamePopup?.(), children: "\uD655\uC778" })
       ] })
     ] }) });
   }
   function AppOverlays() {
-    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)(import_jsx_runtime24.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(ImportModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(ExportModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(ShortcutsModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(UserNameModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(LoginModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "ov", id: "adminAuthModal", style: { display: "none" } }),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(DiffModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "ftt", id: "ftt" }),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "notif", id: "notif" }),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { id: "boardActionBar", className: "board-action-bar" })
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(import_jsx_runtime25.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(ImportModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(ExportModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(ShortcutsModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(UserNameModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(LoginModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "ov", id: "adminAuthModal", style: { display: "none" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(DiffModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(OverlayMenus, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "notif", id: "notif" }),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { id: "boardActionBar", className: "board-action-bar" })
     ] });
   }
 
   // components/ErrorBoundary.jsx
-  var import_react15 = __toESM(require_react());
-  var import_jsx_runtime25 = __toESM(require_jsx_runtime());
-  var ErrorBoundary = class extends import_react15.Component {
+  var import_react16 = __toESM(require_react());
+  var import_jsx_runtime26 = __toESM(require_jsx_runtime());
+  var ErrorBoundary = class extends import_react16.Component {
     constructor(props) {
       super(props);
       this.state = { hasError: false, error: null };
@@ -24684,7 +24751,7 @@ ${sample}
       if (!this.state.hasError) return this.props.children;
       const { level = "view", label = "\uC601\uC5ED" } = this.props;
       if (level === "app") {
-        return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { style: {
+        return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { style: {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -24695,11 +24762,11 @@ ${sample}
           background: "var(--bg)",
           color: "var(--text)"
         }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { style: { fontSize: "2rem" }, children: "\u26A0" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { style: { fontSize: "1rem", fontWeight: 700 }, children: "\uC571\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { style: { fontSize: ".8rem", color: "var(--text-3)", maxWidth: "400px", textAlign: "center" }, children: this.state.error?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { style: { fontSize: "2rem" }, children: "\u26A0" }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { style: { fontSize: "1rem", fontWeight: 700 }, children: "\uC571\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4" }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { style: { fontSize: ".8rem", color: "var(--text-3)", maxWidth: "400px", textAlign: "center" }, children: this.state.error?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958" }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
               "button",
               {
                 onClick: () => this.handleReset(),
@@ -24707,7 +24774,7 @@ ${sample}
                 children: "\uB2E4\uC2DC \uC2DC\uB3C4"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
               "button",
               {
                 onClick: () => window.location.reload(),
@@ -24718,7 +24785,7 @@ ${sample}
           ] })
         ] });
       }
-      return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { style: {
+      return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { style: {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -24730,12 +24797,12 @@ ${sample}
         fontSize: ".8rem",
         textAlign: "center"
       }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { style: { fontSize: "1.2rem" }, children: "\u26A0" }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { style: { fontSize: "1.2rem" }, children: "\u26A0" }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { children: [
           label,
           " \uB80C\uB354\uB9C1 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4"
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
           "button",
           {
             onClick: () => this.handleReset(),
@@ -24748,33 +24815,33 @@ ${sample}
   };
 
   // components/App.jsx
-  var import_jsx_runtime26 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime27 = __toESM(require_jsx_runtime());
   function App() {
-    (0, import_react16.useEffect)(() => {
+    (0, import_react17.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] failed to initialize legacy bridge:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(AuthProvider, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(Header, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(UpdateBanner, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(LayoutShell, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "ov", id: "editModal" }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "ov", id: "settingsModal" }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(AppOverlays, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BoardView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(DashboardView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ErrorBoundary, { level: "modal", label: "\uC124\uC815", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(SettingsPanel, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ErrorBoundary, { level: "modal", label: "\uD3B8\uC9D1 \uBAA8\uB2EC", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ItemModal, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ErrorBoundary, { level: "view", label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(MatrixView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ErrorBoundary, { level: "view", label: "\uB9AC\uC2A4\uD2B8 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ListView, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(Header, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(UpdateBanner, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(LayoutShell, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "ov", id: "editModal" }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "ov", id: "settingsModal" }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(AppOverlays, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(BoardView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(DashboardView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ErrorBoundary, { level: "modal", label: "\uC124\uC815", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(SettingsPanel, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ErrorBoundary, { level: "modal", label: "\uD3B8\uC9D1 \uBAA8\uB2EC", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ItemModal, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ErrorBoundary, { level: "view", label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(MatrixView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ErrorBoundary, { level: "view", label: "\uB9AC\uC2A4\uD2B8 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ListView, {}) })
     ] }) }) });
   }
 
   // main.jsx
-  var import_jsx_runtime27 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime28 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime27.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime28.jsx)(App, {}));
 })();
 /*! Bundled license information:
 

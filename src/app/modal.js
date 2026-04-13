@@ -6,9 +6,9 @@
             + #5 표·수식 파서
 ══════════════════════════════════════════ */
 
-import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, logActivity, pushChangeLog, lockItem, unlockItem } from './state.js';
+import { S, save, pushUndo, genKey, findItem, esc, eattr, notify, logActivity, pushChangeLog, lockItem, unlockItem } from './state.js';
 import { renderAll, scheduleCardAnim, mxSel } from './render.js';
-import { STATUS_CLS, STATUS_LBL, STATUS_OPTS } from './constants.js';
+import { STATUS_CLS, STATUS_LBL } from './constants.js';
 import { requireAdmin, requireEditor, isEditor } from './admin.js';
 import { setStore, getStore } from '../store/useAppStore.js';
 import { emitSave } from './socket.js';
@@ -348,51 +348,18 @@ export function quickToggleDel(key) {
 }
 
 /* ── A - 우클릭 컨텍스트 메뉴 ── */
-let _ctxMenu = null;
-function closeCtxMenu() { _ctxMenu?.remove(); _ctxMenu = null; }
+function closeCtxMenu() { window.__reactCloseCtxMenu?.(); }
 
 export function openCtxMenu(e, key) {
-  e.preventDefault(); e.stopPropagation();
-  closeCtxMenu();
-  const it = findItem(key); if (!it) return;
-  const menu = document.createElement('div');
-  menu.className = 'ctx-menu';
-  menu.innerHTML = `
-    <button class="ctx-item" onclick="closeCtxMenu();openEditModal('${eattr(key)}')">✏️ 편집</button>
-    <button class="ctx-item" onclick="closeCtxMenu();openEditOrMd('${eattr(key)}')">📝 마크다운 열기</button>
-    <button class="ctx-item" onclick="closeCtxMenu();duplicateItem('${eattr(key)}')">⧉ 복제</button>
-    <div class="ctx-sep"></div>
-    <button class="ctx-item danger" onclick="closeCtxMenu();quickToggleDel('${eattr(key)}')">${it.isDelete==='Y'?'↩ 삭제 복원':'✕ 삭제 처리'}</button>
-  `;
-  const x = Math.min(e.clientX, window.innerWidth  - 160);
-  const y = Math.min(e.clientY, window.innerHeight - 180);
-  menu.style.left = x + 'px'; menu.style.top = y + 'px';
-  document.body.appendChild(menu);
-  _ctxMenu = menu;
-  setTimeout(() => document.addEventListener('click', closeCtxMenu, {once:true}), 0);
+  window.__reactOpenCtxMenu?.(e, key);
 }
 window.closeCtxMenu = closeCtxMenu;
 
 /* ── C - 빠른 상태 변경 ── */
-let _statusMenu = null;
-function closeStatusMenu() { _statusMenu?.remove(); _statusMenu = null; }
+function closeStatusMenu() { window.__reactCloseStatusMenu?.(); }
 
 export function openStatusMenu(e, key) {
-  e.stopPropagation();
-  closeStatusMenu(); closeCtxMenu();
-  const it = findItem(key); if (!it) return;
-  const menu = document.createElement('div');
-  menu.className = 'status-quick-menu';
-  const opts = [['', '— 없음'], ...STATUS_OPTS.map(s => [s, s])];
-  menu.innerHTML = opts.map(([v, lbl]) =>
-    `<button class="status-quick-item${it.status===v?' on':''}" onclick="setItemStatus('${eattr(key)}','${v}')">${lbl}</button>`
-  ).join('');
-  const x = Math.min(e.clientX, window.innerWidth  - 120);
-  const y = Math.min(e.clientY + 4, window.innerHeight - 160);
-  menu.style.left = x + 'px'; menu.style.top = y + 'px';
-  document.body.appendChild(menu);
-  _statusMenu = menu;
-  setTimeout(() => document.addEventListener('click', closeStatusMenu, {once:true}), 0);
+  window.__reactOpenStatusMenu?.(e, key);
 }
 window.openStatusMenu = openStatusMenu;
 
@@ -490,22 +457,9 @@ export function onDrop(e) {
 
 /* ── 툴팁 ── */
 export function startTT(e, key) {
-  if (S.isDragging) return; clearTT();
-  const item = findItem(key);
-  if (!item || (!item.desc && !item.mdContent)) return;
-  const mx = e.clientX, my = e.clientY;
-  S.ttTimer = setTimeout(() => {
-    if (S.isDragging) return;
-    const tt = document.getElementById('ftt');
-    tt.innerHTML = `<div class="tt-key">${esc(item.key)}</div><div class="tt-name">${esc(item.name)}</div>${(item.desc||'').replace(/\n/g,'<br>')}
-      ${item.owner ? `<div style="margin-top:4px;font-size:.69rem;color:var(--text-3)">담당: ${esc(normOwner(item.owner))}</div>` : ''}
-      ${item.mdContent ? '<div style="margin-top:4px;font-size:.68rem;color:var(--accent)">📄 MD — 클릭하면 열림</div>' : ''}`;
-    tt.style.left = `${Math.min(mx+14,window.innerWidth-300)}px`;
-    tt.style.top  = `${Math.min(my+14,window.innerHeight-150)}px`;
-    tt.classList.add('on');
-  }, 900);
+  window.__reactStartTT?.(e, key);
 }
-export function clearTT() { if(S.ttTimer){clearTimeout(S.ttTimer);S.ttTimer=null;} document.getElementById('ftt')?.classList.remove('on'); }
+export function clearTT() { window.__reactClearTT?.(); }
 export function copyPath(p) { navigator.clipboard?.writeText(p).then(()=>notify('경로 복사됨.')).catch(()=>notify('복사 실패',true)); }
 
 function sanitizeFilename(str) { return (str||'').replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,'_').slice(0,80); }

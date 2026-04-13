@@ -3,6 +3,7 @@ import ImportModal from './ImportModal.jsx';
 import LoginModal from './LoginModal.jsx';
 import ShortcutsModal from './ShortcutsModal.jsx';
 import DiffModal from './DiffModal.jsx';
+import OverlayMenus from './OverlayMenus.jsx';
 
 function UserNameModal() {
   return (
@@ -42,7 +43,7 @@ export default function AppOverlays() {
       <LoginModal />
       <div className="ov" id="adminAuthModal" style={{ display: 'none' }} />
       <DiffModal />
-      <div className="ftt" id="ftt" />
+      <OverlayMenus />
       <div className="notif" id="notif" />
       <div id="boardActionBar" className="board-action-bar" />
     </>
