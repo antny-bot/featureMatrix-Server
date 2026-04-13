@@ -10,6 +10,7 @@ import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, log
 import { renderAll, scheduleCardAnim, mxSel } from './render.js';
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS } from './constants.js';
 import { requireAdmin, requireEditor, isEditor } from './admin.js';
+import { setStore } from '../store/useAppStore.js';
 
 export function openModal(id) {
   const el = document.getElementById(id);
@@ -182,6 +183,7 @@ function renderKatex(container) {
 /* ── 모달 열기: 편집 ── */
 export function openEditModal(key) {
   S.editKey = key;
+  setStore({ editKey: key });
   const item = findItem(key);
   if (!item) return;
   const fm = {
@@ -207,6 +209,7 @@ export function openEditModal(key) {
 export function openAddModal() {
   if (!isEditor()) { requireEditor(openAddModal); return; }
   S.editKey = null;
+  setStore({ editKey: null });
   ['fName','fDesc','fPath','fGroup','fSubGroup','fCat','fSubCat','fOwner','fRel','fMemo','fMdContent']
     .forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('fStatus').value  = '';
@@ -289,7 +292,7 @@ export function saveItem() {
     notify('기능이 추가되었습니다.');
     scheduleCardAnim();
   }
-  closeModal('editModal'); unlockItem(S.editKey); save(); renderAll();
+  closeModal('editModal'); unlockItem(S.editKey); setStore({ editKey: null }); S.editKey = null; save(); renderAll();
 }
 
 export function hardDelete() {
@@ -301,7 +304,7 @@ export function hardDelete() {
     logActivity('완전삭제', `${S.editKey} ${it?.name||''}`);
     pushChangeLog('완전삭제', S.editKey, it?.name || S.editKey);
     S.items = S.items.filter(it => it.key !== S.editKey);
-    closeModal('editModal'); unlockItem(S.editKey); save(); renderAll(); notify('완전 삭제되었습니다.');
+    closeModal('editModal'); unlockItem(S.editKey); setStore({ editKey: null }); S.editKey = null; save(); renderAll(); notify('완전 삭제되었습니다.');
   });
 }
 
@@ -404,7 +407,7 @@ export function expSingleMd() {
 
 /* ── 드래그 & 드롭 ── */
 export function onDS(e, key) {
-  S.isDragging=true; clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move';
+  S.isDragging=true; setStore({ isDragging: true }); clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move';
   if (mxSel.size > 0 && !mxSel.has(key)) {
     mxSel.forEach(k => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => c.classList.remove('mxsel')));
     mxSel.clear();
@@ -416,7 +419,7 @@ export function onDS(e, key) {
   }
 }
 export function onDEnd(e) {
-  S.isDragging=false;
+  S.isDragging=false; setStore({ isDragging: false });
   document.querySelectorAll('.mitem.dragging').forEach(c => c.classList.remove('dragging'));
   if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;}
 }

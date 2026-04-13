@@ -9,6 +9,7 @@ import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
          loadFromServer, saveToServer, logActivity, notify, apiFetch, fmtDate,
          lockItem, unlockItem, updateLocks, editLocks } from './state.js';
 import { initSocket, disconnectSocket, isSocketConnected } from './socket.js';
+import { setStore } from '../store/useAppStore.js';
 import { isAdmin, isEditor, requireAdmin, requireEditor,
          openLoginModal, closeLoginModal, submitLogin,
          adminLogout, logout, updateAdminUI, getAdminToken, getEditorToken,
@@ -230,6 +231,7 @@ window.togglePanel = () => {
   S.settings.panelVisible = !S.settings.panelVisible;
   document.getElementById('fpanel').classList.toggle('collapsed', !S.settings.panelVisible);
   save();
+  setStore({ settings: { ...S.settings } });
 };
 
 /* ── 키보드 단축키 ── */
@@ -487,6 +489,7 @@ const DB_SECTION_LABELS = { stats: '스탯 카드 4개', insight: '그룹 진척
 window.saveDbSettings = () => {
   S.settings.dbHeroName = document.getElementById('dbHeroName')?.value || '';
   save();
+  setStore({ settings: { ...S.settings } });
   if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
 };
 
@@ -498,6 +501,7 @@ window.dbSectionMove = (idx, dir) => {
   S.settings.dbSections = secs;
   renderDbSectionOrder();
   save();
+  setStore({ settings: { ...S.settings } });
   if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
 };
 
@@ -546,6 +550,7 @@ window.dbSecDrop = (e, toIdx) => {
   secs.splice(toIdx, 0, moved);
   S.settings.dbSections = secs;
   save();
+  setStore({ settings: { ...S.settings } });
   if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
   renderDbSectionOrder();
 };

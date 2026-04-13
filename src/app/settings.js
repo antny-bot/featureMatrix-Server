@@ -99,13 +99,13 @@ export function renderColEditor() {
   ).join('');
 }
 
-export function toggleColVisible(idx, checked) { S.settings.listColumns[idx].visible = checked; save(); if (S.view==='list') renderList(); }
+export function toggleColVisible(idx, checked) { S.settings.listColumns[idx].visible = checked; save(); setStore({ settings: { ...S.settings } }); if (S.view==='list') renderList(); }
 export function colDragStart(e, idx)  { _colDragIdx=idx; e.currentTarget.classList.add('dragging-col'); e.dataTransfer.effectAllowed='move'; }
 export function colDragOver(e, idx)   { e.preventDefault(); if(idx===_colDragIdx)return; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('drag-over-col')); e.currentTarget.classList.add('drag-over-col'); }
 export function colDragLeave(e)       { e.currentTarget.classList.remove('drag-over-col'); }
-export function colDrop(e, toIdx)     { e.preventDefault(); if(_colDragIdx===null||_colDragIdx===toIdx)return; const cols=[...S.settings.listColumns]; const[moved]=cols.splice(_colDragIdx,1); cols.splice(toIdx,0,moved); S.settings.listColumns=cols; save(); renderColEditor(); if(S.view==='list')renderList(); }
+export function colDrop(e, toIdx)     { e.preventDefault(); if(_colDragIdx===null||_colDragIdx===toIdx)return; const cols=[...S.settings.listColumns]; const[moved]=cols.splice(_colDragIdx,1); cols.splice(toIdx,0,moved); S.settings.listColumns=cols; save(); setStore({ settings: { ...S.settings } }); renderColEditor(); if(S.view==='list')renderList(); }
 export function colDragEnd()          { _colDragIdx=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }
-export function resetListCols()       { S.settings.listColumns=JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)); save(); renderColEditor(); if(S.view==='list')renderList(); notify('리스트 컬럼을 기본값으로 복원했습니다.'); }
+export function resetListCols()       { S.settings.listColumns=JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)); save(); setStore({ settings: { ...S.settings } }); renderColEditor(); if(S.view==='list')renderList(); notify('리스트 컬럼을 기본값으로 복원했습니다.'); }
 
 /* ── 그룹/카테고리 순서 관리 ── */
 let _axisDragIdx = null, _axisField = null;
@@ -147,11 +147,12 @@ export function axisDrop(e, field, toIdx) {
   list.splice(toIdx, 0, moved);
   S.settings[orderKey] = list;
   save();
+  setStore({ settings: { ...S.settings } });
   renderAxisEditor();
   if (S.view === 'matrix') renderMatrix();
 }
 export function axisDragEnd() { _axisDragIdx=null; _axisField=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }
-export function resetAxisOrder() { S.settings.groupOrder=[]; S.settings.catOrder=[]; save(); renderAxisEditor(); if(S.view==='matrix')renderMatrix(); notify('축 순서를 자동 정렬로 초기화했습니다.'); }
+export function resetAxisOrder() { S.settings.groupOrder=[]; S.settings.catOrder=[]; save(); setStore({ settings: { ...S.settings } }); renderAxisEditor(); if(S.view==='matrix')renderMatrix(); notify('축 순서를 자동 정렬로 초기화했습니다.'); }
 
 /* ── 설정 JSON Import / Export ── */
 export function expSettJSON() {

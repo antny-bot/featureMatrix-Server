@@ -11,6 +11,7 @@
 ══════════════════════════════════════════ */
 
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 import { SK, DEFAULT_LIST_COLS, DATA_VERSION, MIGRATIONS } from '../app/constants.js';
 import { apiFetch } from '../app/state.js';  // Phase 4 전까지 API 함수 재사용
 
@@ -73,7 +74,9 @@ const initialState = {
 };
 
 /* ── Zustand 스토어 ── */
-export const useAppStore = create((set, get) => ({
+export const useAppStore = create(
+  devtools(
+    (set, get) => ({
   ...initialState,
 
   /* ── 기본 setter들 ── */
@@ -147,7 +150,16 @@ export const useAppStore = create((set, get) => ({
       editLocks:  { ...S.editLocks },
     });
   },
-}));
+}),
+    {
+      name: 'featureMatrix',
+      // process.env.NODE_ENV는 빌드 시 esbuild define으로 치환됨
+      enabled: typeof process !== 'undefined'
+        ? process.env.NODE_ENV !== 'production'
+        : true,
+    }
+  )
+);
 
 /* ── 스냅샷 헬퍼 (React 외부에서 사용) ── */
 export const getStore = () => useAppStore.getState();

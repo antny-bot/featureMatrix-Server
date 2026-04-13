@@ -84,6 +84,8 @@ async function build() {
       __APP_VERSION__: JSON.stringify(version),
       __BUILD_ID__:    JSON.stringify(buildId),
       __GIT_HASH__:    JSON.stringify(gitHash),
+      // Zustand devtools 프로덕션 비활성화
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
     },
     plugins: [],
   });
