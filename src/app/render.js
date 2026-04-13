@@ -2,15 +2,9 @@
    render.js — 매트릭스·리스트 렌더, 통계, 필터 UI
 ══════════════════════════════════════════ */
 
-import { STATUS_CLS, STATUS_LBL } from './constants.js';
-import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate } from './state.js';
-import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
-import { isEditor } from './admin.js';
-import { setStore, getStore } from '../store/useAppStore.js';
-
-// Zustand store에서 실시간 editLocks/previews 읽기 헬퍼
-const getEditLocks  = () => getStore().editLocks  || {};
-const getPreviews   = () => getStore().previews   || {};
+import { S, eattr, normOwner } from './state.js';
+import { renderPrioStyleRows } from './theme.js';
+import { setStore } from '../store/useAppStore.js';
 
 /* ── Zustand 동기화: renderAll() 후 React 컴포넌트에 S 상태 반영 ── */
 function syncToStore() {
@@ -35,9 +29,9 @@ export function animOk(k) {
   return a.enabled && (k ? !!a[k] : true);
 }
 
-/* 카드 등장 애니메이션은 의도적 진입(초기 로드·항목 추가)에만 허용 */
-let _cardAnimEnabled = false;
-export function scheduleCardAnim() { _cardAnimEnabled = true; }
+export function scheduleCardAnim() {
+  setStore({ items: [...S.items] });
+}
 
 /* ── CountUp ── */
 const _cu = {};
@@ -98,11 +92,13 @@ export function mxCardClick(e, key) {
     mxSel.add(key);
     _mxCards(key).forEach(c => c.classList.add('mxsel'));
   }
+  window.dispatchEvent(new CustomEvent('mxSelChange', { detail: { sel: [...mxSel] } }));
 }
 
 export function mxClearSel() {
   mxSel.forEach(k => _mxCards(k).forEach(c => c.classList.remove('mxsel')));
   mxSel.clear();
+  window.dispatchEvent(new CustomEvent('mxSelChange', { detail: { sel: [] } }));
 }
 
 /* 필드 별칭 → 아이템 키 매핑 */
@@ -136,13 +132,7 @@ function matchesSearch(it, q) {
   });
 }
 
-function hlSearch(text, q) {
-  if (!q || !text) return esc(text);
-  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-  return esc(text).replace(re, '<mark class="search-hl">$1</mark>');
-}
-
-function sortCell(arr) {
+export function sortCell(arr) {
   const po = {'상':0,'중':1,'하':2};
   return arr.slice().sort((a,b) => {
     const pa = po[a.priority]??3, pb = po[b.priority]??3;
@@ -161,7 +151,7 @@ export function getUniqSorted(field, items) {
   return res.sort((a,b) => { try { return a.localeCompare(b,'ko'); } catch { return a < b ? -1 : 1; } });
 }
 
-function buildStruct(items) {
+export function buildStruct(items) {
   const gm = {}, cm = {};
   items.forEach(it => {
     const g = it.group||'(미분류)', sg = it.subGroup||'', c = it.category||'(미분류)', sc = it.subCategory||'';
@@ -257,181 +247,11 @@ export function renderStats() {
   if (fb) fb.className = 'fbadge' + (isFilterActive() ? ' on' : '');
 }
 
-/* ── 매트릭스 ── */
-/* ── 매트릭스 HTML 빌드 — MatrixView.jsx에서 호출 (expandedCells를 인자로 받음) ── */
-export function buildMatrixHtml(expandedCells) {
-  const items = getFiltered();
-  if (!items.length) {
-    return S.settings.storageMode === 'server'
-      ? '<div class="empty"><div style="font-size:2rem;opacity:.3">🌐</div><div style="font-size:.875rem;text-align:center">서버에 데이터가 없거나 연결을 확인해주세요.<br><span style="font-size:.75rem;color:var(--text-3)">관리자에게 문의하거나 로그인 후 다시 시도하세요.</span></div></div>'
-      : '<div class="empty"><div style="font-size:2rem;opacity:.3">📋</div><div style="font-size:.875rem;text-align:center">표시할 기능이 없습니다.</div></div>';
-  }
-  const st = buildStruct(items);
-  const cm  = {};
-  items.forEach(it => {
-    const ck = `${it.group||'(미분류)'}|||${it.subGroup||''}|||${it.category||'(미분류)'}|||${it.subCategory||''}`;
-    if (!cm[ck]) cm[ck] = [];
-    cm[ck].push(it);
-  });
-  Object.keys(cm).forEach(k => { cm[k] = sortCell(cm[k]); });
-
-  const c = getColors();
-  const showCnt = S.display.showCellCount;
-
-  const gCnt = {}, sgCnt = {}, catCnt = {}, scCnt = {};
-  items.forEach(it => {
-    const g   = it.group||'(미분류)', sg = `${g}|||${it.subGroup||''}`;
-    const cat = it.category||'(미분류)', sc = `${cat}|||${it.subCategory||''}`;
-    gCnt[g]    = (gCnt[g]   ||0)+1;
-    sgCnt[sg]  = (sgCnt[sg] ||0)+1;
-    catCnt[cat]= (catCnt[cat]||0)+1;
-    scCnt[sc]  = (scCnt[sc] ||0)+1;
-  });
-  const badge = n => `<span class="gcnt">${n}</span>`;
-
-  const ss = S.settings;
-  const totalSubCols = st.groups.reduce((acc, gn) => acc + st.gsubs[gn].length, 0);
-  const tableMinW = (ss.catW || 12) + (ss.subCatW || 72) + totalSubCols * (ss.colW || 130);
-  const catW = ss.catW || 12, subCatW = ss.subCatW || 72;
-
-  let h = `<div class="mscroll"><table class="mtable" style="min-width:${tableMinW}px"><thead class="mx-thead-sticky"><tr>`;
-  h += `<th class="m-corner" rowspan="2" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px"></th><th class="m-corner" rowspan="2" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px"></th>`;
-  st.groups.forEach(gn => {
-    h += `<th class="m-ghd" colspan="${st.gsubs[gn].length}">${esc(gn)}${showCnt ? badge(gCnt[gn]||0) : ''}</th>`;
-  });
-  h += '</tr><tr>';
-  st.groups.forEach(gn => {
-    st.gsubs[gn].forEach(sg => {
-      const sgKey = `${gn}|||${sg}`;
-      h += `<th class="m-sghd">${esc(sg||'—')}${showCnt ? badge(sgCnt[sgKey]||0) : ''}</th>`;
-    });
-  });
-  h += '</tr></thead><tbody>';
-
-  st.cats.forEach(cn => {
-    const scA = st.csubs[cn];
-    scA.forEach((scn, sci) => {
-      h += '<tr>';
-      if (sci === 0) {
-        h += `<td class="m-cathd" rowspan="${scA.length}" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px">${esc(cn)}${showCnt ? badge(catCnt[cn]||0) : ''}</td>`;
-      }
-      const scKey = `${cn}|||${scn}`;
-      h += `<td class="m-subcat" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px">${esc(scn||'—')}${showCnt ? badge(scCnt[scKey]||0) : ''}</td>`;
-
-      st.groups.forEach(gn => {
-        st.gsubs[gn].forEach(sg => {
-          const ck    = `${gn}|||${sg}|||${cn}|||${scn}`;
-          const ci    = cm[ck] || [];
-          const fold  = S.settings.cellFold;
-          const isExp = expandedCells.has(ck) || !!S.searchQ || fold === 0;
-          const show  = isExp ? ci : ci.slice(0, fold);
-          const hidden = ci.length - show.length;
-          const doCardAnim = animOk('card') && _cardAnimEnabled;
-          h += `<td class="m-cell${doCardAnim ? ' anim-card-entrance' : ''}" style="background:var(--bg)"
-            data-g="${eattr(gn)}" data-sg="${eattr(sg)}" data-c="${eattr(cn)}" data-sc="${eattr(scn)}"
-            ondragenter="onDE(event)" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onDrop(event)">`;
-          show.forEach((it, ii) => { h += renderCard(it, c, doCardAnim ? ii : -1, { onclick: `mxCardClick(event,'${eattr(it.key)}')`, ondblclick: `openEditOrMd('${eattr(it.key)}')`, extraClass: mxSel.has(it.key) ? 'mxsel' : '' }); });
-          if (hidden > 0)
-            h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">▼ ${hidden}개 더보기</button>`;
-          if (isExp && ci.length > fold && fold > 0)
-            h += `<button class="cell-more-btn" onclick="collapseCell(event,'${eattr(ck)}')">▲ 접기</button>`;
-          if (isEditor() && S.display.showQuickAdd) {
-            h += `<button class="cell-quick-add-btn" onclick="event.stopPropagation();openAddInCell('${eattr(gn)}','${eattr(sg)}','${eattr(cn)}','${eattr(scn)}')">+ 추가</button>`;
-          }
-          h += '</td>';
-        });
-      });
-      h += '</tr>';
-    });
-  });
-  h += '</tbody></table></div>';
-  _cardAnimEnabled = false;
-  return h;
-}
-
 /* ── 매트릭스 렌더 — MatrixView.jsx React 포털로 위임, syncToStore()만 호출 ── */
 export function renderMatrix() { syncToStore(); }
 
 export function expandCell(e, ck)   { e.stopPropagation(); syncToStore(); }
 export function collapseCell(e, ck) { e.stopPropagation(); syncToStore(); }
-
-/* ── 카드 HTML ── */
-export function renderCard(item, c, si = -1, overrides = {}) {
-  const pk    = getPK(item.priority), pkC = pk[0].toUpperCase() + pk.slice(1);
-  const pHex  = c[`p${pkC}`]   || '#888';
-  const pBg   = c[`p${pkC}Bg`] || '#eee';
-  const css   = `${getPresetCSS(S.settings.priorityStyles[pk], pHex, pBg)};border-radius:${S.settings.cardRadius}px;margin-bottom:${S.settings.cardGap}px;`;
-  const isNew = item.key?.charAt(0) === 'N';
-  const isDel = item.isDelete === 'Y';
-  const delay = si >= 0 ? `animation-delay:${si * 40}ms;` : '';
-  const delStyle   = isDel ? 'text-decoration:line-through;color:var(--text-3);' : '';
-  const ownerColor = getOwnerColor(item.owner);
-  const nameHl     = S.searchQ ? hlSearch(item.name, S.searchQ) : esc(item.name);
-  /* C - 상태 뱃지 클릭으로 빠른 상태 변경 */
-  const statusHtml = S.display.showStatus
-    ? (item.status
-      ? `<span class="status-badge ${STATUS_CLS[item.status]||''}" onclick="event.stopPropagation();openStatusMenu(event,'${eattr(item.key)}')">${STATUS_LBL[item.status]||esc(item.status)}</span>`
-      : `<span class="status-badge" style="background:var(--surface-3);color:var(--text-3);opacity:.6" onclick="event.stopPropagation();openStatusMenu(event,'${eattr(item.key)}')">—</span>`)
-    : '';
-  const mdBadge = (S.display.showMdBadge && item.mdContent)
-    ? `<span class="md-badge" onclick="event.stopPropagation();openMdModal('${eattr(item.key)}')" title="마크다운 보기" style="cursor:pointer">MD</span>`
-    : '';
-  const updatedHtml = S.display.showUpdated && item.updatedAt ? `<div class="item-updated">${fmtDate(item.updatedAt)}</div>` : '';
-  const ownerHtml   = S.display.showOwner ? `<div class="item-owner"><span class="owner-dot" style="background:${ownerColor}"></span>${esc(normOwner(item.owner))}</div>` : '';
-  /* 편집 중 락 배지 + 미리보기 오버레이 */
-  const editLocksNow = getEditLocks();
-  const previewsNow  = getPreviews();
-  const lockInfo     = editLocksNow[item.key];
-  const myName       = S.settings.userName || '익명';
-  const isLockedByOther = lockInfo && lockInfo.user !== myName;
-  const lockBadge = isLockedByOther
-    ? `<div style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:6px 6px 0 0;pointer-events:none">🔒 ${esc(lockInfo.user)} 편집 중</div>`
-    : '';
-  // 편집 미리보기 툴팁 (호버 시 표시)
-  const previewData = isLockedByOther ? previewsNow[item.key] : null;
-  const previewHtml = previewData ? (() => {
-    const p = previewData.preview || {};
-    const rows = [
-      p.name     && p.name     !== item.name     ? `<div>기능명: <b>${esc(p.name)}</b></div>` : '',
-      p.priority && p.priority !== item.priority ? `<div>우선순위: <b>${esc(p.priority)}</b></div>` : '',
-      p.status   && p.status   !== item.status   ? `<div>상태: <b>${esc(p.status)}</b></div>` : '',
-      p.owner    && p.owner    !== item.owner    ? `<div>담당자: <b>${esc(p.owner)}</b></div>` : '',
-      p.group    && p.group    !== item.group    ? `<div>그룹: <b>${esc(p.group)}</b></div>` : '',
-      p.subGroup && p.subGroup !== item.subGroup ? `<div>서브그룹: <b>${esc(p.subGroup)}</b></div>` : '',
-      p.category && p.category !== item.category ? `<div>카테고리: <b>${esc(p.category)}</b></div>` : '',
-      p.subCategory && p.subCategory !== item.subCategory ? `<div>서브카테고리: <b>${esc(p.subCategory)}</b></div>` : '',
-    ].filter(Boolean).join('');
-    if (!rows) return '';
-    return `<div class="edit-preview-overlay"><div style="font-weight:700;margin-bottom:4px">✏ ${esc(lockInfo.user)} 편집 중</div>${rows}</div>`;
-  })() : '';
-
-  const actions = `<div class="card-actions" onclick="event.stopPropagation()">
-    <button class="card-act-btn" title="편집"    onclick="openEditModal('${eattr(item.key)}')">✏</button>
-    <button class="card-act-btn" title="복제"    onclick="duplicateItem('${eattr(item.key)}')">⧉</button>
-  </div>`;
-  const extraClass   = overrides.extraClass  ? ' ' + overrides.extraClass : '';
-  const idAttr       = overrides.id          ? ` id="${overrides.id}"` : '';
-  const dragStart    = overrides.ondragstart ?? `onDS(event,'${eattr(item.key)}')`;
-  const dragEnd      = overrides.ondragend   ?? 'onDEnd(event)';
-  const clickHandler = overrides.onclick     ?? `openEditOrMd('${eattr(item.key)}')`;
-  const dblClick     = overrides.ondblclick  ? ` ondblclick="${overrides.ondblclick}"` : '';
-  const canDrag = isEditor();
-  return `<div class="mitem${isDel?' item-del':''}${isLockedByOther ? ' item-locked' : ''}${extraClass}" draggable="${canDrag}" data-key="${eattr(item.key)}"${idAttr}
-    style="${css}${delay}"
-    ondragstart="${canDrag ? dragStart : ''}" ondragend="${canDrag ? dragEnd : ''}"
-    onmouseover="startTT(event,'${eattr(item.key)}')" onmouseout="clearTT()"
-    onclick="${clickHandler}"${dblClick}
-    oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${previewHtml}${actions}
-  <div class="item-hd">
-    <span class="item-key">${esc(item.key)}</span>
-    ${item.isImportant==='Y'&&S.display.showStar ? '<span class="item-star">★</span>' : ''}
-    ${isNew&&S.display.showNewBadge ? '<span class="item-nbadge">N</span>' : ''}
-    ${mdBadge}${statusHtml}
-  </div>
-  <div class="item-name" style="${delStyle}">${nameHl}</div>
-  ${ownerHtml}${updatedHtml}
-</div>`;
-}
 
 /* ── 리스트 뷰 ── */
 export function getVisibleCols() { return S.settings.listColumns.filter(c => c.visible); }

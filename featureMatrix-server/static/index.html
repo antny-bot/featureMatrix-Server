@@ -18351,6 +18351,342 @@ function __inlineNotify(msg, type) {
     }
   });
 
+  // app/render.js
+  function syncToStore() {
+    setStore({
+      items: S.items,
+      changeLog: S.changeLog,
+      view: S.view,
+      searchQ: S.searchQ,
+      filters: { ...S.filters },
+      display: { ...S.display },
+      settings: { ...S.settings },
+      sort: { ...S.sort },
+      editKey: S.editKey
+    });
+  }
+  function animOk(k) {
+    if (prefersReduced) return false;
+    const a = S.settings.animations;
+    return a.enabled && (k ? !!a[k] : true);
+  }
+  function scheduleCardAnim() {
+    setStore({ items: [...S.items] });
+  }
+  function countUp(id, target) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!animOk("countUp")) {
+      el.textContent = target;
+      return;
+    }
+    const start = parseInt(el.textContent, 10) || 0;
+    if (start === target) return;
+    if (_cu[id]) cancelAnimationFrame(_cu[id]);
+    const dur = 500, t0 = performance.now();
+    function step(now) {
+      const t = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - t, 4);
+      el.textContent = Math.round(start + (target - start) * e);
+      if (t < 1) {
+        _cu[id] = requestAnimationFrame(step);
+      } else {
+        el.textContent = target;
+        el.classList.remove("bump");
+        void el.offsetWidth;
+        el.classList.add("bump");
+      }
+    }
+    _cu[id] = requestAnimationFrame(step);
+  }
+  function getFiltered() {
+    const { priorities, statuses, showDeleted, importantOnly, owners } = S.filters;
+    return S.items.filter((it) => {
+      if (!showDeleted && it.isDelete === "Y") return false;
+      if (importantOnly && it.isImportant !== "Y") return false;
+      if (priorities.length > 0 && !priorities.includes(it.priority)) return false;
+      if (owners.length > 0 && !owners.includes(normOwner(it.owner))) return false;
+      if (statuses && statuses.length > 0 && it.status && !statuses.includes(it.status)) return false;
+      if (S.searchQ && !matchesSearch(it, S.searchQ)) return false;
+      return true;
+    });
+  }
+  function _mxCards(key) {
+    return document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`);
+  }
+  function mxCardClick(e, key) {
+    if (e.shiftKey) {
+      if (mxSel.has(key)) {
+        mxSel.delete(key);
+        _mxCards(key).forEach((c) => c.classList.remove("mxsel"));
+      } else {
+        mxSel.add(key);
+        _mxCards(key).forEach((c) => c.classList.add("mxsel"));
+      }
+    } else {
+      mxSel.forEach((k) => _mxCards(k).forEach((c) => c.classList.remove("mxsel")));
+      mxSel.clear();
+      mxSel.add(key);
+      _mxCards(key).forEach((c) => c.classList.add("mxsel"));
+    }
+    window.dispatchEvent(new CustomEvent("mxSelChange", { detail: { sel: [...mxSel] } }));
+  }
+  function mxClearSel() {
+    mxSel.forEach((k) => _mxCards(k).forEach((c) => c.classList.remove("mxsel")));
+    mxSel.clear();
+    window.dispatchEvent(new CustomEvent("mxSelChange", { detail: { sel: [] } }));
+  }
+  function matchesSearch(it, q) {
+    const tokens = q.trim().split(/\s+/);
+    return tokens.every((tok) => {
+      const colon = tok.indexOf(":");
+      if (colon > 0) {
+        const alias = tok.slice(0, colon).toLowerCase();
+        const val = tok.slice(colon + 1).toLowerCase();
+        const field = SEARCH_FIELD_MAP[alias];
+        if (field) return (it[field] || "").toLowerCase().includes(val);
+      }
+      const lq = tok.toLowerCase();
+      return [it.key, it.name, it.owner, it.path, it.desc, it.group, it.subGroup, it.category, it.subCategory].some((v) => (v || "").toLowerCase().includes(lq));
+    });
+  }
+  function sortCell(arr) {
+    const po = { "\uC0C1": 0, "\uC911": 1, "\uD558": 2 };
+    return arr.slice().sort((a, b) => {
+      const pa = po[a.priority] ?? 3, pb = po[b.priority] ?? 3;
+      if (pa !== pb) return pa - pb;
+      if (a.isDelete !== b.isDelete) return a.isDelete === "Y" ? 1 : -1;
+      return 0;
+    });
+  }
+  function getUniqSorted(field, items) {
+    const seen = /* @__PURE__ */ new Set(), res = [];
+    items.forEach((it) => {
+      const v = field === "owner" ? normOwner(it[field]) : it[field] || "(\uBBF8\uBD84\uB958)";
+      if (!seen.has(v)) {
+        seen.add(v);
+        res.push(v);
+      }
+    });
+    return res.sort((a, b) => {
+      try {
+        return a.localeCompare(b, "ko");
+      } catch {
+        return a < b ? -1 : 1;
+      }
+    });
+  }
+  function buildStruct(items) {
+    const gm = {}, cm = {};
+    items.forEach((it) => {
+      const g = it.group || "(\uBBF8\uBD84\uB958)", sg = it.subGroup || "", c = it.category || "(\uBBF8\uBD84\uB958)", sc = it.subCategory || "";
+      if (!gm[g]) gm[g] = {};
+      gm[g][sg] = true;
+      if (!cm[c]) cm[c] = {};
+      cm[c][sc] = true;
+    });
+    const sk = (a, b) => {
+      try {
+        return a.localeCompare(b, "ko");
+      } catch {
+        return a < b ? -1 : 1;
+      }
+    };
+    const applyOrder = (autoList, orderArr) => {
+      if (!orderArr || !orderArr.length) return autoList;
+      const set = new Set(autoList);
+      const ordered = orderArr.filter((v) => set.has(v));
+      const rest = autoList.filter((v) => !ordered.includes(v));
+      return [...ordered, ...rest];
+    };
+    const autoGroups = getUniqSorted("group", S.items).filter((g) => !!gm[g]);
+    const autoCats = getUniqSorted("category", S.items).filter((c) => !!cm[c]);
+    const groups = applyOrder(autoGroups, S.settings.groupOrder);
+    const cats = applyOrder(autoCats, S.settings.catOrder);
+    const gsubs = {}, csubs = {};
+    for (const g in gm) gsubs[g] = Object.keys(gm[g]).sort(sk);
+    for (const c in cm) csubs[c] = Object.keys(cm[c]).sort(sk);
+    return { groups, gsubs, cats, csubs };
+  }
+  function syncLayout() {
+    const v = S.view;
+    const navMap = { dashboard: "navD", matrix: "navM", board: "navB", list: "navL" };
+    ["navD", "navM", "navB", "navL"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.className = "nav-item" + (navMap[v] === id ? " on" : "");
+    });
+    ["dashboardView", "matrixView", "boardView", "listView"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = id === v + "View" ? "" : "none";
+    });
+    if (v !== "board" && window.hideBoardActionBar) window.hideBoardActionBar();
+    const fp = document.getElementById("fpanel");
+    if (fp) fp.classList.toggle("fp-hide", v === "dashboard");
+    const hs = document.getElementById("hdrSearchWrap");
+    if (hs) hs.style.display = v === "dashboard" ? "none" : "flex";
+    const contentEl = document.getElementById("contentArea");
+    if (contentEl) contentEl.style.overflowY = v === "board" ? "hidden" : "";
+  }
+  function renderAll(withFade = false) {
+    syncLayout();
+    const doRender = () => {
+      renderStats();
+      if (S.view === "matrix") renderMatrix();
+      else if (S.view === "list") renderList();
+      else if (S.view === "board" && window.renderBoard) window.renderBoard();
+      else if (S.view === "dashboard" && window.renderDashboard) window.renderDashboard();
+      updateDL();
+      renderOwnerChips();
+      renderPrioChips();
+      renderStatusChips();
+      syncToStore();
+    };
+    if (withFade && animOk("filter")) {
+      const area = document.getElementById("contentArea");
+      area.classList.add("fading");
+      setTimeout(() => {
+        doRender();
+        area.classList.remove("fading");
+        area.classList.add("fading-in");
+        setTimeout(() => area.classList.remove("fading-in"), 200);
+      }, 150);
+    } else {
+      doRender();
+    }
+  }
+  function renderStats() {
+    const items = getFiltered();
+    let h = 0, m = 0, l = 0, imp = 0, nw = 0, done = 0;
+    items.forEach((it) => {
+      if (it.priority === "\uC0C1") h++;
+      else if (it.priority === "\uC911") m++;
+      else l++;
+      if (it.isImportant === "Y") imp++;
+      if (it.key?.charAt(0) === "N") nw++;
+      if (it.status === "\uC644\uB8CC") done++;
+    });
+    countUp("stTotal", items.length);
+    countUp("stHigh", h);
+    countUp("stMid", m);
+    countUp("stLow", l);
+    countUp("stImp", imp);
+    countUp("stNew", nw);
+    const cb = document.getElementById("hdrCountBadge");
+    if (cb) cb.textContent = items.length ? `${items.length}\uAC1C` : "";
+    const fb = document.getElementById("fbadge");
+    if (fb) fb.className = "fbadge" + (isFilterActive() ? " on" : "");
+  }
+  function renderMatrix() {
+    syncToStore();
+  }
+  function expandCell(e, ck) {
+    e.stopPropagation();
+    syncToStore();
+  }
+  function collapseCell(e, ck) {
+    e.stopPropagation();
+    syncToStore();
+  }
+  function getVisibleCols() {
+    return S.settings.listColumns.filter((c) => c.visible);
+  }
+  function bulkToggle(key) {
+    if (bulkSel.keys.has(key)) bulkSel.keys.delete(key);
+    else bulkSel.keys.add(key);
+    renderBulkBar();
+  }
+  function bulkToggleAll(checked) {
+    const items = getFiltered();
+    if (checked) items.forEach((it) => bulkSel.keys.add(it.key));
+    else bulkSel.keys.clear();
+    renderBulkBar();
+    renderList();
+  }
+  function renderBulkBar() {
+    window.__bulkBarRefresh?.();
+    window.dispatchEvent(new CustomEvent("bulkSelChange", { detail: { keys: [...bulkSel.keys] } }));
+  }
+  function bulkClear() {
+    bulkSel.keys.clear();
+    renderBulkBar();
+    renderList();
+  }
+  function renderList() {
+    syncToStore();
+    window.__listViewRefresh?.();
+  }
+  function sortL(k) {
+    if (S.sort.key === k) S.sort.dir = S.sort.dir === "asc" ? "desc" : "asc";
+    else {
+      S.sort.key = k;
+      S.sort.dir = "asc";
+    }
+    renderList();
+  }
+  function switchView(v) {
+    if (v !== "matrix") mxClearSel();
+    S.view = v;
+    syncLayout();
+    renderBulkBar();
+    if (v === "matrix") renderMatrix();
+    else if (v === "list") renderList();
+    else if (v === "board") {
+      if (window.renderBoard) window.renderBoard();
+    } else {
+      if (window.renderDashboard) window.renderDashboard();
+    }
+  }
+  function renderPrioChips() {
+    syncToStore();
+  }
+  function renderStatusChips() {
+    syncToStore();
+  }
+  function renderOwnerChips() {
+    syncToStore();
+  }
+  function updateDL() {
+    const setDL = (id, vals) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = vals.map((v) => `<option value="${eattr(v)}">`).join("");
+    };
+    setDL("dlGroup", getUniqSorted("group", S.items));
+    setDL("dlSubGroup", getUniqSorted("subGroup", S.items));
+    setDL("dlCat", getUniqSorted("category", S.items));
+    setDL("dlSubCat", getUniqSorted("subCategory", S.items));
+    setDL("dlOwner", getUniqSorted("owner", S.items));
+  }
+  var prefersReduced, _cu, isFilterActive, bulkSel, mxSel, SEARCH_FIELD_MAP;
+  var init_render = __esm({
+    "app/render.js"() {
+      init_state();
+      init_theme();
+      init_useAppStore();
+      prefersReduced = window.matchMedia?.("(prefers-reduced-motion:reduce)").matches ?? false;
+      _cu = {};
+      isFilterActive = () => {
+        const f = S.filters;
+        return f.priorities.length > 0 || f.statuses && f.statuses.length > 0 || f.importantOnly || f.owners.length > 0 || f.showDeleted || !!S.searchQ;
+      };
+      bulkSel = { active: false, keys: /* @__PURE__ */ new Set() };
+      mxSel = /* @__PURE__ */ new Set();
+      SEARCH_FIELD_MAP = {
+        owner: "owner",
+        \uB2F4\uB2F9: "owner",
+        status: "status",
+        \uC0C1\uD0DC: "status",
+        group: "group",
+        \uADF8\uB8F9: "group",
+        category: "category",
+        cat: "category",
+        \uCE74\uD14C\uACE0\uB9AC: "category",
+        priority: "priority",
+        \uC6B0\uC120\uC21C\uC704: "priority",
+        key: "key"
+      };
+    }
+  });
+
   // app/admin.js
   function isServerMode() {
     return S.settings.storageMode === "server";
@@ -18528,499 +18864,6 @@ function __inlineNotify(msg, type) {
       init_state();
       init_constants();
       _loginCallback = null;
-    }
-  });
-
-  // app/render.js
-  function syncToStore() {
-    setStore({
-      items: S.items,
-      changeLog: S.changeLog,
-      view: S.view,
-      searchQ: S.searchQ,
-      filters: { ...S.filters },
-      display: { ...S.display },
-      settings: { ...S.settings },
-      sort: { ...S.sort },
-      editKey: S.editKey
-    });
-  }
-  function animOk(k) {
-    if (prefersReduced) return false;
-    const a = S.settings.animations;
-    return a.enabled && (k ? !!a[k] : true);
-  }
-  function scheduleCardAnim() {
-    _cardAnimEnabled = true;
-  }
-  function countUp(id, target) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (!animOk("countUp")) {
-      el.textContent = target;
-      return;
-    }
-    const start = parseInt(el.textContent, 10) || 0;
-    if (start === target) return;
-    if (_cu[id]) cancelAnimationFrame(_cu[id]);
-    const dur = 500, t0 = performance.now();
-    function step(now) {
-      const t = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - t, 4);
-      el.textContent = Math.round(start + (target - start) * e);
-      if (t < 1) {
-        _cu[id] = requestAnimationFrame(step);
-      } else {
-        el.textContent = target;
-        el.classList.remove("bump");
-        void el.offsetWidth;
-        el.classList.add("bump");
-      }
-    }
-    _cu[id] = requestAnimationFrame(step);
-  }
-  function getFiltered() {
-    const { priorities, statuses, showDeleted, importantOnly, owners } = S.filters;
-    return S.items.filter((it) => {
-      if (!showDeleted && it.isDelete === "Y") return false;
-      if (importantOnly && it.isImportant !== "Y") return false;
-      if (priorities.length > 0 && !priorities.includes(it.priority)) return false;
-      if (owners.length > 0 && !owners.includes(normOwner(it.owner))) return false;
-      if (statuses && statuses.length > 0 && it.status && !statuses.includes(it.status)) return false;
-      if (S.searchQ && !matchesSearch(it, S.searchQ)) return false;
-      return true;
-    });
-  }
-  function _mxCards(key) {
-    return document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`);
-  }
-  function mxCardClick(e, key) {
-    if (e.shiftKey) {
-      if (mxSel.has(key)) {
-        mxSel.delete(key);
-        _mxCards(key).forEach((c) => c.classList.remove("mxsel"));
-      } else {
-        mxSel.add(key);
-        _mxCards(key).forEach((c) => c.classList.add("mxsel"));
-      }
-    } else {
-      mxSel.forEach((k) => _mxCards(k).forEach((c) => c.classList.remove("mxsel")));
-      mxSel.clear();
-      mxSel.add(key);
-      _mxCards(key).forEach((c) => c.classList.add("mxsel"));
-    }
-  }
-  function mxClearSel() {
-    mxSel.forEach((k) => _mxCards(k).forEach((c) => c.classList.remove("mxsel")));
-    mxSel.clear();
-  }
-  function matchesSearch(it, q) {
-    const tokens = q.trim().split(/\s+/);
-    return tokens.every((tok) => {
-      const colon = tok.indexOf(":");
-      if (colon > 0) {
-        const alias = tok.slice(0, colon).toLowerCase();
-        const val = tok.slice(colon + 1).toLowerCase();
-        const field = SEARCH_FIELD_MAP[alias];
-        if (field) return (it[field] || "").toLowerCase().includes(val);
-      }
-      const lq = tok.toLowerCase();
-      return [it.key, it.name, it.owner, it.path, it.desc, it.group, it.subGroup, it.category, it.subCategory].some((v) => (v || "").toLowerCase().includes(lq));
-    });
-  }
-  function hlSearch(text, q) {
-    if (!q || !text) return esc2(text);
-    const re2 = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
-    return esc2(text).replace(re2, '<mark class="search-hl">$1</mark>');
-  }
-  function sortCell(arr) {
-    const po = { "\uC0C1": 0, "\uC911": 1, "\uD558": 2 };
-    return arr.slice().sort((a, b) => {
-      const pa = po[a.priority] ?? 3, pb = po[b.priority] ?? 3;
-      if (pa !== pb) return pa - pb;
-      if (a.isDelete !== b.isDelete) return a.isDelete === "Y" ? 1 : -1;
-      return 0;
-    });
-  }
-  function getUniqSorted(field, items) {
-    const seen = /* @__PURE__ */ new Set(), res = [];
-    items.forEach((it) => {
-      const v = field === "owner" ? normOwner(it[field]) : it[field] || "(\uBBF8\uBD84\uB958)";
-      if (!seen.has(v)) {
-        seen.add(v);
-        res.push(v);
-      }
-    });
-    return res.sort((a, b) => {
-      try {
-        return a.localeCompare(b, "ko");
-      } catch {
-        return a < b ? -1 : 1;
-      }
-    });
-  }
-  function buildStruct(items) {
-    const gm = {}, cm = {};
-    items.forEach((it) => {
-      const g = it.group || "(\uBBF8\uBD84\uB958)", sg = it.subGroup || "", c = it.category || "(\uBBF8\uBD84\uB958)", sc = it.subCategory || "";
-      if (!gm[g]) gm[g] = {};
-      gm[g][sg] = true;
-      if (!cm[c]) cm[c] = {};
-      cm[c][sc] = true;
-    });
-    const sk = (a, b) => {
-      try {
-        return a.localeCompare(b, "ko");
-      } catch {
-        return a < b ? -1 : 1;
-      }
-    };
-    const applyOrder = (autoList, orderArr) => {
-      if (!orderArr || !orderArr.length) return autoList;
-      const set = new Set(autoList);
-      const ordered = orderArr.filter((v) => set.has(v));
-      const rest = autoList.filter((v) => !ordered.includes(v));
-      return [...ordered, ...rest];
-    };
-    const autoGroups = getUniqSorted("group", S.items).filter((g) => !!gm[g]);
-    const autoCats = getUniqSorted("category", S.items).filter((c) => !!cm[c]);
-    const groups = applyOrder(autoGroups, S.settings.groupOrder);
-    const cats = applyOrder(autoCats, S.settings.catOrder);
-    const gsubs = {}, csubs = {};
-    for (const g in gm) gsubs[g] = Object.keys(gm[g]).sort(sk);
-    for (const c in cm) csubs[c] = Object.keys(cm[c]).sort(sk);
-    return { groups, gsubs, cats, csubs };
-  }
-  function syncLayout() {
-    const v = S.view;
-    const navMap = { dashboard: "navD", matrix: "navM", board: "navB", list: "navL" };
-    ["navD", "navM", "navB", "navL"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.className = "nav-item" + (navMap[v] === id ? " on" : "");
-    });
-    ["dashboardView", "matrixView", "boardView", "listView"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = id === v + "View" ? "" : "none";
-    });
-    if (v !== "board" && window.hideBoardActionBar) window.hideBoardActionBar();
-    const fp = document.getElementById("fpanel");
-    if (fp) fp.classList.toggle("fp-hide", v === "dashboard");
-    const hs = document.getElementById("hdrSearchWrap");
-    if (hs) hs.style.display = v === "dashboard" ? "none" : "flex";
-    const contentEl = document.getElementById("contentArea");
-    if (contentEl) contentEl.style.overflowY = v === "board" ? "hidden" : "";
-  }
-  function renderAll(withFade = false) {
-    syncLayout();
-    const doRender = () => {
-      renderStats();
-      if (S.view === "matrix") renderMatrix();
-      else if (S.view === "list") renderList();
-      else if (S.view === "board" && window.renderBoard) window.renderBoard();
-      else if (S.view === "dashboard" && window.renderDashboard) window.renderDashboard();
-      updateDL();
-      renderOwnerChips();
-      renderPrioChips();
-      renderStatusChips();
-      syncToStore();
-    };
-    if (withFade && animOk("filter")) {
-      const area = document.getElementById("contentArea");
-      area.classList.add("fading");
-      setTimeout(() => {
-        doRender();
-        area.classList.remove("fading");
-        area.classList.add("fading-in");
-        setTimeout(() => area.classList.remove("fading-in"), 200);
-      }, 150);
-    } else {
-      doRender();
-    }
-  }
-  function renderStats() {
-    const items = getFiltered();
-    let h = 0, m = 0, l = 0, imp = 0, nw = 0, done = 0;
-    items.forEach((it) => {
-      if (it.priority === "\uC0C1") h++;
-      else if (it.priority === "\uC911") m++;
-      else l++;
-      if (it.isImportant === "Y") imp++;
-      if (it.key?.charAt(0) === "N") nw++;
-      if (it.status === "\uC644\uB8CC") done++;
-    });
-    countUp("stTotal", items.length);
-    countUp("stHigh", h);
-    countUp("stMid", m);
-    countUp("stLow", l);
-    countUp("stImp", imp);
-    countUp("stNew", nw);
-    const cb = document.getElementById("hdrCountBadge");
-    if (cb) cb.textContent = items.length ? `${items.length}\uAC1C` : "";
-    const fb = document.getElementById("fbadge");
-    if (fb) fb.className = "fbadge" + (isFilterActive() ? " on" : "");
-  }
-  function buildMatrixHtml(expandedCells) {
-    const items = getFiltered();
-    if (!items.length) {
-      return S.settings.storageMode === "server" ? '<div class="empty"><div style="font-size:2rem;opacity:.3">\u{1F310}</div><div style="font-size:.875rem;text-align:center">\uC11C\uBC84\uC5D0 \uB370\uC774\uD130\uAC00 \uC5C6\uAC70\uB098 \uC5F0\uACB0\uC744 \uD655\uC778\uD574\uC8FC\uC138\uC694.<br><span style="font-size:.75rem;color:var(--text-3)">\uAD00\uB9AC\uC790\uC5D0\uAC8C \uBB38\uC758\uD558\uAC70\uB098 \uB85C\uADF8\uC778 \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694.</span></div></div>' : '<div class="empty"><div style="font-size:2rem;opacity:.3">\u{1F4CB}</div><div style="font-size:.875rem;text-align:center">\uD45C\uC2DC\uD560 \uAE30\uB2A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</div></div>';
-    }
-    const st = buildStruct(items);
-    const cm = {};
-    items.forEach((it) => {
-      const ck = `${it.group || "(\uBBF8\uBD84\uB958)"}|||${it.subGroup || ""}|||${it.category || "(\uBBF8\uBD84\uB958)"}|||${it.subCategory || ""}`;
-      if (!cm[ck]) cm[ck] = [];
-      cm[ck].push(it);
-    });
-    Object.keys(cm).forEach((k) => {
-      cm[k] = sortCell(cm[k]);
-    });
-    const c = getColors();
-    const showCnt = S.display.showCellCount;
-    const gCnt = {}, sgCnt = {}, catCnt = {}, scCnt = {};
-    items.forEach((it) => {
-      const g = it.group || "(\uBBF8\uBD84\uB958)", sg = `${g}|||${it.subGroup || ""}`;
-      const cat = it.category || "(\uBBF8\uBD84\uB958)", sc = `${cat}|||${it.subCategory || ""}`;
-      gCnt[g] = (gCnt[g] || 0) + 1;
-      sgCnt[sg] = (sgCnt[sg] || 0) + 1;
-      catCnt[cat] = (catCnt[cat] || 0) + 1;
-      scCnt[sc] = (scCnt[sc] || 0) + 1;
-    });
-    const badge = (n) => `<span class="gcnt">${n}</span>`;
-    const ss = S.settings;
-    const totalSubCols = st.groups.reduce((acc, gn) => acc + st.gsubs[gn].length, 0);
-    const tableMinW = (ss.catW || 12) + (ss.subCatW || 72) + totalSubCols * (ss.colW || 130);
-    const catW = ss.catW || 12, subCatW = ss.subCatW || 72;
-    let h = `<div class="mscroll"><table class="mtable" style="min-width:${tableMinW}px"><thead class="mx-thead-sticky"><tr>`;
-    h += `<th class="m-corner" rowspan="2" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px"></th><th class="m-corner" rowspan="2" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px"></th>`;
-    st.groups.forEach((gn) => {
-      h += `<th class="m-ghd" colspan="${st.gsubs[gn].length}">${esc2(gn)}${showCnt ? badge(gCnt[gn] || 0) : ""}</th>`;
-    });
-    h += "</tr><tr>";
-    st.groups.forEach((gn) => {
-      st.gsubs[gn].forEach((sg) => {
-        const sgKey = `${gn}|||${sg}`;
-        h += `<th class="m-sghd">${esc2(sg || "\u2014")}${showCnt ? badge(sgCnt[sgKey] || 0) : ""}</th>`;
-      });
-    });
-    h += "</tr></thead><tbody>";
-    st.cats.forEach((cn) => {
-      const scA = st.csubs[cn];
-      scA.forEach((scn, sci) => {
-        h += "<tr>";
-        if (sci === 0) {
-          h += `<td class="m-cathd" rowspan="${scA.length}" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px">${esc2(cn)}${showCnt ? badge(catCnt[cn] || 0) : ""}</td>`;
-        }
-        const scKey = `${cn}|||${scn}`;
-        h += `<td class="m-subcat" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px">${esc2(scn || "\u2014")}${showCnt ? badge(scCnt[scKey] || 0) : ""}</td>`;
-        st.groups.forEach((gn) => {
-          st.gsubs[gn].forEach((sg) => {
-            const ck = `${gn}|||${sg}|||${cn}|||${scn}`;
-            const ci = cm[ck] || [];
-            const fold = S.settings.cellFold;
-            const isExp = expandedCells.has(ck) || !!S.searchQ || fold === 0;
-            const show = isExp ? ci : ci.slice(0, fold);
-            const hidden = ci.length - show.length;
-            const doCardAnim = animOk("card") && _cardAnimEnabled;
-            h += `<td class="m-cell${doCardAnim ? " anim-card-entrance" : ""}" style="background:var(--bg)"
-            data-g="${eattr(gn)}" data-sg="${eattr(sg)}" data-c="${eattr(cn)}" data-sc="${eattr(scn)}"
-            ondragenter="onDE(event)" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onDrop(event)">`;
-            show.forEach((it, ii) => {
-              h += renderCard(it, c, doCardAnim ? ii : -1, { onclick: `mxCardClick(event,'${eattr(it.key)}')`, ondblclick: `openEditOrMd('${eattr(it.key)}')`, extraClass: mxSel.has(it.key) ? "mxsel" : "" });
-            });
-            if (hidden > 0)
-              h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">\u25BC ${hidden}\uAC1C \uB354\uBCF4\uAE30</button>`;
-            if (isExp && ci.length > fold && fold > 0)
-              h += `<button class="cell-more-btn" onclick="collapseCell(event,'${eattr(ck)}')">\u25B2 \uC811\uAE30</button>`;
-            if (isEditor() && S.display.showQuickAdd) {
-              h += `<button class="cell-quick-add-btn" onclick="event.stopPropagation();openAddInCell('${eattr(gn)}','${eattr(sg)}','${eattr(cn)}','${eattr(scn)}')">+ \uCD94\uAC00</button>`;
-            }
-            h += "</td>";
-          });
-        });
-        h += "</tr>";
-      });
-    });
-    h += "</tbody></table></div>";
-    _cardAnimEnabled = false;
-    return h;
-  }
-  function renderMatrix() {
-    syncToStore();
-  }
-  function expandCell(e, ck) {
-    e.stopPropagation();
-    syncToStore();
-  }
-  function collapseCell(e, ck) {
-    e.stopPropagation();
-    syncToStore();
-  }
-  function renderCard(item, c, si = -1, overrides = {}) {
-    const pk = getPK(item.priority), pkC = pk[0].toUpperCase() + pk.slice(1);
-    const pHex = c[`p${pkC}`] || "#888";
-    const pBg = c[`p${pkC}Bg`] || "#eee";
-    const css = `${getPresetCSS(S.settings.priorityStyles[pk], pHex, pBg)};border-radius:${S.settings.cardRadius}px;margin-bottom:${S.settings.cardGap}px;`;
-    const isNew = item.key?.charAt(0) === "N";
-    const isDel = item.isDelete === "Y";
-    const delay = si >= 0 ? `animation-delay:${si * 40}ms;` : "";
-    const delStyle = isDel ? "text-decoration:line-through;color:var(--text-3);" : "";
-    const ownerColor = getOwnerColor2(item.owner);
-    const nameHl = S.searchQ ? hlSearch(item.name, S.searchQ) : esc2(item.name);
-    const statusHtml = S.display.showStatus ? item.status ? `<span class="status-badge ${STATUS_CLS[item.status] || ""}" onclick="event.stopPropagation();openStatusMenu(event,'${eattr(item.key)}')">${STATUS_LBL[item.status] || esc2(item.status)}</span>` : `<span class="status-badge" style="background:var(--surface-3);color:var(--text-3);opacity:.6" onclick="event.stopPropagation();openStatusMenu(event,'${eattr(item.key)}')">\u2014</span>` : "";
-    const mdBadge = S.display.showMdBadge && item.mdContent ? `<span class="md-badge" onclick="event.stopPropagation();openMdModal('${eattr(item.key)}')" title="\uB9C8\uD06C\uB2E4\uC6B4 \uBCF4\uAE30" style="cursor:pointer">MD</span>` : "";
-    const updatedHtml = S.display.showUpdated && item.updatedAt ? `<div class="item-updated">${fmtDate(item.updatedAt)}</div>` : "";
-    const ownerHtml = S.display.showOwner ? `<div class="item-owner"><span class="owner-dot" style="background:${ownerColor}"></span>${esc2(normOwner(item.owner))}</div>` : "";
-    const editLocksNow = getEditLocks();
-    const previewsNow = getPreviews();
-    const lockInfo = editLocksNow[item.key];
-    const myName = S.settings.userName || "\uC775\uBA85";
-    const isLockedByOther = lockInfo && lockInfo.user !== myName;
-    const lockBadge = isLockedByOther ? `<div style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:6px 6px 0 0;pointer-events:none">\u{1F512} ${esc2(lockInfo.user)} \uD3B8\uC9D1 \uC911</div>` : "";
-    const previewData = isLockedByOther ? previewsNow[item.key] : null;
-    const previewHtml = previewData ? (() => {
-      const p = previewData.preview || {};
-      const rows = [
-        p.name && p.name !== item.name ? `<div>\uAE30\uB2A5\uBA85: <b>${esc2(p.name)}</b></div>` : "",
-        p.priority && p.priority !== item.priority ? `<div>\uC6B0\uC120\uC21C\uC704: <b>${esc2(p.priority)}</b></div>` : "",
-        p.status && p.status !== item.status ? `<div>\uC0C1\uD0DC: <b>${esc2(p.status)}</b></div>` : "",
-        p.owner && p.owner !== item.owner ? `<div>\uB2F4\uB2F9\uC790: <b>${esc2(p.owner)}</b></div>` : "",
-        p.group && p.group !== item.group ? `<div>\uADF8\uB8F9: <b>${esc2(p.group)}</b></div>` : "",
-        p.subGroup && p.subGroup !== item.subGroup ? `<div>\uC11C\uBE0C\uADF8\uB8F9: <b>${esc2(p.subGroup)}</b></div>` : "",
-        p.category && p.category !== item.category ? `<div>\uCE74\uD14C\uACE0\uB9AC: <b>${esc2(p.category)}</b></div>` : "",
-        p.subCategory && p.subCategory !== item.subCategory ? `<div>\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC: <b>${esc2(p.subCategory)}</b></div>` : ""
-      ].filter(Boolean).join("");
-      if (!rows) return "";
-      return `<div class="edit-preview-overlay"><div style="font-weight:700;margin-bottom:4px">\u270F ${esc2(lockInfo.user)} \uD3B8\uC9D1 \uC911</div>${rows}</div>`;
-    })() : "";
-    const actions = `<div class="card-actions" onclick="event.stopPropagation()">
-    <button class="card-act-btn" title="\uD3B8\uC9D1"    onclick="openEditModal('${eattr(item.key)}')">\u270F</button>
-    <button class="card-act-btn" title="\uBCF5\uC81C"    onclick="duplicateItem('${eattr(item.key)}')">\u29C9</button>
-  </div>`;
-    const extraClass = overrides.extraClass ? " " + overrides.extraClass : "";
-    const idAttr = overrides.id ? ` id="${overrides.id}"` : "";
-    const dragStart = overrides.ondragstart ?? `onDS(event,'${eattr(item.key)}')`;
-    const dragEnd = overrides.ondragend ?? "onDEnd(event)";
-    const clickHandler = overrides.onclick ?? `openEditOrMd('${eattr(item.key)}')`;
-    const dblClick = overrides.ondblclick ? ` ondblclick="${overrides.ondblclick}"` : "";
-    const canDrag = isEditor();
-    return `<div class="mitem${isDel ? " item-del" : ""}${isLockedByOther ? " item-locked" : ""}${extraClass}" draggable="${canDrag}" data-key="${eattr(item.key)}"${idAttr}
-    style="${css}${delay}"
-    ondragstart="${canDrag ? dragStart : ""}" ondragend="${canDrag ? dragEnd : ""}"
-    onmouseover="startTT(event,'${eattr(item.key)}')" onmouseout="clearTT()"
-    onclick="${clickHandler}"${dblClick}
-    oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${previewHtml}${actions}
-  <div class="item-hd">
-    <span class="item-key">${esc2(item.key)}</span>
-    ${item.isImportant === "Y" && S.display.showStar ? '<span class="item-star">\u2605</span>' : ""}
-    ${isNew && S.display.showNewBadge ? '<span class="item-nbadge">N</span>' : ""}
-    ${mdBadge}${statusHtml}
-  </div>
-  <div class="item-name" style="${delStyle}">${nameHl}</div>
-  ${ownerHtml}${updatedHtml}
-</div>`;
-  }
-  function getVisibleCols() {
-    return S.settings.listColumns.filter((c) => c.visible);
-  }
-  function bulkToggle(key) {
-    if (bulkSel.keys.has(key)) bulkSel.keys.delete(key);
-    else bulkSel.keys.add(key);
-    renderBulkBar();
-  }
-  function bulkToggleAll(checked) {
-    const items = getFiltered();
-    if (checked) items.forEach((it) => bulkSel.keys.add(it.key));
-    else bulkSel.keys.clear();
-    renderBulkBar();
-    renderList();
-  }
-  function renderBulkBar() {
-    window.__bulkBarRefresh?.();
-    window.dispatchEvent(new CustomEvent("bulkSelChange", { detail: { keys: [...bulkSel.keys] } }));
-  }
-  function bulkClear() {
-    bulkSel.keys.clear();
-    renderBulkBar();
-    renderList();
-  }
-  function renderList() {
-    syncToStore();
-    window.__listViewRefresh?.();
-  }
-  function sortL(k) {
-    if (S.sort.key === k) S.sort.dir = S.sort.dir === "asc" ? "desc" : "asc";
-    else {
-      S.sort.key = k;
-      S.sort.dir = "asc";
-    }
-    renderList();
-  }
-  function switchView(v) {
-    if (v !== "matrix") mxClearSel();
-    S.view = v;
-    syncLayout();
-    renderBulkBar();
-    if (v === "matrix") renderMatrix();
-    else if (v === "list") renderList();
-    else if (v === "board") {
-      if (window.renderBoard) window.renderBoard();
-    } else {
-      if (window.renderDashboard) window.renderDashboard();
-    }
-  }
-  function renderPrioChips() {
-    syncToStore();
-  }
-  function renderStatusChips() {
-    syncToStore();
-  }
-  function renderOwnerChips() {
-    syncToStore();
-  }
-  function updateDL() {
-    const setDL = (id, vals) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.innerHTML = vals.map((v) => `<option value="${eattr(v)}">`).join("");
-    };
-    setDL("dlGroup", getUniqSorted("group", S.items));
-    setDL("dlSubGroup", getUniqSorted("subGroup", S.items));
-    setDL("dlCat", getUniqSorted("category", S.items));
-    setDL("dlSubCat", getUniqSorted("subCategory", S.items));
-    setDL("dlOwner", getUniqSorted("owner", S.items));
-  }
-  var getEditLocks, getPreviews, prefersReduced, _cardAnimEnabled, _cu, isFilterActive, bulkSel, mxSel, SEARCH_FIELD_MAP;
-  var init_render = __esm({
-    "app/render.js"() {
-      init_constants();
-      init_state();
-      init_theme();
-      init_admin();
-      init_useAppStore();
-      getEditLocks = () => getStore().editLocks || {};
-      getPreviews = () => getStore().previews || {};
-      prefersReduced = window.matchMedia?.("(prefers-reduced-motion:reduce)").matches ?? false;
-      _cardAnimEnabled = false;
-      _cu = {};
-      isFilterActive = () => {
-        const f = S.filters;
-        return f.priorities.length > 0 || f.statuses && f.statuses.length > 0 || f.importantOnly || f.owners.length > 0 || f.showDeleted || !!S.searchQ;
-      };
-      bulkSel = { active: false, keys: /* @__PURE__ */ new Set() };
-      mxSel = /* @__PURE__ */ new Set();
-      SEARCH_FIELD_MAP = {
-        owner: "owner",
-        \uB2F4\uB2F9: "owner",
-        status: "status",
-        \uC0C1\uD0DC: "status",
-        group: "group",
-        \uADF8\uB8F9: "group",
-        category: "category",
-        cat: "category",
-        \uCE74\uD14C\uACE0\uB9AC: "category",
-        priority: "priority",
-        \uC6B0\uC120\uC21C\uC704: "priority",
-        key: "key"
-      };
     }
   });
 
@@ -23417,7 +23260,56 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_react8 = __toESM(require_react());
   init_useAppStore();
   init_render();
+  init_theme();
+  init_state();
+  init_admin();
   var import_jsx_runtime9 = __toESM(require_jsx_runtime());
+  function CountBadge({ value: value2 }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "gcnt", children: value2 });
+  }
+  function EmptyState() {
+    if (S.settings.storageMode === "server") {
+      return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "empty", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { style: { fontSize: "2rem", opacity: 0.3 }, children: "\u{1F310}" }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { style: { fontSize: ".875rem", textAlign: "center" }, children: [
+          "\uC11C\uBC84\uC5D0 \uB370\uC774\uD130\uAC00 \uC5C6\uAC70\uB098 \uC5F0\uACB0\uC744 \uD655\uC778\uD574\uC8FC\uC138\uC694.",
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("br", {}),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { style: { fontSize: ".75rem", color: "var(--text-3)" }, children: "\uAD00\uB9AC\uC790\uC5D0\uAC8C \uBB38\uC758\uD558\uAC70\uB098 \uB85C\uADF8\uC778 \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694." })
+        ] })
+      ] });
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "empty", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { style: { fontSize: "2rem", opacity: 0.3 }, children: "\u{1F4CB}" }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { style: { fontSize: ".875rem", textAlign: "center" }, children: "\uD45C\uC2DC\uD560 \uAE30\uB2A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4." })
+    ] });
+  }
+  function getMatrixData(items) {
+    const structure = buildStruct(items);
+    const cellMap = {};
+    const counts = {
+      groups: {},
+      subGroups: {},
+      categories: {},
+      subCategories: {}
+    };
+    items.forEach((item) => {
+      const group = item.group || "(\uBBF8\uBD84\uB958)";
+      const subGroup = item.subGroup || "";
+      const category = item.category || "(\uBBF8\uBD84\uB958)";
+      const subCategory = item.subCategory || "";
+      const cellKey = `${group}|||${subGroup}|||${category}|||${subCategory}`;
+      if (!cellMap[cellKey]) cellMap[cellKey] = [];
+      cellMap[cellKey].push(item);
+      counts.groups[group] = (counts.groups[group] || 0) + 1;
+      counts.subGroups[`${group}|||${subGroup}`] = (counts.subGroups[`${group}|||${subGroup}`] || 0) + 1;
+      counts.categories[category] = (counts.categories[category] || 0) + 1;
+      counts.subCategories[`${category}|||${subCategory}`] = (counts.subCategories[`${category}|||${subCategory}`] || 0) + 1;
+    });
+    Object.keys(cellMap).forEach((key) => {
+      cellMap[key] = sortCell(cellMap[key]);
+    });
+    return { cellMap, counts, structure };
+  }
   function MatrixView() {
     const items = useAppStore((s) => s.items);
     const editLocks2 = useAppStore((s) => s.editLocks);
@@ -23429,6 +23321,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     const cellFold = useAppStore((s) => s.settings.cellFold);
     const [container, setContainer] = (0, import_react8.useState)(null);
     const [expandedCells, setExpandedCells] = (0, import_react8.useState)(/* @__PURE__ */ new Set());
+    const [selectedKeys, setSelectedKeys] = (0, import_react8.useState)(() => new Set(mxSel));
     (0, import_react8.useEffect)(() => {
       setContainer(document.getElementById("matrixView"));
     }, []);
@@ -23441,20 +23334,20 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       }
     }, [container, settings.matrixWidth]);
     (0, import_react8.useEffect)(() => {
-      window.expandCell = (e, ck) => {
-        e.stopPropagation();
+      window.expandCell = (event, cellKey) => {
+        event.stopPropagation();
         setExpandedCells((prev) => {
-          const n = new Set(prev);
-          n.add(ck);
-          return n;
+          const next = new Set(prev);
+          next.add(cellKey);
+          return next;
         });
       };
-      window.collapseCell = (e, ck) => {
-        e.stopPropagation();
+      window.collapseCell = (event, cellKey) => {
+        event.stopPropagation();
         setExpandedCells((prev) => {
-          const n = new Set(prev);
-          n.delete(ck);
-          return n;
+          const next = new Set(prev);
+          next.delete(cellKey);
+          return next;
         });
       };
       return () => {
@@ -23462,10 +23355,123 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         delete window.collapseCell;
       };
     }, []);
+    (0, import_react8.useEffect)(() => {
+      const handler = (event) => setSelectedKeys(new Set(event.detail.sel));
+      window.addEventListener("mxSelChange", handler);
+      return () => window.removeEventListener("mxSelChange", handler);
+    }, []);
+    const filteredItems = (0, import_react8.useMemo)(() => getFiltered(), [items, filters, searchQ, settings, display, editLocks2, previews]);
+    const matrix = (0, import_react8.useMemo)(() => getMatrixData(filteredItems), [filteredItems]);
+    const colors = getColors();
     if (!container) return null;
-    const html = buildMatrixHtml(expandedCells);
+    if (!filteredItems.length) {
+      return (0, import_react_dom5.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyState, {}), container);
+    }
+    const { structure, cellMap, counts } = matrix;
+    const showCount = display.showCellCount;
+    const totalSubCols = structure.groups.reduce((acc, group) => acc + structure.gsubs[group].length, 0);
+    const catW = settings.catW || 12;
+    const subCatW = settings.subCatW || 72;
+    const tableMinW = catW + subCatW + totalSubCols * (settings.colW || 130);
     return (0, import_react_dom5.createPortal)(
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { dangerouslySetInnerHTML: { __html: html } }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "mscroll", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("table", { className: "mtable", style: { minWidth: `${tableMinW}px` }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("thead", { className: "mx-thead-sticky", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("tr", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { className: "m-corner", rowSpan: "2", style: { width: `${catW}px`, minWidth: `${catW}px`, maxWidth: `${catW}px` } }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { className: "m-corner", rowSpan: "2", style: { width: `${subCatW}px`, minWidth: `${subCatW}px`, maxWidth: `${subCatW}px` } }),
+            structure.groups.map((group) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("th", { className: "m-ghd", colSpan: structure.gsubs[group].length, children: [
+              group,
+              showCount && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(CountBadge, { value: counts.groups[group] || 0 })
+            ] }, group))
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("tr", { children: structure.groups.flatMap((group) => structure.gsubs[group].map((subGroup) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("th", { className: "m-sghd", children: [
+            subGroup || "\u2014",
+            showCount && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(CountBadge, { value: counts.subGroups[`${group}|||${subGroup}`] || 0 })
+          ] }, `${group}:${subGroup}`))) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("tbody", { children: structure.cats.flatMap((category) => structure.csubs[category].map((subCategory, subCategoryIndex) => {
+          const subCategoryKey = `${category}|||${subCategory}`;
+          return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("tr", { children: [
+            subCategoryIndex === 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+              "td",
+              {
+                className: "m-cathd",
+                rowSpan: structure.csubs[category].length,
+                style: { width: `${catW}px`, minWidth: `${catW}px`, maxWidth: `${catW}px` },
+                children: [
+                  category,
+                  showCount && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(CountBadge, { value: counts.categories[category] || 0 })
+                ]
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("td", { className: "m-subcat", style: { width: `${subCatW}px`, minWidth: `${subCatW}px`, maxWidth: `${subCatW}px` }, children: [
+              subCategory || "\u2014",
+              showCount && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(CountBadge, { value: counts.subCategories[subCategoryKey] || 0 })
+            ] }),
+            structure.groups.flatMap((group) => structure.gsubs[group].map((subGroup) => {
+              const cellKey = `${group}|||${subGroup}|||${category}|||${subCategory}`;
+              const cellItems = cellMap[cellKey] || [];
+              const fold = settings.cellFold;
+              const isExpanded = expandedCells.has(cellKey) || !!searchQ || fold === 0;
+              const visible = isExpanded ? cellItems : cellItems.slice(0, fold);
+              const hidden = cellItems.length - visible.length;
+              const canQuickAdd = isEditor() && display.showQuickAdd;
+              return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+                "td",
+                {
+                  className: "m-cell",
+                  style: { background: "var(--bg)" },
+                  "data-g": group,
+                  "data-sg": subGroup,
+                  "data-c": category,
+                  "data-sc": subCategory,
+                  onDragEnter: (event) => window.onDE?.(event),
+                  onDragOver: (event) => window.onDO?.(event),
+                  onDragLeave: (event) => window.onDL?.(event),
+                  onDrop: (event) => window.onDrop?.(event),
+                  children: [
+                    visible.map((item) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+                      FeatureCard,
+                      {
+                        item,
+                        colors,
+                        animationIndex: -1,
+                        extraClass: selectedKeys.has(item.key) ? "mxsel" : "",
+                        onClick: (event) => {
+                          window.mxCardClick?.(event, item.key);
+                          setSelectedKeys(new Set(mxSel));
+                        },
+                        onDoubleClick: () => window.openEditOrMd?.(item.key),
+                        onDragStart: (event) => window.onDS?.(event, item.key),
+                        onDragEnd: (event) => window.onDEnd?.(event)
+                      },
+                      item.key
+                    )),
+                    hidden > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("button", { className: "cell-more-btn", onClick: (event) => window.expandCell?.(event, cellKey), children: [
+                      "\u25BC ",
+                      hidden,
+                      "\uAC1C \uB354\uBCF4\uAE30"
+                    ] }),
+                    isExpanded && cellItems.length > fold && fold > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", { className: "cell-more-btn", onClick: (event) => window.collapseCell?.(event, cellKey), children: "\u25B2 \uC811\uAE30" }),
+                    canQuickAdd && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+                      "button",
+                      {
+                        className: "cell-quick-add-btn",
+                        onClick: (event) => {
+                          event.stopPropagation();
+                          window.openAddInCell?.(group, subGroup, category, subCategory);
+                        },
+                        children: "+ \uCD94\uAC00"
+                      }
+                    )
+                  ]
+                },
+                cellKey
+              );
+            }))
+          ] }, `${category}:${subCategory}`);
+        })) })
+      ] }) }),
       container
     );
   }
