@@ -19311,351 +19311,6 @@ function __inlineNotify(msg, type) {
     }
   });
 
-  // node_modules/drag-drop-touch/DragDropTouch.js
-  var DragDropTouch;
-  var init_DragDropTouch = __esm({
-    "node_modules/drag-drop-touch/DragDropTouch.js"() {
-      (function(DragDropTouch_1) {
-        "use strict";
-        var DataTransfer = (function() {
-          function DataTransfer2() {
-            this._dropEffect = "move";
-            this._effectAllowed = "all";
-            this._data = {};
-          }
-          Object.defineProperty(DataTransfer2.prototype, "dropEffect", {
-            /**
-             * Gets or sets the type of drag-and-drop operation currently selected.
-             * The value must be 'none',  'copy',  'link', or 'move'.
-             */
-            get: function() {
-              return this._dropEffect;
-            },
-            set: function(value2) {
-              this._dropEffect = value2;
-            },
-            enumerable: true,
-            configurable: true
-          });
-          Object.defineProperty(DataTransfer2.prototype, "effectAllowed", {
-            /**
-             * Gets or sets the types of operations that are possible.
-             * Must be one of 'none', 'copy', 'copyLink', 'copyMove', 'link',
-             * 'linkMove', 'move', 'all' or 'uninitialized'.
-             */
-            get: function() {
-              return this._effectAllowed;
-            },
-            set: function(value2) {
-              this._effectAllowed = value2;
-            },
-            enumerable: true,
-            configurable: true
-          });
-          Object.defineProperty(DataTransfer2.prototype, "types", {
-            /**
-             * Gets an array of strings giving the formats that were set in the @see:dragstart event.
-             */
-            get: function() {
-              return Object.keys(this._data);
-            },
-            enumerable: true,
-            configurable: true
-          });
-          DataTransfer2.prototype.clearData = function(type) {
-            if (type != null) {
-              delete this._data[type];
-            } else {
-              this._data = null;
-            }
-          };
-          DataTransfer2.prototype.getData = function(type) {
-            return this._data[type] || "";
-          };
-          DataTransfer2.prototype.setData = function(type, value2) {
-            this._data[type] = value2;
-          };
-          DataTransfer2.prototype.setDragImage = function(img, offsetX, offsetY) {
-            var ddt = DragDropTouch2._instance;
-            ddt._imgCustom = img;
-            ddt._imgOffset = { x: offsetX, y: offsetY };
-          };
-          return DataTransfer2;
-        })();
-        DragDropTouch_1.DataTransfer = DataTransfer;
-        var DragDropTouch2 = (function() {
-          function DragDropTouch3() {
-            this._lastClick = 0;
-            if (DragDropTouch3._instance) {
-              throw "DragDropTouch instance already created.";
-            }
-            var supportsPassive = false;
-            document.addEventListener("test", function() {
-            }, {
-              get passive() {
-                supportsPassive = true;
-                return true;
-              }
-            });
-            if ("ontouchstart" in document) {
-              var d = document, ts = this._touchstart.bind(this), tm = this._touchmove.bind(this), te = this._touchend.bind(this), opt = supportsPassive ? { passive: false, capture: false } : false;
-              d.addEventListener("touchstart", ts, opt);
-              d.addEventListener("touchmove", tm, opt);
-              d.addEventListener("touchend", te);
-              d.addEventListener("touchcancel", te);
-            }
-          }
-          DragDropTouch3.getInstance = function() {
-            return DragDropTouch3._instance;
-          };
-          DragDropTouch3.prototype._touchstart = function(e) {
-            var _this = this;
-            if (this._shouldHandle(e)) {
-              if (Date.now() - this._lastClick < DragDropTouch3._DBLCLICK) {
-                if (this._dispatchEvent(e, "dblclick", e.target)) {
-                  if (e.cancelable) {
-                    e.preventDefault();
-                  }
-                  this._reset();
-                  return;
-                }
-              }
-              this._reset();
-              var src = this._closestDraggable(e.target);
-              if (src) {
-                if (!this._dispatchEvent(e, "mousemove", e.target) && !this._dispatchEvent(e, "mousedown", e.target)) {
-                  this._dragSource = src;
-                  this._ptDown = this._getPoint(e);
-                  this._lastTouch = e;
-                  if (e.cancelable) {
-                    e.preventDefault();
-                  }
-                  setTimeout(function() {
-                    if (_this._dragSource == src && _this._img == null) {
-                      if (_this._dispatchEvent(e, "contextmenu", src)) {
-                        _this._reset();
-                      }
-                    }
-                  }, DragDropTouch3._CTXMENU);
-                  if (DragDropTouch3._ISPRESSHOLDMODE) {
-                    this._pressHoldInterval = setTimeout(function() {
-                      _this._isDragEnabled = true;
-                      _this._touchmove(e);
-                    }, DragDropTouch3._PRESSHOLDAWAIT);
-                  }
-                }
-              }
-            }
-          };
-          DragDropTouch3.prototype._touchmove = function(e) {
-            if (this._shouldCancelPressHoldMove(e)) {
-              this._reset();
-              return;
-            }
-            if (this._shouldHandleMove(e) || this._shouldHandlePressHoldMove(e)) {
-              var target = this._getTarget(e);
-              if (this._dispatchEvent(e, "mousemove", target)) {
-                this._lastTouch = e;
-                if (e.cancelable) {
-                  e.preventDefault();
-                }
-                return;
-              }
-              if (this._dragSource && !this._img && this._shouldStartDragging(e)) {
-                this._dispatchEvent(e, "dragstart", this._dragSource);
-                this._createImage(e);
-                this._dispatchEvent(e, "dragenter", target);
-              }
-              if (this._img) {
-                this._lastTouch = e;
-                if (e.cancelable) {
-                  e.preventDefault();
-                }
-                if (target != this._lastTarget) {
-                  this._dispatchEvent(this._lastTouch, "dragleave", this._lastTarget);
-                  this._dispatchEvent(e, "dragenter", target);
-                  this._lastTarget = target;
-                }
-                this._moveImage(e);
-                this._isDropZone = this._dispatchEvent(e, "dragover", target);
-              }
-            }
-          };
-          DragDropTouch3.prototype._touchend = function(e) {
-            if (this._shouldHandle(e)) {
-              if (this._dispatchEvent(this._lastTouch, "mouseup", e.target)) {
-                if (e.cancelable) {
-                  e.preventDefault();
-                }
-                return;
-              }
-              if (!this._img) {
-                this._dragSource = null;
-                this._dispatchEvent(this._lastTouch, "click", e.target);
-                this._lastClick = Date.now();
-              }
-              this._destroyImage();
-              if (this._dragSource) {
-                if (e.type.indexOf("cancel") < 0 && this._isDropZone) {
-                  this._dispatchEvent(this._lastTouch, "drop", this._lastTarget);
-                }
-                this._dispatchEvent(this._lastTouch, "dragend", this._dragSource);
-                this._reset();
-              }
-            }
-          };
-          DragDropTouch3.prototype._shouldHandle = function(e) {
-            return e && !e.defaultPrevented && e.touches && e.touches.length < 2;
-          };
-          DragDropTouch3.prototype._shouldHandleMove = function(e) {
-            return !DragDropTouch3._ISPRESSHOLDMODE && this._shouldHandle(e);
-          };
-          DragDropTouch3.prototype._shouldHandlePressHoldMove = function(e) {
-            return DragDropTouch3._ISPRESSHOLDMODE && this._isDragEnabled && e && e.touches && e.touches.length;
-          };
-          DragDropTouch3.prototype._shouldCancelPressHoldMove = function(e) {
-            return DragDropTouch3._ISPRESSHOLDMODE && !this._isDragEnabled && this._getDelta(e) > DragDropTouch3._PRESSHOLDMARGIN;
-          };
-          DragDropTouch3.prototype._shouldStartDragging = function(e) {
-            var delta = this._getDelta(e);
-            return delta > DragDropTouch3._THRESHOLD || DragDropTouch3._ISPRESSHOLDMODE && delta >= DragDropTouch3._PRESSHOLDTHRESHOLD;
-          };
-          DragDropTouch3.prototype._reset = function() {
-            this._destroyImage();
-            this._dragSource = null;
-            this._lastTouch = null;
-            this._lastTarget = null;
-            this._ptDown = null;
-            this._isDragEnabled = false;
-            this._isDropZone = false;
-            this._dataTransfer = new DataTransfer();
-            clearInterval(this._pressHoldInterval);
-          };
-          DragDropTouch3.prototype._getPoint = function(e, page) {
-            if (e && e.touches) {
-              e = e.touches[0];
-            }
-            return { x: page ? e.pageX : e.clientX, y: page ? e.pageY : e.clientY };
-          };
-          DragDropTouch3.prototype._getDelta = function(e) {
-            if (DragDropTouch3._ISPRESSHOLDMODE && !this._ptDown) {
-              return 0;
-            }
-            var p = this._getPoint(e);
-            return Math.abs(p.x - this._ptDown.x) + Math.abs(p.y - this._ptDown.y);
-          };
-          DragDropTouch3.prototype._getTarget = function(e) {
-            var pt = this._getPoint(e), el = document.elementFromPoint(pt.x, pt.y);
-            while (el && getComputedStyle(el).pointerEvents == "none") {
-              el = el.parentElement;
-            }
-            return el;
-          };
-          DragDropTouch3.prototype._createImage = function(e) {
-            if (this._img) {
-              this._destroyImage();
-            }
-            var src = this._imgCustom || this._dragSource;
-            this._img = src.cloneNode(true);
-            this._copyStyle(src, this._img);
-            this._img.style.top = this._img.style.left = "-9999px";
-            if (!this._imgCustom) {
-              var rc = src.getBoundingClientRect(), pt = this._getPoint(e);
-              this._imgOffset = { x: pt.x - rc.left, y: pt.y - rc.top };
-              this._img.style.opacity = DragDropTouch3._OPACITY.toString();
-            }
-            this._moveImage(e);
-            document.body.appendChild(this._img);
-          };
-          DragDropTouch3.prototype._destroyImage = function() {
-            if (this._img && this._img.parentElement) {
-              this._img.parentElement.removeChild(this._img);
-            }
-            this._img = null;
-            this._imgCustom = null;
-          };
-          DragDropTouch3.prototype._moveImage = function(e) {
-            var _this = this;
-            requestAnimationFrame(function() {
-              if (_this._img) {
-                var pt = _this._getPoint(e, true), s = _this._img.style;
-                s.position = "absolute";
-                s.pointerEvents = "none";
-                s.zIndex = "999999";
-                s.left = Math.round(pt.x - _this._imgOffset.x) + "px";
-                s.top = Math.round(pt.y - _this._imgOffset.y) + "px";
-              }
-            });
-          };
-          DragDropTouch3.prototype._copyProps = function(dst, src, props) {
-            for (var i = 0; i < props.length; i++) {
-              var p = props[i];
-              dst[p] = src[p];
-            }
-          };
-          DragDropTouch3.prototype._copyStyle = function(src, dst) {
-            DragDropTouch3._rmvAtts.forEach(function(att) {
-              dst.removeAttribute(att);
-            });
-            if (src instanceof HTMLCanvasElement) {
-              var cSrc = src, cDst = dst;
-              cDst.width = cSrc.width;
-              cDst.height = cSrc.height;
-              cDst.getContext("2d").drawImage(cSrc, 0, 0);
-            }
-            var cs = getComputedStyle(src);
-            for (var i = 0; i < cs.length; i++) {
-              var key = cs[i];
-              if (key.indexOf("transition") < 0) {
-                dst.style[key] = cs[key];
-              }
-            }
-            dst.style.pointerEvents = "none";
-            for (var i = 0; i < src.children.length; i++) {
-              this._copyStyle(src.children[i], dst.children[i]);
-            }
-          };
-          DragDropTouch3.prototype._dispatchEvent = function(e, type, target) {
-            if (e && target) {
-              var evt = document.createEvent("Event"), t = e.touches ? e.touches[0] : e;
-              evt.initEvent(type, true, true);
-              evt.button = 0;
-              evt.which = evt.buttons = 1;
-              this._copyProps(evt, e, DragDropTouch3._kbdProps);
-              this._copyProps(evt, t, DragDropTouch3._ptProps);
-              evt.dataTransfer = this._dataTransfer;
-              target.dispatchEvent(evt);
-              return evt.defaultPrevented;
-            }
-            return false;
-          };
-          DragDropTouch3.prototype._closestDraggable = function(e) {
-            for (; e; e = e.parentElement) {
-              if (e.hasAttribute("draggable") && e.draggable) {
-                return e;
-              }
-            }
-            return null;
-          };
-          return DragDropTouch3;
-        })();
-        DragDropTouch2._instance = new DragDropTouch2();
-        DragDropTouch2._THRESHOLD = 5;
-        DragDropTouch2._OPACITY = 0.5;
-        DragDropTouch2._DBLCLICK = 500;
-        DragDropTouch2._CTXMENU = 900;
-        DragDropTouch2._ISPRESSHOLDMODE = false;
-        DragDropTouch2._PRESSHOLDAWAIT = 400;
-        DragDropTouch2._PRESSHOLDMARGIN = 25;
-        DragDropTouch2._PRESSHOLDTHRESHOLD = 0;
-        DragDropTouch2._rmvAtts = "id,class,style,draggable".split(",");
-        DragDropTouch2._kbdProps = "altKey,ctrlKey,metaKey,shiftKey".split(",");
-        DragDropTouch2._ptProps = "pageX,pageY,clientX,clientY,screenX,screenY".split(",");
-        DragDropTouch_1.DragDropTouch = DragDropTouch2;
-      })(DragDropTouch || (DragDropTouch = {}));
-    }
-  });
-
   // app/io.js
   function dlBlob2(content, filename, type) {
     const url2 = URL.createObjectURL(new Blob([content], { type }));
@@ -19998,120 +19653,23 @@ function __inlineNotify(msg, type) {
   }
   function dzOver(e) {
     e.preventDefault();
-    document.getElementById("dropZone").classList.add("da");
   }
   function dzLeave() {
-    document.getElementById("dropZone").classList.remove("da");
   }
   function dzDrop(e) {
     e.preventDefault();
-    dzLeave();
-    const f = e.dataTransfer.files[0];
-    if (f) readCSVFile(f);
   }
   function csvFileSel(e) {
-    const f = e.target.files[0];
-    if (f) readCSVFile(f);
     e.target.value = "";
   }
-  function readCSVFile(file) {
-    const r = new FileReader();
-    r.onload = (e) => {
-      document.getElementById("csvPaste").value = e.target.result;
-      analyzeCSV();
-    };
-    r.readAsText(file, "UTF-8");
-  }
   function analyzeCSV() {
-    const raw = document.getElementById("csvPaste").value.trim();
-    if (!raw) {
-      notify("\uB370\uC774\uD130\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694.", true);
-      return;
-    }
-    const allRows = parseTSVFull(raw);
-    if (allRows.length < 2) {
-      notify("\uD5E4\uB354\uC640 \uB370\uC774\uD130 \uD589\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.", true);
-      return;
-    }
-    S.importData.headers = allRows[0];
-    S.importData.rows = allRows.slice(1);
-    showImportStep2();
-  }
-  function showImportStep2() {
-    document.getElementById("impStep1").style.display = "none";
-    document.getElementById("impStep2").style.display = "";
-    const { headers: hdrs, rows } = S.importData;
-    document.getElementById("mapStatus").textContent = `${rows.length}\uAC1C \uD589 \uAC10\uC9C0\uB428, \uCEEC\uB7FC ${hdrs.length}\uAC1C`;
-    document.getElementById("mapRows").innerHTML = FIELDS.map((fld) => {
-      const ai = hdrs.findIndex((h) => h.trim().toLowerCase() === fld.toLowerCase() || FLABELS[fld] && h.trim() === FLABELS[fld]);
-      const preview = ai !== -1 && rows.length > 0 ? (rows[0][ai] || "").replace(/\n/g, "\u21B5").slice(0, 40) : "";
-      const opts = hdrs.map((h, i) => `<option value="${i}"${ai === i ? " selected" : ""}>${esc(h)}</option>`).join("");
-      const required = IMPORT_REQUIRED.includes(fld);
-      const label = (FLABELS[fld] || fld) + (required ? " *" : "");
-      return `<div class="map-row">
-      <span class="map-lbl" style="${required ? "font-weight:700;color:var(--text)" : ""}">${esc(label)}</span>
-      <select id="mp_${fld}" class="map-sel"><option value="-1">(\uB9E4\uD551 \uC548 \uD568)</option>${opts}</select>
-      <span class="map-prev">${esc(preview)}</span>
-    </div>`;
-    }).join("") + '<div style="font-size:.7rem;color:var(--text-3);margin-top:6px">* \uD544\uC218 \uD544\uB4DC</div>';
+    window.__reactAnalyzeCSV?.();
   }
   function backToStep1() {
-    document.getElementById("impStep1").style.display = "";
-    document.getElementById("impStep2").style.display = "none";
+    window.__reactImportBackToStep1?.();
   }
   function doImport(append) {
-    requireAdmin(() => _doImport(append));
-  }
-  function _doImport(append) {
-    const unmapped = IMPORT_REQUIRED.filter((fld) => {
-      const sel = document.getElementById(`mp_${fld}`);
-      return !sel || parseInt(sel.value, 10) < 0;
-    });
-    if (unmapped.length) {
-      notify(`\uD544\uC218 \uD544\uB4DC \uB9E4\uD551\uC774 \uC5C6\uC2B5\uB2C8\uB2E4: ${unmapped.map((f) => FLABELS[f] || f).join(", ")}`, "error");
-      return;
-    }
-    const rows = S.importData.rows;
-    const items = rows.map((row) => {
-      const obj = {};
-      FIELDS.forEach((fld) => {
-        const sel = document.getElementById(`mp_${fld}`);
-        const ci = sel ? parseInt(sel.value, 10) : -1;
-        obj[fld] = ci >= 0 && ci < row.length ? row[ci] || "" : "";
-      });
-      return obj;
-    }).filter((o) => o.key && o.name);
-    if (!items.length) {
-      notify("\uAC00\uC838\uC62C \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.", true);
-      return;
-    }
-    const exK = new Set(S.items.map((it) => it.key));
-    const dups = items.filter((it) => exK.has(it.key)).map((it) => it.key);
-    if (!append && dups.length > 0) {
-      if (!confirm(`\uC911\uBCF5 Key ${dups.length}\uAC1C:
-${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
-\uB36E\uC5B4\uC4F0\uAE30?`)) return;
-    }
-    pushUndo();
-    if (!append) {
-      if (!confirm(`${items.length}\uAC1C \uD56D\uBAA9\uC73C\uB85C \uAD50\uCCB4?`)) return;
-      S.items = items;
-      notify(`${items.length}\uAC1C \uD56D\uBAA9\uC744 \uAC00\uC838\uC654\uC2B5\uB2C8\uB2E4.`);
-    } else {
-      let added = 0;
-      items.forEach((it) => {
-        const ex = findItem(it.key);
-        if (ex) Object.assign(ex, it);
-        else {
-          S.items.push(it);
-          added++;
-        }
-      });
-      notify(`${items.length}\uAC1C \uCC98\uB9AC (\uC2E0\uADDC ${added}\uAC1C).`);
-    }
-    closeModal("importModal");
-    save();
-    renderAll();
+    window.__reactDoImport?.(append);
   }
   function buildZip(files) {
     const enc = (str) => {
@@ -20231,7 +19789,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     const eocd = new Uint8Array([80, 75, 5, 6, 0, 0, 0, 0].concat(u16le(files.length)).concat(u16le(files.length)).concat(u32le(cdSize)).concat(u32le(cdStart)).concat([0, 0]));
     return concat([...localHeaders, ...centralDirs, eocd]);
   }
-  var IMPORT_REQUIRED;
   var init_io = __esm({
     "app/io.js"() {
       init_constants();
@@ -20240,7 +19797,351 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       init_render();
       init_modal();
       init_admin();
-      IMPORT_REQUIRED = ["key", "name"];
+    }
+  });
+
+  // node_modules/drag-drop-touch/DragDropTouch.js
+  var DragDropTouch;
+  var init_DragDropTouch = __esm({
+    "node_modules/drag-drop-touch/DragDropTouch.js"() {
+      (function(DragDropTouch_1) {
+        "use strict";
+        var DataTransfer = (function() {
+          function DataTransfer2() {
+            this._dropEffect = "move";
+            this._effectAllowed = "all";
+            this._data = {};
+          }
+          Object.defineProperty(DataTransfer2.prototype, "dropEffect", {
+            /**
+             * Gets or sets the type of drag-and-drop operation currently selected.
+             * The value must be 'none',  'copy',  'link', or 'move'.
+             */
+            get: function() {
+              return this._dropEffect;
+            },
+            set: function(value2) {
+              this._dropEffect = value2;
+            },
+            enumerable: true,
+            configurable: true
+          });
+          Object.defineProperty(DataTransfer2.prototype, "effectAllowed", {
+            /**
+             * Gets or sets the types of operations that are possible.
+             * Must be one of 'none', 'copy', 'copyLink', 'copyMove', 'link',
+             * 'linkMove', 'move', 'all' or 'uninitialized'.
+             */
+            get: function() {
+              return this._effectAllowed;
+            },
+            set: function(value2) {
+              this._effectAllowed = value2;
+            },
+            enumerable: true,
+            configurable: true
+          });
+          Object.defineProperty(DataTransfer2.prototype, "types", {
+            /**
+             * Gets an array of strings giving the formats that were set in the @see:dragstart event.
+             */
+            get: function() {
+              return Object.keys(this._data);
+            },
+            enumerable: true,
+            configurable: true
+          });
+          DataTransfer2.prototype.clearData = function(type) {
+            if (type != null) {
+              delete this._data[type];
+            } else {
+              this._data = null;
+            }
+          };
+          DataTransfer2.prototype.getData = function(type) {
+            return this._data[type] || "";
+          };
+          DataTransfer2.prototype.setData = function(type, value2) {
+            this._data[type] = value2;
+          };
+          DataTransfer2.prototype.setDragImage = function(img, offsetX, offsetY) {
+            var ddt = DragDropTouch2._instance;
+            ddt._imgCustom = img;
+            ddt._imgOffset = { x: offsetX, y: offsetY };
+          };
+          return DataTransfer2;
+        })();
+        DragDropTouch_1.DataTransfer = DataTransfer;
+        var DragDropTouch2 = (function() {
+          function DragDropTouch3() {
+            this._lastClick = 0;
+            if (DragDropTouch3._instance) {
+              throw "DragDropTouch instance already created.";
+            }
+            var supportsPassive = false;
+            document.addEventListener("test", function() {
+            }, {
+              get passive() {
+                supportsPassive = true;
+                return true;
+              }
+            });
+            if ("ontouchstart" in document) {
+              var d = document, ts = this._touchstart.bind(this), tm = this._touchmove.bind(this), te = this._touchend.bind(this), opt = supportsPassive ? { passive: false, capture: false } : false;
+              d.addEventListener("touchstart", ts, opt);
+              d.addEventListener("touchmove", tm, opt);
+              d.addEventListener("touchend", te);
+              d.addEventListener("touchcancel", te);
+            }
+          }
+          DragDropTouch3.getInstance = function() {
+            return DragDropTouch3._instance;
+          };
+          DragDropTouch3.prototype._touchstart = function(e) {
+            var _this = this;
+            if (this._shouldHandle(e)) {
+              if (Date.now() - this._lastClick < DragDropTouch3._DBLCLICK) {
+                if (this._dispatchEvent(e, "dblclick", e.target)) {
+                  if (e.cancelable) {
+                    e.preventDefault();
+                  }
+                  this._reset();
+                  return;
+                }
+              }
+              this._reset();
+              var src = this._closestDraggable(e.target);
+              if (src) {
+                if (!this._dispatchEvent(e, "mousemove", e.target) && !this._dispatchEvent(e, "mousedown", e.target)) {
+                  this._dragSource = src;
+                  this._ptDown = this._getPoint(e);
+                  this._lastTouch = e;
+                  if (e.cancelable) {
+                    e.preventDefault();
+                  }
+                  setTimeout(function() {
+                    if (_this._dragSource == src && _this._img == null) {
+                      if (_this._dispatchEvent(e, "contextmenu", src)) {
+                        _this._reset();
+                      }
+                    }
+                  }, DragDropTouch3._CTXMENU);
+                  if (DragDropTouch3._ISPRESSHOLDMODE) {
+                    this._pressHoldInterval = setTimeout(function() {
+                      _this._isDragEnabled = true;
+                      _this._touchmove(e);
+                    }, DragDropTouch3._PRESSHOLDAWAIT);
+                  }
+                }
+              }
+            }
+          };
+          DragDropTouch3.prototype._touchmove = function(e) {
+            if (this._shouldCancelPressHoldMove(e)) {
+              this._reset();
+              return;
+            }
+            if (this._shouldHandleMove(e) || this._shouldHandlePressHoldMove(e)) {
+              var target = this._getTarget(e);
+              if (this._dispatchEvent(e, "mousemove", target)) {
+                this._lastTouch = e;
+                if (e.cancelable) {
+                  e.preventDefault();
+                }
+                return;
+              }
+              if (this._dragSource && !this._img && this._shouldStartDragging(e)) {
+                this._dispatchEvent(e, "dragstart", this._dragSource);
+                this._createImage(e);
+                this._dispatchEvent(e, "dragenter", target);
+              }
+              if (this._img) {
+                this._lastTouch = e;
+                if (e.cancelable) {
+                  e.preventDefault();
+                }
+                if (target != this._lastTarget) {
+                  this._dispatchEvent(this._lastTouch, "dragleave", this._lastTarget);
+                  this._dispatchEvent(e, "dragenter", target);
+                  this._lastTarget = target;
+                }
+                this._moveImage(e);
+                this._isDropZone = this._dispatchEvent(e, "dragover", target);
+              }
+            }
+          };
+          DragDropTouch3.prototype._touchend = function(e) {
+            if (this._shouldHandle(e)) {
+              if (this._dispatchEvent(this._lastTouch, "mouseup", e.target)) {
+                if (e.cancelable) {
+                  e.preventDefault();
+                }
+                return;
+              }
+              if (!this._img) {
+                this._dragSource = null;
+                this._dispatchEvent(this._lastTouch, "click", e.target);
+                this._lastClick = Date.now();
+              }
+              this._destroyImage();
+              if (this._dragSource) {
+                if (e.type.indexOf("cancel") < 0 && this._isDropZone) {
+                  this._dispatchEvent(this._lastTouch, "drop", this._lastTarget);
+                }
+                this._dispatchEvent(this._lastTouch, "dragend", this._dragSource);
+                this._reset();
+              }
+            }
+          };
+          DragDropTouch3.prototype._shouldHandle = function(e) {
+            return e && !e.defaultPrevented && e.touches && e.touches.length < 2;
+          };
+          DragDropTouch3.prototype._shouldHandleMove = function(e) {
+            return !DragDropTouch3._ISPRESSHOLDMODE && this._shouldHandle(e);
+          };
+          DragDropTouch3.prototype._shouldHandlePressHoldMove = function(e) {
+            return DragDropTouch3._ISPRESSHOLDMODE && this._isDragEnabled && e && e.touches && e.touches.length;
+          };
+          DragDropTouch3.prototype._shouldCancelPressHoldMove = function(e) {
+            return DragDropTouch3._ISPRESSHOLDMODE && !this._isDragEnabled && this._getDelta(e) > DragDropTouch3._PRESSHOLDMARGIN;
+          };
+          DragDropTouch3.prototype._shouldStartDragging = function(e) {
+            var delta = this._getDelta(e);
+            return delta > DragDropTouch3._THRESHOLD || DragDropTouch3._ISPRESSHOLDMODE && delta >= DragDropTouch3._PRESSHOLDTHRESHOLD;
+          };
+          DragDropTouch3.prototype._reset = function() {
+            this._destroyImage();
+            this._dragSource = null;
+            this._lastTouch = null;
+            this._lastTarget = null;
+            this._ptDown = null;
+            this._isDragEnabled = false;
+            this._isDropZone = false;
+            this._dataTransfer = new DataTransfer();
+            clearInterval(this._pressHoldInterval);
+          };
+          DragDropTouch3.prototype._getPoint = function(e, page) {
+            if (e && e.touches) {
+              e = e.touches[0];
+            }
+            return { x: page ? e.pageX : e.clientX, y: page ? e.pageY : e.clientY };
+          };
+          DragDropTouch3.prototype._getDelta = function(e) {
+            if (DragDropTouch3._ISPRESSHOLDMODE && !this._ptDown) {
+              return 0;
+            }
+            var p = this._getPoint(e);
+            return Math.abs(p.x - this._ptDown.x) + Math.abs(p.y - this._ptDown.y);
+          };
+          DragDropTouch3.prototype._getTarget = function(e) {
+            var pt = this._getPoint(e), el = document.elementFromPoint(pt.x, pt.y);
+            while (el && getComputedStyle(el).pointerEvents == "none") {
+              el = el.parentElement;
+            }
+            return el;
+          };
+          DragDropTouch3.prototype._createImage = function(e) {
+            if (this._img) {
+              this._destroyImage();
+            }
+            var src = this._imgCustom || this._dragSource;
+            this._img = src.cloneNode(true);
+            this._copyStyle(src, this._img);
+            this._img.style.top = this._img.style.left = "-9999px";
+            if (!this._imgCustom) {
+              var rc = src.getBoundingClientRect(), pt = this._getPoint(e);
+              this._imgOffset = { x: pt.x - rc.left, y: pt.y - rc.top };
+              this._img.style.opacity = DragDropTouch3._OPACITY.toString();
+            }
+            this._moveImage(e);
+            document.body.appendChild(this._img);
+          };
+          DragDropTouch3.prototype._destroyImage = function() {
+            if (this._img && this._img.parentElement) {
+              this._img.parentElement.removeChild(this._img);
+            }
+            this._img = null;
+            this._imgCustom = null;
+          };
+          DragDropTouch3.prototype._moveImage = function(e) {
+            var _this = this;
+            requestAnimationFrame(function() {
+              if (_this._img) {
+                var pt = _this._getPoint(e, true), s = _this._img.style;
+                s.position = "absolute";
+                s.pointerEvents = "none";
+                s.zIndex = "999999";
+                s.left = Math.round(pt.x - _this._imgOffset.x) + "px";
+                s.top = Math.round(pt.y - _this._imgOffset.y) + "px";
+              }
+            });
+          };
+          DragDropTouch3.prototype._copyProps = function(dst, src, props) {
+            for (var i = 0; i < props.length; i++) {
+              var p = props[i];
+              dst[p] = src[p];
+            }
+          };
+          DragDropTouch3.prototype._copyStyle = function(src, dst) {
+            DragDropTouch3._rmvAtts.forEach(function(att) {
+              dst.removeAttribute(att);
+            });
+            if (src instanceof HTMLCanvasElement) {
+              var cSrc = src, cDst = dst;
+              cDst.width = cSrc.width;
+              cDst.height = cSrc.height;
+              cDst.getContext("2d").drawImage(cSrc, 0, 0);
+            }
+            var cs = getComputedStyle(src);
+            for (var i = 0; i < cs.length; i++) {
+              var key = cs[i];
+              if (key.indexOf("transition") < 0) {
+                dst.style[key] = cs[key];
+              }
+            }
+            dst.style.pointerEvents = "none";
+            for (var i = 0; i < src.children.length; i++) {
+              this._copyStyle(src.children[i], dst.children[i]);
+            }
+          };
+          DragDropTouch3.prototype._dispatchEvent = function(e, type, target) {
+            if (e && target) {
+              var evt = document.createEvent("Event"), t = e.touches ? e.touches[0] : e;
+              evt.initEvent(type, true, true);
+              evt.button = 0;
+              evt.which = evt.buttons = 1;
+              this._copyProps(evt, e, DragDropTouch3._kbdProps);
+              this._copyProps(evt, t, DragDropTouch3._ptProps);
+              evt.dataTransfer = this._dataTransfer;
+              target.dispatchEvent(evt);
+              return evt.defaultPrevented;
+            }
+            return false;
+          };
+          DragDropTouch3.prototype._closestDraggable = function(e) {
+            for (; e; e = e.parentElement) {
+              if (e.hasAttribute("draggable") && e.draggable) {
+                return e;
+              }
+            }
+            return null;
+          };
+          return DragDropTouch3;
+        })();
+        DragDropTouch2._instance = new DragDropTouch2();
+        DragDropTouch2._THRESHOLD = 5;
+        DragDropTouch2._OPACITY = 0.5;
+        DragDropTouch2._DBLCLICK = 500;
+        DragDropTouch2._CTXMENU = 900;
+        DragDropTouch2._ISPRESSHOLDMODE = false;
+        DragDropTouch2._PRESSHOLDAWAIT = 400;
+        DragDropTouch2._PRESSHOLDMARGIN = 25;
+        DragDropTouch2._PRESSHOLDTHRESHOLD = 0;
+        DragDropTouch2._rmvAtts = "id,class,style,draggable".split(",");
+        DragDropTouch2._kbdProps = "altKey,ctrlKey,metaKey,shiftKey".split(",");
+        DragDropTouch2._ptProps = "pageX,pageY,clientX,clientY,screenX,screenY".split(",");
+        DragDropTouch_1.DragDropTouch = DragDropTouch2;
+      })(DragDropTouch || (DragDropTouch = {}));
     }
   });
 
@@ -21252,7 +21153,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react15 = __toESM(require_react());
+  var import_react16 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -24305,26 +24206,146 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   }
 
   // components/ImportModal.jsx
+  var import_react13 = __toESM(require_react());
+  init_constants();
+  init_io();
+  init_modal();
+  init_state();
+  init_admin();
+  init_useAppStore();
   var import_jsx_runtime20 = __toESM(require_jsx_runtime());
+  var IMPORT_REQUIRED = ["key", "name"];
+  function buildDefaultMapping(headers) {
+    return Object.fromEntries(FIELDS.map((field) => {
+      const index = headers.findIndex((header) => header.trim().toLowerCase() === field.toLowerCase() || FLABELS[field] && header.trim() === FLABELS[field]);
+      return [field, index];
+    }));
+  }
+  function readTextFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => resolve(event.target.result);
+      reader.onerror = reject;
+      reader.readAsText(file, "UTF-8");
+    });
+  }
   function ImportModal() {
+    const [raw, setRaw] = (0, import_react13.useState)("");
+    const [step, setStep] = (0, import_react13.useState)(1);
+    const [headers, setHeaders] = (0, import_react13.useState)([]);
+    const [rows, setRows] = (0, import_react13.useState)([]);
+    const [mapping, setMapping] = (0, import_react13.useState)({});
+    const [isDragOver, setIsDragOver] = (0, import_react13.useState)(false);
+    const statusText = (0, import_react13.useMemo)(() => `${rows.length}\uAC1C \uD589 \uAC10\uC9C0\uB428, \uCEEC\uB7FC ${headers.length}\uAC1C`, [headers.length, rows.length]);
+    const analyzeText = (value2 = raw) => {
+      const text = value2.trim();
+      if (!text) {
+        notify("\uB370\uC774\uD130\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694.", true);
+        return;
+      }
+      const allRows = parseTSVFull(text);
+      if (allRows.length < 2) {
+        notify("\uD5E4\uB354\uC640 \uB370\uC774\uD130 \uD589\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.", true);
+        return;
+      }
+      const nextHeaders = allRows[0];
+      const nextRows = allRows.slice(1);
+      S.importData.headers = nextHeaders;
+      S.importData.rows = nextRows;
+      setHeaders(nextHeaders);
+      setRows(nextRows);
+      setMapping(buildDefaultMapping(nextHeaders));
+      setStep(2);
+    };
+    const loadFile = async (file) => {
+      if (!file) return;
+      const text = await readTextFile(file);
+      setRaw(text);
+      analyzeText(text);
+    };
+    const doImport2 = (append) => {
+      requireAdmin(() => {
+        const unmapped = IMPORT_REQUIRED.filter((field) => (mapping[field] ?? -1) < 0);
+        if (unmapped.length) {
+          notify(`\uD544\uC218 \uD544\uB4DC \uB9E4\uD551\uC774 \uC5C6\uC2B5\uB2C8\uB2E4: ${unmapped.map((field) => FLABELS[field] || field).join(", ")}`, "error");
+          return;
+        }
+        const items = rows.map((row) => Object.fromEntries(FIELDS.map((field) => {
+          const columnIndex = mapping[field] ?? -1;
+          return [field, columnIndex >= 0 && columnIndex < row.length ? row[columnIndex] || "" : ""];
+        }))).filter((item) => item.key && item.name);
+        if (!items.length) {
+          notify("\uAC00\uC838\uC62C \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.", true);
+          return;
+        }
+        const existingKeys = new Set(S.items.map((item) => item.key));
+        const duplicates = items.filter((item) => existingKeys.has(item.key)).map((item) => item.key);
+        if (!append && duplicates.length > 0) {
+          const sample = `${duplicates.slice(0, 5).join(", ")}${duplicates.length > 5 ? "\u2026" : ""}`;
+          if (!confirm(`\uC911\uBCF5 Key ${duplicates.length}\uAC1C:
+${sample}
+\uB36E\uC5B4\uC4F0\uAE30?`)) return;
+        }
+        pushUndo();
+        if (!append) {
+          if (!confirm(`${items.length}\uAC1C \uD56D\uBAA9\uC73C\uB85C \uAD50\uCCB4?`)) return;
+          S.items = items;
+          notify(`${items.length}\uAC1C \uD56D\uBAA9\uC744 \uAC00\uC838\uC654\uC2B5\uB2C8\uB2E4.`);
+        } else {
+          let added = 0;
+          items.forEach((item) => {
+            const existing = findItem(item.key);
+            if (existing) Object.assign(existing, item);
+            else {
+              S.items.push(item);
+              added++;
+            }
+          });
+          notify(`${items.length}\uAC1C \uCC98\uB9AC (\uC2E0\uADDC ${added}\uAC1C).`);
+        }
+        save();
+        setStore({ items: S.items });
+        closeModal("importModal");
+        renderAll();
+      });
+    };
+    (0, import_react13.useEffect)(() => {
+      window.__reactAnalyzeCSV = () => analyzeText();
+      window.__reactShowImportStep2 = () => setStep(2);
+      window.__reactImportBackToStep1 = () => setStep(1);
+      window.__reactDoImport = doImport2;
+      return () => {
+        delete window.__reactAnalyzeCSV;
+        delete window.__reactShowImportStep2;
+        delete window.__reactImportBackToStep1;
+        delete window.__reactDoImport;
+      };
+    });
     return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "ov", id: "importModal", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "mbox", style: { width: "600px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "mhd", children: [
         /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "mtitle", children: "\u{1F4E5} \uB370\uC774\uD130 \uAC00\uC838\uC624\uAE30" }),
         /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("importModal"), children: "\u2715" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "mbody", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { id: "impStep1", children: [
+        step === 1 && /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
             "div",
             {
-              className: "drop-zone",
+              className: `drop-zone${isDragOver ? " da" : ""}`,
               id: "dropZone",
-              onClick: (e) => {
-                if (e.target.id !== "csvFile") document.getElementById("csvFile")?.click();
+              onClick: (event) => {
+                if (event.target.id !== "csvFile") document.getElementById("csvFile")?.click();
               },
-              onDragOver: (e) => window.dzOver?.(e),
-              onDragLeave: () => window.dzLeave?.(),
-              onDrop: (e) => window.dzDrop?.(e),
+              onDragOver: (event) => {
+                event.preventDefault();
+                setIsDragOver(true);
+              },
+              onDragLeave: () => setIsDragOver(false),
+              onDrop: (event) => {
+                event.preventDefault();
+                setIsDragOver(false);
+                loadFile(event.dataTransfer.files[0]);
+              },
               children: [
                 /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
                   "input",
@@ -24332,8 +24353,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                     type: "file",
                     id: "csvFile",
                     accept: ".csv,.tsv,.txt",
-                    onClick: (e) => e.stopPropagation(),
-                    onChange: (e) => window.csvFileSel?.(e)
+                    onClick: (event) => event.stopPropagation(),
+                    onChange: (event) => {
+                      loadFile(event.target.files[0]);
+                      event.target.value = "";
+                    }
                   }
                 ),
                 /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { fontSize: "1.3rem", marginBottom: "5px" }, children: "\u{1F4C2}" }),
@@ -24348,41 +24372,20 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             {
               className: "txta",
               id: "csvPaste",
+              value: raw,
+              onChange: (event) => setRaw(event.target.value),
               placeholder: "\uD5E4\uB354 \uD3EC\uD568 Tab-separated \uB370\uC774\uD130",
-              style: {
-                marginTop: "5px",
-                minHeight: "80px",
-                fontFamily: "monospace",
-                fontSize: ".7rem"
-              }
+              style: { marginTop: "5px", minHeight: "80px", fontFamily: "monospace", fontSize: ".7rem" }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { display: "flex", gap: "6px", marginTop: "7px" }, children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.analyzeCSV?.(), children: "\u{1F50D} \uBD84\uC11D\uD558\uAE30" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { display: "flex", gap: "6px", marginTop: "7px" }, children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => analyzeText(), children: "\u{1F50D} \uBD84\uC11D\uD558\uAE30" }) }),
           /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: { marginTop: "14px", paddingTop: "12px", borderTop: "1px solid var(--border)" }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "exp-sec-ttl", children: "MD \uD30C\uC77C \uC77C\uAD04 \uAC00\uC838\uC624\uAE30" }),
             /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: { fontSize: ".74rem", color: "var(--text-3)", marginBottom: "8px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
-                "code",
-                {
-                  style: {
-                    fontFamily: "monospace",
-                    background: "var(--surface-2)",
-                    padding: "1px 4px",
-                    borderRadius: "3px"
-                  },
-                  children: "{key}_{\uAE30\uB2A5\uBA85}.md"
-                }
-              ),
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("code", { style: { fontFamily: "monospace", background: "var(--surface-2)", padding: "1px 4px", borderRadius: "3px" }, children: "{key}_{\uAE30\uB2A5\uBA85}.md" }),
               " \uD30C\uC77C\uC744 \uBCF5\uC218 \uC120\uD0DD\uD558\uBA74 key\uB85C \uC790\uB3D9 \uB9E4\uD551"
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
-              "button",
-              {
-                className: "btn btn-s btn-sm",
-                onClick: () => document.getElementById("mdImpInp")?.click(),
-                children: "\u{1F4C2} MD \uD30C\uC77C \uC120\uD0DD"
-              }
-            ),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => document.getElementById("mdImpInp")?.click(), children: "\u{1F4C2} MD \uD30C\uC77C \uC120\uD0DD" }),
             /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
               "input",
               {
@@ -24391,66 +24394,52 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                 accept: ".md",
                 multiple: true,
                 style: { display: "none" },
-                onChange: (e) => window.impMdFiles?.(e)
+                onChange: (event) => window.impMdFiles?.(event)
               }
             )
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { id: "impStep2", style: { display: "none" }, children: [
+        step === 2 && /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { fontSize: ".82rem", fontWeight: 600, color: "var(--text)" }, children: "\uCEEC\uB7FC \uB9E4\uD551 \uD655\uC778" }),
-            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.backToStep1?.(), children: "\u2190 \uB4A4\uB85C" })
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => setStep(1), children: "\u2190 \uB4A4\uB85C" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
-            "div",
-            {
-              id: "mapStatus",
-              style: {
-                fontSize: ".78rem",
-                color: "var(--text-2)",
-                marginBottom: "8px",
-                padding: "7px 10px",
-                background: "var(--accent-l)",
-                borderRadius: "7px",
-                borderLeft: "3px solid var(--accent)"
-              }
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
-            "div",
-            {
-              style: {
-                maxHeight: "260px",
-                overflowY: "auto",
-                border: "1px solid var(--border)",
-                borderRadius: "7px",
-                background: "var(--surface)"
-              },
-              children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { fontSize: ".78rem", color: "var(--text-2)", marginBottom: "8px", padding: "7px 10px", background: "var(--accent-l)", borderRadius: "7px", borderLeft: "3px solid var(--accent)" }, children: statusText }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: { maxHeight: "260px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "7px", background: "var(--surface)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: { display: "flex", alignItems: "center", padding: "5px 8px", background: "var(--surface-2)", borderBottom: "2px solid var(--border)" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "110px" }, children: "\uC18C\uBCF5 \uD544\uB4DC" }),
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", flex: 1 }, children: "CSV \uCEEC\uB7FC" }),
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "100px" }, children: "\uBBF8\uB9AC\uBCF4\uAE30" })
+            ] }),
+            FIELDS.map((field) => {
+              const selectedIndex = mapping[field] ?? -1;
+              const preview = selectedIndex !== -1 && rows.length > 0 ? (rows[0][selectedIndex] || "").replace(/\n/g, "\u21B5").slice(0, 40) : "";
+              const required = IMPORT_REQUIRED.includes(field);
+              return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "map-row", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("span", { className: "map-lbl", style: required ? { fontWeight: 700, color: "var(--text)" } : void 0, children: [
+                  FLABELS[field] || field,
+                  required ? " *" : ""
+                ] }),
                 /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
-                  "div",
+                  "select",
                   {
-                    style: {
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "5px 8px",
-                      background: "var(--surface-2)",
-                      borderBottom: "2px solid var(--border)"
-                    },
+                    className: "map-sel",
+                    value: selectedIndex,
+                    onChange: (event) => setMapping((current) => ({ ...current, [field]: parseInt(event.target.value, 10) })),
                     children: [
-                      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "110px" }, children: "\uC18C\uBCF5 \uD544\uB4DC" }),
-                      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", flex: 1 }, children: "CSV \uCEEC\uB7FC" }),
-                      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "100px" }, children: "\uBBF8\uB9AC\uBCF4\uAE30" })
+                      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("option", { value: -1, children: "(\uB9E4\uD551 \uC548 \uD568)" }),
+                      headers.map((header, index) => /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("option", { value: index, children: header }, `${header}:${index}`))
                     ]
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { id: "mapRows" })
-              ]
-            }
-          ),
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "map-prev", children: preview })
+              ] }, field);
+            }),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { fontSize: ".7rem", color: "var(--text-3)", marginTop: "6px" }, children: "* \uD544\uC218 \uD544\uB4DC" })
+          ] }),
           /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "10px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.doImport?.(false), children: "\u2B07 \uAC00\uC838\uC624\uAE30" }),
-            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.doImport?.(true), children: "\uBCD1\uD569 \uCD94\uAC00" })
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => doImport2(false), children: "\u2B07 \uAC00\uC838\uC624\uAE30" }),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => doImport2(true), children: "\uBCD1\uD569 \uCD94\uAC00" })
           ] })
         ] })
       ] })
@@ -24546,7 +24535,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   }
 
   // components/DiffModal.jsx
-  var import_react13 = __toESM(require_react());
+  var import_react14 = __toESM(require_react());
   init_state();
   var import_jsx_runtime23 = __toESM(require_jsx_runtime());
   var DIFF_FIELDS = ["name", "priority", "status", "owner", "group", "category"];
@@ -24580,8 +24569,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     };
   }
   function DiffModal() {
-    const [content, setContent] = (0, import_react13.useState)({ empty: "", rows: [] });
-    (0, import_react13.useEffect)(() => {
+    const [content, setContent] = (0, import_react14.useState)({ empty: "", rows: [] });
+    (0, import_react14.useEffect)(() => {
       window.__reactOpenDiffModal = () => {
         setContent(buildDiffRows());
         window.openModal?.("diffModal");
@@ -24674,9 +24663,9 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   }
 
   // components/ErrorBoundary.jsx
-  var import_react14 = __toESM(require_react());
+  var import_react15 = __toESM(require_react());
   var import_jsx_runtime25 = __toESM(require_jsx_runtime());
-  var ErrorBoundary = class extends import_react14.Component {
+  var ErrorBoundary = class extends import_react15.Component {
     constructor(props) {
       super(props);
       this.state = { hasError: false, error: null };
@@ -24761,7 +24750,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   // components/App.jsx
   var import_jsx_runtime26 = __toESM(require_jsx_runtime());
   function App() {
-    (0, import_react15.useEffect)(() => {
+    (0, import_react16.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] failed to initialize legacy bridge:", err);
       });

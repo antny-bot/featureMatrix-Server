@@ -48,7 +48,7 @@ function parseTSVLine(line) {
   return fields;
 }
 
-function parseTSVFull(raw) {
+export function parseTSVFull(raw) {
   const lines = raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const rows = []; let cur = '', inQ = false;
   for (let i = 0; i <= lines.length; i++) {
@@ -316,100 +316,32 @@ function _doImpMdFiles(e, fileList) {
 /* ═══════════════════════════════
    CSV / TSV Import
 ═══════════════════════════════ */
-export function dzOver(e)  { e.preventDefault(); document.getElementById('dropZone').classList.add('da'); }
-export function dzLeave()  { document.getElementById('dropZone').classList.remove('da'); }
-export function dzDrop(e)  { e.preventDefault(); dzLeave(); const f = e.dataTransfer.files[0]; if (f) readCSVFile(f); }
-export function csvFileSel(e) { const f = e.target.files[0]; if (f) readCSVFile(f); e.target.value = ''; }
+export function dzOver(e)  { e.preventDefault(); }
+export function dzLeave()  {}
+export function dzDrop(e)  { e.preventDefault(); }
+export function csvFileSel(e) { e.target.value = ''; }
 
 function readCSVFile(file) {
-  const r = new FileReader();
-  r.onload = e => { document.getElementById('csvPaste').value = e.target.result; analyzeCSV(); };
-  r.readAsText(file, 'UTF-8');
+  // React ImportModal handles file reading directly.
 }
 
 export function analyzeCSV() {
-  const raw = document.getElementById('csvPaste').value.trim();
-  if (!raw) { notify('데이터를 입력해주세요.', true); return; }
-  const allRows = parseTSVFull(raw);
-  if (allRows.length < 2) { notify('헤더와 데이터 행이 필요합니다.', true); return; }
-  S.importData.headers = allRows[0];
-  S.importData.rows    = allRows.slice(1);
-  showImportStep2();
+  window.__reactAnalyzeCSV?.();
 }
 
-/* 임포트에서 필수 필드 */
-const IMPORT_REQUIRED = ['key', 'name'];
-
 function showImportStep2() {
-  document.getElementById('impStep1').style.display = 'none';
-  document.getElementById('impStep2').style.display = '';
-  const {headers:hdrs, rows} = S.importData;
-  document.getElementById('mapStatus').textContent = `${rows.length}개 행 감지됨, 컬럼 ${hdrs.length}개`;
-  document.getElementById('mapRows').innerHTML = FIELDS.map(fld => {
-    const ai = hdrs.findIndex(h => h.trim().toLowerCase()===fld.toLowerCase() || (FLABELS[fld] && h.trim()===FLABELS[fld]));
-    const preview = ai !== -1 && rows.length > 0 ? (rows[0][ai]||'').replace(/\n/g,'↵').slice(0,40) : '';
-    const opts = hdrs.map((h,i) => `<option value="${i}"${ai===i?' selected':''}>${esc(h)}</option>`).join('');
-    const required = IMPORT_REQUIRED.includes(fld);
-    const label = (FLABELS[fld]||fld) + (required ? ' *' : '');
-    return `<div class="map-row">
-      <span class="map-lbl" style="${required ? 'font-weight:700;color:var(--text)' : ''}">${esc(label)}</span>
-      <select id="mp_${fld}" class="map-sel"><option value="-1">(매핑 안 함)</option>${opts}</select>
-      <span class="map-prev">${esc(preview)}</span>
-    </div>`;
-  }).join('') + '<div style="font-size:.7rem;color:var(--text-3);margin-top:6px">* 필수 필드</div>';
+  window.__reactShowImportStep2?.();
 }
 
 export function backToStep1() {
-  document.getElementById('impStep1').style.display = '';
-  document.getElementById('impStep2').style.display = 'none';
+  window.__reactImportBackToStep1?.();
 }
 
 export function doImport(append) {
-  requireAdmin(() => _doImport(append));
+  window.__reactDoImport?.(append);
 }
 function _doImport(append) {
-  /* 필수 필드 매핑 검증 */
-  const unmapped = IMPORT_REQUIRED.filter(fld => {
-    const sel = document.getElementById(`mp_${fld}`);
-    return !sel || parseInt(sel.value, 10) < 0;
-  });
-  if (unmapped.length) {
-    notify(`필수 필드 매핑이 없습니다: ${unmapped.map(f => FLABELS[f]||f).join(', ')}`, 'error');
-    return;
-  }
-
-  const rows  = S.importData.rows;
-  const items = rows.map(row => {
-    const obj = {};
-    FIELDS.forEach(fld => {
-      const sel = document.getElementById(`mp_${fld}`);
-      const ci  = sel ? parseInt(sel.value, 10) : -1;
-      obj[fld]  = ci >= 0 && ci < row.length ? (row[ci]||'') : '';
-    });
-    return obj;
-  }).filter(o => o.key && o.name); // key와 name 모두 있는 항목만
-
-  if (!items.length) { notify('가져올 데이터가 없습니다.', true); return; }
-  const exK  = new Set(S.items.map(it => it.key));
-  const dups = items.filter(it => exK.has(it.key)).map(it => it.key);
-
-  if (!append && dups.length > 0) {
-    if (!confirm(`중복 Key ${dups.length}개:\n${dups.slice(0,5).join(', ')}${dups.length>5?'…':''}\n덮어쓰기?`)) return;
-  }
-  pushUndo();
-  if (!append) {
-    if (!confirm(`${items.length}개 항목으로 교체?`)) return;
-    S.items = items;
-    notify(`${items.length}개 항목을 가져왔습니다.`);
-  } else {
-    let added = 0;
-    items.forEach(it => {
-      const ex = findItem(it.key);
-      if (ex) Object.assign(ex, it); else { S.items.push(it); added++; }
-    });
-    notify(`${items.length}개 처리 (신규 ${added}개).`);
-  }
-  closeModal('importModal'); save(); window.__sobukRenderAll?.();
+  window.__reactDoImport?.(append);
 }
 
 /* ═══════════════════════════════
