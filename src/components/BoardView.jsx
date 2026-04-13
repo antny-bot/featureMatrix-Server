@@ -8,7 +8,7 @@
             foldCount = 0 이면 항상 펼침 (버튼 없음)
             boardExpandCol / boardCollapseCol window 브릿지로 expanded 상태 제어
 
-   선택/드래그: board.js의 _boardSel 모듈 변수로 관리 → DOM classList 직접 조작
+   선택/드래그: board.js의 _boardSel 모듈 변수로 관리
                CustomEvent(boardSelChange) → useState(boardSel)로 ActionBar 알림
 ══════════════════════════════════════════ */
 
@@ -16,9 +16,10 @@ import { createPortal } from 'react-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { STATUS_OPTS, STATUS_LBL, STATUS_ACCENT } from '../app/constants.js';
-import { getFiltered, isFilterActive, renderCard } from '../app/render.js';
+import { getFiltered, isFilterActive } from '../app/render.js';
 import { getColors } from '../app/theme.js';
-import { S, esc, eattr } from '../app/state.js';
+import { S } from '../app/state.js';
+import FeatureCard from './FeatureCard.jsx';
 
 /* ── 메인 컴포넌트 ── */
 export default function BoardView() {
@@ -27,7 +28,6 @@ export default function BoardView() {
   const previews  = useAppStore(s => s.previews);  // 편집 미리보기 변경 시 리렌더 트리거
   const foldCount = useAppStore(s => s.settings.boardFoldCount ?? 6);
 
-  /* portal containers: dangerouslySetInnerHTML 마운트 후 존재 */
   const [boardContainer, setBoardContainer] = useState(null);
   const [barContainer,   setBarContainer]   = useState(null);
 
@@ -49,7 +49,7 @@ export default function BoardView() {
     return () => window.removeEventListener('boardSelChange', handler);
   }, []);
 
-  /* 컬럼 펼침/접기 브릿지 (onclick="boardExpandCol('...')" 에서 호출) */
+  /* 컬럼 펼침/접기 브릿지 */
   useEffect(() => {
     window.boardExpandCol   = (colKey) => setExpanded(prev => { const n = new Set(prev); n.add(colKey);    return n; });
     window.boardCollapseCol = (colKey) => setExpanded(prev => { const n = new Set(prev); n.delete(colKey); return n; });
@@ -70,7 +70,7 @@ export default function BoardView() {
     else byCol['대기'].push(it);
   });
 
-  /* 선택 Set — renderCard extraClass 적용 (mxSel 패턴과 동일) */
+  /* 선택 Set — FeatureCard extraClass 적용 (mxSel 패턴과 동일) */
   const selSet = new Set(boardSel);
 
   /* ── 보드 컬럼 포털 (.board-cols 자체를 portal root로 → wrapper div 없음) ── */
@@ -84,33 +84,16 @@ export default function BoardView() {
         const visible        = isExp ? colItems : colItems.slice(0, foldCount);
         const hidden         = colItems.length - foldCount;
 
-        const cardsHtml = visible.map(it => renderCard(it, c, -1, {
-          id:          `bcard-${it.key}`,
-          extraClass:  selSet.has(it.key) ? 'board-selected' : '',  // mxSel 패턴과 동일
-          onclick:     `boardCardClick(event,'${eattr(it.key)}')`,
-          ondblclick:  `boardCardDblClick('${eattr(it.key)}')`,
-          ondragstart: `boardCardDragStart(event,'${eattr(it.key)}')`,
-          ondragend:   'boardCardDragEnd()',
-        })).join('');
-
-        /* 더 보기 / 접기 버튼 — dangerouslySetInnerHTML 내부에 포함 */
-        const moreHtml = overLimit && !isExp
-          ? `<button class="cell-more-btn" onclick="boardExpandCol('${eattr(colKey)}')">▼ ${hidden}개 더보기</button>`
-          : overLimit && isExp
-          ? `<button class="cell-more-btn" onclick="boardCollapseCol('${eattr(colKey)}')">▲ 접기</button>`
-          : '';
-
         return (
           <div key={colKey} className="board-col">
             {/* 컬럼 헤더 */}
             <div className="board-col-hd" style={{ borderTop: `3px solid ${STATUS_ACCENT[colKey]}` }}>
               <span>
-                {esc(colKey)}
+                {colKey}
                 <span className="board-col-cnt">{colItems.length}</span>
               </span>
             </div>
 
-            {/* 카드 영역: dangerouslySetInnerHTML + React drag 이벤트 공존 */}
             <div
               className={`board-col-body${isExp ? ' board-col-body--expanded' : ''}`}
               id={`bbody-${colKey}`}
@@ -129,8 +112,27 @@ export default function BoardView() {
                 e.currentTarget.classList.remove('drag-over');
                 window.boardDrop?.(e, colKey);
               }}
-              dangerouslySetInnerHTML={{ __html: cardsHtml + moreHtml }}
-            />
+            >
+              {visible.map(item => (
+                <FeatureCard
+                  key={item.key}
+                  item={item}
+                  colors={c}
+                  id={`bcard-${item.key}`}
+                  extraClass={selSet.has(item.key) ? 'board-selected' : ''}
+                  onClick={event => window.boardCardClick?.(event, item.key)}
+                  onDoubleClick={() => window.boardCardDblClick?.(item.key)}
+                  onDragStart={event => window.boardCardDragStart?.(event, item.key)}
+                  onDragEnd={() => window.boardCardDragEnd?.()}
+                />
+              ))}
+              {overLimit && !isExp && (
+                <button className="cell-more-btn" onClick={() => window.boardExpandCol?.(colKey)}>▼ {hidden}개 더보기</button>
+              )}
+              {overLimit && isExp && (
+                <button className="cell-more-btn" onClick={() => window.boardCollapseCol?.(colKey)}>▲ 접기</button>
+              )}
+            </div>
           </div>
         );
       })}
