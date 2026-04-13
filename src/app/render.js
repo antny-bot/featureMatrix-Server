@@ -78,25 +78,18 @@ export const bulkSel = { active: false, keys: new Set() };
 /* 매트릭스 선택 상태 */
 export const mxSel = new Set();
 
-function _mxCards(key) {
-  return document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`);
-}
-
 export function mxCardClick(e, key) {
   if (e.shiftKey) {
-    if (mxSel.has(key)) { mxSel.delete(key); _mxCards(key).forEach(c => c.classList.remove('mxsel')); }
-    else                { mxSel.add(key);    _mxCards(key).forEach(c => c.classList.add('mxsel'));    }
+    if (mxSel.has(key)) mxSel.delete(key);
+    else mxSel.add(key);
   } else {
-    mxSel.forEach(k => _mxCards(k).forEach(c => c.classList.remove('mxsel')));
     mxSel.clear();
     mxSel.add(key);
-    _mxCards(key).forEach(c => c.classList.add('mxsel'));
   }
   window.dispatchEvent(new CustomEvent('mxSelChange', { detail: { sel: [...mxSel] } }));
 }
 
 export function mxClearSel() {
-  mxSel.forEach(k => _mxCards(k).forEach(c => c.classList.remove('mxsel')));
   mxSel.clear();
   window.dispatchEvent(new CustomEvent('mxSelChange', { detail: { sel: [] } }));
 }

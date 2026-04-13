@@ -18274,28 +18274,17 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       return true;
     });
   }
-  function _mxCards(key) {
-    return document.querySelectorAll(`.mitem[data-key="${key.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`);
-  }
   function mxCardClick(e, key) {
     if (e.shiftKey) {
-      if (mxSel.has(key)) {
-        mxSel.delete(key);
-        _mxCards(key).forEach((c) => c.classList.remove("mxsel"));
-      } else {
-        mxSel.add(key);
-        _mxCards(key).forEach((c) => c.classList.add("mxsel"));
-      }
+      if (mxSel.has(key)) mxSel.delete(key);
+      else mxSel.add(key);
     } else {
-      mxSel.forEach((k) => _mxCards(k).forEach((c) => c.classList.remove("mxsel")));
       mxSel.clear();
       mxSel.add(key);
-      _mxCards(key).forEach((c) => c.classList.add("mxsel"));
     }
     window.dispatchEvent(new CustomEvent("mxSelChange", { detail: { sel: [...mxSel] } }));
   }
   function mxClearSel() {
-    mxSel.forEach((k) => _mxCards(k).forEach((c) => c.classList.remove("mxsel")));
     mxSel.clear();
     window.dispatchEvent(new CustomEvent("mxSelChange", { detail: { sel: [] } }));
   }
