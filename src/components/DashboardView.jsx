@@ -384,6 +384,7 @@ export default function DashboardView() {
     if (!container) return;
 
     if (animOk()) {
+      // LEGACY-DOM: 섹션 애니메이션 순서는 DOM 기준으로 계산.
       container.querySelectorAll('[data-anim-idx]').forEach(section => {
         const idx = parseInt(section.dataset.animIdx, 10);
         section.style.opacity = '0';

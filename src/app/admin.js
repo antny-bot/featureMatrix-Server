@@ -122,6 +122,7 @@ export function updateAdminUI() {
   const admin      = isAdmin();
   const editor     = isEditor();
 
+  // LEGACY-DOM: data-* 기반 권한 잠금은 순수 DOM 제어로 유지 (React 대체 없음).
   /* 관리자 전용 요소 (data-admin) */
   document.querySelectorAll('[data-admin]').forEach(el => {
     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {

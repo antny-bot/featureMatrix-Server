@@ -36,6 +36,7 @@ export function scheduleCardAnim() {
 /* ── CountUp ── */
 const _cu = {};
 export function countUp(id, target) {
+  // LEGACY-DOM: 숫자 카운트업은 DOM 텍스트/클래스 조작이 필요.
   const el = document.getElementById(id);
   if (!el) return;
   if (!animOk('countUp')) { el.textContent = target; return; }

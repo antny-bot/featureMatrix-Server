@@ -39,6 +39,7 @@ function unlockKeys(keys) {
 }
 
 export function openModal(id) {
+  // LEGACY-DOM: 모달 표시를 class 기반으로 유지 (React 컨테이너는 별도).
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.add('on');
@@ -46,6 +47,7 @@ export function openModal(id) {
   window.__modalState[id] = true;
 }
 export const closeModal = id => {
+  // LEGACY-DOM: 모달 표시를 class 기반으로 유지 (React 컨테이너는 별도).
   document.getElementById(id)?.classList.remove('on');
   if (!window.__modalState) window.__modalState = {};
   window.__modalState[id] = false;
@@ -204,6 +206,7 @@ export function parseMd(md) {
 
 /* KaTeX 렌더링 */
 function renderKatex(container) {
+  // LEGACY-DOM: KaTeX 렌더는 DOM 주입이 필요.
   container.querySelectorAll('[data-math]').forEach(el => {
     try {
       const disp = !!el.dataset.disp;

@@ -113,6 +113,7 @@ export default function ItemModal() {
   /* KaTeX 렌더링 — mdPreview 변경 후 DOM 반영 */
   useEffect(() => {
     if (!previewRef.current || !window.katex) return;
+    // LEGACY-DOM: KaTeX 렌더는 DOM 주입이 필요.
     previewRef.current.querySelectorAll('[data-math]').forEach(el => {
       try {
         el.innerHTML = window.katex.renderToString(el.dataset.math, {

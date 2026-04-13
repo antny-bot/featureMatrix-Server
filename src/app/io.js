@@ -76,6 +76,7 @@ function buildTSV() {
    Export
 ═══════════════════════════════ */
 export function expClip() {
+  // LEGACY-DOM: 클립보드/textarea 폴백은 DOM 접근이 필요.
   const tsv = buildTSV();
   navigator.clipboard?.writeText(tsv)
     .then(() => notify('클립보드에 복사되었습니다.'))
@@ -87,6 +88,7 @@ export function expClip() {
 }
 
 export function expTSV() {
+  // LEGACY-DOM: 다운로드는 anchor + ObjectURL 방식 유지.
   dlBlob('\uFEFF' + buildTSV(), `sobuk-${today()}.tsv`, 'text/tab-separated-values;charset=utf-8');
   notify('TSV 다운로드.');
 }
@@ -110,6 +112,7 @@ export function expXLS() {
 }
 
 export function expHTML() {
+  // LEGACY-DOM: 현재 스타일/라디오 상태를 읽어 내보내기 위해 DOM 접근 유지.
   const isFluid = document.querySelector('input[name="htmlW"]:checked')?.value === 'fluid';
   const items   = getFiltered();
   const isDark  = document.documentElement.getAttribute('data-theme') === 'dark';
