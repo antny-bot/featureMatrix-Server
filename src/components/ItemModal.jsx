@@ -4,11 +4,11 @@
    전략:
    - #editModal .ov 컨테이너에 createPortal
    - 열기/닫기: 기존 openModal/closeModal (DOM classList) 그대로 유지
-   - React 관리: title, showHardDel, activeTab, mdMode, mdPreview, mdStats
+   - React 관리: title, showHardDel, activeTab, mdMode, mdPreview, mdStats, form
    - 브릿지: window.__editModalBridge (열림 알림)
              window.switchEditTab, window.switchMdView (탭/뷰 전환)
              window.onMdInput, window.syncMdPreview, window.updateMdStat (MD 상태)
-   - 폼 입력은 uncontrolled (id 유지) → modal.js saveItem()이 DOM으로 직접 읽음
+   - 폼 입력은 controlled, modal.js는 form bridge로 읽고 씀
 ══════════════════════════════════════════ */
 
 import { createPortal } from 'react-dom';
@@ -18,6 +18,25 @@ import { STATUS_OPTS } from '../app/constants.js';
 import { emitLock, emitUnlock, emitPreview, isSocketConnected } from '../app/socket.js';
 import { getStore } from '../store/useAppStore.js';
 
+const EMPTY_FORM = {
+  key: '',
+  priority: '중',
+  name: '',
+  desc: '',
+  path: '',
+  group: '',
+  subGroup: '',
+  category: '',
+  subCategory: '',
+  owner: '',
+  status: '',
+  relSystem: '',
+  memo: '',
+  mdContent: '',
+  isImportant: 'N',
+  isDelete: 'N',
+};
+
 export default function ItemModal() {
   const [container,      setContainer]      = useState(null);
   const [activeTab,      setActiveTab]      = useState('info');
@@ -26,10 +45,23 @@ export default function ItemModal() {
   const [mdStats,        setMdStats]        = useState({ chars: '0자', lines: '0줄', words: '0단어' });
   const [title,          setTitle]          = useState('기능 추가');
   const [showHardDel,    setShowHardDel]    = useState(false);
+  const [form,           setForm]           = useState(EMPTY_FORM);
   const previewRef      = useRef(null);
   const currentKeyRef   = useRef(null);   // 현재 편집 중인 item key
   const previewTimerRef = useRef(null);   // 미리보기 디바운스 타이머
-  const inputListeners  = useRef([]);     // attach된 input 리스너 정리용
+  const formRef         = useRef(EMPTY_FORM);
+
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+
+  const updateMdStats = useCallback(value => {
+    setMdStats({
+      chars: `${value.length}자`,
+      lines: `${value ? value.split('\n').length : 0}줄`,
+      words: `${value.trim() ? value.trim().split(/\s+/).length : 0}단어`,
+    });
+  }, []);
 
   /* 편집 미리보기 전송 (300ms 디바운스) */
   const schedulePreview = useCallback(() => {
@@ -38,43 +70,38 @@ export default function ItemModal() {
     previewTimerRef.current = setTimeout(() => {
       const key  = currentKeyRef.current;
       const user = getStore().settings?.userName || '익명';
+      const current = formRef.current;
       const preview = {
-        name:     document.getElementById('fName')?.value     || '',
-        priority: document.getElementById('fPri')?.value      || '',
-        status:   document.getElementById('fStatus')?.value   || '',
-        owner:    document.getElementById('fOwner')?.value    || '',
-        desc:     document.getElementById('fDesc')?.value     || '',
-        group:       document.getElementById('fGroup')?.value    || '',
-        subGroup:    document.getElementById('fSubGroup')?.value || '',
-        category:    document.getElementById('fCat')?.value      || '',
-        subCategory: document.getElementById('fSubCat')?.value   || '',
+        name: current.name || '',
+        priority: current.priority || '',
+        status: current.status || '',
+        owner: current.owner || '',
+        desc: current.desc || '',
+        group: current.group || '',
+        subGroup: current.subGroup || '',
+        category: current.category || '',
+        subCategory: current.subCategory || '',
       };
       emitPreview(key, user, preview);
     }, 300);
   }, []);
 
-  /* 모달 내 입력 필드에 리스너 attach */
-  const attachInputListeners = useCallback(() => {
-    const ids = ['fName', 'fPri', 'fStatus', 'fOwner', 'fDesc', 'fGroup', 'fSubGroup', 'fCat', 'fSubCat', 'fMdContent'];
-    inputListeners.current.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
-    inputListeners.current = [];
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('input', schedulePreview);
-        el.addEventListener('change', schedulePreview);
-        inputListeners.current.push({ el, type: 'input', fn: schedulePreview });
-        inputListeners.current.push({ el, type: 'change', fn: schedulePreview });
-      }
-    });
-  }, [schedulePreview]);
-
-  /* 입력 리스너 정리 */
   const detachInputListeners = useCallback(() => {
-    inputListeners.current.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
-    inputListeners.current = [];
     clearTimeout(previewTimerRef.current);
   }, []);
+
+  const updateField = useCallback((field, value) => {
+    setForm(current => {
+      const next = { ...current, [field]: value };
+      formRef.current = next;
+      return next;
+    });
+    if (field === 'mdContent') {
+      updateMdStats(value);
+      setMdPreview(parseMd(value));
+    }
+    schedulePreview();
+  }, [schedulePreview, updateMdStats]);
 
   useEffect(() => {
     setContainer(document.getElementById('editModal'));
@@ -95,20 +122,23 @@ export default function ItemModal() {
   /* 브릿지: modal.js → React 상태 동기화 */
   useEffect(() => {
     /* 모달 열림 알림: title/showHardDel/탭/뷰 초기화 + Lock 획득 */
-    window.__editModalBridge = (mode, key) => {
+    window.__editModalBridge = (mode, key, nextForm = {}) => {
+      const mergedForm = { ...EMPTY_FORM, ...nextForm };
       setTitle(mode === 'add' ? '기능 추가' : `기능 수정 — ${key}`);
       setShowHardDel(mode === 'edit');
       setActiveTab('info');
       setMdMode('edit');
-      setMdPreview('');
-      setMdStats({ chars: '0자', lines: '0줄', words: '0단어' });
+      setForm(mergedForm);
+      formRef.current = mergedForm;
+      setMdPreview(parseMd(mergedForm.mdContent || ''));
+      updateMdStats(mergedForm.mdContent || '');
       // WebSocket Lock 획득 (편집 모드일 때만)
       if (mode === 'edit' && key) {
         currentKeyRef.current = key;
         const user = getStore().settings?.userName || '익명';
         emitLock(key, user);
-        // 입력 리스너 약간 지연 후 attach (DOM 렌더 완료 후)
-        setTimeout(attachInputListeners, 100);
+      } else {
+        currentKeyRef.current = null;
       }
     };
 
@@ -132,14 +162,7 @@ export default function ItemModal() {
     window.__editModalSwitchEditTab = (tab) => {
       setActiveTab(tab);
       if (tab === 'md') {
-        const ta = document.getElementById('fMdContent');
-        if (!ta) return;
-        const v = ta.value;
-        setMdStats({
-          chars: `${v.length}자`,
-          lines: `${v ? v.split('\n').length : 0}줄`,
-          words: `${v.trim() ? v.trim().split(/\s+/).length : 0}단어`,
-        });
+        updateMdStats(formRef.current.mdContent || '');
       }
     };
 
@@ -147,37 +170,44 @@ export default function ItemModal() {
     window.__editModalSwitchMdView = (mode) => {
       setMdMode(mode);
       if (mode !== 'edit') {
-        const ta = document.getElementById('fMdContent');
-        if (ta) setMdPreview(parseMd(ta.value));
+        setMdPreview(parseMd(formRef.current.mdContent || ''));
       }
     };
 
     /* MD 입력 이벤트: 통계 + 프리뷰 갱신 */
     window.__editModalOnMdInput = () => {
-      const ta = document.getElementById('fMdContent');
-      if (!ta) return;
-      const v = ta.value;
-      setMdStats({
-        chars: `${v.length}자`,
-        lines: `${v ? v.split('\n').length : 0}줄`,
-        words: `${v.trim() ? v.trim().split(/\s+/).length : 0}단어`,
-      });
+      const v = formRef.current.mdContent || '';
+      updateMdStats(v);
       setMdPreview(parseMd(v));
     };
 
     window.__editModalSyncMdPreview = () => {
-      const ta = document.getElementById('fMdContent');
-      if (ta) setMdPreview(parseMd(ta.value));
+      setMdPreview(parseMd(formRef.current.mdContent || ''));
     };
 
     window.__editModalUpdateMdStat = () => {
-      const ta = document.getElementById('fMdContent');
-      if (!ta) return;
-      const v = ta.value;
-      setMdStats({
-        chars: `${v.length}자`,
-        lines: `${v ? v.split('\n').length : 0}줄`,
-        words: `${v.trim() ? v.trim().split(/\s+/).length : 0}단어`,
+      updateMdStats(formRef.current.mdContent || '');
+    };
+
+    window.__editModalGetForm = () => ({ ...formRef.current });
+
+    window.__editModalSetMdContent = (value) => {
+      updateField('mdContent', value || '');
+    };
+
+    window.__editModalApplyMdEdit = (editor) => {
+      const textarea = document.getElementById('fMdContent');
+      const current = formRef.current.mdContent || '';
+      const selectionStart = textarea?.selectionStart ?? current.length;
+      const selectionEnd = textarea?.selectionEnd ?? current.length;
+      const result = editor(current, selectionStart, selectionEnd);
+      updateField('mdContent', result.value);
+      requestAnimationFrame(() => {
+        const nextTextarea = document.getElementById('fMdContent');
+        if (!nextTextarea) return;
+        nextTextarea.focus();
+        nextTextarea.selectionStart = result.selectionStart;
+        nextTextarea.selectionEnd = result.selectionEnd;
       });
     };
 
@@ -190,8 +220,11 @@ export default function ItemModal() {
       delete window.__editModalOnMdInput;
       delete window.__editModalSyncMdPreview;
       delete window.__editModalUpdateMdStat;
+      delete window.__editModalGetForm;
+      delete window.__editModalSetMdContent;
+      delete window.__editModalApplyMdEdit;
     };
-  }, [attachInputListeners, detachInputListeners]);
+  }, [detachInputListeners, updateField, updateMdStats]);
 
   if (!container) return null;
 
@@ -219,64 +252,64 @@ export default function ItemModal() {
         <div className="mg">
           <div className="field">
             <label className="lbl">Key</label>
-            <input className="inp" id="fKey" readOnly tabIndex={-1} style={{ background: 'var(--surface-2)', color: 'var(--text-3)' }} />
+            <input className="inp" id="fKey" value={form.key} readOnly tabIndex={-1} style={{ background: 'var(--surface-2)', color: 'var(--text-3)' }} />
           </div>
           <div className="field">
             <label className="lbl">우선순위</label>
-            <select className="sel" id="fPri">
+            <select className="sel" id="fPri" value={form.priority} onChange={event => updateField('priority', event.target.value)}>
               <option value="상">상</option><option value="중">중</option><option value="하">하</option>
             </select>
           </div>
           <div className="field s2">
             <label className="lbl">기능명 <span style={{ color: 'var(--danger)' }}>*</span></label>
-            <input className="inp" id="fName" placeholder="기능명" />
+            <input className="inp" id="fName" value={form.name} onChange={event => updateField('name', event.target.value)} placeholder="기능명" />
           </div>
           <div className="field s2">
             <label className="lbl">설명</label>
-            <textarea className="txta" id="fDesc" style={{ minHeight: '105px', resize: 'vertical' }} />
+            <textarea className="txta" id="fDesc" value={form.desc} onChange={event => updateField('desc', event.target.value)} style={{ minHeight: '105px', resize: 'vertical' }} />
           </div>
           <div className="field s2">
             <label className="lbl">메모</label>
-            <textarea className="txta" id="fMemo" style={{ minHeight: '105px', resize: 'vertical' }} />
+            <textarea className="txta" id="fMemo" value={form.memo} onChange={event => updateField('memo', event.target.value)} style={{ minHeight: '105px', resize: 'vertical' }} />
           </div>
           <div className="field s2">
             <label className="lbl">경로</label>
-            <input className="inp" id="fPath" placeholder="/path/to/feature" />
+            <input className="inp" id="fPath" value={form.path} onChange={event => updateField('path', event.target.value)} placeholder="/path/to/feature" />
           </div>
           <div className="field">
             <label className="lbl">그룹 (X축)</label>
-            <input className="inp" id="fGroup" list="dlGroup" /><datalist id="dlGroup" />
+            <input className="inp" id="fGroup" value={form.group} onChange={event => updateField('group', event.target.value)} list="dlGroup" /><datalist id="dlGroup" />
           </div>
           <div className="field">
             <label className="lbl">서브그룹</label>
-            <input className="inp" id="fSubGroup" list="dlSubGroup" /><datalist id="dlSubGroup" />
+            <input className="inp" id="fSubGroup" value={form.subGroup} onChange={event => updateField('subGroup', event.target.value)} list="dlSubGroup" /><datalist id="dlSubGroup" />
           </div>
           <div className="field">
             <label className="lbl">카테고리 (Y축)</label>
-            <input className="inp" id="fCat" list="dlCat" /><datalist id="dlCat" />
+            <input className="inp" id="fCat" value={form.category} onChange={event => updateField('category', event.target.value)} list="dlCat" /><datalist id="dlCat" />
           </div>
           <div className="field">
             <label className="lbl">서브카테고리</label>
-            <input className="inp" id="fSubCat" list="dlSubCat" /><datalist id="dlSubCat" />
+            <input className="inp" id="fSubCat" value={form.subCategory} onChange={event => updateField('subCategory', event.target.value)} list="dlSubCat" /><datalist id="dlSubCat" />
           </div>
           <div className="field">
             <label className="lbl">담당</label>
-            <input className="inp" id="fOwner" list="dlOwner" /><datalist id="dlOwner" />
+            <input className="inp" id="fOwner" value={form.owner} onChange={event => updateField('owner', event.target.value)} list="dlOwner" /><datalist id="dlOwner" />
           </div>
           <div className="field">
             <label className="lbl">진행상태</label>
-            <select className="sel" id="fStatus">
+            <select className="sel" id="fStatus" value={form.status} onChange={event => updateField('status', event.target.value)}>
               <option value="">—</option>
               {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div className="field">
             <label className="lbl">연관 시스템</label>
-            <input className="inp" id="fRel" />
+            <input className="inp" id="fRel" value={form.relSystem} onChange={event => updateField('relSystem', event.target.value)} />
           </div>
           <div style={{ display: 'flex', gap: '18px', alignItems: 'center', paddingTop: '2px' }}>
-            <label className="tgl"><input type="checkbox" id="fIsImp" /><span className="tgl-track" /><span className="tgl-lbl">★ 중요</span></label>
-            <label className="tgl"><input type="checkbox" id="fIsDel" /><span className="tgl-track" /><span className="tgl-lbl">삭제 처리</span></label>
+            <label className="tgl"><input type="checkbox" id="fIsImp" checked={form.isImportant === 'Y'} onChange={event => updateField('isImportant', event.target.checked ? 'Y' : 'N')} /><span className="tgl-track" /><span className="tgl-lbl">★ 중요</span></label>
+            <label className="tgl"><input type="checkbox" id="fIsDel" checked={form.isDelete === 'Y'} onChange={event => updateField('isDelete', event.target.checked ? 'Y' : 'N')} /><span className="tgl-track" /><span className="tgl-lbl">삭제 처리</span></label>
           </div>
         </div>
       </div>
@@ -333,6 +366,7 @@ export default function ItemModal() {
         <div style={{ display: 'flex', gap: '8px', flex: 1, minHeight: 0 }}>
           <textarea
             id="fMdContent"
+            value={form.mdContent}
             style={{
               ...taStyle,
               minHeight: '300px',
@@ -343,7 +377,7 @@ export default function ItemModal() {
               background: 'var(--surface-2)', color: 'var(--text)', outline: 'none',
             }}
             placeholder={"# 기능 제목\n\n## 개요\n마크다운으로 작성\n\n| 컬럼1 | 컬럼2 |\n|-------|-------|\n| 값1   | 값2   |\n\n수식: $E=mc^2$"}
-            onInput={() => window.__editModalOnMdInput?.()}
+            onChange={event => updateField('mdContent', event.target.value)}
           />
           <div
             ref={previewRef}

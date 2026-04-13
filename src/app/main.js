@@ -245,7 +245,7 @@ document.querySelectorAll('.ov').forEach(ov => {
     if (e.target !== ov) return;
     if (ov.id === 'editModal') {
       // 편집 모달 외부 클릭 → 자동 저장
-      const name = document.getElementById('fName')?.value.trim();
+      const name = window.__editModalGetForm?.().name?.trim();
       if (name) {
         saveItem(); // 기능명 있으면 저장 후 닫힘
       } else {

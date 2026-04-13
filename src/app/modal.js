@@ -61,24 +61,26 @@ export function updateMdStat() { window.__editModalUpdateMdStat?.(); }
 
 /* E - MD 툴바 삽입 헬퍼 */
 export function mdInsert(before, after) {
-  const ta = document.getElementById('fMdContent');
-  const s = ta.selectionStart, e = ta.selectionEnd;
-  const sel = ta.value.substring(s, e);
-  const rep = before + (sel || '텍스트') + (after||'');
-  ta.value = ta.value.substring(0, s) + rep + ta.value.substring(e);
-  ta.focus();
-  ta.selectionStart = s + before.length;
-  ta.selectionEnd   = s + before.length + (sel||'텍스트').length;
-  onMdInput();
+  window.__editModalApplyMdEdit?.((value, s, e) => {
+    const sel = value.substring(s, e);
+    const fallback = '텍스트';
+    const text = sel || fallback;
+    return {
+      value: value.substring(0, s) + before + text + (after || '') + value.substring(e),
+      selectionStart: s + before.length,
+      selectionEnd: s + before.length + text.length,
+    };
+  });
 }
 export function mdInsertLine(prefix) {
-  const ta = document.getElementById('fMdContent');
-  const s = ta.selectionStart;
-  const lineStart = ta.value.lastIndexOf('\n', s - 1) + 1;
-  ta.value = ta.value.substring(0, lineStart) + prefix + ta.value.substring(lineStart);
-  ta.focus();
-  ta.selectionStart = ta.selectionEnd = lineStart + prefix.length;
-  onMdInput();
+  window.__editModalApplyMdEdit?.((value, s) => {
+    const lineStart = value.lastIndexOf('\n', s - 1) + 1;
+    return {
+      value: value.substring(0, lineStart) + prefix + value.substring(lineStart),
+      selectionStart: lineStart + prefix.length,
+      selectionEnd: lineStart + prefix.length,
+    };
+  });
 }
 
 /* ── #5 MD 파서 (표 + 수식 + 헤딩 버그 수정) ── */
@@ -212,17 +214,24 @@ export function openEditModal(key) {
   setStore({ editKey: key });
   const item = findItem(key);
   if (!item) return;
-  const fm = {
-    fKey:'key', fPri:'priority', fName:'name', fDesc:'desc', fPath:'path',
-    fGroup:'group', fSubGroup:'subGroup', fCat:'category', fSubCat:'subCategory',
-    fOwner:'owner', fStatus:'status', fRel:'relSystem', fMemo:'memo', fMdContent:'mdContent'
-  };
-  Object.entries(fm).forEach(([id, prop]) => {
-    const el = document.getElementById(id); if (el) el.value = item[prop] || '';
+  window.__editModalBridge?.('edit', key, {
+    key: item.key || '',
+    priority: item.priority || '중',
+    name: item.name || '',
+    desc: item.desc || '',
+    path: item.path || '',
+    group: item.group || '',
+    subGroup: item.subGroup || '',
+    category: item.category || '',
+    subCategory: item.subCategory || '',
+    owner: item.owner || '',
+    status: item.status || '',
+    relSystem: item.relSystem || '',
+    memo: item.memo || '',
+    mdContent: item.mdContent || '',
+    isImportant: item.isImportant || 'N',
+    isDelete: item.isDelete || 'N',
   });
-  document.getElementById('fIsImp').checked = item.isImportant === 'Y';
-  document.getElementById('fIsDel').checked = item.isDelete    === 'Y';
-  window.__editModalBridge?.('edit', key);
   // 편집 중 락 등록 (서버 모드) — 충돌 알림은 lock_denied 이벤트로 처리
   lockItem(key);
   openModal('editModal');
@@ -232,23 +241,37 @@ export function openAddModal() {
   if (!isEditor()) { requireEditor(openAddModal); return; }
   S.editKey = null;
   setStore({ editKey: null });
-  ['fName','fDesc','fPath','fGroup','fSubGroup','fCat','fSubCat','fOwner','fRel','fMemo','fMdContent']
-    .forEach(id => { document.getElementById(id).value = ''; });
-  document.getElementById('fStatus').value  = '';
-  document.getElementById('fPri').value     = '중';
-  document.getElementById('fIsImp').checked = false;
-  document.getElementById('fIsDel').checked = false;
-  document.getElementById('fKey').value = genKey();
-  window.__editModalBridge?.('add', null);
+  window.__editModalBridge?.('add', null, {
+    key: genKey(),
+    priority: '중',
+    name: '',
+    desc: '',
+    path: '',
+    group: '',
+    subGroup: '',
+    category: '',
+    subCategory: '',
+    owner: '',
+    status: '',
+    relSystem: '',
+    memo: '',
+    mdContent: '',
+    isImportant: 'N',
+    isDelete: 'N',
+  });
   openModal('editModal');
 }
 
 export function openAddInCell(g, sg, c, sc) {
   openAddModal();
-  document.getElementById('fGroup').value    = g;
-  document.getElementById('fSubGroup').value = sg;
-  document.getElementById('fCat').value      = c;
-  document.getElementById('fSubCat').value   = sc;
+  const form = window.__editModalGetForm?.() || {};
+  window.__editModalBridge?.('add', null, {
+    ...form,
+    group: g,
+    subGroup: sg,
+    category: c,
+    subCategory: sc,
+  });
 }
 
 export function openEditOrMd(key) {
@@ -271,26 +294,27 @@ export function openMdModal(key) {
 /* ── 저장 ── */
 export function saveItem() {
   if (!isEditor()) { requireEditor(saveItem); return; }
-  const name = document.getElementById('fName').value.trim();
+  const form = window.__editModalGetForm?.() || {};
+  const name = (form.name || '').trim();
   if (!name) { notify('기능명을 입력해주세요.', true); return; }
   const ni = {
-    key:         document.getElementById('fKey').value,
+    key:         form.key,
     name,
-    desc:        document.getElementById('fDesc').value,
-    path:        document.getElementById('fPath').value.trim(),
-    group:       document.getElementById('fGroup').value.trim(),
-    subGroup:    document.getElementById('fSubGroup').value.trim(),
-    category:    document.getElementById('fCat').value.trim(),
-    subCategory: document.getElementById('fSubCat').value.trim(),
-    priority:    document.getElementById('fPri').value,
-    owner:       document.getElementById('fOwner').value.trim(),
-    isImportant: document.getElementById('fIsImp').checked ? 'Y' : 'N',
-    isDelete:    document.getElementById('fIsDel').checked ? 'Y' : 'N',
-    relSystem:   document.getElementById('fRel').value.trim(),
-    memo:        document.getElementById('fMemo').value,
-    status:      document.getElementById('fStatus').value,
+    desc:        form.desc || '',
+    path:        (form.path || '').trim(),
+    group:       (form.group || '').trim(),
+    subGroup:    (form.subGroup || '').trim(),
+    category:    (form.category || '').trim(),
+    subCategory: (form.subCategory || '').trim(),
+    priority:    form.priority || '중',
+    owner:       (form.owner || '').trim(),
+    isImportant: form.isImportant === 'Y' ? 'Y' : 'N',
+    isDelete:    form.isDelete === 'Y' ? 'Y' : 'N',
+    relSystem:   (form.relSystem || '').trim(),
+    memo:        form.memo || '',
+    status:      form.status || '',
     mdPath:      S.editKey ? (findItem(S.editKey)||{}).mdPath||'' : '',
-    mdContent:   document.getElementById('fMdContent').value,
+    mdContent:   form.mdContent || '',
     updatedAt:   Date.now()
   };
   pushUndo();
@@ -378,7 +402,7 @@ export function impSingleMd(e) {
   const file = e.target.files[0]; if (!file) return;
   const r = new FileReader();
   r.onload = ev => {
-    document.getElementById('fMdContent').value = ev.target.result;
+    window.__editModalSetMdContent?.(ev.target.result);
     onMdInput(); notify('MD 파일 불러왔습니다: ' + file.name);
     switchMdView('preview');
   };
@@ -386,10 +410,11 @@ export function impSingleMd(e) {
 }
 
 export function expSingleMd() {
-  const content = document.getElementById('fMdContent').value;
+  const form = window.__editModalGetForm?.() || {};
+  const content = form.mdContent || '';
   if (!content.trim()) { notify('MD 내용이 없습니다.', true); return; }
-  const key  = document.getElementById('fKey').value  || 'unknown';
-  const name = sanitizeFilename(document.getElementById('fName').value) || 'untitled';
+  const key  = form.key || 'unknown';
+  const name = sanitizeFilename(form.name) || 'untitled';
   dlBlob(content, key + '_' + name + '.md', 'text/markdown;charset=utf-8');
   notify('MD 파일 저장됨.');
 }

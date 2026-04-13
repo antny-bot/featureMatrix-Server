@@ -18783,24 +18783,26 @@ function __inlineNotify(msg, type) {
     window.__editModalOnMdInput?.();
   }
   function mdInsert(before, after) {
-    const ta = document.getElementById("fMdContent");
-    const s = ta.selectionStart, e = ta.selectionEnd;
-    const sel = ta.value.substring(s, e);
-    const rep = before + (sel || "\uD14D\uC2A4\uD2B8") + (after || "");
-    ta.value = ta.value.substring(0, s) + rep + ta.value.substring(e);
-    ta.focus();
-    ta.selectionStart = s + before.length;
-    ta.selectionEnd = s + before.length + (sel || "\uD14D\uC2A4\uD2B8").length;
-    onMdInput();
+    window.__editModalApplyMdEdit?.((value2, s, e) => {
+      const sel = value2.substring(s, e);
+      const fallback = "\uD14D\uC2A4\uD2B8";
+      const text = sel || fallback;
+      return {
+        value: value2.substring(0, s) + before + text + (after || "") + value2.substring(e),
+        selectionStart: s + before.length,
+        selectionEnd: s + before.length + text.length
+      };
+    });
   }
   function mdInsertLine(prefix) {
-    const ta = document.getElementById("fMdContent");
-    const s = ta.selectionStart;
-    const lineStart = ta.value.lastIndexOf("\n", s - 1) + 1;
-    ta.value = ta.value.substring(0, lineStart) + prefix + ta.value.substring(lineStart);
-    ta.focus();
-    ta.selectionStart = ta.selectionEnd = lineStart + prefix.length;
-    onMdInput();
+    window.__editModalApplyMdEdit?.((value2, s) => {
+      const lineStart = value2.lastIndexOf("\n", s - 1) + 1;
+      return {
+        value: value2.substring(0, lineStart) + prefix + value2.substring(lineStart),
+        selectionStart: lineStart + prefix.length,
+        selectionEnd: lineStart + prefix.length
+      };
+    });
   }
   function parseMd(md) {
     if (!md) return "";
@@ -18914,29 +18916,24 @@ function __inlineNotify(msg, type) {
     setStore({ editKey: key });
     const item = findItem(key);
     if (!item) return;
-    const fm = {
-      fKey: "key",
-      fPri: "priority",
-      fName: "name",
-      fDesc: "desc",
-      fPath: "path",
-      fGroup: "group",
-      fSubGroup: "subGroup",
-      fCat: "category",
-      fSubCat: "subCategory",
-      fOwner: "owner",
-      fStatus: "status",
-      fRel: "relSystem",
-      fMemo: "memo",
-      fMdContent: "mdContent"
-    };
-    Object.entries(fm).forEach(([id, prop]) => {
-      const el = document.getElementById(id);
-      if (el) el.value = item[prop] || "";
+    window.__editModalBridge?.("edit", key, {
+      key: item.key || "",
+      priority: item.priority || "\uC911",
+      name: item.name || "",
+      desc: item.desc || "",
+      path: item.path || "",
+      group: item.group || "",
+      subGroup: item.subGroup || "",
+      category: item.category || "",
+      subCategory: item.subCategory || "",
+      owner: item.owner || "",
+      status: item.status || "",
+      relSystem: item.relSystem || "",
+      memo: item.memo || "",
+      mdContent: item.mdContent || "",
+      isImportant: item.isImportant || "N",
+      isDelete: item.isDelete || "N"
     });
-    document.getElementById("fIsImp").checked = item.isImportant === "Y";
-    document.getElementById("fIsDel").checked = item.isDelete === "Y";
-    window.__editModalBridge?.("edit", key);
     lockItem(key);
     openModal("editModal");
   }
@@ -18947,23 +18944,36 @@ function __inlineNotify(msg, type) {
     }
     S.editKey = null;
     setStore({ editKey: null });
-    ["fName", "fDesc", "fPath", "fGroup", "fSubGroup", "fCat", "fSubCat", "fOwner", "fRel", "fMemo", "fMdContent"].forEach((id) => {
-      document.getElementById(id).value = "";
+    window.__editModalBridge?.("add", null, {
+      key: genKey(),
+      priority: "\uC911",
+      name: "",
+      desc: "",
+      path: "",
+      group: "",
+      subGroup: "",
+      category: "",
+      subCategory: "",
+      owner: "",
+      status: "",
+      relSystem: "",
+      memo: "",
+      mdContent: "",
+      isImportant: "N",
+      isDelete: "N"
     });
-    document.getElementById("fStatus").value = "";
-    document.getElementById("fPri").value = "\uC911";
-    document.getElementById("fIsImp").checked = false;
-    document.getElementById("fIsDel").checked = false;
-    document.getElementById("fKey").value = genKey();
-    window.__editModalBridge?.("add", null);
     openModal("editModal");
   }
   function openAddInCell(g, sg, c, sc) {
     openAddModal();
-    document.getElementById("fGroup").value = g;
-    document.getElementById("fSubGroup").value = sg;
-    document.getElementById("fCat").value = c;
-    document.getElementById("fSubCat").value = sc;
+    const form = window.__editModalGetForm?.() || {};
+    window.__editModalBridge?.("add", null, {
+      ...form,
+      group: g,
+      subGroup: sg,
+      category: c,
+      subCategory: sc
+    });
   }
   function openEditOrMd(key) {
     const it = findItem(key);
@@ -18987,29 +18997,30 @@ function __inlineNotify(msg, type) {
       requireEditor(saveItem);
       return;
     }
-    const name = document.getElementById("fName").value.trim();
+    const form = window.__editModalGetForm?.() || {};
+    const name = (form.name || "").trim();
     if (!name) {
       notify("\uAE30\uB2A5\uBA85\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.", true);
       return;
     }
     const ni = {
-      key: document.getElementById("fKey").value,
+      key: form.key,
       name,
-      desc: document.getElementById("fDesc").value,
-      path: document.getElementById("fPath").value.trim(),
-      group: document.getElementById("fGroup").value.trim(),
-      subGroup: document.getElementById("fSubGroup").value.trim(),
-      category: document.getElementById("fCat").value.trim(),
-      subCategory: document.getElementById("fSubCat").value.trim(),
-      priority: document.getElementById("fPri").value,
-      owner: document.getElementById("fOwner").value.trim(),
-      isImportant: document.getElementById("fIsImp").checked ? "Y" : "N",
-      isDelete: document.getElementById("fIsDel").checked ? "Y" : "N",
-      relSystem: document.getElementById("fRel").value.trim(),
-      memo: document.getElementById("fMemo").value,
-      status: document.getElementById("fStatus").value,
+      desc: form.desc || "",
+      path: (form.path || "").trim(),
+      group: (form.group || "").trim(),
+      subGroup: (form.subGroup || "").trim(),
+      category: (form.category || "").trim(),
+      subCategory: (form.subCategory || "").trim(),
+      priority: form.priority || "\uC911",
+      owner: (form.owner || "").trim(),
+      isImportant: form.isImportant === "Y" ? "Y" : "N",
+      isDelete: form.isDelete === "Y" ? "Y" : "N",
+      relSystem: (form.relSystem || "").trim(),
+      memo: form.memo || "",
+      status: form.status || "",
       mdPath: S.editKey ? (findItem(S.editKey) || {}).mdPath || "" : "",
-      mdContent: document.getElementById("fMdContent").value,
+      mdContent: form.mdContent || "",
       updatedAt: Date.now()
     };
     pushUndo();
@@ -19106,7 +19117,7 @@ function __inlineNotify(msg, type) {
     if (!file) return;
     const r = new FileReader();
     r.onload = (ev) => {
-      document.getElementById("fMdContent").value = ev.target.result;
+      window.__editModalSetMdContent?.(ev.target.result);
       onMdInput();
       notify("MD \uD30C\uC77C \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4: " + file.name);
       switchMdView("preview");
@@ -19115,13 +19126,14 @@ function __inlineNotify(msg, type) {
     e.target.value = "";
   }
   function expSingleMd() {
-    const content = document.getElementById("fMdContent").value;
+    const form = window.__editModalGetForm?.() || {};
+    const content = form.mdContent || "";
     if (!content.trim()) {
       notify("MD \uB0B4\uC6A9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.", true);
       return;
     }
-    const key = document.getElementById("fKey").value || "unknown";
-    const name = sanitizeFilename(document.getElementById("fName").value) || "untitled";
+    const key = form.key || "unknown";
+    const name = sanitizeFilename(form.name) || "untitled";
     dlBlob(content, key + "_" + name + ".md", "text/markdown;charset=utf-8");
     notify("MD \uD30C\uC77C \uC800\uC7A5\uB428.");
   }
@@ -20579,7 +20591,7 @@ function __inlineNotify(msg, type) {
     scheduleCardAnim();
     (() => {
       const ver = true ? "2.0.0" : "dev";
-      const bid = true ? "20260413.local" : "local";
+      const bid = true ? "20260414.local" : "local";
       const el = document.getElementById("buildNumberDisplay");
       if (el) el.textContent = `v${ver} (build ${bid})`;
     })();
@@ -20928,7 +20940,7 @@ function __inlineNotify(msg, type) {
         ov.addEventListener("click", (e) => {
           if (e.target !== ov) return;
           if (ov.id === "editModal") {
-            const name = document.getElementById("fName")?.value.trim();
+            const name = window.__editModalGetForm?.().name?.trim();
             if (name) {
               saveItem();
             } else {
@@ -22881,6 +22893,24 @@ function __inlineNotify(msg, type) {
   init_socket3();
   init_useAppStore();
   var import_jsx_runtime11 = __toESM(require_jsx_runtime());
+  var EMPTY_FORM = {
+    key: "",
+    priority: "\uC911",
+    name: "",
+    desc: "",
+    path: "",
+    group: "",
+    subGroup: "",
+    category: "",
+    subCategory: "",
+    owner: "",
+    status: "",
+    relSystem: "",
+    memo: "",
+    mdContent: "",
+    isImportant: "N",
+    isDelete: "N"
+  };
   function ItemModal() {
     const [container, setContainer] = (0, import_react9.useState)(null);
     const [activeTab, setActiveTab] = (0, import_react9.useState)("info");
@@ -22889,49 +22919,57 @@ function __inlineNotify(msg, type) {
     const [mdStats, setMdStats] = (0, import_react9.useState)({ chars: "0\uC790", lines: "0\uC904", words: "0\uB2E8\uC5B4" });
     const [title, setTitle] = (0, import_react9.useState)("\uAE30\uB2A5 \uCD94\uAC00");
     const [showHardDel, setShowHardDel] = (0, import_react9.useState)(false);
+    const [form, setForm] = (0, import_react9.useState)(EMPTY_FORM);
     const previewRef = (0, import_react9.useRef)(null);
     const currentKeyRef = (0, import_react9.useRef)(null);
     const previewTimerRef = (0, import_react9.useRef)(null);
-    const inputListeners = (0, import_react9.useRef)([]);
+    const formRef = (0, import_react9.useRef)(EMPTY_FORM);
+    (0, import_react9.useEffect)(() => {
+      formRef.current = form;
+    }, [form]);
+    const updateMdStats = (0, import_react9.useCallback)((value2) => {
+      setMdStats({
+        chars: `${value2.length}\uC790`,
+        lines: `${value2 ? value2.split("\n").length : 0}\uC904`,
+        words: `${value2.trim() ? value2.trim().split(/\s+/).length : 0}\uB2E8\uC5B4`
+      });
+    }, []);
     const schedulePreview = (0, import_react9.useCallback)(() => {
       if (!isSocketConnected() || !currentKeyRef.current) return;
       clearTimeout(previewTimerRef.current);
       previewTimerRef.current = setTimeout(() => {
         const key = currentKeyRef.current;
         const user = getStore().settings?.userName || "\uC775\uBA85";
+        const current = formRef.current;
         const preview = {
-          name: document.getElementById("fName")?.value || "",
-          priority: document.getElementById("fPri")?.value || "",
-          status: document.getElementById("fStatus")?.value || "",
-          owner: document.getElementById("fOwner")?.value || "",
-          desc: document.getElementById("fDesc")?.value || "",
-          group: document.getElementById("fGroup")?.value || "",
-          subGroup: document.getElementById("fSubGroup")?.value || "",
-          category: document.getElementById("fCat")?.value || "",
-          subCategory: document.getElementById("fSubCat")?.value || ""
+          name: current.name || "",
+          priority: current.priority || "",
+          status: current.status || "",
+          owner: current.owner || "",
+          desc: current.desc || "",
+          group: current.group || "",
+          subGroup: current.subGroup || "",
+          category: current.category || "",
+          subCategory: current.subCategory || ""
         };
         emitPreview(key, user, preview);
       }, 300);
     }, []);
-    const attachInputListeners = (0, import_react9.useCallback)(() => {
-      const ids = ["fName", "fPri", "fStatus", "fOwner", "fDesc", "fGroup", "fSubGroup", "fCat", "fSubCat", "fMdContent"];
-      inputListeners.current.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
-      inputListeners.current = [];
-      ids.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener("input", schedulePreview);
-          el.addEventListener("change", schedulePreview);
-          inputListeners.current.push({ el, type: "input", fn: schedulePreview });
-          inputListeners.current.push({ el, type: "change", fn: schedulePreview });
-        }
-      });
-    }, [schedulePreview]);
     const detachInputListeners = (0, import_react9.useCallback)(() => {
-      inputListeners.current.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
-      inputListeners.current = [];
       clearTimeout(previewTimerRef.current);
     }, []);
+    const updateField = (0, import_react9.useCallback)((field, value2) => {
+      setForm((current) => {
+        const next = { ...current, [field]: value2 };
+        formRef.current = next;
+        return next;
+      });
+      if (field === "mdContent") {
+        updateMdStats(value2);
+        setMdPreview(parseMd(value2));
+      }
+      schedulePreview();
+    }, [schedulePreview, updateMdStats]);
     (0, import_react9.useEffect)(() => {
       setContainer(document.getElementById("editModal"));
     }, []);
@@ -22949,18 +22987,22 @@ function __inlineNotify(msg, type) {
       });
     }, [mdPreview]);
     (0, import_react9.useEffect)(() => {
-      window.__editModalBridge = (mode, key) => {
+      window.__editModalBridge = (mode, key, nextForm = {}) => {
+        const mergedForm = { ...EMPTY_FORM, ...nextForm };
         setTitle(mode === "add" ? "\uAE30\uB2A5 \uCD94\uAC00" : `\uAE30\uB2A5 \uC218\uC815 \u2014 ${key}`);
         setShowHardDel(mode === "edit");
         setActiveTab("info");
         setMdMode("edit");
-        setMdPreview("");
-        setMdStats({ chars: "0\uC790", lines: "0\uC904", words: "0\uB2E8\uC5B4" });
+        setForm(mergedForm);
+        formRef.current = mergedForm;
+        setMdPreview(parseMd(mergedForm.mdContent || ""));
+        updateMdStats(mergedForm.mdContent || "");
         if (mode === "edit" && key) {
           currentKeyRef.current = key;
           const user = getStore().settings?.userName || "\uC775\uBA85";
           emitLock(key, user);
-          setTimeout(attachInputListeners, 100);
+        } else {
+          currentKeyRef.current = null;
         }
       };
       const modalEl = document.getElementById("editModal");
@@ -22980,46 +23022,43 @@ function __inlineNotify(msg, type) {
       window.__editModalSwitchEditTab = (tab) => {
         setActiveTab(tab);
         if (tab === "md") {
-          const ta = document.getElementById("fMdContent");
-          if (!ta) return;
-          const v = ta.value;
-          setMdStats({
-            chars: `${v.length}\uC790`,
-            lines: `${v ? v.split("\n").length : 0}\uC904`,
-            words: `${v.trim() ? v.trim().split(/\s+/).length : 0}\uB2E8\uC5B4`
-          });
+          updateMdStats(formRef.current.mdContent || "");
         }
       };
       window.__editModalSwitchMdView = (mode) => {
         setMdMode(mode);
         if (mode !== "edit") {
-          const ta = document.getElementById("fMdContent");
-          if (ta) setMdPreview(parseMd(ta.value));
+          setMdPreview(parseMd(formRef.current.mdContent || ""));
         }
       };
       window.__editModalOnMdInput = () => {
-        const ta = document.getElementById("fMdContent");
-        if (!ta) return;
-        const v = ta.value;
-        setMdStats({
-          chars: `${v.length}\uC790`,
-          lines: `${v ? v.split("\n").length : 0}\uC904`,
-          words: `${v.trim() ? v.trim().split(/\s+/).length : 0}\uB2E8\uC5B4`
-        });
+        const v = formRef.current.mdContent || "";
+        updateMdStats(v);
         setMdPreview(parseMd(v));
       };
       window.__editModalSyncMdPreview = () => {
-        const ta = document.getElementById("fMdContent");
-        if (ta) setMdPreview(parseMd(ta.value));
+        setMdPreview(parseMd(formRef.current.mdContent || ""));
       };
       window.__editModalUpdateMdStat = () => {
-        const ta = document.getElementById("fMdContent");
-        if (!ta) return;
-        const v = ta.value;
-        setMdStats({
-          chars: `${v.length}\uC790`,
-          lines: `${v ? v.split("\n").length : 0}\uC904`,
-          words: `${v.trim() ? v.trim().split(/\s+/).length : 0}\uB2E8\uC5B4`
+        updateMdStats(formRef.current.mdContent || "");
+      };
+      window.__editModalGetForm = () => ({ ...formRef.current });
+      window.__editModalSetMdContent = (value2) => {
+        updateField("mdContent", value2 || "");
+      };
+      window.__editModalApplyMdEdit = (editor) => {
+        const textarea = document.getElementById("fMdContent");
+        const current = formRef.current.mdContent || "";
+        const selectionStart = textarea?.selectionStart ?? current.length;
+        const selectionEnd = textarea?.selectionEnd ?? current.length;
+        const result = editor(current, selectionStart, selectionEnd);
+        updateField("mdContent", result.value);
+        requestAnimationFrame(() => {
+          const nextTextarea = document.getElementById("fMdContent");
+          if (!nextTextarea) return;
+          nextTextarea.focus();
+          nextTextarea.selectionStart = result.selectionStart;
+          nextTextarea.selectionEnd = result.selectionEnd;
         });
       };
       return () => {
@@ -23031,8 +23070,11 @@ function __inlineNotify(msg, type) {
         delete window.__editModalOnMdInput;
         delete window.__editModalSyncMdPreview;
         delete window.__editModalUpdateMdStat;
+        delete window.__editModalGetForm;
+        delete window.__editModalSetMdContent;
+        delete window.__editModalApplyMdEdit;
       };
-    }, [attachInputListeners, detachInputListeners]);
+    }, [detachInputListeners, updateField, updateMdStats]);
     if (!container) return null;
     const infoVisible = activeTab === "info";
     const taStyle = { display: mdMode === "preview" ? "none" : "", flex: mdMode !== "preview" ? "1" : "" };
@@ -23050,11 +23092,11 @@ function __inlineNotify(msg, type) {
         /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "mbody", style: { padding: "16px 20px", display: infoVisible ? "" : "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "mg", children: [
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "Key" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fKey", readOnly: true, tabIndex: -1, style: { background: "var(--surface-2)", color: "var(--text-3)" } })
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fKey", value: form.key, readOnly: true, tabIndex: -1, style: { background: "var(--surface-2)", color: "var(--text-3)" } })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uC6B0\uC120\uC21C\uC704" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("select", { className: "sel", id: "fPri", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("select", { className: "sel", id: "fPri", value: form.priority, onChange: (event) => updateField("priority", event.target.value), children: [
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("option", { value: "\uC0C1", children: "\uC0C1" }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("option", { value: "\uC911", children: "\uC911" }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("option", { value: "\uD558", children: "\uD558" })
@@ -23065,64 +23107,64 @@ function __inlineNotify(msg, type) {
               "\uAE30\uB2A5\uBA85 ",
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { style: { color: "var(--danger)" }, children: "*" })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fName", placeholder: "\uAE30\uB2A5\uBA85" })
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fName", value: form.name, onChange: (event) => updateField("name", event.target.value), placeholder: "\uAE30\uB2A5\uBA85" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field s2", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uC124\uBA85" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("textarea", { className: "txta", id: "fDesc", style: { minHeight: "105px", resize: "vertical" } })
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("textarea", { className: "txta", id: "fDesc", value: form.desc, onChange: (event) => updateField("desc", event.target.value), style: { minHeight: "105px", resize: "vertical" } })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field s2", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uBA54\uBAA8" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("textarea", { className: "txta", id: "fMemo", style: { minHeight: "105px", resize: "vertical" } })
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("textarea", { className: "txta", id: "fMemo", value: form.memo, onChange: (event) => updateField("memo", event.target.value), style: { minHeight: "105px", resize: "vertical" } })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field s2", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uACBD\uB85C" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fPath", placeholder: "/path/to/feature" })
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fPath", value: form.path, onChange: (event) => updateField("path", event.target.value), placeholder: "/path/to/feature" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uADF8\uB8F9 (X\uCD95)" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fGroup", list: "dlGroup" }),
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fGroup", value: form.group, onChange: (event) => updateField("group", event.target.value), list: "dlGroup" }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("datalist", { id: "dlGroup" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uC11C\uBE0C\uADF8\uB8F9" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fSubGroup", list: "dlSubGroup" }),
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fSubGroup", value: form.subGroup, onChange: (event) => updateField("subGroup", event.target.value), list: "dlSubGroup" }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("datalist", { id: "dlSubGroup" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uCE74\uD14C\uACE0\uB9AC (Y\uCD95)" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fCat", list: "dlCat" }),
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fCat", value: form.category, onChange: (event) => updateField("category", event.target.value), list: "dlCat" }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("datalist", { id: "dlCat" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fSubCat", list: "dlSubCat" }),
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fSubCat", value: form.subCategory, onChange: (event) => updateField("subCategory", event.target.value), list: "dlSubCat" }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("datalist", { id: "dlSubCat" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uB2F4\uB2F9" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fOwner", list: "dlOwner" }),
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fOwner", value: form.owner, onChange: (event) => updateField("owner", event.target.value), list: "dlOwner" }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("datalist", { id: "dlOwner" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uC9C4\uD589\uC0C1\uD0DC" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("select", { className: "sel", id: "fStatus", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("select", { className: "sel", id: "fStatus", value: form.status, onChange: (event) => updateField("status", event.target.value), children: [
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("option", { value: "", children: "\u2014" }),
               STATUS_OPTS.map((s) => /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("option", { value: s, children: s }, s))
             ] })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { className: "lbl", children: "\uC5F0\uAD00 \uC2DC\uC2A4\uD15C" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fRel" })
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "fRel", value: form.relSystem, onChange: (event) => updateField("relSystem", event.target.value) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", gap: "18px", alignItems: "center", paddingTop: "2px" }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { className: "tgl", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "checkbox", id: "fIsImp" }),
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "checkbox", id: "fIsImp", checked: form.isImportant === "Y", onChange: (event) => updateField("isImportant", event.target.checked ? "Y" : "N") }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "tgl-track" }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "tgl-lbl", children: "\u2605 \uC911\uC694" })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { className: "tgl", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "checkbox", id: "fIsDel" }),
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "checkbox", id: "fIsDel", checked: form.isDelete === "Y", onChange: (event) => updateField("isDelete", event.target.checked ? "Y" : "N") }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "tgl-track" }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "tgl-lbl", children: "\uC0AD\uC81C \uCC98\uB9AC" })
             ] })
@@ -23177,6 +23219,7 @@ function __inlineNotify(msg, type) {
               "textarea",
               {
                 id: "fMdContent",
+                value: form.mdContent,
                 style: {
                   ...taStyle,
                   minHeight: "300px",
@@ -23192,7 +23235,7 @@ function __inlineNotify(msg, type) {
                   outline: "none"
                 },
                 placeholder: "# \uAE30\uB2A5 \uC81C\uBAA9\n\n## \uAC1C\uC694\n\uB9C8\uD06C\uB2E4\uC6B4\uC73C\uB85C \uC791\uC131\n\n| \uCEEC\uB7FC1 | \uCEEC\uB7FC2 |\n|-------|-------|\n| \uAC121   | \uAC122   |\n\n\uC218\uC2DD: $E=mc^2$",
-                onInput: () => window.__editModalOnMdInput?.()
+                onChange: (event) => updateField("mdContent", event.target.value)
               }
             ),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
