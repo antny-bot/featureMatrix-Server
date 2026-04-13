@@ -97,26 +97,24 @@ export function logout() {
 export function adminLogout() { logout(); }
 
 /* ── 편집자 비밀번호 변경 (관리자 전용) ── */
-export async function setEditorPassword() {
-  const inp  = document.getElementById('editorPwInp');
-  const errEl = document.getElementById('editorPwErr');
-  if (!inp) return;
-  const newPw = inp.value;
-  if (errEl) errEl.textContent = '';
+export async function setEditorPassword(password = '') {
+  const newPw = password || '';
+  window.__reactSetEditorPwError?.('');
   try {
     const json = await apiFetch('/api/set-editor-password', {
       method: 'POST',
       body: JSON.stringify({ password: newPw })
     });
     if (json.ok) {
-      inp.value = '';
       notify(newPw ? '편집자 비밀번호가 변경됐습니다.' : '편집자 비밀번호가 제거됐습니다.');
+      return true;
     } else {
-      if (errEl) errEl.textContent = json.error || '변경 실패';
+      window.__reactSetEditorPwError?.(json.error || '변경 실패');
     }
   } catch(e) {
-    if (errEl) errEl.textContent = '서버에 연결할 수 없습니다.';
+    window.__reactSetEditorPwError?.('서버에 연결할 수 없습니다.');
   }
+  return false;
 }
 
 /* ── UI 상태 동기화 ── */

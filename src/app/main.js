@@ -362,14 +362,13 @@ function showUserNamePopup() {
 }
 
 window.syncEditorPwStatus = async () => {
-  const inp = document.getElementById('editorPwInp');
-  if (!inp || S.settings.storageMode !== 'server') return;
+  if (S.settings.storageMode !== 'server') return;
   try {
     const result = await pollServerTs();
     if (result && result.hasEditorPw) {
-      inp.placeholder = '새 비밀번호 (비워두면 제거) — 현재 설정됨 ****';
+      window.__reactSetEditorPwPlaceholder?.('새 비밀번호 (비워두면 제거) — 현재 설정됨 ****');
     } else {
-      inp.placeholder = '새 비밀번호 (비워두면 비번 없이 편집 가능)';
+      window.__reactSetEditorPwPlaceholder?.('새 비밀번호 (비워두면 비번 없이 편집 가능)');
     }
   } catch(e) {}
 };

@@ -209,16 +209,7 @@ export default function SettingsPanel() {
               <button className="btn btn-d btn-sm" onClick={() => window.resetData?.()}>초기화</button>
             </div>
             <div className="sec-ttl" style={{ marginTop: '16px' }}>접근 제어</div>
-            <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-              <div><div className="slbl">편집자 비밀번호</div><div className="ssub">비워두면 비번 없이 편집 가능</div></div>
-              <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                <input className="inp" id="editorPwInp" type="password" placeholder="새 비밀번호 (비우면 제거)"
-                  style={{ flex: 1, height: '28px', fontSize: '.82rem' }}
-                  onKeyDown={e => { if(e.key==='Enter') window.setEditorPassword?.(); }} />
-                <button className="btn btn-s btn-sm" onClick={() => window.setEditorPassword?.()}>변경</button>
-              </div>
-              <div id="editorPwErr" style={{ color: 'var(--danger)', fontSize: '.78rem', minHeight: '14px' }}></div>
-            </div>
+            <EditorPasswordControl />
           </div>
         )}
 
@@ -330,6 +321,49 @@ function ServerSettingsPanel({ settings }) {
       <div style={{ marginTop: '14px' }}>
         <button className="btn btn-p btn-sm" onClick={() => saveServerSettings()}>저장</button>
       </div>
+    </div>
+  );
+}
+
+function EditorPasswordControl() {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [placeholder, setPlaceholder] = useState('새 비밀번호 (비우면 제거)');
+
+  useEffect(() => {
+    window.__reactSetEditorPwError = message => setError(message || '');
+    window.__reactSetEditorPwPlaceholder = value => setPlaceholder(value || '새 비밀번호 (비우면 제거)');
+    return () => {
+      delete window.__reactSetEditorPwError;
+      delete window.__reactSetEditorPwPlaceholder;
+    };
+  }, []);
+
+  const submit = async () => {
+    const ok = await window.setEditorPassword?.(password);
+    if (ok) setPassword('');
+  };
+
+  return (
+    <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+      <div><div className="slbl">편집자 비밀번호</div><div className="ssub">비워두면 비번 없이 편집 가능</div></div>
+      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+        <input
+          className="inp"
+          id="editorPwInp"
+          type="password"
+          value={password}
+          placeholder={placeholder}
+          onChange={event => {
+            setPassword(event.target.value);
+            setError('');
+          }}
+          style={{ flex: 1, height: '28px', fontSize: '.82rem' }}
+          onKeyDown={event => { if (event.key === 'Enter') submit(); }}
+        />
+        <button className="btn btn-s btn-sm" onClick={submit}>변경</button>
+      </div>
+      <div id="editorPwErr" style={{ color: 'var(--danger)', fontSize: '.78rem', minHeight: '14px' }}>{error}</div>
     </div>
   );
 }

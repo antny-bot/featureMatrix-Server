@@ -18639,26 +18639,24 @@ function __inlineNotify(msg, type) {
   function adminLogout() {
     logout();
   }
-  async function setEditorPassword() {
-    const inp = document.getElementById("editorPwInp");
-    const errEl = document.getElementById("editorPwErr");
-    if (!inp) return;
-    const newPw = inp.value;
-    if (errEl) errEl.textContent = "";
+  async function setEditorPassword(password = "") {
+    const newPw = password || "";
+    window.__reactSetEditorPwError?.("");
     try {
       const json = await apiFetch("/api/set-editor-password", {
         method: "POST",
         body: JSON.stringify({ password: newPw })
       });
       if (json.ok) {
-        inp.value = "";
         notify(newPw ? "\uD3B8\uC9D1\uC790 \uBE44\uBC00\uBC88\uD638\uAC00 \uBCC0\uACBD\uB410\uC2B5\uB2C8\uB2E4." : "\uD3B8\uC9D1\uC790 \uBE44\uBC00\uBC88\uD638\uAC00 \uC81C\uAC70\uB410\uC2B5\uB2C8\uB2E4.");
+        return true;
       } else {
-        if (errEl) errEl.textContent = json.error || "\uBCC0\uACBD \uC2E4\uD328";
+        window.__reactSetEditorPwError?.(json.error || "\uBCC0\uACBD \uC2E4\uD328");
       }
     } catch (e) {
-      if (errEl) errEl.textContent = "\uC11C\uBC84\uC5D0 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.";
+      window.__reactSetEditorPwError?.("\uC11C\uBC84\uC5D0 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     }
+    return false;
   }
   function updateAdminUI() {
     const admin = isAdmin();
@@ -20926,14 +20924,13 @@ function __inlineNotify(msg, type) {
         syncServerSettingsUI();
       };
       window.syncEditorPwStatus = async () => {
-        const inp = document.getElementById("editorPwInp");
-        if (!inp || S.settings.storageMode !== "server") return;
+        if (S.settings.storageMode !== "server") return;
         try {
           const result = await pollServerTs();
           if (result && result.hasEditorPw) {
-            inp.placeholder = "\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6CC\uB450\uBA74 \uC81C\uAC70) \u2014 \uD604\uC7AC \uC124\uC815\uB428 ****";
+            window.__reactSetEditorPwPlaceholder?.("\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6CC\uB450\uBA74 \uC81C\uAC70) \u2014 \uD604\uC7AC \uC124\uC815\uB428 ****");
           } else {
-            inp.placeholder = "\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6CC\uB450\uBA74 \uBE44\uBC88 \uC5C6\uC774 \uD3B8\uC9D1 \uAC00\uB2A5)";
+            window.__reactSetEditorPwPlaceholder?.("\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6CC\uB450\uBA74 \uBE44\uBC88 \uC5C6\uC774 \uD3B8\uC9D1 \uAC00\uB2A5)");
           }
         } catch (e) {
         }
@@ -22773,29 +22770,7 @@ function __inlineNotify(msg, type) {
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-d btn-sm", onClick: () => window.resetData?.(), children: "\uCD08\uAE30\uD654" })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "sec-ttl", style: { marginTop: "16px" }, children: "\uC811\uADFC \uC81C\uC5B4" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "6px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uD3B8\uC9D1\uC790 \uBE44\uBC00\uBC88\uD638" }),
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ssub", children: "\uBE44\uC6CC\uB450\uBA74 \uBE44\uBC88 \uC5C6\uC774 \uD3B8\uC9D1 \uAC00\uB2A5" })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", gap: "8px", width: "100%" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
-                  "input",
-                  {
-                    className: "inp",
-                    id: "editorPwInp",
-                    type: "password",
-                    placeholder: "\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6B0\uBA74 \uC81C\uAC70)",
-                    style: { flex: 1, height: "28px", fontSize: ".82rem" },
-                    onKeyDown: (e) => {
-                      if (e.key === "Enter") window.setEditorPassword?.();
-                    }
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.setEditorPassword?.(), children: "\uBCC0\uACBD" })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { id: "editorPwErr", style: { color: "var(--danger)", fontSize: ".78rem", minHeight: "14px" } })
-            ] })
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(EditorPasswordControl, {})
           ] })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.closeModal?.("settingsModal"), children: "\uB2EB\uAE30" }) })
@@ -22907,6 +22882,51 @@ function __inlineNotify(msg, type) {
         )
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { style: { marginTop: "14px" }, children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => saveServerSettings(), children: "\uC800\uC7A5" }) })
+    ] });
+  }
+  function EditorPasswordControl() {
+    const [password, setPassword] = (0, import_react9.useState)("");
+    const [error, setError] = (0, import_react9.useState)("");
+    const [placeholder, setPlaceholder] = (0, import_react9.useState)("\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6B0\uBA74 \uC81C\uAC70)");
+    (0, import_react9.useEffect)(() => {
+      window.__reactSetEditorPwError = (message) => setError(message || "");
+      window.__reactSetEditorPwPlaceholder = (value2) => setPlaceholder(value2 || "\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6B0\uBA74 \uC81C\uAC70)");
+      return () => {
+        delete window.__reactSetEditorPwError;
+        delete window.__reactSetEditorPwPlaceholder;
+      };
+    }, []);
+    const submit = async () => {
+      const ok = await window.setEditorPassword?.(password);
+      if (ok) setPassword("");
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "6px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uD3B8\uC9D1\uC790 \uBE44\uBC00\uBC88\uD638" }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ssub", children: "\uBE44\uC6CC\uB450\uBA74 \uBE44\uBC88 \uC5C6\uC774 \uD3B8\uC9D1 \uAC00\uB2A5" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", gap: "8px", width: "100%" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          "input",
+          {
+            className: "inp",
+            id: "editorPwInp",
+            type: "password",
+            value: password,
+            placeholder,
+            onChange: (event) => {
+              setPassword(event.target.value);
+              setError("");
+            },
+            style: { flex: 1, height: "28px", fontSize: ".82rem" },
+            onKeyDown: (event) => {
+              if (event.key === "Enter") submit();
+            }
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: submit, children: "\uBCC0\uACBD" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { id: "editorPwErr", style: { color: "var(--danger)", fontSize: ".78rem", minHeight: "14px" }, children: error })
     ] });
   }
 
