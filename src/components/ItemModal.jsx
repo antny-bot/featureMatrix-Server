@@ -15,8 +15,9 @@ import { createPortal } from 'react-dom';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { parseMd } from '../app/modal.js';
 import { STATUS_OPTS } from '../app/constants.js';
+import { getUniqSorted } from '../app/render.js';
 import { emitLock, emitUnlock, emitPreview, isSocketConnected } from '../app/socket.js';
-import { getStore } from '../store/useAppStore.js';
+import { getStore, useAppStore } from '../store/useAppStore.js';
 
 const EMPTY_FORM = {
   key: '',
@@ -46,6 +47,7 @@ export default function ItemModal() {
   const [title,          setTitle]          = useState('기능 추가');
   const [showHardDel,    setShowHardDel]    = useState(false);
   const [form,           setForm]           = useState(EMPTY_FORM);
+  const items = useAppStore(s => s.items);
   const previewRef      = useRef(null);
   const currentKeyRef   = useRef(null);   // 현재 편집 중인 item key
   const previewTimerRef = useRef(null);   // 미리보기 디바운스 타이머
@@ -228,6 +230,14 @@ export default function ItemModal() {
 
   if (!container) return null;
 
+  const dataLists = {
+    group: getUniqSorted('group', items),
+    subGroup: getUniqSorted('subGroup', items),
+    category: getUniqSorted('category', items),
+    subCategory: getUniqSorted('subCategory', items),
+    owner: getUniqSorted('owner', items),
+  };
+
   const infoVisible = activeTab === 'info';
   const taStyle  = { display: mdMode === 'preview' ? 'none' : '', flex: mdMode !== 'preview' ? '1' : '' };
   const pvStyle  = { display: mdMode === 'edit'    ? 'none' : '', flex: mdMode !== 'edit'    ? '1' : '' };
@@ -278,23 +288,28 @@ export default function ItemModal() {
           </div>
           <div className="field">
             <label className="lbl">그룹 (X축)</label>
-            <input className="inp" id="fGroup" value={form.group} onChange={event => updateField('group', event.target.value)} list="dlGroup" /><datalist id="dlGroup" />
+            <input className="inp" id="fGroup" value={form.group} onChange={event => updateField('group', event.target.value)} list="dlGroup" />
+            <datalist id="dlGroup">{dataLists.group.map(value => <option value={value} key={value} />)}</datalist>
           </div>
           <div className="field">
             <label className="lbl">서브그룹</label>
-            <input className="inp" id="fSubGroup" value={form.subGroup} onChange={event => updateField('subGroup', event.target.value)} list="dlSubGroup" /><datalist id="dlSubGroup" />
+            <input className="inp" id="fSubGroup" value={form.subGroup} onChange={event => updateField('subGroup', event.target.value)} list="dlSubGroup" />
+            <datalist id="dlSubGroup">{dataLists.subGroup.map(value => <option value={value} key={value} />)}</datalist>
           </div>
           <div className="field">
             <label className="lbl">카테고리 (Y축)</label>
-            <input className="inp" id="fCat" value={form.category} onChange={event => updateField('category', event.target.value)} list="dlCat" /><datalist id="dlCat" />
+            <input className="inp" id="fCat" value={form.category} onChange={event => updateField('category', event.target.value)} list="dlCat" />
+            <datalist id="dlCat">{dataLists.category.map(value => <option value={value} key={value} />)}</datalist>
           </div>
           <div className="field">
             <label className="lbl">서브카테고리</label>
-            <input className="inp" id="fSubCat" value={form.subCategory} onChange={event => updateField('subCategory', event.target.value)} list="dlSubCat" /><datalist id="dlSubCat" />
+            <input className="inp" id="fSubCat" value={form.subCategory} onChange={event => updateField('subCategory', event.target.value)} list="dlSubCat" />
+            <datalist id="dlSubCat">{dataLists.subCategory.map(value => <option value={value} key={value} />)}</datalist>
           </div>
           <div className="field">
             <label className="lbl">담당</label>
-            <input className="inp" id="fOwner" value={form.owner} onChange={event => updateField('owner', event.target.value)} list="dlOwner" /><datalist id="dlOwner" />
+            <input className="inp" id="fOwner" value={form.owner} onChange={event => updateField('owner', event.target.value)} list="dlOwner" />
+            <datalist id="dlOwner">{dataLists.owner.map(value => <option value={value} key={value} />)}</datalist>
           </div>
           <div className="field">
             <label className="lbl">진행상태</label>

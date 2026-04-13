@@ -18521,16 +18521,6 @@ function __inlineNotify(msg, type) {
     syncToStore();
   }
   function updateDL() {
-    const setDL = (id, vals) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.innerHTML = vals.map((v) => `<option value="${eattr(v)}">`).join("");
-    };
-    setDL("dlGroup", getUniqSorted("group", S.items));
-    setDL("dlSubGroup", getUniqSorted("subGroup", S.items));
-    setDL("dlCat", getUniqSorted("category", S.items));
-    setDL("dlSubCat", getUniqSorted("subCategory", S.items));
-    setDL("dlOwner", getUniqSorted("owner", S.items));
   }
   var prefersReduced, _cu, isFilterActive, bulkSel, mxSel, SEARCH_FIELD_MAP;
   var init_render = __esm({
@@ -22879,6 +22869,7 @@ function __inlineNotify(msg, type) {
   var import_react10 = __toESM(require_react());
   init_modal();
   init_constants();
+  init_render();
   init_socket3();
   init_useAppStore();
   var import_jsx_runtime12 = __toESM(require_jsx_runtime());
@@ -22909,6 +22900,7 @@ function __inlineNotify(msg, type) {
     const [title, setTitle] = (0, import_react10.useState)("\uAE30\uB2A5 \uCD94\uAC00");
     const [showHardDel, setShowHardDel] = (0, import_react10.useState)(false);
     const [form, setForm] = (0, import_react10.useState)(EMPTY_FORM);
+    const items = useAppStore((s) => s.items);
     const previewRef = (0, import_react10.useRef)(null);
     const currentKeyRef = (0, import_react10.useRef)(null);
     const previewTimerRef = (0, import_react10.useRef)(null);
@@ -23065,6 +23057,13 @@ function __inlineNotify(msg, type) {
       };
     }, [detachInputListeners, updateField, updateMdStats]);
     if (!container) return null;
+    const dataLists = {
+      group: getUniqSorted("group", items),
+      subGroup: getUniqSorted("subGroup", items),
+      category: getUniqSorted("category", items),
+      subCategory: getUniqSorted("subCategory", items),
+      owner: getUniqSorted("owner", items)
+    };
     const infoVisible = activeTab === "info";
     const taStyle = { display: mdMode === "preview" ? "none" : "", flex: mdMode !== "preview" ? "1" : "" };
     const pvStyle = { display: mdMode === "edit" ? "none" : "", flex: mdMode !== "edit" ? "1" : "" };
@@ -23113,27 +23112,27 @@ function __inlineNotify(msg, type) {
           /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("label", { className: "lbl", children: "\uADF8\uB8F9 (X\uCD95)" }),
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("input", { className: "inp", id: "fGroup", value: form.group, onChange: (event) => updateField("group", event.target.value), list: "dlGroup" }),
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlGroup" })
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlGroup", children: dataLists.group.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("option", { value: value2 }, value2)) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("label", { className: "lbl", children: "\uC11C\uBE0C\uADF8\uB8F9" }),
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("input", { className: "inp", id: "fSubGroup", value: form.subGroup, onChange: (event) => updateField("subGroup", event.target.value), list: "dlSubGroup" }),
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlSubGroup" })
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlSubGroup", children: dataLists.subGroup.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("option", { value: value2 }, value2)) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("label", { className: "lbl", children: "\uCE74\uD14C\uACE0\uB9AC (Y\uCD95)" }),
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("input", { className: "inp", id: "fCat", value: form.category, onChange: (event) => updateField("category", event.target.value), list: "dlCat" }),
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlCat" })
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlCat", children: dataLists.category.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("option", { value: value2 }, value2)) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("label", { className: "lbl", children: "\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC" }),
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("input", { className: "inp", id: "fSubCat", value: form.subCategory, onChange: (event) => updateField("subCategory", event.target.value), list: "dlSubCat" }),
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlSubCat" })
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlSubCat", children: dataLists.subCategory.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("option", { value: value2 }, value2)) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("label", { className: "lbl", children: "\uB2F4\uB2F9" }),
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("input", { className: "inp", id: "fOwner", value: form.owner, onChange: (event) => updateField("owner", event.target.value), list: "dlOwner" }),
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlOwner" })
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("datalist", { id: "dlOwner", children: dataLists.owner.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("option", { value: value2 }, value2)) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("label", { className: "lbl", children: "\uC9C4\uD589\uC0C1\uD0DC" }),

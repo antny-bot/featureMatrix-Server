@@ -2,7 +2,7 @@
    render.js — 매트릭스·리스트 렌더, 통계, 필터 UI
 ══════════════════════════════════════════ */
 
-import { S, eattr, normOwner } from './state.js';
+import { S, normOwner } from './state.js';
 import { renderPrioStyleRows } from './theme.js';
 import { setStore } from '../store/useAppStore.js';
 
@@ -312,14 +312,5 @@ export function renderOwnerChips() {
 }
 
 export function updateDL() {
-  const setDL = (id, vals) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = vals.map(v => `<option value="${eattr(v)}">`).join('');
-  };
-  setDL('dlGroup',    getUniqSorted('group',        S.items));
-  setDL('dlSubGroup', getUniqSorted('subGroup',     S.items));
-  setDL('dlCat',      getUniqSorted('category',     S.items));
-  setDL('dlSubCat',   getUniqSorted('subCategory',  S.items));
-  setDL('dlOwner',    getUniqSorted('owner',        S.items));
+  // ItemModal renders datalist options from Zustand items.
 }
