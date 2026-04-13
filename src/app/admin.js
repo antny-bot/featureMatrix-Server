@@ -43,33 +43,21 @@ let _loginCallback = null;
 
 export function openLoginModal(role = 'editor', callback = null) {
   _loginCallback = callback;
-  const modal = document.getElementById('loginModal');
-  if (!modal) { if (callback) callback(); return; }
-  const roleSelect = document.getElementById('loginRoleSelect');
-  if (roleSelect) roleSelect.value = role;
-  const nameInp = document.getElementById('loginNameInp');
-  if (nameInp) nameInp.value = S.settings.userName || '';
-  const pwInp = document.getElementById('loginPwInp');
-  if (pwInp) pwInp.value = '';
-  const errEl = document.getElementById('loginErr');
-  if (errEl) errEl.textContent = '';
-  document.querySelectorAll('.ov.on').forEach(m => { m.style.zIndex = '1000'; });
-  modal.style.zIndex = '1010';
-  modal.classList.add('on');
-  setTimeout(() => pwInp?.focus(), 100);
+  if (!window.__reactOpenLoginModal) { if (callback) callback(); return; }
+  window.__reactOpenLoginModal({ role, name: S.settings.userName || '' });
 }
 
 export function closeLoginModal() {
-  document.getElementById('loginModal')?.classList.remove('on');
+  window.__reactCloseLoginModal?.();
   _loginCallback = null;
 }
 
 export async function submitLogin() {
-  const name   = document.getElementById('loginNameInp')?.value.trim() || '';
-  const pw     = document.getElementById('loginPwInp')?.value || '';
-  const role   = document.getElementById('loginRoleSelect')?.value || 'editor';
-  const errEl  = document.getElementById('loginErr');
-  if (errEl) errEl.textContent = '';
+  const form = window.__reactGetLoginForm?.() || {};
+  const name = (form.name || '').trim();
+  const pw = form.password || '';
+  const role = form.role || 'editor';
+  window.__reactSetLoginError?.('');
 
   try {
     const json = await apiFetch('/api/auth', {
@@ -90,10 +78,10 @@ export async function submitLogin() {
       _loginCallback = null;
       if (cb) cb();
     } else {
-      if (errEl) errEl.textContent = json.error || '비밀번호가 올바르지 않습니다.';
+      window.__reactSetLoginError?.(json.error || '비밀번호가 올바르지 않습니다.');
     }
   } catch(e) {
-    if (errEl) errEl.textContent = '서버에 연결할 수 없습니다.';
+    window.__reactSetLoginError?.('서버에 연결할 수 없습니다.');
   }
 }
 
@@ -135,7 +123,6 @@ export async function setEditorPassword() {
 export function updateAdminUI() {
   const admin      = isAdmin();
   const editor     = isEditor();
-  const serverMode = isServerMode();
 
   /* 관리자 전용 요소 (data-admin) */
   document.querySelectorAll('[data-admin]').forEach(el => {
@@ -157,44 +144,7 @@ export function updateAdminUI() {
 
   /* 관리자 배지 / 로그아웃 버튼: Header.jsx(React)가 제어 → DOM 직접 조작 제거 */
 
-  /* 관리자 탭 표시 여부 */
-  const sadminTab = document.getElementById('sadminTab');
-  if (sadminTab) {
-    sadminTab.style.display = admin ? '' : 'none';
-    if (!admin && document.getElementById('sadmin')?.classList.contains('on')) {
-      document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
-      document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
-      document.querySelector('.stab:not(#sadminTab)')?.classList.add('on');
-      document.getElementById('sg')?.classList.add('on');
-    }
-  }
-
-  /* 사이드바 로그인 버튼 */
-  _updateNavLogin(admin, editor, serverMode);
-
   /* React AuthContext 동기화 */
   window.__authRefresh?.();
-}
-
-function _updateNavLogin(admin, editor, serverMode) {
-  const btn = document.getElementById('navLogin');
-  if (!btn) return;
-  btn.style.display = serverMode ? '' : 'none';
-  if (!serverMode) return;
-
-  const lockIcon  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
-  const adminIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
-  const editIcon  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-
-  if (admin) {
-    btn.innerHTML = `${adminIcon}<span>관리자</span>`;
-    btn.classList.add('nav-login--on');
-  } else if (editor) {
-    btn.innerHTML = `${editIcon}<span>편집자</span>`;
-    btn.classList.add('nav-login--on');
-  } else {
-    btn.innerHTML = `${lockIcon}<span>로그인</span>`;
-    btn.classList.remove('nav-login--on');
-  }
 }
 

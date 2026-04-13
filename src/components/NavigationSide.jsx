@@ -51,6 +51,23 @@ function LoginIcon() {
   );
 }
 
+function AdminIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function EditorIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
+
 function NavButton({ id, title, label, icon, active = false, onClick, className = '', style }) {
   return (
     <button
@@ -67,6 +84,13 @@ function NavButton({ id, title, label, icon, active = false, onClick, className 
 }
 
 export default function NavigationSide() {
+  const { isAdmin, isEditor, isServerMode } = useAuth();
+  const loginState = isAdmin
+    ? { label: '관리자', icon: <AdminIcon />, active: true }
+    : isEditor
+      ? { label: '편집자', icon: <EditorIcon />, active: true }
+      : { label: '로그인', icon: <LoginIcon />, active: false };
+
   return (
     <nav className="nav-side" id="navSide">
       <NavButton
@@ -102,12 +126,13 @@ export default function NavigationSide() {
       <NavButton
         id="navLogin"
         title="로그인"
-        label="로그인"
-        icon={<LoginIcon />}
-        className="nav-login"
-        style={{ display: 'none' }}
+        label={loginState.label}
+        icon={loginState.icon}
+        className={`nav-login${loginState.active ? ' nav-login--on' : ''}`}
+        style={{ display: isServerMode ? '' : 'none' }}
         onClick={() => window.openLoginModal?.()}
       />
     </nav>
   );
 }
+import { useAuth } from '../contexts/AuthContext.jsx';
