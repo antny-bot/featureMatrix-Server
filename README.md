@@ -4,7 +4,7 @@
 
 이 저장소는 두 부분으로 나뉩니다.
 
-- `src/`: 프런트엔드 소스 (React 19 + Zustand v5 + 바닐라 JS 하이브리드)
+- `src/`: 프런트엔드 소스 (React 19 + Zustand v5 중심, 일부 브라우저 API용 DOM 접근)
 - `featureMatrix-server/`: 정적 파일 서빙과 공유 데이터 API를 담당하는 Flask 서버
 
 ## 주요 특징
@@ -65,8 +65,8 @@ featureMatrix-ServerAdmin/
 
 ## 동작 방식
 
-- 프런트엔드는 React 19 + Zustand v5와 바닐라 JS를 함께 사용하는 하이브리드 구조입니다.
-- `src/app/*.js`에 바닐라 JS 로직이 있고, `src/components/*.jsx`에 React 컴포넌트가 있습니다.
+- 프런트엔드는 React 19 + Zustand v5를 중심으로 동작합니다.
+- `src/app/*.js`에 데이터/서버/브릿지 로직이 있고, `src/components/*.jsx`에 React 컴포넌트가 있습니다.
 - React 컴포넌트는 `createPortal`로 기존 DOM 컨테이너에 주입되며, Zustand 스토어가 상태 동기화를 담당합니다.
 - `npm run build`를 실행하면 `src/dist/index.html`이 생성되고, 자동으로 `featureMatrix-server/static/index.html`에 복사됩니다.
 - 서버는 `featureMatrix-server/server.py`에서 실행되며, 정적 HTML과 API를 함께 제공합니다.
@@ -110,6 +110,14 @@ python featureMatrix-server/server.py --host 0.0.0.0 --port 5000 --admin-passwor
 실행 후 기본 접속 주소:
 
 - [http://localhost:5000](http://localhost:5000)
+
+## 릴리즈
+
+```bash
+node release.js 2.1.0
+```
+
+- `VERSION` 업데이트, 태그 생성, push까지 자동 수행합니다.
 
 ## 사용 모드
 
