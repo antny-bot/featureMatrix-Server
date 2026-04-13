@@ -41,8 +41,6 @@ function unlockKeys(keys) {
 export function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
-  document.querySelectorAll('.ov.on').forEach(m => { m.style.zIndex = '1000'; });
-  el.style.zIndex = '1010';
   el.classList.add('on');
 }
 export const closeModal = id => document.getElementById(id)?.classList.remove('on');

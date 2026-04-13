@@ -18666,10 +18666,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function openModal(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    document.querySelectorAll(".ov.on").forEach((m) => {
-      m.style.zIndex = "1000";
-    });
-    el.style.zIndex = "1010";
     el.classList.add("on");
   }
   function switchEditTab(tab) {
