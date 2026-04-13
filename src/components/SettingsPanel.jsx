@@ -14,7 +14,9 @@ import { useAppStore } from '../store/useAppStore.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { S, save } from '../app/state.js';
 import { setStore } from '../store/useAppStore.js';
-import { applyVars, applyBlurSetting } from '../app/theme.js';
+import { applyVars } from '../app/theme.js';
+import SettingsColumnsPanel from './SettingsColumnsPanel.jsx';
+import SettingsDesignPanel from './SettingsDesignPanel.jsx';
 
 /* ── S.settings 변경 + Zustand 동기화 헬퍼 ── */
 function syncSettings() { setStore({ settings: { ...S.settings } }); }
@@ -36,16 +38,6 @@ export default function SettingsPanel() {
 
   /* 탭 전환 시 서브에디터 초기화 */
   useEffect(() => {
-    if (activeTab === 'sdesign') {
-      window.renderPrioStyleRows?.();
-      window.renderPreviewCards?.();
-      window.updateDesignContent?.();
-      window.renderThemeGrid?.();
-    }
-    if (activeTab === 'scola') {
-      window.renderColEditor?.();
-      window.renderAxisEditor?.();
-    }
     if (activeTab === 'sserv') window.syncServerSettingsUI?.();
     if (activeTab === 'slog')  window.loadInlineActivityLog?.();
     if (activeTab === 'sadmin') {
@@ -120,47 +112,12 @@ export default function SettingsPanel() {
 
         {/* ── 디자인 탭 ── */}
         {activeTab === 'sdesign' && (
-          <div>
-            <div className="sec-ttl">테마</div>
-            <div style={{ fontSize: '.77rem', color: 'var(--text-3)', marginBottom: '10px' }}>테마 선택 시 색상이 자동 업데이트됩니다.</div>
-            <div className="theme-grid" id="themeGrid"></div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px', marginTop: '16px' }}>
-              <div>
-                <div className="sec-ttl">카드 스타일</div>
-                <div id="prioStyleRows"></div>
-              </div>
-              <div>
-                <div className="sec-ttl">포인트·배경 색상</div>
-                <div id="designContent"></div>
-              </div>
-            </div>
-            <div className="sec-ttl" style={{ marginTop: '12px' }}>카드 미리보기</div>
-            <div className="preview-cards" id="previewCards"></div>
-            <div className="sec-ttl" style={{ marginTop: '12px' }}>애니메이션</div>
-            <AnimToggle id="animEnabled" label="애니메이션 전체"   sub="모든 애니메이션 일괄 on/off" checked={settings.animations.enabled} onChange={v => { S.settings.animations.enabled=v; save(); applyBlurSetting(); syncSettings(); window.renderAll?.(); }} />
-            <AnimToggle id="animCountUp" label="숫자 카운트업"     sub="헤더 통계 숫자 증가 효과"     checked={settings.animations.countUp} onChange={v => { S.settings.animations.countUp=v; save(); syncSettings(); window.renderAll?.(); }} />
-            <AnimToggle id="animCard"    label="카드 등장 효과"    sub="카드 렌더 시 순서대로 fade-in" checked={settings.animations.card}    onChange={v => { S.settings.animations.card=v;    save(); syncSettings(); window.renderAll?.(); }} />
-            <AnimToggle id="animFilter"  label="필터 전환 페이드"  sub="필터 변경 시 콘텐츠 fade 전환" checked={settings.animations.filter}  onChange={v => { S.settings.animations.filter=v;  save(); syncSettings(); window.renderAll?.(); }} />
-            <AnimToggle id="animShimmer" label="행 Hover Shimmer" sub="리스트 뷰 행 hover 광택 효과"  checked={settings.animations.shimmer} onChange={v => { S.settings.animations.shimmer=v; save(); syncSettings(); window.renderAll?.(); }} />
-            <AnimToggle id="animBlur"    label="모달 Backdrop Blur" sub="모달 배경 블러 처리"         checked={settings.animations.blur}    onChange={v => { S.settings.animations.blur=v;    save(); applyBlurSetting(); syncSettings(); }} />
-          </div>
+          <SettingsDesignPanel />
         )}
 
         {/* ── 컬럼·축 탭 ── */}
         {activeTab === 'scola' && (
-          <div>
-            <div className="sec-ttl">리스트 컬럼</div>
-            <div style={{ fontSize: '.77rem', color: 'var(--text-3)', marginBottom: '10px' }}>체크: 표시 여부 &nbsp;|&nbsp; ⠿ 드래그: 순서 변경</div>
-            <div className="col-editor" id="colEditor"></div>
-            <div style={{ marginTop: '10px' }}><button className="btn btn-s btn-sm" onClick={() => window.resetListCols?.()}>기본값 복원</button></div>
-            <div className="sec-ttl" style={{ marginTop: '16px' }}>축 순서</div>
-            <div style={{ fontSize: '.77rem', color: 'var(--text-3)', marginBottom: '10px' }}>⠿ 드래그로 X축(그룹)·Y축(카테고리) 순서를 재정렬합니다.</div>
-            <div className="sec-ttl" style={{ fontSize: '.62rem' }}>그룹 (X축)</div>
-            <div className="col-editor" id="groupAxisList"></div>
-            <div className="sec-ttl" style={{ marginTop: '12px', fontSize: '.62rem' }}>카테고리 (Y축)</div>
-            <div className="col-editor" id="catAxisList"></div>
-            <div style={{ marginTop: '10px' }}><button className="btn btn-s btn-sm" onClick={() => window.resetAxisOrder?.()}>자동 정렬 초기화</button></div>
-          </div>
+          <SettingsColumnsPanel />
         )}
 
         {/* ── 데이터 탭 ── */}
@@ -332,18 +289,3 @@ function Stepper({ label, sub, value, onMinus, onPlus }) {
   );
 }
 
-/* ── 애니메이션 토글 서브컴포넌트 ── */
-function AnimToggle({ id, label, sub, checked, onChange }) {
-  return (
-    <div className="srow">
-      <div>
-        <div className="slbl">{label}</div>
-        {sub && <div className="ssub">{sub}</div>}
-      </div>
-      <label className="tgl">
-        <input type="checkbox" id={id} checked={checked} onChange={e => onChange(e.target.checked)} />
-        <span className="tgl-track"></span>
-      </label>
-    </div>
-  );
-}
