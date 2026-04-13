@@ -22153,7 +22153,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           "data-field": field,
           onDragStart: (event) => {
             setDrag({ type: "axis", field, key: field, index });
-            event.currentTarget.classList.add("dragging-col");
             event.dataTransfer.effectAllowed = "move";
           },
           onDragOver: (event) => {
@@ -22188,7 +22187,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           "data-idx": index,
           onDragStart: (event) => {
             setDrag({ type: "column", key: "list", index });
-            event.currentTarget.classList.add("dragging-col");
             event.dataTransfer.effectAllowed = "move";
           },
           onDragOver: (event) => {

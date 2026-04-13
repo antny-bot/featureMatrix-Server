@@ -102,7 +102,6 @@ export default function SettingsColumnsPanel() {
             key={value}
             onDragStart={event => {
               setDrag({ type: 'axis', field, key: field, index });
-              event.currentTarget.classList.add('dragging-col');
               event.dataTransfer.effectAllowed = 'move';
             }}
             onDragOver={event => {
@@ -142,7 +141,6 @@ export default function SettingsColumnsPanel() {
             key={column.key}
             onDragStart={event => {
               setDrag({ type: 'column', key: 'list', index });
-              event.currentTarget.classList.add('dragging-col');
               event.dataTransfer.effectAllowed = 'move';
             }}
             onDragOver={event => {
