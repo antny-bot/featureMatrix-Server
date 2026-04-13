@@ -16,4 +16,3 @@ node_modules/
 
 # 빌드 아티팩트
 src/dist/
-featureMatrix-server/activity.json
