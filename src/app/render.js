@@ -3,9 +3,28 @@
 ══════════════════════════════════════════ */
 
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS, STATUS_CHIP_COLORS, FLABELS } from './constants.js';
-import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate, editLocks } from './state.js';
+import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate } from './state.js';
 import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
 import { isAdmin, isEditor } from './admin.js';
+import { setStore, getStore } from '../store/useAppStore.js';
+
+// Zustand store에서 실시간 editLocks/previews 읽기 헬퍼
+const getEditLocks  = () => getStore().editLocks  || {};
+const getPreviews   = () => getStore().previews   || {};
+
+/* ── Zustand 동기화: renderAll() 후 React 컴포넌트에 S 상태 반영 ── */
+function syncToStore() {
+  setStore({
+    items:    S.items,
+    view:     S.view,
+    searchQ:  S.searchQ,
+    filters:  { ...S.filters },
+    display:  { ...S.display },
+    settings: { ...S.settings },
+    sort:     { ...S.sort },
+    editKey:  S.editKey,
+  });
+}
 
 /* ── 애니메이션 유틸 ── */
 const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;
@@ -204,6 +223,7 @@ export function renderAll(withFade = false) {
     renderOwnerChips();
     renderPrioChips();
     renderStatusChips();
+    syncToStore();
   };
   if (withFade && animOk('filter')) {
     const area = document.getElementById('contentArea');
@@ -237,16 +257,13 @@ export function renderStats() {
 }
 
 /* ── 매트릭스 ── */
-export function renderMatrix() {
+/* ── 매트릭스 HTML 빌드 — MatrixView.jsx에서 호출 (expandedCells를 인자로 받음) ── */
+export function buildMatrixHtml(expandedCells) {
   const items = getFiltered();
-  const el    = document.getElementById('matrixView');
-  el.className = 'mwrap' + (S.settings.matrixWidth === 'fluid' ? ' fluid' : '');
   if (!items.length) {
-    const emptyMsg = S.settings.storageMode === 'server'
+    return S.settings.storageMode === 'server'
       ? '<div class="empty"><div style="font-size:2rem;opacity:.3">🌐</div><div style="font-size:.875rem;text-align:center">서버에 데이터가 없거나 연결을 확인해주세요.<br><span style="font-size:.75rem;color:var(--text-3)">관리자에게 문의하거나 로그인 후 다시 시도하세요.</span></div></div>'
       : '<div class="empty"><div style="font-size:2rem;opacity:.3">📋</div><div style="font-size:.875rem;text-align:center">표시할 기능이 없습니다.</div></div>';
-    el.innerHTML = emptyMsg;
-    return;
   }
   const st = buildStruct(items);
   const cm  = {};
@@ -260,7 +277,6 @@ export function renderMatrix() {
   const c = getColors();
   const showCnt = S.display.showCellCount;
 
-  /* 카운트 집계 */
   const gCnt = {}, sgCnt = {}, catCnt = {}, scCnt = {};
   items.forEach(it => {
     const g   = it.group||'(미분류)', sg = `${g}|||${it.subGroup||''}`;
@@ -272,13 +288,11 @@ export function renderMatrix() {
   });
   const badge = n => `<span class="gcnt">${n}</span>`;
 
-  /* 최소 테이블 폭 계산: 행 헤더(카테고리+서브카테고리) + 각 서브그룹 컬럼 * colW
-     → table-layout:fixed 가 컨테이너에 맞춰 축소하지 못하도록 min-width 고정 */
   const ss = S.settings;
   const totalSubCols = st.groups.reduce((acc, gn) => acc + st.gsubs[gn].length, 0);
   const tableMinW = (ss.catW || 12) + (ss.subCatW || 72) + totalSubCols * (ss.colW || 130);
-
   const catW = ss.catW || 12, subCatW = ss.subCatW || 72;
+
   let h = `<div class="mscroll"><table class="mtable" style="min-width:${tableMinW}px"><thead class="mx-thead-sticky"><tr>`;
   h += `<th class="m-corner" rowspan="2" style="width:${catW}px;min-width:${catW}px;max-width:${catW}px"></th><th class="m-corner" rowspan="2" style="width:${subCatW}px;min-width:${subCatW}px;max-width:${subCatW}px"></th>`;
   st.groups.forEach(gn => {
@@ -308,7 +322,7 @@ export function renderMatrix() {
           const ck    = `${gn}|||${sg}|||${cn}|||${scn}`;
           const ci    = cm[ck] || [];
           const fold  = S.settings.cellFold;
-          const isExp = S.expandedCells.has(ck) || !!S.searchQ || fold === 0;
+          const isExp = expandedCells.has(ck) || !!S.searchQ || fold === 0;
           const show  = isExp ? ci : ci.slice(0, fold);
           const hidden = ci.length - show.length;
           const doCardAnim = animOk('card') && _cardAnimEnabled;
@@ -320,7 +334,6 @@ export function renderMatrix() {
             h += `<button class="cell-more-btn" onclick="expandCell(event,'${eattr(ck)}')">▼ ${hidden}개 더보기</button>`;
           if (isExp && ci.length > fold && fold > 0)
             h += `<button class="cell-more-btn" onclick="collapseCell(event,'${eattr(ck)}')">▲ 접기</button>`;
-          
           if (isEditor() && S.display.showQuickAdd) {
             h += `<button class="cell-quick-add-btn" onclick="event.stopPropagation();openAddInCell('${eattr(gn)}','${eattr(sg)}','${eattr(cn)}','${eattr(scn)}')">+ 추가</button>`;
           }
@@ -331,12 +344,15 @@ export function renderMatrix() {
     });
   });
   h += '</tbody></table></div>';
-  el.innerHTML = h;
   _cardAnimEnabled = false;
+  return h;
 }
 
-export function expandCell(e, ck)   { e.stopPropagation(); S.expandedCells.add(ck);    renderMatrix(); }
-export function collapseCell(e, ck) { e.stopPropagation(); S.expandedCells.delete(ck); renderMatrix(); }
+/* ── 매트릭스 렌더 — MatrixView.jsx React 포털로 위임, syncToStore()만 호출 ── */
+export function renderMatrix() { syncToStore(); }
+
+export function expandCell(e, ck)   { e.stopPropagation(); syncToStore(); }
+export function collapseCell(e, ck) { e.stopPropagation(); syncToStore(); }
 
 /* ── 카드 HTML ── */
 export function renderCard(item, c, si = -1, overrides = {}) {
@@ -361,12 +377,28 @@ export function renderCard(item, c, si = -1, overrides = {}) {
     : '';
   const updatedHtml = S.display.showUpdated && item.updatedAt ? `<div class="item-updated">${fmtDate(item.updatedAt)}</div>` : '';
   const ownerHtml   = S.display.showOwner ? `<div class="item-owner"><span class="owner-dot" style="background:${ownerColor}"></span>${esc(normOwner(item.owner))}</div>` : '';
-  /* 편집 중 락 배지 */
-  const lockInfo  = editLocks[item.key];
-  const myName    = S.settings.userName || '익명';
-  const lockBadge = lockInfo && lockInfo.user !== myName
-    ? `<div style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:6px 6px 0 0;pointer-events:none">🖊 ${esc(lockInfo.user)} 편집 중</div>`
+  /* 편집 중 락 배지 + 미리보기 오버레이 */
+  const editLocksNow = getEditLocks();
+  const previewsNow  = getPreviews();
+  const lockInfo     = editLocksNow[item.key];
+  const myName       = S.settings.userName || '익명';
+  const isLockedByOther = lockInfo && lockInfo.user !== myName;
+  const lockBadge = isLockedByOther
+    ? `<div style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:6px 6px 0 0;pointer-events:none">🔒 ${esc(lockInfo.user)} 편집 중</div>`
     : '';
+  // 편집 미리보기 툴팁 (호버 시 표시)
+  const previewData = isLockedByOther ? previewsNow[item.key] : null;
+  const previewHtml = previewData ? (() => {
+    const p = previewData.preview || {};
+    const rows = [
+      p.name     && p.name     !== item.name     ? `<div>기능명: <b>${esc(p.name)}</b></div>` : '',
+      p.priority && p.priority !== item.priority ? `<div>우선순위: <b>${esc(p.priority)}</b></div>` : '',
+      p.status   && p.status   !== item.status   ? `<div>상태: <b>${esc(p.status)}</b></div>` : '',
+      p.owner    && p.owner    !== item.owner    ? `<div>담당자: <b>${esc(p.owner)}</b></div>` : '',
+    ].filter(Boolean).join('');
+    if (!rows) return '';
+    return `<div class="edit-preview-overlay"><div style="font-weight:700;margin-bottom:4px">✏ ${esc(lockInfo.user)} 편집 중</div>${rows}</div>`;
+  })() : '';
 
   const actions = `<div class="card-actions" onclick="event.stopPropagation()">
     <button class="card-act-btn" title="편집"    onclick="openEditModal('${eattr(item.key)}')">✏</button>
@@ -379,12 +411,12 @@ export function renderCard(item, c, si = -1, overrides = {}) {
   const clickHandler = overrides.onclick     ?? `openEditOrMd('${eattr(item.key)}')`;
   const dblClick     = overrides.ondblclick  ? ` ondblclick="${overrides.ondblclick}"` : '';
   const canDrag = isEditor();
-  return `<div class="mitem${isDel?' item-del':''}${lockInfo && lockInfo.user !== myName ? ' item-locked' : ''}${extraClass}" draggable="${canDrag}" data-key="${eattr(item.key)}"${idAttr}
+  return `<div class="mitem${isDel?' item-del':''}${isLockedByOther ? ' item-locked' : ''}${extraClass}" draggable="${canDrag}" data-key="${eattr(item.key)}"${idAttr}
     style="${css}${delay}"
     ondragstart="${canDrag ? dragStart : ''}" ondragend="${canDrag ? dragEnd : ''}"
     onmouseover="startTT(event,'${eattr(item.key)}')" onmouseout="clearTT()"
     onclick="${clickHandler}"${dblClick}
-    oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${actions}
+    oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${previewHtml}${actions}
   <div class="item-hd">
     <span class="item-key">${esc(item.key)}</span>
     ${item.isImportant==='Y'&&S.display.showStar ? '<span class="item-star">★</span>' : ''}
@@ -435,9 +467,14 @@ export function renderBulkBar() {
 }
 export function bulkClear() { bulkSel.keys.clear(); renderBulkBar(); renderList(); }
 
-export function renderList() {
-  const items = getFiltered(), el = document.getElementById('listView');
-  if (!items.length) { el.innerHTML = '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>'; bulkSel.keys.clear(); renderBulkBar(); return; }
+/* ── 리스트 HTML 빌드 — ListView.jsx에서 호출 ── */
+export function buildListHtml() {
+  const items = getFiltered();
+  if (!items.length) {
+    bulkSel.keys.clear();
+    renderBulkBar();
+    return '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>';
+  }
   const vcols    = getVisibleCols();
   const sorted   = items.slice().sort((a,b) => { const va=a[S.sort.key]||'', vb=b[S.sort.key]||''; const r=va<vb?-1:va>vb?1:0; return S.sort.dir==='asc'?r:-r; });
   const useShimmer = animOk('shimmer'), useRow = animOk('card') && _cardAnimEnabled;
@@ -464,8 +501,14 @@ export function renderList() {
     h += '</tr>';
   });
   h += '</tbody></table></div></div>';
-  el.innerHTML = h;
   _cardAnimEnabled = false;
+  return h;
+}
+
+/* ── 리스트 렌더 — ListView.jsx React 포털로 위임 ── */
+export function renderList() {
+  syncToStore();
+  window.__listViewRefresh?.();
 }
 
 function renderListCell(it, key) {

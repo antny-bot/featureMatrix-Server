@@ -9,6 +9,7 @@ import { renderAll, renderList, renderMatrix } from './render.js';
 import { dlBlob } from './io.js';
 import { DEMO } from './constants.js';
 import { isAdmin, updateAdminUI } from './admin.js';
+import { setStore } from '../store/useAppStore.js';
 
 /* ── 설정 탭 전환 ── */
 export function sstab(btn, paneId) {
@@ -23,62 +24,24 @@ export function sstab(btn, paneId) {
   if (paneId === 'sadmin')  { window.renderDbSectionOrder?.(); window.syncEditorPwStatus?.(); }
 }
 
-/* ── 설정 UI 전체 동기화 ── */
+/* ── 설정 UI 전체 동기화 — React(Zustand)가 읽어서 렌더링 ── */
 export function syncSettingsUI() {
-  const ss = S.settings;
-  const admin = isAdmin();
-  const titleEl = document.getElementById('sTitle');
-  const subEl   = document.getElementById('sSub');
-  if (titleEl) { titleEl.value = ss.title; titleEl.disabled = !admin; }
-  if (subEl)   { subEl.value   = ss.subtitle; subEl.disabled = !admin; }
-  const dbHeroEl = document.getElementById('dbHeroName');
-  if (dbHeroEl) dbHeroEl.value = ss.dbHeroName || '';
-  // 헤더 DOM도 즉시 반영
-  const dTitleEl = document.getElementById('dTitle');
-  const dSubEl   = document.getElementById('dSub');
-  if (dTitleEl) dTitleEl.textContent = ss.title || 'featureMATRIX';
-  if (dSubEl)   dSubEl.textContent   = ss.subtitle || '기능정의 툴';
-  document.title = ss.title || 'featureMATRIX';
-  document.getElementById('dBaseFont').textContent  = ss.baseFont  + 'px';
-  document.getElementById('dCardFont').textContent  = ss.cardFont  + 'px';
-  document.getElementById('dRadius').textContent    = ss.cardRadius + 'px';
-  document.getElementById('dGap').textContent       = ss.cardGap   + 'px';
-  document.getElementById('dColW').textContent      = ss.colW      + 'px';
-  document.getElementById('dCatW').textContent      = ss.catW      + 'px';
-  document.getElementById('dSubCatW').textContent   = ss.subCatW   + 'px';
-  document.getElementById('dCellFold').textContent  = ss.cellFold  === 0 ? '∞' : ss.cellFold;
-  const dCLMax = document.getElementById('dChangeLogMax');
-  if (dCLMax) dCLMax.textContent = ss.changeLogMax ?? 50;
-  document.getElementById('mwF').className = 'rbtn' + (ss.matrixWidth === 'fluid' ? ' on' : '');
-  document.getElementById('mwX').className = 'rbtn' + (ss.matrixWidth === 'fixed'  ? ' on' : '');
-  document.getElementById('ppL').className = 'rbtn' + (ss.panelPos   === 'left'  ? ' on' : '');
-  document.getElementById('ppR').className = 'rbtn' + (ss.panelPos   === 'right' ? ' on' : '');
-  document.getElementById('layout').classList.toggle('pr', ss.panelPos === 'right');
-  document.getElementById('fpanel').classList.toggle('collapsed', !ss.panelVisible);
-  const di = S.display;
-  document.getElementById('togOwner').checked  = di.showOwner;
-  document.getElementById('togStar').checked   = di.showStar;
-  document.getElementById('togNew').checked    = di.showNewBadge;
-  document.getElementById('togCnt').checked    = di.showCellCount;
-  document.getElementById('togUpd').checked    = !!di.showUpdated;
-  document.getElementById('togStatus').checked = di.showStatus !== false;
-  document.getElementById('togMd').checked     = di.showMdBadge !== false;
-  const togQA = document.getElementById('togQuickAdd');
-  if (togQA) togQA.checked = !!di.showQuickAdd;
-  document.getElementById('togDel').checked    = S.filters.showDeleted;
-  document.getElementById('togImp').checked    = S.filters.importantOnly;
-  syncAnimUI();
+  /* SettingsPanel.jsx가 Zustand에서 직접 읽으므로 store 동기화만 수행 */
+  setStore({ settings: { ...S.settings }, display: { ...S.display }, filters: { ...S.filters } });
+  /* 레이아웃 관련 DOM (설정 모달 외부) */
+  document.getElementById('layout')?.classList.toggle('pr', S.settings.panelPos === 'right');
+  document.getElementById('fpanel')?.classList.toggle('collapsed', !S.settings.panelVisible);
+  document.title = S.settings.title || 'featureMATRIX';
   updateAdminUI();
 }
 
 /* ── 타이틀 미리보기 ── */
 export function previewTitle() {
-  S.settings.title    = document.getElementById('sTitle').value;
-  S.settings.subtitle = document.getElementById('sSub').value;
-  document.getElementById('dTitle').textContent = S.settings.title;
-  document.getElementById('dSub').textContent   = S.settings.subtitle;
+  S.settings.title    = document.getElementById('sTitle')?.value ?? S.settings.title;
+  S.settings.subtitle = document.getElementById('sSub')?.value   ?? S.settings.subtitle;
   document.title = S.settings.title;
   save();
+  setStore({ settings: { ...S.settings } }); // Header.jsx가 Zustand에서 title 읽음
 }
 
 /* ── 레이아웃 ── */
@@ -86,36 +49,33 @@ export function setMW(v)   { S.settings.matrixWidth=v; document.getElementById('
 export function setPPos(v) { S.settings.panelPos=v; document.getElementById('layout').classList.toggle('pr',v==='right'); document.getElementById('ppL').className='rbtn'+(v==='left'?' on':''); document.getElementById('ppR').className='rbtn'+(v==='right'?' on':''); save(); }
 
 /* ── Stepper 설정값 조절 ── */
-export function adjFont(d)     { S.settings.baseFont    = Math.max(12,Math.min(22,S.settings.baseFont+d));    document.getElementById('dBaseFont').textContent =S.settings.baseFont+'px';    save(); applyVars(); }
-export function adjCardFont(d) { S.settings.cardFont    = Math.max(9, Math.min(18,S.settings.cardFont+d));    document.getElementById('dCardFont').textContent =S.settings.cardFont+'px';    save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-export function adjRadius(d)   { S.settings.cardRadius  = Math.max(0, Math.min(14,S.settings.cardRadius+d));  document.getElementById('dRadius').textContent   =S.settings.cardRadius+'px';  save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-export function adjGap(d)      { S.settings.cardGap     = Math.max(0, Math.min(20,S.settings.cardGap+d));     document.getElementById('dGap').textContent      =S.settings.cardGap+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-export function adjColW(d)     { S.settings.colW        = Math.max(80,Math.min(300,S.settings.colW+d));       document.getElementById('dColW').textContent     =S.settings.colW+'px';       save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-export function adjCatW(d)     { S.settings.catW        = Math.max(40,Math.min(80,S.settings.catW+d));        document.getElementById('dCatW').textContent     =S.settings.catW+'px';        save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-export function adjSubCatW(d)  { S.settings.subCatW     = Math.max(40,Math.min(200,S.settings.subCatW+d));    document.getElementById('dSubCatW').textContent  =S.settings.subCatW+'px';     save(); applyVars(); if(S.view==='matrix')renderMatrix(); }
-export function adjCellFold(d)      { S.settings.cellFold      = Math.max(0,  Math.min(20,  S.settings.cellFold+d));      document.getElementById('dCellFold').textContent      = S.settings.cellFold===0?'∞':S.settings.cellFold; save(); S.expandedCells=new Set(); if(S.view==='matrix')renderMatrix(); }
-export function adjChangeLogMax(d)  { S.settings.changeLogMax  = Math.max(10, Math.min(500, S.settings.changeLogMax+d));  document.getElementById('dChangeLogMax').textContent  = S.settings.changeLogMax; save(); }
-
-/* ── 애니메이션 ── */
-export function onAnimTgl() {
-  const a = S.settings.animations;
-  a.enabled  = document.getElementById('animEnabled').checked;
-  a.countUp  = document.getElementById('animCountUp').checked;
-  a.card     = document.getElementById('animCard').checked;
-  a.filter   = document.getElementById('animFilter').checked;
-  a.shimmer  = document.getElementById('animShimmer').checked;
-  a.blur     = document.getElementById('animBlur').checked;
-  save(); applyBlurSetting(); renderAll();
+/* adj* 함수: S.settings 업데이트 → save() → setStore() → React 자동 반영 */
+export function adjFont(d)     { S.settings.baseFont   = Math.max(12,Math.min(22, S.settings.baseFont+d));   save(); applyVars(); setStore({ settings: { ...S.settings } }); }
+export function adjCardFont(d) { S.settings.cardFont   = Math.max(9, Math.min(18, S.settings.cardFont+d));   save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
+export function adjRadius(d)   { S.settings.cardRadius = Math.max(0, Math.min(14, S.settings.cardRadius+d)); save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
+export function adjGap(d)      { S.settings.cardGap    = Math.max(0, Math.min(20, S.settings.cardGap+d));    save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
+export function adjColW(d)     { S.settings.colW       = Math.max(80,Math.min(300,S.settings.colW+d));       save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
+export function adjCatW(d)     { S.settings.catW       = Math.max(40,Math.min(80, S.settings.catW+d));       save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
+export function adjSubCatW(d)  { S.settings.subCatW    = Math.max(40,Math.min(200,S.settings.subCatW+d));    save(); applyVars(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
+export function adjCellFold(d) { S.settings.cellFold   = Math.max(0, Math.min(20, S.settings.cellFold+d));   save(); setStore({ settings: { ...S.settings } }); if(S.view==='matrix')renderMatrix(); }
+export function adjChangeLogMax(d) { S.settings.changeLogMax = Math.max(10,Math.min(500,S.settings.changeLogMax+d)); save(); setStore({ settings: { ...S.settings } }); }
+export function adjBoardFoldCount(d) {
+  S.settings.boardFoldCount = Math.max(0, Math.min(30, (S.settings.boardFoldCount??6)+d));
+  const v = S.settings.boardFoldCount;
+  document.getElementById('dBoardFoldCount').textContent = v === 0 ? '∞' : v;
+  save();
+  setStore({ settings: { ...S.settings } });
 }
 
+/* ── 애니메이션 — SettingsPanel.jsx에서 직접 처리, 하위 호환용으로 유지 ── */
+export function onAnimTgl() {
+  /* SettingsPanel.jsx의 AnimToggle onChange에서 직접 S.settings.animations를 업데이트함 */
+  save(); applyBlurSetting(); setStore({ settings: { ...S.settings } }); renderAll();
+}
+
+/* ── 애니메이션 UI 동기화 — SettingsPanel.jsx가 Zustand에서 직접 읽으므로 no-op ── */
 export function syncAnimUI() {
-  const a = S.settings.animations;
-  document.getElementById('animEnabled').checked = a.enabled;
-  document.getElementById('animCountUp').checked = a.countUp;
-  document.getElementById('animCard').checked    = a.card;
-  document.getElementById('animFilter').checked  = a.filter;
-  document.getElementById('animShimmer').checked = a.shimmer;
-  document.getElementById('animBlur').checked    = a.blur;
+  /* SettingsPanel.jsx의 AnimToggle 컴포넌트가 checked={settings.animations.*} 로 자동 반영 */
 }
 
 /* ── 리스트 컬럼 편집기 ── */
@@ -139,13 +99,13 @@ export function renderColEditor() {
   ).join('');
 }
 
-export function toggleColVisible(idx, checked) { S.settings.listColumns[idx].visible = checked; save(); if (S.view==='list') renderList(); }
+export function toggleColVisible(idx, checked) { S.settings.listColumns[idx].visible = checked; save(); setStore({ settings: { ...S.settings } }); if (S.view==='list') renderList(); }
 export function colDragStart(e, idx)  { _colDragIdx=idx; e.currentTarget.classList.add('dragging-col'); e.dataTransfer.effectAllowed='move'; }
 export function colDragOver(e, idx)   { e.preventDefault(); if(idx===_colDragIdx)return; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('drag-over-col')); e.currentTarget.classList.add('drag-over-col'); }
 export function colDragLeave(e)       { e.currentTarget.classList.remove('drag-over-col'); }
-export function colDrop(e, toIdx)     { e.preventDefault(); if(_colDragIdx===null||_colDragIdx===toIdx)return; const cols=[...S.settings.listColumns]; const[moved]=cols.splice(_colDragIdx,1); cols.splice(toIdx,0,moved); S.settings.listColumns=cols; save(); renderColEditor(); if(S.view==='list')renderList(); }
+export function colDrop(e, toIdx)     { e.preventDefault(); if(_colDragIdx===null||_colDragIdx===toIdx)return; const cols=[...S.settings.listColumns]; const[moved]=cols.splice(_colDragIdx,1); cols.splice(toIdx,0,moved); S.settings.listColumns=cols; save(); setStore({ settings: { ...S.settings } }); renderColEditor(); if(S.view==='list')renderList(); }
 export function colDragEnd()          { _colDragIdx=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }
-export function resetListCols()       { S.settings.listColumns=JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)); save(); renderColEditor(); if(S.view==='list')renderList(); notify('리스트 컬럼을 기본값으로 복원했습니다.'); }
+export function resetListCols()       { S.settings.listColumns=JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)); save(); setStore({ settings: { ...S.settings } }); renderColEditor(); if(S.view==='list')renderList(); notify('리스트 컬럼을 기본값으로 복원했습니다.'); }
 
 /* ── 그룹/카테고리 순서 관리 ── */
 let _axisDragIdx = null, _axisField = null;
@@ -187,11 +147,12 @@ export function axisDrop(e, field, toIdx) {
   list.splice(toIdx, 0, moved);
   S.settings[orderKey] = list;
   save();
+  setStore({ settings: { ...S.settings } });
   renderAxisEditor();
   if (S.view === 'matrix') renderMatrix();
 }
 export function axisDragEnd() { _axisDragIdx=null; _axisField=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }
-export function resetAxisOrder() { S.settings.groupOrder=[]; S.settings.catOrder=[]; save(); renderAxisEditor(); if(S.view==='matrix')renderMatrix(); notify('축 순서를 자동 정렬로 초기화했습니다.'); }
+export function resetAxisOrder() { S.settings.groupOrder=[]; S.settings.catOrder=[]; save(); setStore({ settings: { ...S.settings } }); renderAxisEditor(); if(S.view==='matrix')renderMatrix(); notify('축 순서를 자동 정렬로 초기화했습니다.'); }
 
 /* ── 설정 JSON Import / Export ── */
 export function expSettJSON() {
@@ -227,7 +188,7 @@ export function resetSettings() {
   if (!confirm('설정을 기본값으로 초기화하겠습니까?')) return;
   Object.assign(S.settings, {
     baseFont:16, cardFont:12, cardRadius:6, cardGap:4,
-    colW:130, catW:52, subCatW:80, cellFold:3,
+    colW:130, catW:52, subCatW:80, cellFold:3, boardFoldCount:6,
     matrixWidth:'fluid', panelPos:'left', themeId:'sobuk',
     priorityStyles:{high:'left-thick',mid:'left-thin',low:'none'},
     customColors:{light:{},dark:{}},

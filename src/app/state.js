@@ -3,6 +3,8 @@
 ══════════════════════════════════════════ */
 
 import { SK, UNDO_MAX, DEFAULT_LIST_COLS, ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY, DATA_VERSION, MIGRATIONS } from './constants.js';
+import { emitLock, emitUnlock, isSocketConnected } from './socket.js';
+import { setStore } from '../store/useAppStore.js';
 
 /** 전역 상태 — 앱 전체에서 import해서 사용 */
 export const S = {
@@ -10,7 +12,6 @@ export const S = {
   changeLog: [],           // 변경 이력 (추가/수정/삭제 등)
   view: 'matrix',
   searchQ: '',
-  expandedCells: new Set(),
   filters: { priorities:[], statuses:[], showDeleted:false, importantOnly:false, owners:[] },
   display: { showOwner:true, showStar:true, showNewBadge:true, showCellCount:true, showUpdated:false, showStatus:true, showMdBadge:true, showQuickAdd:false },
   settings: {
@@ -27,6 +28,7 @@ export const S = {
     dbHeroName: '',
     dbSections: ['stats', 'insight', 'heatmap'],
     changeLogMax: 50,      // 최근 변경 이력 최대 보관 개수
+    boardFoldCount: 6,     // 보드 뷰 컬럼 기본 표시 카드 수
     storageMode: 'server',
     serverUrl:   '',
     pollInterval: 60,
@@ -376,42 +378,49 @@ export function pushChangeLog(action, key, name, extra = {}) {
 }
 
 /* ── 편집 중 락 ── */
-export const editLocks = {};  // { key: { user, ts } }
+export const editLocks = {};  // { key: { user, ts } }  (레거시 참조 유지)
 
 export function updateLocks(locks) {
   const prev = JSON.stringify(editLocks);
   Object.keys(editLocks).forEach(k => delete editLocks[k]);
   if (locks) Object.assign(editLocks, locks);
+  // Zustand 동기화
+  setStore({ editLocks: { ...(locks || {}) } });
   return JSON.stringify(editLocks) !== prev;
 }
 
-/* 락 TTL 타이머 맵: key → timerId */
+/* 락 TTL 타이머 맵: key → timerId (네트워크 단절 대비 fallback) */
 const _lockTimers = {};
 const LOCK_TTL = 5 * 60 * 1000; // 5분
 
-export async function lockItem(key) {
-  if (S.settings.storageMode !== 'server' || !key) return null;
-  // 기존 TTL 타이머 초기화
+export function lockItem(key) {
+  if (S.settings.storageMode !== 'server' || !key) return;
   if (_lockTimers[key]) { clearTimeout(_lockTimers[key]); delete _lockTimers[key]; }
-  try {
-    const result = await apiFetch('/api/lock', {
+  const user = S.settings.userName || '익명';
+  if (isSocketConnected()) {
+    // WebSocket emit (응답은 item_locked / lock_denied 이벤트로 수신)
+    emitLock(key, user);
+  } else {
+    // Polling 폴백: REST API
+    apiFetch('/api/lock', {
       method: 'POST',
-      body: JSON.stringify({ key, user: S.settings.userName || '익명' })
-    });
-    // 5분 후 자동 해제
-    _lockTimers[key] = setTimeout(() => unlockItem(key), LOCK_TTL);
-    return result;
-  } catch(e) { return null; }
+      body: JSON.stringify({ key, user })
+    }).catch(() => {});
+  }
+  // 5분 TTL fallback (네트워크 단절 시 자동 해제)
+  _lockTimers[key] = setTimeout(() => unlockItem(key), LOCK_TTL);
 }
 
-export async function unlockItem(key) {
+export function unlockItem(key) {
   if (S.settings.storageMode !== 'server' || !key) return;
-  // TTL 타이머 정리
   if (_lockTimers[key]) { clearTimeout(_lockTimers[key]); delete _lockTimers[key]; }
-  try {
-    await apiFetch('/api/unlock', {
+  const user = S.settings.userName || '익명';
+  if (isSocketConnected()) {
+    emitUnlock(key, user);
+  } else {
+    apiFetch('/api/unlock', {
       method: 'POST',
-      body: JSON.stringify({ key, user: S.settings.userName || '익명' })
-    });
-  } catch(e) {}
+      body: JSON.stringify({ key, user })
+    }).catch(() => {});
+  }
 }

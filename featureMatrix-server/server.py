@@ -5,9 +5,10 @@ Flask 기반 공유 데이터 서버
 실행: python server.py [--port 5000] [--host 0.0.0.0] [--admin-password 1234] [--editor-password 5678]
 """
 
-import json, os, time, argparse, secrets
+import json, os, time, argparse, secrets, threading
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, abort
+from flask_socketio import SocketIO, emit, disconnect as sio_disconnect
 
 BASE_DIR       = Path(__file__).parent
 STATIC_DIR     = BASE_DIR / 'static'
@@ -22,6 +23,9 @@ TOKEN_TTL_MS   = 24 * 60 * 60 * 1000  # 24시간
 
 app = Flask(__name__, static_folder=str(STATIC_DIR))
 
+# SocketIO는 CONFIG 로드 후 초기화 (CORS 설정 반영)
+socketio: SocketIO = None  # type: ignore  # _init_socketio()에서 설정
+
 # ── 런타임 설정 ───────────────────────────────────────────
 RUNTIME = {'admin_password': None, 'editor_password': None}
 
@@ -31,6 +35,9 @@ editor_tokens: dict = {}   # { token: expire_ts }
 
 # ── 편집 락 저장소 (메모리) ───────────────────────────────
 edit_locks = {}  # { key: { user, ts } }
+
+# ── Socket.IO 클라이언트-사용자 매핑 ─────────────────────
+socket_users = {}  # { sid: user }
 
 # ── 토큰 파일 저장/로드 (관리자 토큰만 영속) ──────────────
 def load_tokens():
@@ -78,11 +85,22 @@ def load_config():
     cfg = {'allowed_origins': [], 'editor_password': ''}
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(cfg, f, indent=2, ensure_ascii=False)
-    print(f'\n✅ config.json 생성됨\n')
+    print(f'\n[ok] config.json 생성됨\n')
     return cfg
 
 CONFIG = load_config()
 load_tokens()
+
+def _init_socketio():
+    global socketio
+    allowed = CONFIG.get('allowed_origins') or []
+    cors = allowed if allowed else '*'
+    socketio = SocketIO(app, cors_allowed_origins=cors, async_mode='threading',
+                        logger=False, engineio_logger=False)
+    _register_socketio_events()
+    _start_lock_timeout_task()
+
+LOCK_TIMEOUT_MS = 5 * 60 * 1000  # 5분
 
 # editor_password: CLI 우선, 없으면 config.json
 def get_editor_password():
@@ -321,6 +339,107 @@ def set_editor_password():
     editor_tokens.clear()
     return jsonify({'ok': True})
 
+# ── Socket.IO 이벤트 핸들러 등록 ────────────────────────────
+def _register_socketio_events():
+
+    @socketio.on('connect')
+    def on_connect():
+        """새 클라이언트 연결 시 현재 락 상태 전송"""
+        emit('locks_sync', {'locks': edit_locks})
+
+    @socketio.on('disconnect')
+    def on_disconnect():
+        """연결 끊김 시 해당 사용자의 모든 락 자동 해제"""
+        from flask import request as req
+        sid  = req.sid
+        user = socket_users.pop(sid, None)
+        if not user:
+            return
+        released = [k for k, v in list(edit_locks.items()) if v['user'] == user]
+        for k in released:
+            del edit_locks[k]
+            socketio.emit('item_unlocked', {'key': k})
+
+    @socketio.on('register_user')
+    def on_register_user(data):
+        """클라이언트가 자신의 사용자명을 등록"""
+        from flask import request as req
+        user = (data or {}).get('user', '익명')
+        socket_users[req.sid] = user
+
+    @socketio.on('lock_item')
+    def on_lock_item(data):
+        """항목 Lock 요청 처리"""
+        data = data or {}
+        key  = data.get('key', '')
+        user = data.get('user', '익명')
+        if not key:
+            return
+        now      = int(time.time() * 1000)
+        existing = edit_locks.get(key)
+        if existing and existing['user'] != user and (now - existing['ts']) < LOCK_TIMEOUT_MS:
+            emit('lock_denied', {'key': key, 'lockedBy': existing['user']})
+            return
+        edit_locks[key] = {'user': user, 'ts': now}
+        socketio.emit('item_locked', {'key': key, 'lockedBy': user, 'lockedAt': now})
+
+    @socketio.on('unlock_item')
+    def on_unlock_item(data):
+        """항목 Lock 해제"""
+        data = data or {}
+        key  = data.get('key', '')
+        user = data.get('user', '익명')
+        if key in edit_locks and edit_locks[key]['user'] == user:
+            del edit_locks[key]
+            socketio.emit('item_unlocked', {'key': key})
+
+    @socketio.on('force_unlock')
+    def on_force_unlock(data):
+        """관리자 강제 Lock 해제"""
+        data        = data or {}
+        key         = data.get('key', '')
+        admin_token = data.get('adminToken', '')
+        now = int(time.time() * 1000)
+        valid = admin_token and admin_tokens.get(admin_token, 0) > now
+        if not valid:
+            emit('lock_denied', {'key': key, 'lockedBy': '', 'error': '관리자 권한 필요'})
+            return
+        if key in edit_locks:
+            del edit_locks[key]
+            socketio.emit('item_unlocked', {'key': key})
+
+    @socketio.on('editing_preview')
+    def on_editing_preview(data):
+        """편집 미리보기 전체 브로드캐스트 (발신자 포함)"""
+        from flask import request as req
+        socketio.emit('editing_preview', data, skip_sid=req.sid)
+
+    @socketio.on('save_item')
+    def on_save_item(data):
+        """항목 저장 완료 브로드캐스트 + Lock 해제"""
+        data = data or {}
+        key  = data.get('key', '')
+        user = data.get('user', '익명')
+        if key in edit_locks and edit_locks[key]['user'] == user:
+            del edit_locks[key]
+        socketio.emit('item_saved', data)
+
+
+def _start_lock_timeout_task():
+    """5분 비활성 Lock 자동 해제 백그라운드 태스크"""
+    def _task():
+        while True:
+            time.sleep(30)
+            now    = int(time.time() * 1000)
+            stale  = [k for k, v in list(edit_locks.items())
+                      if now - v['ts'] > LOCK_TIMEOUT_MS]
+            for k in stale:
+                del edit_locks[k]
+                socketio.emit('item_unlocked', {'key': k})
+    t = threading.Thread(target=_task, daemon=True)
+    t.start()
+
+
 # ── 정적 파일 서빙 ────────────────────────────────────────
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -354,11 +473,14 @@ if __name__ == '__main__':
     RUNTIME['admin_password']  = args.admin_password
     RUNTIME['editor_password'] = args.editor_password
 
-    print(f'🚀 featureMatrix-server')
+    _init_socketio()
+
+    print(f'[start] featureMatrix-server (WebSocket 지원)')
     print(f'   http://{args.host}:{args.port}')
     print(f'   관리자: {"비밀번호 설정됨" if args.admin_password else "미설정 (모든 사용자 관리자)"}')
     print(f'   편집자: {"비밀번호 설정됨" if get_editor_password() else "미설정 (로그인 없이 편집 가능)"}')
     print(f'   데이터: {DATA_DIR}')
     print(f'   정적파일: {STATIC_DIR}\n')
 
-    app.run(host=args.host, port=args.port, debug=args.debug)
+    socketio.run(app, host=args.host, port=args.port, debug=args.debug,
+                 allow_unsafe_werkzeug=True)

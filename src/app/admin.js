@@ -155,16 +155,7 @@ export function updateAdminUI() {
     }
   });
 
-  /* 관리자 배지 */
-  const badge = document.getElementById('adminBadge');
-  if (badge) badge.style.display = admin && serverMode ? 'inline' : 'none';
-
-  /* 로그아웃 버튼 */
-  const logoutBtn = document.getElementById('adminLogoutBtn');
-  if (logoutBtn) {
-    logoutBtn.style.display = (admin || editor) && serverMode ? 'inline-flex' : 'none';
-    logoutBtn.title = admin ? '관리자 로그아웃' : '편집자 로그아웃';
-  }
+  /* 관리자 배지 / 로그아웃 버튼: Header.jsx(React)가 제어 → DOM 직접 조작 제거 */
 
   /* 관리자 탭 표시 여부 */
   const sadminTab = document.getElementById('sadminTab');
@@ -180,6 +171,9 @@ export function updateAdminUI() {
 
   /* 사이드바 로그인 버튼 */
   _updateNavLogin(admin, editor, serverMode);
+
+  /* React AuthContext 동기화 */
+  window.__authRefresh?.();
 }
 
 function _updateNavLogin(admin, editor, serverMode) {

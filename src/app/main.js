@@ -4,11 +4,12 @@
 
 import 'drag-drop-touch'; // 터치 디바이스 드래그앤드롭 폴리필
 import { DEMO } from './constants.js';
-import { renderDashboard, setHmView } from './dashboard.js';
 import { S, save, load, doUndo, updateUndoFab, getUndoHistory, pushUndo, genKey,
          pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
          loadFromServer, saveToServer, logActivity, notify, apiFetch, fmtDate,
          lockItem, unlockItem, updateLocks, editLocks } from './state.js';
+import { initSocket, disconnectSocket, isSocketConnected } from './socket.js';
+import { setStore } from '../store/useAppStore.js';
 import { isAdmin, isEditor, requireAdmin, requireEditor,
          openLoginModal, closeLoginModal, submitLogin,
          adminLogout, logout, updateAdminUI, getAdminToken, getEditorToken,
@@ -32,12 +33,13 @@ import { openModal, closeModal, openEditModal, openAddModal, openAddInCell,
 import { expClip, expTSV, expXLS, expHTML, expMdZip, impMdFiles,
          dzOver, dzLeave, dzDrop, csvFileSel, analyzeCSV, backToStep1, doImport,
          expFullJSON, impFullJSON } from './io.js';
-import { renderBoard, boardCardClick, boardCardDblClick,
+import { boardCardClick, boardCardDblClick,
          boardMoveSelected, hideBoardActionBar, boardClearSel,
          boardCardDragStart, boardCardDragEnd,
          boardDragOver, boardDragLeave, boardDrop } from './board.js';
 import { sstab, syncSettingsUI, previewTitle, setMW, setPPos,
          adjFont, adjCardFont, adjRadius, adjGap, adjColW, adjCatW, adjSubCatW, adjCellFold,
+         adjChangeLogMax, adjBoardFoldCount,
          onAnimTgl, syncAnimUI, renderColEditor, toggleColVisible,
          colDragStart, colDragOver, colDragLeave, colDrop, colDragEnd, resetListCols,
          renderAxisEditor, axisDragStart, axisDragOver, axisDragLeave, axisDrop, axisDragEnd, resetAxisOrder,
@@ -45,7 +47,6 @@ import { sstab, syncSettingsUI, previewTitle, setMW, setPPos,
 
 /* ── window 바인딩 ── */
 Object.assign(window, {
-  renderDashboard, setHmView,
   doUndo,
   toggleTheme, applyTheme, setPreset, setCustomColor, onCP, onHex, onHexKey, adjBW,
   renderPrioStyleRows, renderPreviewCards, updateDesignContent, renderThemeGrid,
@@ -65,11 +66,12 @@ Object.assign(window, {
   expFullJSON, impFullJSON,
   sstab, syncSettingsUI, previewTitle, setMW, setPPos,
   adjFont, adjCardFont, adjRadius, adjGap, adjColW, adjCatW, adjSubCatW, adjCellFold,
+  adjChangeLogMax, adjBoardFoldCount,
   onAnimTgl, syncAnimUI, renderColEditor, toggleColVisible,
   colDragStart, colDragOver, colDragLeave, colDrop, colDragEnd, resetListCols,
   renderAxisEditor, axisDragStart, axisDragOver, axisDragLeave, axisDrop, axisDragEnd, resetAxisOrder,
   expSettJSON, impSettJSON, resetData, resetSettings,
-  renderBoard, boardCardClick, boardCardDblClick,
+  boardCardClick, boardCardDblClick,
   boardMoveSelected, hideBoardActionBar, boardClearSel,
   boardCardDragStart, boardCardDragEnd,
   boardDragOver, boardDragLeave, boardDrop,
@@ -78,6 +80,9 @@ Object.assign(window, {
   adminLogout, logout, updateAdminUI, getAdminToken, getEditorToken,
   setEditorPassword,
 });
+
+/* ── AuthContext용 S 브릿지 ── */
+window.__S = S;
 
 /* ── notify 인라인 ── */
 window.__sobukRenderAll = () => renderAll();
@@ -102,7 +107,6 @@ window.__sobukNotify = (msg, type = false) => {
 window.onSearch = q => {
   S.searchQ = q.trim();
   document.getElementById('searchClear').className = 'search-clear' + (S.searchQ ? ' on' : '');
-  S.expandedCells = new Set();
   renderAll(true);
 };
 window.clearSearch = () => { document.getElementById('searchInp').value = ''; window.onSearch(''); };
@@ -227,6 +231,7 @@ window.togglePanel = () => {
   S.settings.panelVisible = !S.settings.panelVisible;
   document.getElementById('fpanel').classList.toggle('collapsed', !S.settings.panelVisible);
   save();
+  setStore({ settings: { ...S.settings } });
 };
 
 /* ── 키보드 단축키 ── */
@@ -279,19 +284,47 @@ document.querySelectorAll('.ov').forEach(ov => {
   });
 });
 
-/* ── 폴링: 다른 사용자 변경 감지 ── */
+/* ── WebSocket 브릿지 콜백 ── */
+// socket.js에서 서버 이벤트 수신 시 호출됨
+window.__onLocksChanged = () => {
+  if (S.view !== 'dashboard') renderAll();
+};
+window.__onLockDenied = (key, lockedBy) => {
+  notify(`🔒 ${lockedBy}님이 편집 중입니다. 잠시 후 다시 시도하세요.`, 'warning');
+};
+window.__onItemSaved = (key, user, item) => {
+  if (S.view !== 'dashboard') renderAll();
+};
+window.__onPreviewChanged = () => {
+  // 미리보기 변경 시 카드 re-render (렌더 비용 최소화 위해 debounce 없이 직접)
+  if (S.view !== 'dashboard') renderAll();
+};
+
+/* ── 폴링: 다른 사용자 변경 감지 (WebSocket 폴백) ── */
 let _pollTimer = null;
 window.addEventListener('beforeunload', () => { if (_pollTimer) clearInterval(_pollTimer); });
 function startPolling() {
+  // WebSocket 초기화 (서버 모드일 때)
+  if (S.settings.storageMode === 'server') {
+    initSocket();
+  } else {
+    disconnectSocket();
+  }
+
   if (_pollTimer) clearInterval(_pollTimer);
-  const interval = (S.settings.pollInterval || 60) * 1000;
   if (S.settings.storageMode !== 'server') return;
+
+  // 폴링은 데이터 변경 감지(업데이트 배너) + WebSocket 폴백용 — 60초 고정
+  const interval = 60 * 1000;
   _pollTimer = setInterval(async () => {
     const result = await pollServerTs();
     if (result !== null) {
       setServerStatus('ok');
-      // locks 업데이트
-      if (result.locks) { const changed = updateLocks(result.locks); if (changed && S.view !== 'dashboard') renderAll(); }
+      // WebSocket이 없을 때만 locks를 polling으로 업데이트
+      if (!isSocketConnected() && result.locks) {
+        const changed = updateLocks(result.locks);
+        if (changed && S.view !== 'dashboard') renderAll();
+      }
       if (result.serverTs > lastServerTs) {
         const banner = document.getElementById('updateBanner');
         if (banner) {
@@ -325,7 +358,6 @@ window.saveServerSettings = async () => {
   const mode = document.querySelector('input[name="storageMode"]:checked')?.value || 'local';
   S.settings.storageMode  = mode;
   S.settings.serverUrl    = document.getElementById('sServerUrl')?.value.trim() || '';
-  S.settings.pollInterval = parseInt(document.getElementById('sPollInterval')?.value || '10', 10) || 10;
   S.settings.userName     = document.getElementById('sUserName')?.value.trim() || '';
 
   if (mode === 'server') {
@@ -345,7 +377,8 @@ window.saveServerSettings = async () => {
       notify('서버 연결 실패. URL을 확인하세요.', true);
     }
   } else {
-    save(); // 로컬 모드 전환
+    disconnectSocket(); // 로컬 모드 전환 시 WebSocket 해제
+    save();
     notify('로컬 모드로 설정됐습니다.');
   }
 
@@ -441,8 +474,6 @@ function syncServerSettingsUI() {
   });
   const urlEl  = document.getElementById('sServerUrl');
   if (urlEl)  urlEl.value  = S.settings.serverUrl  || '';
-  const pollEl = document.getElementById('sPollInterval');
-  if (pollEl) pollEl.value = S.settings.pollInterval || 60;
   const nameEl = document.getElementById('sUserName');
   if (nameEl) nameEl.value = S.settings.userName    || '';
   const badge  = document.getElementById('storageModeBadge');
@@ -458,6 +489,7 @@ const DB_SECTION_LABELS = { stats: '스탯 카드 4개', insight: '그룹 진척
 window.saveDbSettings = () => {
   S.settings.dbHeroName = document.getElementById('dbHeroName')?.value || '';
   save();
+  setStore({ settings: { ...S.settings } });
   if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
 };
 
@@ -469,6 +501,7 @@ window.dbSectionMove = (idx, dir) => {
   S.settings.dbSections = secs;
   renderDbSectionOrder();
   save();
+  setStore({ settings: { ...S.settings } });
   if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
 };
 
@@ -517,6 +550,7 @@ window.dbSecDrop = (e, toIdx) => {
   secs.splice(toIdx, 0, moved);
   S.settings.dbSections = secs;
   save();
+  setStore({ settings: { ...S.settings } });
   if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
   renderDbSectionOrder();
 };

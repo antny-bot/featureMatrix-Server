@@ -10,6 +10,7 @@ import { S, save, pushUndo, genKey, findItem, esc, eattr, normOwner, notify, log
 import { renderAll, scheduleCardAnim, mxSel } from './render.js';
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS } from './constants.js';
 import { requireAdmin, requireEditor, isEditor } from './admin.js';
+import { setStore } from '../store/useAppStore.js';
 
 export function openModal(id) {
   const el = document.getElementById(id);
@@ -20,49 +21,17 @@ export function openModal(id) {
 }
 export const closeModal = id => document.getElementById(id)?.classList.remove('on');
 
-/* ── 편집 탭 전환 ── */
-export function switchEditTab(tab) {
-  ['info','md'].forEach(t => {
-    document.getElementById(`etab-${t}`)?.classList.toggle('on', t === tab);
-    const pane = document.getElementById(`epane-${t}`);
-    if (pane) pane.style.display = t === tab ? '' : 'none';
-  });
-  if (tab === 'md') { updateMdStat(); syncMdPreview(); switchMdView('preview'); }
-}
+/* ── 편집 탭 전환 — ItemModal.jsx 브릿지로 위임 ── */
+export function switchEditTab(tab) { window.switchEditTab?.(tab); }
 
-/* ── MD 뷰 모드 ── */
-export function switchMdView(mode) {
-  const ta = document.getElementById('fMdContent');
-  const pv = document.getElementById('mdPreviewPane');
-  const modeIdMap = { edit:'mdTabEdit', preview:'mdTabPrev', split:'mdTabSplit' };
-  ['mdTabEdit','mdTabPrev','mdTabSplit'].forEach(id => document.getElementById(id)?.classList.remove('on'));
-  document.getElementById(modeIdMap[mode])?.classList.add('on');
-  if (mode === 'edit') {
-    ta.style.display=''; ta.style.flex='1'; pv.style.display='none';
-  } else if (mode === 'preview') {
-    ta.style.display='none'; pv.style.display=''; pv.style.flex='1'; syncMdPreview();
-  } else {
-    ta.style.display=''; ta.style.flex='1'; pv.style.display=''; pv.style.flex='1'; syncMdPreview();
-  }
-}
+/* ── MD 뷰 모드 — ItemModal.jsx 브릿지로 위임 ── */
+export function switchMdView(mode) { window.switchMdView?.(mode); }
 
-export function syncMdPreview() {
-  const pv = document.getElementById('mdPreviewPane');
-  if (pv && pv.style.display !== 'none') {
-    pv.innerHTML = parseMd(document.getElementById('fMdContent').value);
-    /* KaTeX 렌더링 */
-    if (window.katex) renderKatex(pv);
-  }
-}
+export function syncMdPreview() { window.syncMdPreview?.(); }
 
-export function onMdInput() { updateMdStat(); syncMdPreview(); }
+export function onMdInput() { window.onMdInput?.(); }
 
-export function updateMdStat() {
-  const v = document.getElementById('fMdContent').value;
-  document.getElementById('mdStatChars').textContent = v.length + '자';
-  document.getElementById('mdStatLines').textContent = (v ? v.split('\n').length : 0) + '줄';
-  document.getElementById('mdStatWords').textContent = (v.trim() ? v.trim().split(/\s+/).length : 0) + '단어';
-}
+export function updateMdStat() { window.updateMdStat?.(); }
 
 /* E - MD 툴바 삽입 헬퍼 */
 export function mdInsert(before, after) {
@@ -214,9 +183,9 @@ function renderKatex(container) {
 /* ── 모달 열기: 편집 ── */
 export function openEditModal(key) {
   S.editKey = key;
+  setStore({ editKey: key });
   const item = findItem(key);
   if (!item) return;
-  document.getElementById('editTitle').textContent = `기능 수정 — ${item.key}`;
   const fm = {
     fKey:'key', fPri:'priority', fName:'name', fDesc:'desc', fPath:'path',
     fGroup:'group', fSubGroup:'subGroup', fCat:'category', fSubCat:'subCategory',
@@ -227,8 +196,7 @@ export function openEditModal(key) {
   });
   document.getElementById('fIsImp').checked = item.isImportant === 'Y';
   document.getElementById('fIsDel').checked = item.isDelete    === 'Y';
-  document.getElementById('btnHardDel').style.display = 'inline-flex';
-  switchEditTab('info'); switchMdView('edit'); updateMdStat();
+  window.__editModalBridge?.('edit', key);
   // 편집 중 락 등록 (서버 모드)
   lockItem(key).then(res => {
     if (res?.locked && res?.lockedBy) {
@@ -241,16 +209,15 @@ export function openEditModal(key) {
 export function openAddModal() {
   if (!isEditor()) { requireEditor(openAddModal); return; }
   S.editKey = null;
+  setStore({ editKey: null });
   ['fName','fDesc','fPath','fGroup','fSubGroup','fCat','fSubCat','fOwner','fRel','fMemo','fMdContent']
     .forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('fStatus').value  = '';
   document.getElementById('fPri').value     = '중';
   document.getElementById('fIsImp').checked = false;
   document.getElementById('fIsDel').checked = false;
-  document.getElementById('editTitle').textContent    = '기능 추가';
-  document.getElementById('fKey').value               = genKey();
-  document.getElementById('btnHardDel').style.display = 'none';
-  switchEditTab('info'); switchMdView('edit'); updateMdStat();
+  document.getElementById('fKey').value = genKey();
+  window.__editModalBridge?.('add', null);
   openModal('editModal');
 }
 
@@ -325,7 +292,7 @@ export function saveItem() {
     notify('기능이 추가되었습니다.');
     scheduleCardAnim();
   }
-  closeModal('editModal'); unlockItem(S.editKey); save(); renderAll();
+  closeModal('editModal'); unlockItem(S.editKey); setStore({ editKey: null }); S.editKey = null; save(); renderAll();
 }
 
 export function hardDelete() {
@@ -337,7 +304,7 @@ export function hardDelete() {
     logActivity('완전삭제', `${S.editKey} ${it?.name||''}`);
     pushChangeLog('완전삭제', S.editKey, it?.name || S.editKey);
     S.items = S.items.filter(it => it.key !== S.editKey);
-    closeModal('editModal'); unlockItem(S.editKey); save(); renderAll(); notify('완전 삭제되었습니다.');
+    closeModal('editModal'); unlockItem(S.editKey); setStore({ editKey: null }); S.editKey = null; save(); renderAll(); notify('완전 삭제되었습니다.');
   });
 }
 
@@ -440,7 +407,7 @@ export function expSingleMd() {
 
 /* ── 드래그 & 드롭 ── */
 export function onDS(e, key) {
-  S.isDragging=true; clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move';
+  S.isDragging=true; setStore({ isDragging: true }); clearTT(); S.dragKey=key; e.dataTransfer.effectAllowed='move';
   if (mxSel.size > 0 && !mxSel.has(key)) {
     mxSel.forEach(k => document.querySelectorAll(`.mitem[data-key="${k.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"]`).forEach(c => c.classList.remove('mxsel')));
     mxSel.clear();
@@ -452,7 +419,7 @@ export function onDS(e, key) {
   }
 }
 export function onDEnd(e) {
-  S.isDragging=false;
+  S.isDragging=false; setStore({ isDragging: false });
   document.querySelectorAll('.mitem.dragging').forEach(c => c.classList.remove('dragging'));
   if(S.dragCell){S.dragCell.classList.remove('dov');S.dragCell=null;}
 }
