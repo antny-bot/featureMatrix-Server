@@ -2,7 +2,7 @@
    render.js — 매트릭스·리스트 렌더, 통계, 필터 UI
 ══════════════════════════════════════════ */
 
-import { STATUS_CLS, STATUS_LBL, FLABELS } from './constants.js';
+import { STATUS_CLS, STATUS_LBL } from './constants.js';
 import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate } from './state.js';
 import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
 import { isEditor } from './admin.js';
@@ -455,68 +455,10 @@ export function renderBulkBar() {
 }
 export function bulkClear() { bulkSel.keys.clear(); renderBulkBar(); renderList(); }
 
-/* ── 리스트 HTML 빌드 — ListView.jsx에서 호출 ── */
-export function buildListHtml() {
-  const items = getFiltered();
-  if (!items.length) {
-    bulkSel.keys.clear();
-    renderBulkBar();
-    return '<div class="empty"><div style="font-size:.875rem">표시할 기능이 없습니다.</div></div>';
-  }
-  const vcols    = getVisibleCols();
-  const sorted   = items.slice().sort((a,b) => { const va=a[S.sort.key]||'', vb=b[S.sort.key]||''; const r=va<vb?-1:va>vb?1:0; return S.sort.dir==='asc'?r:-r; });
-  const useShimmer = animOk('shimmer'), useRow = animOk('card') && _cardAnimEnabled;
-  const allChecked = sorted.length > 0 && sorted.every(it => bulkSel.keys.has(it.key));
-  let h = '<div class="ltbl-wrap"><div class="ltbl-scroll"><table class="ltbl"><thead><tr>';
-  h += `<th style="width:32px;text-align:center"><input type="checkbox" ${allChecked?'checked':''} onchange="bulkToggleAll(this.checked)" title="전체 선택"></th>`;
-  vcols.forEach(col => {
-    const sc = S.sort.key===col.key ? (S.sort.dir==='asc'?' sa':' sd') : '';
-    h += `<th class="${sc.trim()}" onclick="sortL('${col.key}')">${FLABELS[col.key]}</th>`;
-  });
-  h += `<th>작업</th></tr></thead><tbody${useRow?' class="anim-list-row"':''}>`;
-  sorted.forEach((it, ri) => {
-    const rc      = it.isDelete==='Y' ? ' rdel' : '';
-    const shimCls = useShimmer ? ' shimmer-row' : '';
-    const delay   = useRow ? `style="animation-delay:${ri*18}ms"` : '';
-    const chk     = bulkSel.keys.has(it.key);
-    h += `<tr class="${rc.trim()}${shimCls}${chk?' bulk-selected':''}" ${delay}>`;
-    h += `<td style="text-align:center"><input type="checkbox" ${chk?'checked':''} onchange="bulkToggle('${eattr(it.key)}');renderList()"></td>`;
-    vcols.forEach(col => { h += renderListCell(it, col.key); });
-    h += `<td>
-      <button class="btn btn-g btn-sm" onclick="openEditModal('${eattr(it.key)}')">편집</button>
-      ${it.mdContent ? `<button class="btn btn-g btn-sm" onclick="openMdModal('${eattr(it.key)}')" style="margin-left:3px">MD</button>` : ''}
-    </td>`;
-    h += '</tr>';
-  });
-  h += '</tbody></table></div></div>';
-  _cardAnimEnabled = false;
-  return h;
-}
-
 /* ── 리스트 렌더 — ListView.jsx React 포털로 위임 ── */
 export function renderList() {
   syncToStore();
   window.__listViewRefresh?.();
-}
-
-function renderListCell(it, key) {
-  const q = S.searchQ;
-  const ppill = p => `<span class="pp ${p==='상'?'h':p==='중'?'m':'l'}">${esc(p)}</span>`;
-  switch(key) {
-    case 'key':        return `<td class="ck">${q?hlSearch(it.key,q):esc(it.key)}</td>`;
-    case 'name':       return `<td class="cn">${q?hlSearch(it.name,q):esc(it.name)}</td>`;
-    case 'priority':   return `<td>${ppill(it.priority)}</td>`;
-    case 'status':     return `<td>${it.status?`<span class="status-badge ${STATUS_CLS[it.status]||''}">${STATUS_LBL[it.status]||esc(it.status)}</span>`:''}</td>`;
-    case 'isImportant':return `<td style="text-align:center">${it.isImportant==='Y'?'<span style="color:var(--accent)">★</span>':''}</td>`;
-    case 'isDelete':   return `<td style="text-align:center">${it.isDelete==='Y'?'<span style="color:var(--danger);font-size:.7rem;font-weight:700">삭제</span>':''}</td>`;
-    case 'owner':      return `<td>${q ? hlSearch(normOwner(it.owner), q) : esc(normOwner(it.owner))}</td>`;
-    case 'desc': case 'memo': {
-      const txt = (it[key]||'').replace(/\n/g,' ');
-      const disp = txt.length > 60 ? txt.slice(0,60) + '…' : txt;
-      return `<td class="desc-cell" title="${eattr(it[key]||'')}">${q ? hlSearch(disp, q) : esc(disp)}</td>`;
-    }
-    default: return `<td>${q ? hlSearch(it[key]||'', q) : esc(it[key]||'')}</td>`;
-  }
 }
 
 export function sortL(k) {

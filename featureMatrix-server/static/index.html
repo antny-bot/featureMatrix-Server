@@ -18942,79 +18942,9 @@ function __inlineNotify(msg, type) {
     renderBulkBar();
     renderList();
   }
-  function buildListHtml() {
-    const items = getFiltered();
-    if (!items.length) {
-      bulkSel.keys.clear();
-      renderBulkBar();
-      return '<div class="empty"><div style="font-size:.875rem">\uD45C\uC2DC\uD560 \uAE30\uB2A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</div></div>';
-    }
-    const vcols = getVisibleCols();
-    const sorted = items.slice().sort((a, b) => {
-      const va = a[S.sort.key] || "", vb = b[S.sort.key] || "";
-      const r = va < vb ? -1 : va > vb ? 1 : 0;
-      return S.sort.dir === "asc" ? r : -r;
-    });
-    const useShimmer = animOk("shimmer"), useRow = animOk("card") && _cardAnimEnabled;
-    const allChecked = sorted.length > 0 && sorted.every((it) => bulkSel.keys.has(it.key));
-    let h = '<div class="ltbl-wrap"><div class="ltbl-scroll"><table class="ltbl"><thead><tr>';
-    h += `<th style="width:32px;text-align:center"><input type="checkbox" ${allChecked ? "checked" : ""} onchange="bulkToggleAll(this.checked)" title="\uC804\uCCB4 \uC120\uD0DD"></th>`;
-    vcols.forEach((col) => {
-      const sc = S.sort.key === col.key ? S.sort.dir === "asc" ? " sa" : " sd" : "";
-      h += `<th class="${sc.trim()}" onclick="sortL('${col.key}')">${FLABELS[col.key]}</th>`;
-    });
-    h += `<th>\uC791\uC5C5</th></tr></thead><tbody${useRow ? ' class="anim-list-row"' : ""}>`;
-    sorted.forEach((it, ri) => {
-      const rc = it.isDelete === "Y" ? " rdel" : "";
-      const shimCls = useShimmer ? " shimmer-row" : "";
-      const delay = useRow ? `style="animation-delay:${ri * 18}ms"` : "";
-      const chk = bulkSel.keys.has(it.key);
-      h += `<tr class="${rc.trim()}${shimCls}${chk ? " bulk-selected" : ""}" ${delay}>`;
-      h += `<td style="text-align:center"><input type="checkbox" ${chk ? "checked" : ""} onchange="bulkToggle('${eattr(it.key)}');renderList()"></td>`;
-      vcols.forEach((col) => {
-        h += renderListCell(it, col.key);
-      });
-      h += `<td>
-      <button class="btn btn-g btn-sm" onclick="openEditModal('${eattr(it.key)}')">\uD3B8\uC9D1</button>
-      ${it.mdContent ? `<button class="btn btn-g btn-sm" onclick="openMdModal('${eattr(it.key)}')" style="margin-left:3px">MD</button>` : ""}
-    </td>`;
-      h += "</tr>";
-    });
-    h += "</tbody></table></div></div>";
-    _cardAnimEnabled = false;
-    return h;
-  }
   function renderList() {
     syncToStore();
     window.__listViewRefresh?.();
-  }
-  function renderListCell(it, key) {
-    const q = S.searchQ;
-    const ppill = (p) => `<span class="pp ${p === "\uC0C1" ? "h" : p === "\uC911" ? "m" : "l"}">${esc2(p)}</span>`;
-    switch (key) {
-      case "key":
-        return `<td class="ck">${q ? hlSearch(it.key, q) : esc2(it.key)}</td>`;
-      case "name":
-        return `<td class="cn">${q ? hlSearch(it.name, q) : esc2(it.name)}</td>`;
-      case "priority":
-        return `<td>${ppill(it.priority)}</td>`;
-      case "status":
-        return `<td>${it.status ? `<span class="status-badge ${STATUS_CLS[it.status] || ""}">${STATUS_LBL[it.status] || esc2(it.status)}</span>` : ""}</td>`;
-      case "isImportant":
-        return `<td style="text-align:center">${it.isImportant === "Y" ? '<span style="color:var(--accent)">\u2605</span>' : ""}</td>`;
-      case "isDelete":
-        return `<td style="text-align:center">${it.isDelete === "Y" ? '<span style="color:var(--danger);font-size:.7rem;font-weight:700">\uC0AD\uC81C</span>' : ""}</td>`;
-      case "owner":
-        return `<td>${q ? hlSearch(normOwner(it.owner), q) : esc2(normOwner(it.owner))}</td>`;
-      case "desc":
-      case "memo": {
-        const txt = (it[key] || "").replace(/\n/g, " ");
-        const disp = txt.length > 60 ? txt.slice(0, 60) + "\u2026" : txt;
-        return `<td class="desc-cell" title="${eattr(it[key] || "")}">${q ? hlSearch(disp, q) : esc2(disp)}</td>`;
-      }
-      default:
-        return `<td>${q ? hlSearch(it[key] || "", q) : esc2(it[key] || "")}</td>`;
-    }
   }
   function sortL(k) {
     if (S.sort.key === k) S.sort.dir = S.sort.dir === "asc" ? "desc" : "asc";
@@ -23369,9 +23299,61 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   // components/ListView.jsx
   var import_react_dom6 = __toESM(require_react_dom());
   var import_react9 = __toESM(require_react());
-  init_useAppStore();
+  init_constants();
   init_render();
+  init_state();
+  init_useAppStore();
   var import_jsx_runtime9 = __toESM(require_jsx_runtime());
+  function highlightText(value2, query) {
+    const text = String(value2 || "");
+    if (!query || !text) return text;
+    try {
+      const re2 = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+      return text.split(re2).map((part, index) => part.toLowerCase() === query.toLowerCase() ? /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("mark", { className: "search-hl", children: part }, `${part}:${index}`) : part);
+    } catch {
+      return text;
+    }
+  }
+  function PriorityPill({ priority }) {
+    const cls = priority === "\uC0C1" ? "h" : priority === "\uC911" ? "m" : "l";
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: `pp ${cls}`, children: priority });
+  }
+  function StatusBadge({ status }) {
+    if (!status) return null;
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: `status-badge ${STATUS_CLS[status] || ""}`, children: STATUS_LBL[status] || status });
+  }
+  function TextCell({ value: value2, query, className, title }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("td", { className, title, children: highlightText(value2, query) });
+  }
+  function ListCell({ item, columnKey, query }) {
+    switch (columnKey) {
+      case "key":
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(TextCell, { className: "ck", value: item.key, query });
+      case "name":
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(TextCell, { className: "cn", value: item.name, query });
+      case "priority":
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("td", { children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(PriorityPill, { priority: item.priority }) });
+      case "status":
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("td", { children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(StatusBadge, { status: item.status }) });
+      case "isImportant":
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("td", { style: { textAlign: "center" }, children: item.isImportant === "Y" && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { style: { color: "var(--accent)" }, children: "\u2605" }) });
+      case "isDelete":
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("td", { style: { textAlign: "center" }, children: item.isDelete === "Y" && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { style: { color: "var(--danger)", fontSize: ".7rem", fontWeight: 700 }, children: "\uC0AD\uC81C" }) });
+      case "owner": {
+        const owner = normOwner(item.owner);
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(TextCell, { value: owner, query });
+      }
+      case "desc":
+      case "memo": {
+        const raw = item[columnKey] || "";
+        const text = raw.replace(/\n/g, " ");
+        const display = text.length > 60 ? `${text.slice(0, 60)}\u2026` : text;
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(TextCell, { className: "desc-cell", title: raw, value: display, query });
+      }
+      default:
+        return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(TextCell, { value: item[columnKey] || "", query });
+    }
+  }
   function ListView() {
     const items = useAppStore((s) => s.items);
     const settings = useAppStore((s) => s.settings);
@@ -23385,15 +23367,90 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       setContainer(document.getElementById("listView"));
     }, []);
     (0, import_react9.useEffect)(() => {
-      window.__listViewRefresh = () => setTick((t) => t + 1);
+      window.__listViewRefresh = () => setTick((value2) => value2 + 1);
       return () => {
         delete window.__listViewRefresh;
       };
     }, []);
+    const visibleColumns = (0, import_react9.useMemo)(
+      () => getVisibleCols(),
+      [settings]
+    );
+    const rows = (0, import_react9.useMemo)(() => {
+      const filtered = getFiltered();
+      return filtered.slice().sort((a, b) => {
+        const va = a[S.sort.key] || "";
+        const vb = b[S.sort.key] || "";
+        const result = va < vb ? -1 : va > vb ? 1 : 0;
+        return S.sort.dir === "asc" ? result : -result;
+      });
+    }, [items, filters, searchQ, sort, tick, display]);
+    (0, import_react9.useEffect)(() => {
+      if (rows.length === 0 && bulkSel.keys.size > 0) {
+        bulkSel.keys.clear();
+        window.renderBulkBar?.();
+      }
+    }, [rows.length]);
     if (!container) return null;
-    const html = buildListHtml();
+    if (!rows.length) {
+      return (0, import_react_dom6.createPortal)(
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "empty", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { style: { fontSize: ".875rem" }, children: "\uD45C\uC2DC\uD560 \uAE30\uB2A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4." }) }),
+        container
+      );
+    }
+    const allChecked = rows.length > 0 && rows.every((item) => bulkSel.keys.has(item.key));
     return (0, import_react_dom6.createPortal)(
-      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { dangerouslySetInnerHTML: { __html: html } }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "ltbl-wrap", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "ltbl-scroll", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("table", { className: "ltbl", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("tr", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { style: { width: "32px", textAlign: "center" }, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+            "input",
+            {
+              type: "checkbox",
+              checked: allChecked,
+              onChange: (event) => bulkToggleAll(event.target.checked),
+              title: "\uC804\uCCB4 \uC120\uD0DD"
+            }
+          ) }),
+          visibleColumns.map((column) => {
+            const sortClass = S.sort.key === column.key ? S.sort.dir === "asc" ? "sa" : "sd" : "";
+            return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { className: sortClass, onClick: () => sortL(column.key), children: FLABELS[column.key] }, column.key);
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { children: "\uC791\uC5C5" })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("tbody", { children: rows.map((item, rowIndex) => {
+          const checked = bulkSel.keys.has(item.key);
+          const rowClass = [
+            item.isDelete === "Y" ? "rdel" : "",
+            checked ? "bulk-selected" : ""
+          ].filter(Boolean).join(" ");
+          return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("tr", { className: rowClass, style: { animationDelay: `${rowIndex * 18}ms` }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("td", { style: { textAlign: "center" }, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "input",
+              {
+                type: "checkbox",
+                checked,
+                onChange: () => {
+                  bulkToggle(item.key);
+                  setTick((value2) => value2 + 1);
+                }
+              }
+            ) }),
+            visibleColumns.map((column) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(ListCell, { item, columnKey: column.key, query: S.searchQ }, column.key)),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("td", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.openEditModal?.(item.key), children: "\uD3B8\uC9D1" }),
+              item.mdContent && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+                "button",
+                {
+                  className: "btn btn-g btn-sm",
+                  onClick: () => window.openMdModal?.(item.key),
+                  style: { marginLeft: "3px" },
+                  children: "MD"
+                }
+              )
+            ] })
+          ] }, item.key);
+        }) })
+      ] }) }) }),
       container
     );
   }
