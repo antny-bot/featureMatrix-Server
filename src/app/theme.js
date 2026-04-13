@@ -103,8 +103,5 @@ export function adjBW(d)           { const c = getColors(); const next = Math.ma
 
 export function applyBlurSetting() {
   const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;
-  document.querySelectorAll('.ov').forEach(el => {
-    if (!prefersReduced && S.settings.animations?.blur) el.classList.add('blur-bg');
-    else el.classList.remove('blur-bg');
-  });
+  window.__applyOverlayBlur?.(!prefersReduced && S.settings.animations?.blur);
 }

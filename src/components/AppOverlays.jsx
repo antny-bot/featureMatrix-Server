@@ -96,6 +96,17 @@ function UserNameModal() {
 }
 
 export default function AppOverlays() {
+  useEffect(() => {
+    window.__applyOverlayBlur = enabled => {
+      const overlays = document.querySelectorAll('.ov');
+      overlays.forEach(el => {
+        if (enabled) el.classList.add('blur-bg');
+        else el.classList.remove('blur-bg');
+      });
+    };
+    return () => { delete window.__applyOverlayBlur; };
+  }, []);
+
   return (
     <>
       <ImportModal />

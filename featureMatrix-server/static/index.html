@@ -18203,10 +18203,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
   function applyBlurSetting() {
     const prefersReduced2 = window.matchMedia?.("(prefers-reduced-motion:reduce)").matches ?? false;
-    document.querySelectorAll(".ov").forEach((el) => {
-      if (!prefersReduced2 && S.settings.animations?.blur) el.classList.add("blur-bg");
-      else el.classList.remove("blur-bg");
-    });
+    window.__applyOverlayBlur?.(!prefersReduced2 && S.settings.animations?.blur);
   }
   var init_theme = __esm({
     "app/theme.js"() {
@@ -24952,6 +24949,18 @@ ${sample}
     ] }) });
   }
   function AppOverlays() {
+    (0, import_react21.useEffect)(() => {
+      window.__applyOverlayBlur = (enabled) => {
+        const overlays = document.querySelectorAll(".ov");
+        overlays.forEach((el) => {
+          if (enabled) el.classList.add("blur-bg");
+          else el.classList.remove("blur-bg");
+        });
+      };
+      return () => {
+        delete window.__applyOverlayBlur;
+      };
+    }, []);
     return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(import_jsx_runtime26.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ImportModal, {}),
       /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ExportModal, {}),
