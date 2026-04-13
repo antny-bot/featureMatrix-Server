@@ -20147,14 +20147,11 @@ function __inlineNotify(msg, type) {
   function boardDragOver(e, colKey) {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    document.getElementById("bbody-" + colKey)?.classList.add("drag-over");
   }
   function boardDragLeave(_e, colKey) {
-    document.getElementById("bbody-" + colKey)?.classList.remove("drag-over");
   }
   function boardDrop(e, colKey) {
     e.preventDefault();
-    document.getElementById("bbody-" + colKey)?.classList.remove("drag-over");
     if (!_dragKey) return;
     _moveItems(_boardSel.size > 0 ? new Set(_boardSel) : /* @__PURE__ */ new Set([_dragKey]), colKey);
   }

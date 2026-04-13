@@ -33,6 +33,7 @@ export default function BoardView() {
 
   /* 컬럼별 펼침 상태 */
   const [expanded, setExpanded] = useState(new Set());
+  const [dragOverCol, setDragOverCol] = useState(null);
 
   /* 선택 상태: board.js CustomEvent로 수신 */
   const [boardSel, setBoardSel] = useState([]);
@@ -95,21 +96,25 @@ export default function BoardView() {
             </div>
 
             <div
-              className={`board-col-body${isExp ? ' board-col-body--expanded' : ''}`}
+              className={[
+                'board-col-body',
+                isExp ? 'board-col-body--expanded' : '',
+                dragOverCol === colKey ? 'drag-over' : '',
+              ].filter(Boolean).join(' ')}
               id={`bbody-${colKey}`}
               onDragOver={e => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
-                e.currentTarget.classList.add('drag-over');
+                setDragOverCol(colKey);
               }}
               onDragLeave={e => {
                 if (!e.currentTarget.contains(e.relatedTarget)) {
-                  e.currentTarget.classList.remove('drag-over');
+                  setDragOverCol(current => current === colKey ? null : current);
                 }
               }}
               onDrop={e => {
                 e.preventDefault();
-                e.currentTarget.classList.remove('drag-over');
+                setDragOverCol(null);
                 window.boardDrop?.(e, colKey);
               }}
             >

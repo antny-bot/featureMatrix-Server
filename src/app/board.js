@@ -149,16 +149,13 @@ export function boardCardDragEnd() {
 export function boardDragOver(e, colKey) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
-  document.getElementById('bbody-' + colKey)?.classList.add('drag-over');
 }
 
 export function boardDragLeave(_e, colKey) {
-  document.getElementById('bbody-' + colKey)?.classList.remove('drag-over');
 }
 
 export function boardDrop(e, colKey) {
   e.preventDefault();
-  document.getElementById('bbody-' + colKey)?.classList.remove('drag-over');
   if (!_dragKey) return;
   _moveItems(_boardSel.size > 0 ? new Set(_boardSel) : new Set([_dragKey]), colKey);
 }
