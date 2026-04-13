@@ -48,16 +48,16 @@ export function openModal(id) {
 export const closeModal = id => document.getElementById(id)?.classList.remove('on');
 
 /* ── 편집 탭 전환 — ItemModal.jsx 브릿지로 위임 ── */
-export function switchEditTab(tab) { window.switchEditTab?.(tab); }
+export function switchEditTab(tab) { window.__editModalSwitchEditTab?.(tab); }
 
 /* ── MD 뷰 모드 — ItemModal.jsx 브릿지로 위임 ── */
-export function switchMdView(mode) { window.switchMdView?.(mode); }
+export function switchMdView(mode) { window.__editModalSwitchMdView?.(mode); }
 
-export function syncMdPreview() { window.syncMdPreview?.(); }
+export function syncMdPreview() { window.__editModalSyncMdPreview?.(); }
 
-export function onMdInput() { window.onMdInput?.(); }
+export function onMdInput() { window.__editModalOnMdInput?.(); }
 
-export function updateMdStat() { window.updateMdStat?.(); }
+export function updateMdStat() { window.__editModalUpdateMdStat?.(); }
 
 /* E - MD 툴바 삽입 헬퍼 */
 export function mdInsert(before, after) {

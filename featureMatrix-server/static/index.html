@@ -19148,13 +19148,13 @@ function __inlineNotify(msg, type) {
     el.classList.add("on");
   }
   function switchEditTab(tab) {
-    window.switchEditTab?.(tab);
+    window.__editModalSwitchEditTab?.(tab);
   }
   function switchMdView(mode) {
-    window.switchMdView?.(mode);
+    window.__editModalSwitchMdView?.(mode);
   }
   function onMdInput() {
-    window.onMdInput?.();
+    window.__editModalOnMdInput?.();
   }
   function mdInsert(before, after) {
     const ta = document.getElementById("fMdContent");
@@ -23013,7 +23013,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         });
         observer.observe(modalEl, { attributes: true, attributeFilter: ["class"] });
       }
-      window.switchEditTab = (tab) => {
+      window.__editModalSwitchEditTab = (tab) => {
         setActiveTab(tab);
         if (tab === "md") {
           const ta = document.getElementById("fMdContent");
@@ -23026,14 +23026,14 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           });
         }
       };
-      window.switchMdView = (mode) => {
+      window.__editModalSwitchMdView = (mode) => {
         setMdMode(mode);
         if (mode !== "edit") {
           const ta = document.getElementById("fMdContent");
           if (ta) setMdPreview(parseMd(ta.value));
         }
       };
-      window.onMdInput = () => {
+      window.__editModalOnMdInput = () => {
         const ta = document.getElementById("fMdContent");
         if (!ta) return;
         const v = ta.value;
@@ -23044,11 +23044,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         });
         setMdPreview(parseMd(v));
       };
-      window.syncMdPreview = () => {
+      window.__editModalSyncMdPreview = () => {
         const ta = document.getElementById("fMdContent");
         if (ta) setMdPreview(parseMd(ta.value));
       };
-      window.updateMdStat = () => {
+      window.__editModalUpdateMdStat = () => {
         const ta = document.getElementById("fMdContent");
         if (!ta) return;
         const v = ta.value;
@@ -23062,11 +23062,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         observer?.disconnect();
         detachInputListeners();
         delete window.__editModalBridge;
-        delete window.switchEditTab;
-        delete window.switchMdView;
-        delete window.onMdInput;
-        delete window.syncMdPreview;
-        delete window.updateMdStat;
+        delete window.__editModalSwitchEditTab;
+        delete window.__editModalSwitchMdView;
+        delete window.__editModalOnMdInput;
+        delete window.__editModalSyncMdPreview;
+        delete window.__editModalUpdateMdStat;
       };
     }, [attachInputListeners, detachInputListeners]);
     if (!container) return null;
@@ -23080,8 +23080,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("editModal"), children: "\u2715" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "stab-row", style: { padding: "0 20px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `stab${activeTab === "info" ? " on" : ""}`, onClick: () => window.switchEditTab?.("info"), children: "\u{1F4CB} \uAE30\uBCF8 \uC815\uBCF4" }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `stab${activeTab === "md" ? " on" : ""}`, onClick: () => window.switchEditTab?.("md"), children: "\u{1F4DD} \uAE30\uB2A5\uC815\uC758\uC694\uAD6C\uC11C" })
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `stab${activeTab === "info" ? " on" : ""}`, onClick: () => window.__editModalSwitchEditTab?.("info"), children: "\u{1F4CB} \uAE30\uBCF8 \uC815\uBCF4" }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `stab${activeTab === "md" ? " on" : ""}`, onClick: () => window.__editModalSwitchEditTab?.("md"), children: "\u{1F4DD} \uAE30\uB2A5\uC815\uC758\uC694\uAD6C\uC11C" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "mbody", style: { padding: "16px 20px", display: infoVisible ? "" : "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "mg", children: [
           /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "field", children: [
@@ -23193,9 +23193,9 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "5px" }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "2px", background: "var(--surface-2)", borderRadius: "6px", padding: "2px" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `vtab${mdMode === "preview" ? " on" : ""}`, onClick: () => window.switchMdView?.("preview"), style: { height: "22px", padding: "0 9px", fontSize: ".7rem" }, children: "\u{1F441} \uBCF4\uAE30" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `vtab${mdMode === "edit" ? " on" : ""}`, onClick: () => window.switchMdView?.("edit"), style: { height: "22px", padding: "0 9px", fontSize: ".7rem" }, children: "\u270F \uD3B8\uC9D1" }),
-                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `vtab${mdMode === "split" ? " on" : ""}`, onClick: () => window.switchMdView?.("split"), style: { height: "22px", padding: "0 9px", fontSize: ".7rem" }, children: "\u2B1C \uBD84\uD560" })
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `vtab${mdMode === "preview" ? " on" : ""}`, onClick: () => window.__editModalSwitchMdView?.("preview"), style: { height: "22px", padding: "0 9px", fontSize: ".7rem" }, children: "\u{1F441} \uBCF4\uAE30" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `vtab${mdMode === "edit" ? " on" : ""}`, onClick: () => window.__editModalSwitchMdView?.("edit"), style: { height: "22px", padding: "0 9px", fontSize: ".7rem" }, children: "\u270F \uD3B8\uC9D1" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: `vtab${mdMode === "split" ? " on" : ""}`, onClick: () => window.__editModalSwitchMdView?.("split"), style: { height: "22px", padding: "0 9px", fontSize: ".7rem" }, children: "\u2B1C \uBD84\uD560" })
               ] }),
               /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { width: "1px", height: "16px", background: "var(--border)", flexShrink: 0 } }),
               /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => document.getElementById("mdFileInp")?.click(), style: { gap: "4px" }, children: "\u{1F4C2} \uC5F4\uAE30" }),
@@ -23228,7 +23228,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                   outline: "none"
                 },
                 placeholder: "# \uAE30\uB2A5 \uC81C\uBAA9\n\n## \uAC1C\uC694\n\uB9C8\uD06C\uB2E4\uC6B4\uC73C\uB85C \uC791\uC131\n\n| \uCEEC\uB7FC1 | \uCEEC\uB7FC2 |\n|-------|-------|\n| \uAC121   | \uAC122   |\n\n\uC218\uC2DD: $E=mc^2$",
-                onInput: () => window.onMdInput?.()
+                onInput: () => window.__editModalOnMdInput?.()
               }
             ),
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(

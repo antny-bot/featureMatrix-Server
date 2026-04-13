@@ -129,7 +129,7 @@ export default function ItemModal() {
     }
 
     /* 탭 전환: info / md */
-    window.switchEditTab = (tab) => {
+    window.__editModalSwitchEditTab = (tab) => {
       setActiveTab(tab);
       if (tab === 'md') {
         const ta = document.getElementById('fMdContent');
@@ -144,7 +144,7 @@ export default function ItemModal() {
     };
 
     /* MD 뷰 전환: edit / preview / split */
-    window.switchMdView = (mode) => {
+    window.__editModalSwitchMdView = (mode) => {
       setMdMode(mode);
       if (mode !== 'edit') {
         const ta = document.getElementById('fMdContent');
@@ -153,7 +153,7 @@ export default function ItemModal() {
     };
 
     /* MD 입력 이벤트: 통계 + 프리뷰 갱신 */
-    window.onMdInput = () => {
+    window.__editModalOnMdInput = () => {
       const ta = document.getElementById('fMdContent');
       if (!ta) return;
       const v = ta.value;
@@ -165,12 +165,12 @@ export default function ItemModal() {
       setMdPreview(parseMd(v));
     };
 
-    window.syncMdPreview = () => {
+    window.__editModalSyncMdPreview = () => {
       const ta = document.getElementById('fMdContent');
       if (ta) setMdPreview(parseMd(ta.value));
     };
 
-    window.updateMdStat = () => {
+    window.__editModalUpdateMdStat = () => {
       const ta = document.getElementById('fMdContent');
       if (!ta) return;
       const v = ta.value;
@@ -185,11 +185,11 @@ export default function ItemModal() {
       observer?.disconnect();
       detachInputListeners();
       delete window.__editModalBridge;
-      delete window.switchEditTab;
-      delete window.switchMdView;
-      delete window.onMdInput;
-      delete window.syncMdPreview;
-      delete window.updateMdStat;
+      delete window.__editModalSwitchEditTab;
+      delete window.__editModalSwitchMdView;
+      delete window.__editModalOnMdInput;
+      delete window.__editModalSyncMdPreview;
+      delete window.__editModalUpdateMdStat;
     };
   }, [attachInputListeners, detachInputListeners]);
 
@@ -210,8 +210,8 @@ export default function ItemModal() {
 
       {/* 탭 버튼 */}
       <div className="stab-row" style={{ padding: '0 20px' }}>
-        <button className={`stab${activeTab === 'info' ? ' on' : ''}`} onClick={() => window.switchEditTab?.('info')}>📋 기본 정보</button>
-        <button className={`stab${activeTab === 'md'   ? ' on' : ''}`} onClick={() => window.switchEditTab?.('md')}>📝 기능정의요구서</button>
+        <button className={`stab${activeTab === 'info' ? ' on' : ''}`} onClick={() => window.__editModalSwitchEditTab?.('info')}>📋 기본 정보</button>
+        <button className={`stab${activeTab === 'md'   ? ' on' : ''}`} onClick={() => window.__editModalSwitchEditTab?.('md')}>📝 기능정의요구서</button>
       </div>
 
       {/* ── 기본 정보 탭 ── */}
@@ -315,9 +315,9 @@ export default function ItemModal() {
           {/* 2행: 뷰 전환 + 파일 + 통계 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <div style={{ display: 'flex', gap: '2px', background: 'var(--surface-2)', borderRadius: '6px', padding: '2px' }}>
-              <button className={`vtab${mdMode === 'preview' ? ' on' : ''}`} onClick={() => window.switchMdView?.('preview')} style={{ height: '22px', padding: '0 9px', fontSize: '.7rem' }}>👁 보기</button>
-              <button className={`vtab${mdMode === 'edit'    ? ' on' : ''}`} onClick={() => window.switchMdView?.('edit')}    style={{ height: '22px', padding: '0 9px', fontSize: '.7rem' }}>✏ 편집</button>
-              <button className={`vtab${mdMode === 'split'   ? ' on' : ''}`} onClick={() => window.switchMdView?.('split')}   style={{ height: '22px', padding: '0 9px', fontSize: '.7rem' }}>⬜ 분할</button>
+              <button className={`vtab${mdMode === 'preview' ? ' on' : ''}`} onClick={() => window.__editModalSwitchMdView?.('preview')} style={{ height: '22px', padding: '0 9px', fontSize: '.7rem' }}>👁 보기</button>
+              <button className={`vtab${mdMode === 'edit'    ? ' on' : ''}`} onClick={() => window.__editModalSwitchMdView?.('edit')}    style={{ height: '22px', padding: '0 9px', fontSize: '.7rem' }}>✏ 편집</button>
+              <button className={`vtab${mdMode === 'split'   ? ' on' : ''}`} onClick={() => window.__editModalSwitchMdView?.('split')}   style={{ height: '22px', padding: '0 9px', fontSize: '.7rem' }}>⬜ 분할</button>
             </div>
             <div style={{ width: '1px', height: '16px', background: 'var(--border)', flexShrink: 0 }} />
             <button className="btn btn-s btn-sm" onClick={() => document.getElementById('mdFileInp')?.click()} style={{ gap: '4px' }}>📂 열기</button>
@@ -343,7 +343,7 @@ export default function ItemModal() {
               background: 'var(--surface-2)', color: 'var(--text)', outline: 'none',
             }}
             placeholder={"# 기능 제목\n\n## 개요\n마크다운으로 작성\n\n| 컬럼1 | 컬럼2 |\n|-------|-------|\n| 값1   | 값2   |\n\n수식: $E=mc^2$"}
-            onInput={() => window.onMdInput?.()}
+            onInput={() => window.__editModalOnMdInput?.()}
           />
           <div
             ref={previewRef}
