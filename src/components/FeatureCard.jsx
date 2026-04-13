@@ -20,6 +20,30 @@ function highlightText(value, query) {
   }
 }
 
+function cssTextToStyle(cssText) {
+  if (!cssText) return {};
+
+  return cssText
+    .split(';')
+    .map(rule => rule.trim())
+    .filter(Boolean)
+    .reduce((style, rule) => {
+      const separatorIndex = rule.indexOf(':');
+      if (separatorIndex === -1) return style;
+
+      const property = rule
+        .slice(0, separatorIndex)
+        .trim()
+        .replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+      const value = rule.slice(separatorIndex + 1).trim();
+
+      if (property && value) {
+        style[property] = value;
+      }
+      return style;
+    }, {});
+}
+
 function PreviewOverlay({ item, lockInfo, previewData }) {
   if (!previewData) return null;
   const preview = previewData.preview || {};
@@ -68,7 +92,7 @@ export default function FeatureCard({
   const pkColorKey = pk[0].toUpperCase() + pk.slice(1);
   const pHex = colors[`p${pkColorKey}`] || '#888';
   const pBg = colors[`p${pkColorKey}Bg`] || '#eee';
-  const priorityStyle = getPresetCSS(settings.priorityStyles[pk], pHex, pBg);
+  const priorityStyle = cssTextToStyle(getPresetCSS(settings.priorityStyles[pk], pHex, pBg));
   const isNew = item.key?.charAt(0) === 'N';
   const isDeleted = item.isDelete === 'Y';
   const ownerColor = getOwnerColor(item.owner);
