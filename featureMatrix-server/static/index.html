@@ -13355,312 +13355,6 @@ function __inlineNotify(msg, type) {
     }
   });
 
-  // node_modules/zustand/esm/vanilla.mjs
-  var createStoreImpl, createStore;
-  var init_vanilla = __esm({
-    "node_modules/zustand/esm/vanilla.mjs"() {
-      createStoreImpl = (createState) => {
-        let state;
-        const listeners = /* @__PURE__ */ new Set();
-        const setState = (partial, replace) => {
-          const nextState = typeof partial === "function" ? partial(state) : partial;
-          if (!Object.is(nextState, state)) {
-            const previousState = state;
-            state = (replace != null ? replace : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
-            listeners.forEach((listener) => listener(state, previousState));
-          }
-        };
-        const getState = () => state;
-        const getInitialState = () => initialState2;
-        const subscribe = (listener) => {
-          listeners.add(listener);
-          return () => listeners.delete(listener);
-        };
-        const api = { setState, getState, getInitialState, subscribe };
-        const initialState2 = state = createState(setState, getState, api);
-        return api;
-      };
-      createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
-    }
-  });
-
-  // node_modules/zustand/esm/react.mjs
-  function useStore(api, selector = identity) {
-    const slice = import_react3.default.useSyncExternalStore(
-      api.subscribe,
-      import_react3.default.useCallback(() => selector(api.getState()), [api, selector]),
-      import_react3.default.useCallback(() => selector(api.getInitialState()), [api, selector])
-    );
-    import_react3.default.useDebugValue(slice);
-    return slice;
-  }
-  var import_react3, identity, createImpl, create;
-  var init_react = __esm({
-    "node_modules/zustand/esm/react.mjs"() {
-      import_react3 = __toESM(require_react(), 1);
-      init_vanilla();
-      identity = (arg) => arg;
-      createImpl = (createState) => {
-        const api = createStore(createState);
-        const useBoundStore = (selector) => useStore(api, selector);
-        Object.assign(useBoundStore, api);
-        return useBoundStore;
-      };
-      create = ((createState) => createState ? createImpl(createState) : createImpl);
-    }
-  });
-
-  // node_modules/zustand/esm/index.mjs
-  var init_esm = __esm({
-    "node_modules/zustand/esm/index.mjs"() {
-      init_vanilla();
-      init_react();
-    }
-  });
-
-  // node_modules/zustand/esm/middleware.mjs
-  var import_meta, shouldDispatchFromDevtools, trackedConnections, getTrackedConnectionState, extractConnectionInformation, removeStoreFromTrackedConnections, findCallerName, devtoolsImpl, devtools, parseJsonThen;
-  var init_middleware = __esm({
-    "node_modules/zustand/esm/middleware.mjs"() {
-      import_meta = {};
-      shouldDispatchFromDevtools = (api) => !!api.dispatchFromDevtools && typeof api.dispatch === "function";
-      trackedConnections = /* @__PURE__ */ new Map();
-      getTrackedConnectionState = (name) => {
-        const api = trackedConnections.get(name);
-        if (!api) return {};
-        return Object.fromEntries(
-          Object.entries(api.stores).map(([key, api2]) => [key, api2.getState()])
-        );
-      };
-      extractConnectionInformation = (store, extensionConnector, options) => {
-        if (store === void 0) {
-          return {
-            type: "untracked",
-            connection: extensionConnector.connect(options)
-          };
-        }
-        const existingConnection = trackedConnections.get(options.name);
-        if (existingConnection) {
-          return { type: "tracked", store, ...existingConnection };
-        }
-        const newConnection = {
-          connection: extensionConnector.connect(options),
-          stores: {}
-        };
-        trackedConnections.set(options.name, newConnection);
-        return { type: "tracked", store, ...newConnection };
-      };
-      removeStoreFromTrackedConnections = (name, store) => {
-        if (store === void 0) return;
-        const connectionInfo = trackedConnections.get(name);
-        if (!connectionInfo) return;
-        delete connectionInfo.stores[store];
-        if (Object.keys(connectionInfo.stores).length === 0) {
-          trackedConnections.delete(name);
-        }
-      };
-      findCallerName = (stack) => {
-        var _a, _b;
-        if (!stack) return void 0;
-        const traceLines = stack.split("\n");
-        const apiSetStateLineIndex = traceLines.findIndex(
-          (traceLine) => traceLine.includes("api.setState")
-        );
-        if (apiSetStateLineIndex < 0) return void 0;
-        const callerLine = ((_a = traceLines[apiSetStateLineIndex + 1]) == null ? void 0 : _a.trim()) || "";
-        return (_b = /.+ (.+) .+/.exec(callerLine)) == null ? void 0 : _b[1];
-      };
-      devtoolsImpl = (fn, devtoolsOptions = {}) => (set, get, api) => {
-        const { enabled, anonymousActionType, store, ...options } = devtoolsOptions;
-        let extensionConnector;
-        try {
-          extensionConnector = (enabled != null ? enabled : (import_meta.env ? import_meta.env.MODE : void 0) !== "production") && window.__REDUX_DEVTOOLS_EXTENSION__;
-        } catch (e) {
-        }
-        if (!extensionConnector) {
-          return fn(set, get, api);
-        }
-        const { connection, ...connectionInformation } = extractConnectionInformation(store, extensionConnector, options);
-        let isRecording = true;
-        api.setState = ((state, replace, nameOrAction) => {
-          const r = set(state, replace);
-          if (!isRecording) return r;
-          const action = nameOrAction === void 0 ? {
-            type: anonymousActionType || findCallerName(new Error().stack) || "anonymous"
-          } : typeof nameOrAction === "string" ? { type: nameOrAction } : nameOrAction;
-          if (store === void 0) {
-            connection == null ? void 0 : connection.send(action, get());
-            return r;
-          }
-          connection == null ? void 0 : connection.send(
-            {
-              ...action,
-              type: `${store}/${action.type}`
-            },
-            {
-              ...getTrackedConnectionState(options.name),
-              [store]: api.getState()
-            }
-          );
-          return r;
-        });
-        api.devtools = {
-          cleanup: () => {
-            if (connection && typeof connection.unsubscribe === "function") {
-              connection.unsubscribe();
-            }
-            removeStoreFromTrackedConnections(options.name, store);
-          }
-        };
-        const setStateFromDevtools = (...a) => {
-          const originalIsRecording = isRecording;
-          isRecording = false;
-          set(...a);
-          isRecording = originalIsRecording;
-        };
-        const initialState2 = fn(api.setState, get, api);
-        if (connectionInformation.type === "untracked") {
-          connection == null ? void 0 : connection.init(initialState2);
-        } else {
-          connectionInformation.stores[connectionInformation.store] = api;
-          connection == null ? void 0 : connection.init(
-            Object.fromEntries(
-              Object.entries(connectionInformation.stores).map(([key, store2]) => [
-                key,
-                key === connectionInformation.store ? initialState2 : store2.getState()
-              ])
-            )
-          );
-        }
-        if (shouldDispatchFromDevtools(api)) {
-          let didWarnAboutReservedActionType = false;
-          const originalDispatch = api.dispatch;
-          api.dispatch = (...args) => {
-            if ((import_meta.env ? import_meta.env.MODE : void 0) !== "production" && args[0].type === "__setState" && !didWarnAboutReservedActionType) {
-              console.warn(
-                '[zustand devtools middleware] "__setState" action type is reserved to set state from the devtools. Avoid using it.'
-              );
-              didWarnAboutReservedActionType = true;
-            }
-            originalDispatch(...args);
-          };
-        }
-        connection.subscribe((message) => {
-          var _a;
-          switch (message.type) {
-            case "ACTION":
-              if (typeof message.payload !== "string") {
-                console.error(
-                  "[zustand devtools middleware] Unsupported action format"
-                );
-                return;
-              }
-              return parseJsonThen(
-                message.payload,
-                (action) => {
-                  if (action.type === "__setState") {
-                    if (store === void 0) {
-                      setStateFromDevtools(action.state);
-                      return;
-                    }
-                    if (Object.keys(action.state).length !== 1) {
-                      console.error(
-                        `
-                    [zustand devtools middleware] Unsupported __setState action format.
-                    When using 'store' option in devtools(), the 'state' should have only one key, which is a value of 'store' that was passed in devtools(),
-                    and value of this only key should be a state object. Example: { "type": "__setState", "state": { "abc123Store": { "foo": "bar" } } }
-                    `
-                      );
-                    }
-                    const stateFromDevtools = action.state[store];
-                    if (stateFromDevtools === void 0 || stateFromDevtools === null) {
-                      return;
-                    }
-                    if (JSON.stringify(api.getState()) !== JSON.stringify(stateFromDevtools)) {
-                      setStateFromDevtools(stateFromDevtools);
-                    }
-                    return;
-                  }
-                  if (shouldDispatchFromDevtools(api)) {
-                    api.dispatch(action);
-                  }
-                }
-              );
-            case "DISPATCH":
-              switch (message.payload.type) {
-                case "RESET":
-                  setStateFromDevtools(initialState2);
-                  if (store === void 0) {
-                    return connection == null ? void 0 : connection.init(api.getState());
-                  }
-                  return connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
-                case "COMMIT":
-                  if (store === void 0) {
-                    connection == null ? void 0 : connection.init(api.getState());
-                    return;
-                  }
-                  return connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
-                case "ROLLBACK":
-                  return parseJsonThen(message.state, (state) => {
-                    if (store === void 0) {
-                      setStateFromDevtools(state);
-                      connection == null ? void 0 : connection.init(api.getState());
-                      return;
-                    }
-                    setStateFromDevtools(state[store]);
-                    connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
-                  });
-                case "JUMP_TO_STATE":
-                case "JUMP_TO_ACTION":
-                  return parseJsonThen(message.state, (state) => {
-                    if (store === void 0) {
-                      setStateFromDevtools(state);
-                      return;
-                    }
-                    if (JSON.stringify(api.getState()) !== JSON.stringify(state[store])) {
-                      setStateFromDevtools(state[store]);
-                    }
-                  });
-                case "IMPORT_STATE": {
-                  const { nextLiftedState } = message.payload;
-                  const lastComputedState = (_a = nextLiftedState.computedStates.slice(-1)[0]) == null ? void 0 : _a.state;
-                  if (!lastComputedState) return;
-                  if (store === void 0) {
-                    setStateFromDevtools(lastComputedState);
-                  } else {
-                    setStateFromDevtools(lastComputedState[store]);
-                  }
-                  connection == null ? void 0 : connection.send(
-                    null,
-                    // FIXME no-any
-                    nextLiftedState
-                  );
-                  return;
-                }
-                case "PAUSE_RECORDING":
-                  return isRecording = !isRecording;
-              }
-              return;
-          }
-        });
-        return initialState2;
-      };
-      devtools = devtoolsImpl;
-      parseJsonThen = (stringified, fn) => {
-        let parsed;
-        try {
-          parsed = JSON.parse(stringified);
-        } catch (e) {
-          console.error(
-            "[zustand devtools middleware] Could not parse the received json",
-            e
-          );
-        }
-        if (parsed !== void 0) fn(parsed);
-      };
-    }
-  });
-
   // app/constants.js
   var SK, UNDO_MAX, ADMIN_TOKEN_KEY2, EDITOR_TOKEN_KEY2, DATA_VERSION, MIGRATIONS, FIELDS, FLABELS, STATUS_OPTS, STATUS_CLS, STATUS_LBL, STATUS_ACCENT, STATUS_CHIP_COLORS, DEFAULT_LIST_COLS, PRESETS, THEMES, DEMO;
   var init_constants = __esm({
@@ -14090,7 +13784,7 @@ function __inlineNotify(msg, type) {
     });
   }
   var SEPARATOR, encodePayload, decodePayload, TEXT_DECODER, protocol;
-  var init_esm2 = __esm({
+  var init_esm = __esm({
     "node_modules/engine.io-parser/build/esm/index.js"() {
       init_encodePacket_browser();
       init_decodePacket_browser();
@@ -14135,7 +13829,7 @@ function __inlineNotify(msg, type) {
     }
     return obj;
   }
-  var init_esm3 = __esm({
+  var init_esm2 = __esm({
     "node_modules/@socket.io/component-emitter/lib/esm/index.js"() {
       Emitter.prototype.on = Emitter.prototype.addEventListener = function(event, fn) {
         this._callbacks = this._callbacks || {};
@@ -14312,8 +14006,8 @@ function __inlineNotify(msg, type) {
   var TransportError, Transport;
   var init_transport = __esm({
     "node_modules/engine.io-client/build/esm/transport.js"() {
+      init_esm();
       init_esm2();
-      init_esm3();
       init_util();
       init_parseqs();
       TransportError = class extends Error {
@@ -14454,7 +14148,7 @@ function __inlineNotify(msg, type) {
     "node_modules/engine.io-client/build/esm/transports/polling.js"() {
       init_transport();
       init_util();
-      init_esm2();
+      init_esm();
       Polling = class extends Transport {
         constructor() {
           super(...arguments);
@@ -14630,7 +14324,7 @@ function __inlineNotify(msg, type) {
   var init_polling_xhr = __esm({
     "node_modules/engine.io-client/build/esm/transports/polling-xhr.js"() {
       init_polling();
-      init_esm3();
+      init_esm2();
       init_util();
       init_globals();
       init_has_cors();
@@ -14858,7 +14552,7 @@ function __inlineNotify(msg, type) {
     "node_modules/engine.io-client/build/esm/transports/websocket.js"() {
       init_transport();
       init_util();
-      init_esm2();
+      init_esm();
       init_globals();
       isReactNative = typeof navigator !== "undefined" && typeof navigator.product === "string" && navigator.product.toLowerCase() === "reactnative";
       BaseWS = class extends Transport {
@@ -14961,7 +14655,7 @@ function __inlineNotify(msg, type) {
     "node_modules/engine.io-client/build/esm/transports/webtransport.js"() {
       init_transport();
       init_globals();
-      init_esm2();
+      init_esm();
       WT = class extends Transport {
         get name() {
           return "webtransport";
@@ -15114,8 +14808,8 @@ function __inlineNotify(msg, type) {
       init_util();
       init_parseqs();
       init_parseuri();
-      init_esm3();
       init_esm2();
+      init_esm();
       init_globals();
       withEventListeners = typeof addEventListener === "function" && typeof removeEventListener === "function";
       OFFLINE_EVENT_LISTENERS = [];
@@ -15694,7 +15388,7 @@ function __inlineNotify(msg, type) {
 
   // node_modules/engine.io-client/build/esm/index.js
   var protocol2;
-  var init_esm4 = __esm({
+  var init_esm3 = __esm({
     "node_modules/engine.io-client/build/esm/index.js"() {
       init_socket();
       init_socket();
@@ -15752,7 +15446,7 @@ function __inlineNotify(msg, type) {
   }
   var init_url = __esm({
     "node_modules/socket.io-client/build/esm/url.js"() {
-      init_esm4();
+      init_esm3();
     }
   });
 
@@ -15903,9 +15597,9 @@ function __inlineNotify(msg, type) {
     return isNamespaceValid(packet.nsp) && isAckIdValid(packet.id) && isDataValid(packet.type, packet.data);
   }
   var RESERVED_EVENTS, protocol3, PacketType, Encoder, Decoder, BinaryReconstructor, isInteger;
-  var init_esm5 = __esm({
+  var init_esm4 = __esm({
     "node_modules/socket.io-parser/build/esm/index.js"() {
-      init_esm3();
+      init_esm2();
       init_binary();
       init_is_binary();
       RESERVED_EVENTS = [
@@ -16192,9 +15886,9 @@ function __inlineNotify(msg, type) {
   var RESERVED_EVENTS2, Socket2;
   var init_socket2 = __esm({
     "node_modules/socket.io-client/build/esm/socket.js"() {
-      init_esm5();
+      init_esm4();
       init_on();
-      init_esm3();
+      init_esm2();
       RESERVED_EVENTS2 = Object.freeze({
         connect: 1,
         connect_error: 1,
@@ -17008,12 +16702,12 @@ function __inlineNotify(msg, type) {
   var Manager;
   var init_manager = __esm({
     "node_modules/socket.io-client/build/esm/manager.js"() {
-      init_esm4();
+      init_esm3();
       init_socket2();
-      init_esm5();
+      init_esm4();
       init_on();
       init_backo2();
-      init_esm3();
+      init_esm2();
       Manager = class extends Emitter {
         constructor(uri, opts) {
           var _a;
@@ -17393,13 +17087,13 @@ function __inlineNotify(msg, type) {
     return io.socket(parsed.path, opts);
   }
   var cache;
-  var init_esm6 = __esm({
+  var init_esm5 = __esm({
     "node_modules/socket.io-client/build/esm/index.js"() {
       init_url();
       init_manager();
       init_socket2();
-      init_esm5();
       init_esm4();
+      init_esm3();
       cache = {};
       Object.assign(lookup2, {
         Manager,
@@ -17407,6 +17101,462 @@ function __inlineNotify(msg, type) {
         io: lookup2,
         connect: lookup2
       });
+    }
+  });
+
+  // node_modules/zustand/esm/vanilla.mjs
+  var createStoreImpl, createStore;
+  var init_vanilla = __esm({
+    "node_modules/zustand/esm/vanilla.mjs"() {
+      createStoreImpl = (createState) => {
+        let state;
+        const listeners = /* @__PURE__ */ new Set();
+        const setState = (partial, replace) => {
+          const nextState = typeof partial === "function" ? partial(state) : partial;
+          if (!Object.is(nextState, state)) {
+            const previousState = state;
+            state = (replace != null ? replace : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
+            listeners.forEach((listener) => listener(state, previousState));
+          }
+        };
+        const getState = () => state;
+        const getInitialState = () => initialState2;
+        const subscribe = (listener) => {
+          listeners.add(listener);
+          return () => listeners.delete(listener);
+        };
+        const api = { setState, getState, getInitialState, subscribe };
+        const initialState2 = state = createState(setState, getState, api);
+        return api;
+      };
+      createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
+    }
+  });
+
+  // node_modules/zustand/esm/react.mjs
+  function useStore(api, selector = identity) {
+    const slice = import_react3.default.useSyncExternalStore(
+      api.subscribe,
+      import_react3.default.useCallback(() => selector(api.getState()), [api, selector]),
+      import_react3.default.useCallback(() => selector(api.getInitialState()), [api, selector])
+    );
+    import_react3.default.useDebugValue(slice);
+    return slice;
+  }
+  var import_react3, identity, createImpl, create;
+  var init_react = __esm({
+    "node_modules/zustand/esm/react.mjs"() {
+      import_react3 = __toESM(require_react(), 1);
+      init_vanilla();
+      identity = (arg) => arg;
+      createImpl = (createState) => {
+        const api = createStore(createState);
+        const useBoundStore = (selector) => useStore(api, selector);
+        Object.assign(useBoundStore, api);
+        return useBoundStore;
+      };
+      create = ((createState) => createState ? createImpl(createState) : createImpl);
+    }
+  });
+
+  // node_modules/zustand/esm/index.mjs
+  var init_esm6 = __esm({
+    "node_modules/zustand/esm/index.mjs"() {
+      init_vanilla();
+      init_react();
+    }
+  });
+
+  // node_modules/zustand/esm/middleware.mjs
+  var import_meta, shouldDispatchFromDevtools, trackedConnections, getTrackedConnectionState, extractConnectionInformation, removeStoreFromTrackedConnections, findCallerName, devtoolsImpl, devtools, parseJsonThen;
+  var init_middleware = __esm({
+    "node_modules/zustand/esm/middleware.mjs"() {
+      import_meta = {};
+      shouldDispatchFromDevtools = (api) => !!api.dispatchFromDevtools && typeof api.dispatch === "function";
+      trackedConnections = /* @__PURE__ */ new Map();
+      getTrackedConnectionState = (name) => {
+        const api = trackedConnections.get(name);
+        if (!api) return {};
+        return Object.fromEntries(
+          Object.entries(api.stores).map(([key, api2]) => [key, api2.getState()])
+        );
+      };
+      extractConnectionInformation = (store, extensionConnector, options) => {
+        if (store === void 0) {
+          return {
+            type: "untracked",
+            connection: extensionConnector.connect(options)
+          };
+        }
+        const existingConnection = trackedConnections.get(options.name);
+        if (existingConnection) {
+          return { type: "tracked", store, ...existingConnection };
+        }
+        const newConnection = {
+          connection: extensionConnector.connect(options),
+          stores: {}
+        };
+        trackedConnections.set(options.name, newConnection);
+        return { type: "tracked", store, ...newConnection };
+      };
+      removeStoreFromTrackedConnections = (name, store) => {
+        if (store === void 0) return;
+        const connectionInfo = trackedConnections.get(name);
+        if (!connectionInfo) return;
+        delete connectionInfo.stores[store];
+        if (Object.keys(connectionInfo.stores).length === 0) {
+          trackedConnections.delete(name);
+        }
+      };
+      findCallerName = (stack) => {
+        var _a, _b;
+        if (!stack) return void 0;
+        const traceLines = stack.split("\n");
+        const apiSetStateLineIndex = traceLines.findIndex(
+          (traceLine) => traceLine.includes("api.setState")
+        );
+        if (apiSetStateLineIndex < 0) return void 0;
+        const callerLine = ((_a = traceLines[apiSetStateLineIndex + 1]) == null ? void 0 : _a.trim()) || "";
+        return (_b = /.+ (.+) .+/.exec(callerLine)) == null ? void 0 : _b[1];
+      };
+      devtoolsImpl = (fn, devtoolsOptions = {}) => (set, get, api) => {
+        const { enabled, anonymousActionType, store, ...options } = devtoolsOptions;
+        let extensionConnector;
+        try {
+          extensionConnector = (enabled != null ? enabled : (import_meta.env ? import_meta.env.MODE : void 0) !== "production") && window.__REDUX_DEVTOOLS_EXTENSION__;
+        } catch (e) {
+        }
+        if (!extensionConnector) {
+          return fn(set, get, api);
+        }
+        const { connection, ...connectionInformation } = extractConnectionInformation(store, extensionConnector, options);
+        let isRecording = true;
+        api.setState = ((state, replace, nameOrAction) => {
+          const r = set(state, replace);
+          if (!isRecording) return r;
+          const action = nameOrAction === void 0 ? {
+            type: anonymousActionType || findCallerName(new Error().stack) || "anonymous"
+          } : typeof nameOrAction === "string" ? { type: nameOrAction } : nameOrAction;
+          if (store === void 0) {
+            connection == null ? void 0 : connection.send(action, get());
+            return r;
+          }
+          connection == null ? void 0 : connection.send(
+            {
+              ...action,
+              type: `${store}/${action.type}`
+            },
+            {
+              ...getTrackedConnectionState(options.name),
+              [store]: api.getState()
+            }
+          );
+          return r;
+        });
+        api.devtools = {
+          cleanup: () => {
+            if (connection && typeof connection.unsubscribe === "function") {
+              connection.unsubscribe();
+            }
+            removeStoreFromTrackedConnections(options.name, store);
+          }
+        };
+        const setStateFromDevtools = (...a) => {
+          const originalIsRecording = isRecording;
+          isRecording = false;
+          set(...a);
+          isRecording = originalIsRecording;
+        };
+        const initialState2 = fn(api.setState, get, api);
+        if (connectionInformation.type === "untracked") {
+          connection == null ? void 0 : connection.init(initialState2);
+        } else {
+          connectionInformation.stores[connectionInformation.store] = api;
+          connection == null ? void 0 : connection.init(
+            Object.fromEntries(
+              Object.entries(connectionInformation.stores).map(([key, store2]) => [
+                key,
+                key === connectionInformation.store ? initialState2 : store2.getState()
+              ])
+            )
+          );
+        }
+        if (shouldDispatchFromDevtools(api)) {
+          let didWarnAboutReservedActionType = false;
+          const originalDispatch = api.dispatch;
+          api.dispatch = (...args) => {
+            if ((import_meta.env ? import_meta.env.MODE : void 0) !== "production" && args[0].type === "__setState" && !didWarnAboutReservedActionType) {
+              console.warn(
+                '[zustand devtools middleware] "__setState" action type is reserved to set state from the devtools. Avoid using it.'
+              );
+              didWarnAboutReservedActionType = true;
+            }
+            originalDispatch(...args);
+          };
+        }
+        connection.subscribe((message) => {
+          var _a;
+          switch (message.type) {
+            case "ACTION":
+              if (typeof message.payload !== "string") {
+                console.error(
+                  "[zustand devtools middleware] Unsupported action format"
+                );
+                return;
+              }
+              return parseJsonThen(
+                message.payload,
+                (action) => {
+                  if (action.type === "__setState") {
+                    if (store === void 0) {
+                      setStateFromDevtools(action.state);
+                      return;
+                    }
+                    if (Object.keys(action.state).length !== 1) {
+                      console.error(
+                        `
+                    [zustand devtools middleware] Unsupported __setState action format.
+                    When using 'store' option in devtools(), the 'state' should have only one key, which is a value of 'store' that was passed in devtools(),
+                    and value of this only key should be a state object. Example: { "type": "__setState", "state": { "abc123Store": { "foo": "bar" } } }
+                    `
+                      );
+                    }
+                    const stateFromDevtools = action.state[store];
+                    if (stateFromDevtools === void 0 || stateFromDevtools === null) {
+                      return;
+                    }
+                    if (JSON.stringify(api.getState()) !== JSON.stringify(stateFromDevtools)) {
+                      setStateFromDevtools(stateFromDevtools);
+                    }
+                    return;
+                  }
+                  if (shouldDispatchFromDevtools(api)) {
+                    api.dispatch(action);
+                  }
+                }
+              );
+            case "DISPATCH":
+              switch (message.payload.type) {
+                case "RESET":
+                  setStateFromDevtools(initialState2);
+                  if (store === void 0) {
+                    return connection == null ? void 0 : connection.init(api.getState());
+                  }
+                  return connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                case "COMMIT":
+                  if (store === void 0) {
+                    connection == null ? void 0 : connection.init(api.getState());
+                    return;
+                  }
+                  return connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                case "ROLLBACK":
+                  return parseJsonThen(message.state, (state) => {
+                    if (store === void 0) {
+                      setStateFromDevtools(state);
+                      connection == null ? void 0 : connection.init(api.getState());
+                      return;
+                    }
+                    setStateFromDevtools(state[store]);
+                    connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                  });
+                case "JUMP_TO_STATE":
+                case "JUMP_TO_ACTION":
+                  return parseJsonThen(message.state, (state) => {
+                    if (store === void 0) {
+                      setStateFromDevtools(state);
+                      return;
+                    }
+                    if (JSON.stringify(api.getState()) !== JSON.stringify(state[store])) {
+                      setStateFromDevtools(state[store]);
+                    }
+                  });
+                case "IMPORT_STATE": {
+                  const { nextLiftedState } = message.payload;
+                  const lastComputedState = (_a = nextLiftedState.computedStates.slice(-1)[0]) == null ? void 0 : _a.state;
+                  if (!lastComputedState) return;
+                  if (store === void 0) {
+                    setStateFromDevtools(lastComputedState);
+                  } else {
+                    setStateFromDevtools(lastComputedState[store]);
+                  }
+                  connection == null ? void 0 : connection.send(
+                    null,
+                    // FIXME no-any
+                    nextLiftedState
+                  );
+                  return;
+                }
+                case "PAUSE_RECORDING":
+                  return isRecording = !isRecording;
+              }
+              return;
+          }
+        });
+        return initialState2;
+      };
+      devtools = devtoolsImpl;
+      parseJsonThen = (stringified, fn) => {
+        let parsed;
+        try {
+          parsed = JSON.parse(stringified);
+        } catch (e) {
+          console.error(
+            "[zustand devtools middleware] Could not parse the received json",
+            e
+          );
+        }
+        if (parsed !== void 0) fn(parsed);
+      };
+    }
+  });
+
+  // store/useAppStore.js
+  var initialState, useAppStore, getStore, setStore;
+  var init_useAppStore = __esm({
+    "store/useAppStore.js"() {
+      init_esm6();
+      init_middleware();
+      init_constants();
+      init_state();
+      initialState = {
+        items: [],
+        changeLog: [],
+        view: "matrix",
+        searchQ: "",
+        filters: {
+          priorities: [],
+          statuses: [],
+          showDeleted: false,
+          importantOnly: false,
+          owners: []
+        },
+        display: {
+          showOwner: true,
+          showStar: true,
+          showNewBadge: true,
+          showCellCount: true,
+          showUpdated: false,
+          showStatus: true,
+          showMdBadge: true,
+          showQuickAdd: false
+        },
+        settings: {
+          baseFont: 16,
+          cardFont: 12,
+          cardRadius: 6,
+          cardGap: 4,
+          colW: 130,
+          catW: 52,
+          subCatW: 80,
+          cellFold: 0,
+          matrixWidth: "fluid",
+          panelPos: "left",
+          panelVisible: true,
+          title: "\uC18C\uBCF5 \uB9E4\uD2B8\uB9AD\uC2A4",
+          subtitle: "Function Matrix",
+          themeId: "sobuk",
+          priorityStyles: { high: "left-thick", mid: "left-thin", low: "none" },
+          customColors: { light: {}, dark: {} },
+          listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
+          animations: { enabled: true, countUp: true, card: true, filter: true, shimmer: true, blur: false },
+          groupOrder: [],
+          catOrder: [],
+          dbHeroName: "",
+          dbSections: ["stats", "insight", "heatmap"],
+          changeLogMax: 50,
+          boardFoldCount: 6,
+          storageMode: "server",
+          serverUrl: "",
+          pollInterval: 60,
+          userName: ""
+        },
+        sort: { key: "key", dir: "asc" },
+        editKey: null,
+        isDragging: false,
+        dragKey: null,
+        dragCell: null,
+        // 서버 동기화 상태
+        serverTs: 0,
+        isLoading: false,
+        serverStatus: "idle",
+        // 'idle' | 'ok' | 'error'
+        // WebSocket 실시간 상태
+        editLocks: {},
+        // { [key]: { user, ts } }
+        previews: {},
+        // { [key]: { user, preview } }
+        wsStatus: "idle"
+        // 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
+      };
+      useAppStore = create(
+        devtools(
+          (set, get) => ({
+            ...initialState,
+            /* ── 기본 setter들 ── */
+            setItems: (items) => set({ items }),
+            setView: (view) => set({ view }),
+            setSearchQ: (searchQ) => set({ searchQ }),
+            setEditKey: (editKey) => set({ editKey }),
+            setIsDragging: (isDragging) => set({ isDragging }),
+            setServerStatus: (serverStatus) => set({ serverStatus }),
+            setIsLoading: (isLoading) => set({ isLoading }),
+            setWsStatus: (wsStatus) => set({ wsStatus }),
+            /* ── WebSocket Lock/Preview 업데이트 ── */
+            updateLocks: (locks) => set({ editLocks: locks || {} }),
+            updatePreview: (key, data) => set((s) => {
+              const next = { ...s.previews };
+              if (data === null) delete next[key];
+              else next[key] = data;
+              return { previews: next };
+            }),
+            /* ── 필터 업데이트 ── */
+            setFilters: (filters) => set({ filters }),
+            updateFilter: (key, value2) => set((s) => ({ filters: { ...s.filters, [key]: value2 } })),
+            /* ── 표시 설정 업데이트 ── */
+            setDisplay: (display) => set({ display }),
+            updateDisplay: (key, value2) => set((s) => ({ display: { ...s.display, [key]: value2 } })),
+            /* ── 설정 업데이트 ── */
+            setSettings: (settings) => set({ settings }),
+            updateSetting: (key, value2) => set((s) => ({ settings: { ...s.settings, [key]: value2 } })),
+            updateAnimations: (animations) => set((s) => ({ settings: { ...s.settings, animations: { ...s.settings.animations, ...animations } } })),
+            /* ── 아이템 CRUD ── */
+            addItem: (item) => set((s) => ({ items: [...s.items, item] })),
+            updateItem: (key, patch) => set((s) => ({
+              items: s.items.map((it) => it.key === key ? { ...it, ...patch } : it)
+            })),
+            removeItem: (key) => set((s) => ({ items: s.items.filter((it) => it.key !== key) })),
+            /* ── Undo/Redo: changeLog 기반 ── */
+            setChangeLog: (changeLog) => set({ changeLog }),
+            pushChangeLog: (entry) => set((s) => {
+              const max = s.settings.changeLogMax || 50;
+              const next = [entry, ...s.changeLog].slice(0, max);
+              return { changeLog: next };
+            }),
+            /* ── state.js의 S로부터 전체 상태 동기화 (Phase 4 전환기 브릿지) ── */
+            syncFromS: (S2) => {
+              set({
+                items: S2.items,
+                changeLog: S2.changeLog,
+                view: S2.view,
+                searchQ: S2.searchQ,
+                filters: { ...S2.filters },
+                display: { ...S2.display },
+                settings: { ...S2.settings },
+                sort: { ...S2.sort },
+                editKey: S2.editKey,
+                editLocks: { ...S2.editLocks }
+              });
+            }
+          }),
+          {
+            name: "featureMatrix",
+            // process.env.NODE_ENV는 빌드 시 esbuild define으로 치환됨
+            enabled: typeof process !== "undefined" ? false : true
+          }
+        )
+      );
+      getStore = () => useAppStore.getState();
+      setStore = (patch) => useAppStore.setState(patch);
     }
   });
 
@@ -17539,7 +17689,7 @@ function __inlineNotify(msg, type) {
   var _socket, _pendingQueue;
   var init_socket3 = __esm({
     "app/socket.js"() {
-      init_esm6();
+      init_esm5();
       init_useAppStore();
       _socket = null;
       _pendingQueue = [];
@@ -17952,156 +18102,6 @@ function __inlineNotify(msg, type) {
     }
   });
 
-  // store/useAppStore.js
-  var initialState, useAppStore, getStore, setStore;
-  var init_useAppStore = __esm({
-    "store/useAppStore.js"() {
-      init_esm();
-      init_middleware();
-      init_constants();
-      init_state();
-      initialState = {
-        items: [],
-        changeLog: [],
-        view: "matrix",
-        searchQ: "",
-        filters: {
-          priorities: [],
-          statuses: [],
-          showDeleted: false,
-          importantOnly: false,
-          owners: []
-        },
-        display: {
-          showOwner: true,
-          showStar: true,
-          showNewBadge: true,
-          showCellCount: true,
-          showUpdated: false,
-          showStatus: true,
-          showMdBadge: true,
-          showQuickAdd: false
-        },
-        settings: {
-          baseFont: 16,
-          cardFont: 12,
-          cardRadius: 6,
-          cardGap: 4,
-          colW: 130,
-          catW: 52,
-          subCatW: 80,
-          cellFold: 0,
-          matrixWidth: "fluid",
-          panelPos: "left",
-          panelVisible: true,
-          title: "\uC18C\uBCF5 \uB9E4\uD2B8\uB9AD\uC2A4",
-          subtitle: "Function Matrix",
-          themeId: "sobuk",
-          priorityStyles: { high: "left-thick", mid: "left-thin", low: "none" },
-          customColors: { light: {}, dark: {} },
-          listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-          animations: { enabled: true, countUp: true, card: true, filter: true, shimmer: true, blur: false },
-          groupOrder: [],
-          catOrder: [],
-          dbHeroName: "",
-          dbSections: ["stats", "insight", "heatmap"],
-          changeLogMax: 50,
-          boardFoldCount: 6,
-          storageMode: "server",
-          serverUrl: "",
-          pollInterval: 60,
-          userName: ""
-        },
-        sort: { key: "key", dir: "asc" },
-        editKey: null,
-        isDragging: false,
-        dragKey: null,
-        dragCell: null,
-        // 서버 동기화 상태
-        serverTs: 0,
-        isLoading: false,
-        serverStatus: "idle",
-        // 'idle' | 'ok' | 'error'
-        // WebSocket 실시간 상태
-        editLocks: {},
-        // { [key]: { user, ts } }
-        previews: {},
-        // { [key]: { user, preview } }
-        wsStatus: "idle"
-        // 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
-      };
-      useAppStore = create(
-        devtools(
-          (set, get) => ({
-            ...initialState,
-            /* ── 기본 setter들 ── */
-            setItems: (items) => set({ items }),
-            setView: (view) => set({ view }),
-            setSearchQ: (searchQ) => set({ searchQ }),
-            setEditKey: (editKey) => set({ editKey }),
-            setIsDragging: (isDragging) => set({ isDragging }),
-            setServerStatus: (serverStatus) => set({ serverStatus }),
-            setIsLoading: (isLoading) => set({ isLoading }),
-            setWsStatus: (wsStatus) => set({ wsStatus }),
-            /* ── WebSocket Lock/Preview 업데이트 ── */
-            updateLocks: (locks) => set({ editLocks: locks || {} }),
-            updatePreview: (key, data) => set((s) => {
-              const next = { ...s.previews };
-              if (data === null) delete next[key];
-              else next[key] = data;
-              return { previews: next };
-            }),
-            /* ── 필터 업데이트 ── */
-            setFilters: (filters) => set({ filters }),
-            updateFilter: (key, value2) => set((s) => ({ filters: { ...s.filters, [key]: value2 } })),
-            /* ── 표시 설정 업데이트 ── */
-            setDisplay: (display) => set({ display }),
-            updateDisplay: (key, value2) => set((s) => ({ display: { ...s.display, [key]: value2 } })),
-            /* ── 설정 업데이트 ── */
-            setSettings: (settings) => set({ settings }),
-            updateSetting: (key, value2) => set((s) => ({ settings: { ...s.settings, [key]: value2 } })),
-            updateAnimations: (animations) => set((s) => ({ settings: { ...s.settings, animations: { ...s.settings.animations, ...animations } } })),
-            /* ── 아이템 CRUD ── */
-            addItem: (item) => set((s) => ({ items: [...s.items, item] })),
-            updateItem: (key, patch) => set((s) => ({
-              items: s.items.map((it) => it.key === key ? { ...it, ...patch } : it)
-            })),
-            removeItem: (key) => set((s) => ({ items: s.items.filter((it) => it.key !== key) })),
-            /* ── Undo/Redo: changeLog 기반 ── */
-            setChangeLog: (changeLog) => set({ changeLog }),
-            pushChangeLog: (entry) => set((s) => {
-              const max = s.settings.changeLogMax || 50;
-              const next = [entry, ...s.changeLog].slice(0, max);
-              return { changeLog: next };
-            }),
-            /* ── state.js의 S로부터 전체 상태 동기화 (Phase 4 전환기 브릿지) ── */
-            syncFromS: (S2) => {
-              set({
-                items: S2.items,
-                changeLog: S2.changeLog,
-                view: S2.view,
-                searchQ: S2.searchQ,
-                filters: { ...S2.filters },
-                display: { ...S2.display },
-                settings: { ...S2.settings },
-                sort: { ...S2.sort },
-                editKey: S2.editKey,
-                editLocks: { ...S2.editLocks }
-              });
-            }
-          }),
-          {
-            name: "featureMatrix",
-            // process.env.NODE_ENV는 빌드 시 esbuild define으로 치환됨
-            enabled: typeof process !== "undefined" ? false : true
-          }
-        )
-      );
-      getStore = () => useAppStore.getState();
-      setStore = (patch) => useAppStore.setState(patch);
-    }
-  });
-
   // app/theme.js
   function getColors() {
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -18397,8 +18397,6 @@ function __inlineNotify(msg, type) {
     if (v !== "board" && window.hideBoardActionBar) window.hideBoardActionBar();
     const fp = document.getElementById("fpanel");
     if (fp) fp.classList.toggle("fp-hide", v === "dashboard");
-    const hs = document.getElementById("hdrSearchWrap");
-    if (hs) hs.style.display = v === "dashboard" ? "none" : "flex";
     const contentEl = document.getElementById("contentArea");
     if (contentEl) contentEl.style.overflowY = v === "board" ? "hidden" : "";
   }
@@ -18446,10 +18444,6 @@ function __inlineNotify(msg, type) {
     countUp("stLow", l);
     countUp("stImp", imp);
     countUp("stNew", nw);
-    const cb = document.getElementById("hdrCountBadge");
-    if (cb) cb.textContent = items.length ? `${items.length}\uAC1C` : "";
-    const fb = document.getElementById("fbadge");
-    if (fb) fb.className = "fbadge" + (isFilterActive() ? " on" : "");
   }
   function renderMatrix() {
     syncToStore();
@@ -20675,13 +20669,10 @@ function __inlineNotify(msg, type) {
       
       window.onSearch = (q) => {
         S.searchQ = q.trim();
-        document.getElementById("searchClear").className = "search-clear" + (S.searchQ ? " on" : "");
+        setStore({ searchQ: S.searchQ });
         renderAll(true);
       };
-      window.clearSearch = () => {
-        document.getElementById("searchInp").value = "";
-        window.onSearch("");
-      };
+      window.clearSearch = () => window.onSearch("");
       window.onPrioChip = (inp) => {
         const val = inp.value, idx = S.filters.priorities.indexOf(val);
         if (inp.checked && idx === -1) S.filters.priorities.push(val);
@@ -20805,7 +20796,7 @@ function __inlineNotify(msg, type) {
         }
         if (e.key === "/" && !isInput) {
           e.preventDefault();
-          document.getElementById("searchInp").focus();
+          window.__focusSearch?.();
           return;
         }
         if (isInput) return;
@@ -20976,7 +20967,10 @@ function __inlineNotify(msg, type) {
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react20 = __toESM(require_react());
+  var import_react21 = __toESM(require_react());
+
+  // components/Header.jsx
+  var import_react4 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -21039,6 +21033,8 @@ function __inlineNotify(msg, type) {
   var useTheme = () => (0, import_react2.useContext)(ThemeContext);
 
   // components/Header.jsx
+  init_render();
+  init_state();
   init_useAppStore();
   var import_jsx_runtime3 = __toESM(require_jsx_runtime());
   var ICON_SERVER = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
@@ -21084,12 +21080,30 @@ function __inlineNotify(msg, type) {
     const title = useAppStore((s) => s.settings.title || "featureMATRIX");
     const subtitle = useAppStore((s) => s.settings.subtitle || "\uAE30\uB2A5\uC815\uC758 \uD234");
     const wsStatus = useAppStore((s) => s.wsStatus);
+    const view = useAppStore((s) => s.view);
+    const searchQ = useAppStore((s) => s.searchQ);
+    useAppStore((s) => s.items);
+    useAppStore((s) => s.filters);
+    const searchRef = (0, import_react4.useRef)(null);
+    const showSearch = view !== "dashboard";
+    const filteredCount = getFiltered().length;
     const showAdminBadge = isAdmin2 && isServerMode2;
     const showLogoutBtn = (isAdmin2 || isEditor2) && isServerMode2;
     const logoutTitle = isAdmin2 ? "\uAD00\uB9AC\uC790 \uB85C\uADF8\uC544\uC6C3" : "\uD3B8\uC9D1\uC790 \uB85C\uADF8\uC544\uC6C3";
     const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP.idle;
     const showWsDot = isServerMode2 && wsStatus !== "idle";
     const wsLabel = wsStatus === "reconnecting" ? "\uC7AC\uC5F0\uACB0 \uC911..." : wsStatus === "connected" ? "\uC2E4\uC2DC\uAC04" : void 0;
+    (0, import_react4.useEffect)(() => {
+      window.__focusSearch = () => searchRef.current?.focus();
+      return () => {
+        if (window.__focusSearch) delete window.__focusSearch;
+      };
+    }, []);
+    const updateSearch = (value2) => {
+      S.searchQ = value2.trim();
+      useAppStore.getState().setSearchQ(S.searchQ);
+      window.renderAll?.(true);
+    };
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("header", { className: "hdr", children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "hdr-left", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "logo-kr", id: "dTitle", children: title }),
@@ -21101,7 +21115,7 @@ function __inlineNotify(msg, type) {
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stLow", style: { display: "none" }, children: "0" }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stImp", style: { display: "none" }, children: "0" }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { id: "stNew", style: { display: "none" }, children: "0" }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "hdr-mid", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { id: "hdrSearchWrap", style: { display: "none", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "hdr-mid", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { id: "hdrSearchWrap", style: { display: showSearch ? "flex" : "none", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "search-wrap", children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { className: "search-icon", width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: "11", cy: "11", r: "8" }),
@@ -21110,15 +21124,17 @@ function __inlineNotify(msg, type) {
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             "input",
             {
+              ref: searchRef,
               className: "search-inp",
               id: "searchInp",
               placeholder: "\uAC80\uC0C9 (\uAE30\uB2A5\uBA85\xB7Key\xB7\uB2F4\uB2F9\xB7\uACBD\uB85C)",
-              onInput: (e) => window.onSearch?.(e.target.value)
+              value: searchQ,
+              onChange: (e) => updateSearch(e.target.value)
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "search-clear", id: "searchClear", onClick: () => window.clearSearch?.(), children: "\u2715" })
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: `search-clear${searchQ ? " on" : ""}`, id: "searchClear", onClick: () => updateSearch(""), children: "\u2715" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "hdr-count-badge", id: "hdrCountBadge" })
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "hdr-count-badge", id: "hdrCountBadge", children: filteredCount ? `${filteredCount}\uAC1C` : "" })
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "hdr-actions", children: [
         showAdminBadge && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
@@ -21183,7 +21199,7 @@ function __inlineNotify(msg, type) {
 
   // components/BoardView.jsx
   var import_react_dom = __toESM(require_react_dom());
-  var import_react4 = __toESM(require_react());
+  var import_react5 = __toESM(require_react());
   init_useAppStore();
   init_constants();
   init_render();
@@ -21371,20 +21387,20 @@ function __inlineNotify(msg, type) {
     const editLocks2 = useAppStore((s) => s.editLocks);
     const previews = useAppStore((s) => s.previews);
     const foldCount = useAppStore((s) => s.settings.boardFoldCount ?? 6);
-    const [boardContainer, setBoardContainer] = (0, import_react4.useState)(null);
-    const [barContainer, setBarContainer] = (0, import_react4.useState)(null);
-    const [expanded, setExpanded] = (0, import_react4.useState)(/* @__PURE__ */ new Set());
-    const [boardSel, setBoardSel] = (0, import_react4.useState)([]);
-    (0, import_react4.useEffect)(() => {
+    const [boardContainer, setBoardContainer] = (0, import_react5.useState)(null);
+    const [barContainer, setBarContainer] = (0, import_react5.useState)(null);
+    const [expanded, setExpanded] = (0, import_react5.useState)(/* @__PURE__ */ new Set());
+    const [boardSel, setBoardSel] = (0, import_react5.useState)([]);
+    (0, import_react5.useEffect)(() => {
       setBoardContainer(document.getElementById("boardView"));
       setBarContainer(document.getElementById("boardActionBar"));
     }, []);
-    (0, import_react4.useEffect)(() => {
+    (0, import_react5.useEffect)(() => {
       const handler = (e) => setBoardSel(e.detail.sel);
       window.addEventListener("boardSelChange", handler);
       return () => window.removeEventListener("boardSelChange", handler);
     }, []);
-    (0, import_react4.useEffect)(() => {
+    (0, import_react5.useEffect)(() => {
       window.boardExpandCol = (colKey) => setExpanded((prev) => {
         const n = new Set(prev);
         n.add(colKey);
@@ -21480,7 +21496,7 @@ function __inlineNotify(msg, type) {
     ] });
   }
   function BoardActionBar({ boardSel, container }) {
-    (0, import_react4.useEffect)(() => {
+    (0, import_react5.useEffect)(() => {
       container.classList.toggle("on", boardSel.length > 0);
     }, [boardSel.length, container]);
     if (boardSel.length === 0) return null;
@@ -21496,7 +21512,7 @@ function __inlineNotify(msg, type) {
 
   // components/DashboardView.jsx
   var import_react_dom2 = __toESM(require_react_dom());
-  var import_react5 = __toESM(require_react());
+  var import_react6 = __toESM(require_react());
   init_constants();
   init_render();
   init_state();
@@ -21815,13 +21831,13 @@ function __inlineNotify(msg, type) {
     const settings = useAppStore((s) => s.settings);
     const filters = useAppStore((s) => s.filters);
     const searchQ = useAppStore((s) => s.searchQ);
-    const [container, setContainer] = (0, import_react5.useState)(null);
-    const [hmView, setHmView] = (0, import_react5.useState)("cat");
-    const [renderTick, forceRender] = (0, import_react5.useState)(0);
-    (0, import_react5.useEffect)(() => {
+    const [container, setContainer] = (0, import_react6.useState)(null);
+    const [hmView, setHmView] = (0, import_react6.useState)("cat");
+    const [renderTick, forceRender] = (0, import_react6.useState)(0);
+    (0, import_react6.useEffect)(() => {
       setContainer(document.getElementById("dashboardView"));
     }, []);
-    (0, import_react5.useEffect)(() => {
+    (0, import_react6.useEffect)(() => {
       window.setHmView = (value2) => setHmView(value2);
       window.renderDashboard = () => forceRender((tick) => tick + 1);
       return () => {
@@ -21829,7 +21845,7 @@ function __inlineNotify(msg, type) {
         delete window.renderDashboard;
       };
     }, []);
-    (0, import_react5.useEffect)(() => {
+    (0, import_react6.useEffect)(() => {
       if (!container) return;
       if (animOk()) {
         container.querySelectorAll("[data-anim-idx]").forEach((section) => {
@@ -21854,7 +21870,7 @@ function __inlineNotify(msg, type) {
         }
       });
     });
-    const data = (0, import_react5.useMemo)(
+    const data = (0, import_react6.useMemo)(
       () => getDashboardData(),
       [items, changeLog, settings, filters, searchQ, renderTick]
     );
@@ -21894,14 +21910,14 @@ function __inlineNotify(msg, type) {
 
   // components/SettingsPanel.jsx
   var import_react_dom3 = __toESM(require_react_dom());
-  var import_react9 = __toESM(require_react());
+  var import_react10 = __toESM(require_react());
   init_useAppStore();
   init_state();
   init_useAppStore();
   init_theme();
 
   // components/ActivityLogPanel.jsx
-  var import_react6 = __toESM(require_react());
+  var import_react7 = __toESM(require_react());
   init_state();
   var import_jsx_runtime7 = __toESM(require_jsx_runtime());
   var ACTION_COLORS = {
@@ -21919,11 +21935,11 @@ function __inlineNotify(msg, type) {
     return `${date.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })} ${date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
   }
   function ActivityLogPanel({ changeLogMax, onChangeLogMax }) {
-    const [limit, setLimit] = (0, import_react6.useState)(100);
-    const [entries, setEntries] = (0, import_react6.useState)([]);
-    const [status, setStatus] = (0, import_react6.useState)("idle");
-    const [message, setMessage] = (0, import_react6.useState)("\uD0ED\uC744 \uC5F4\uBA74 \uC790\uB3D9\uC73C\uB85C \uBD88\uB7EC\uC635\uB2C8\uB2E4.");
-    const loadLog = (0, import_react6.useCallback)(async () => {
+    const [limit, setLimit] = (0, import_react7.useState)(100);
+    const [entries, setEntries] = (0, import_react7.useState)([]);
+    const [status, setStatus] = (0, import_react7.useState)("idle");
+    const [message, setMessage] = (0, import_react7.useState)("\uD0ED\uC744 \uC5F4\uBA74 \uC790\uB3D9\uC73C\uB85C \uBD88\uB7EC\uC635\uB2C8\uB2E4.");
+    const loadLog = (0, import_react7.useCallback)(async () => {
       setStatus("loading");
       setMessage("\uBD88\uB7EC\uC624\uB294 \uC911...");
       try {
@@ -21944,13 +21960,13 @@ function __inlineNotify(msg, type) {
         }
       }
     }, [limit]);
-    (0, import_react6.useEffect)(() => {
+    (0, import_react7.useEffect)(() => {
       window.__reactLoadInlineActivityLog = loadLog;
       return () => {
         delete window.__reactLoadInlineActivityLog;
       };
     }, [loadLog]);
-    (0, import_react6.useEffect)(() => {
+    (0, import_react7.useEffect)(() => {
       loadLog();
     }, [loadLog]);
     return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
@@ -22009,7 +22025,7 @@ function __inlineNotify(msg, type) {
   }
 
   // components/DashboardSectionOrder.jsx
-  var import_react7 = __toESM(require_react());
+  var import_react8 = __toESM(require_react());
   init_state();
   init_useAppStore();
   var import_jsx_runtime8 = __toESM(require_jsx_runtime());
@@ -22034,8 +22050,8 @@ function __inlineNotify(msg, type) {
   }
   function DashboardSectionOrder() {
     const sections = useAppStore((state) => state.settings.dbSections || DEFAULT_SECTIONS);
-    const [dragIndex, setDragIndex] = (0, import_react7.useState)(null);
-    const [dragOverIndex, setDragOverIndex] = (0, import_react7.useState)(null);
+    const [dragIndex, setDragIndex] = (0, import_react8.useState)(null);
+    const [dragOverIndex, setDragOverIndex] = (0, import_react8.useState)(null);
     const moveSection = (index, direction) => {
       const nextIndex = index + direction;
       if (nextIndex < 0 || nextIndex >= sections.length) return;
@@ -22097,7 +22113,7 @@ function __inlineNotify(msg, type) {
   }
 
   // components/SettingsColumnsPanel.jsx
-  var import_react8 = __toESM(require_react());
+  var import_react9 = __toESM(require_react());
   init_constants();
   init_state();
   init_render();
@@ -22121,13 +22137,13 @@ function __inlineNotify(msg, type) {
   function SettingsColumnsPanel() {
     const settings = useAppStore((state) => state.settings);
     const items = useAppStore((state) => state.items);
-    const [drag, setDrag] = (0, import_react8.useState)(null);
-    const [dragOver, setDragOver] = (0, import_react8.useState)(null);
-    const groupAxis = (0, import_react8.useMemo)(
+    const [drag, setDrag] = (0, import_react9.useState)(null);
+    const [dragOver, setDragOver] = (0, import_react9.useState)(null);
+    const groupAxis = (0, import_react9.useMemo)(
       () => getAxisValues(items, settings, "groupOrder", "group"),
       [items, settings]
     );
-    const categoryAxis = (0, import_react8.useMemo)(
+    const categoryAxis = (0, import_react9.useMemo)(
       () => getAxisValues(items, settings, "catOrder", "category"),
       [items, settings]
     );
@@ -22507,19 +22523,19 @@ function __inlineNotify(msg, type) {
     const display = useAppStore((s) => s.display);
     const filters = useAppStore((s) => s.filters);
     const { isAdmin: isAdmin2 } = useAuth();
-    const [container, setContainer] = (0, import_react9.useState)(null);
-    const [activeTab, setActiveTab] = (0, import_react9.useState)("sg");
-    (0, import_react9.useEffect)(() => {
+    const [container, setContainer] = (0, import_react10.useState)(null);
+    const [activeTab, setActiveTab] = (0, import_react10.useState)("sg");
+    (0, import_react10.useEffect)(() => {
       setContainer(document.getElementById("settingsModal"));
     }, []);
-    (0, import_react9.useEffect)(() => {
+    (0, import_react10.useEffect)(() => {
       if (activeTab === "sserv") window.syncServerSettingsUI?.();
       if (activeTab === "slog") window.loadInlineActivityLog?.();
       if (activeTab === "sadmin") {
         window.syncEditorPwStatus?.();
       }
     }, [activeTab]);
-    (0, import_react9.useEffect)(() => {
+    (0, import_react10.useEffect)(() => {
       window.__settingsPanelOpen = () => setActiveTab("sg");
       return () => {
         delete window.__settingsPanelOpen;
@@ -22792,12 +22808,12 @@ function __inlineNotify(msg, type) {
     ] });
   }
   function ServerSettingsPanel({ settings }) {
-    const [form, setForm] = (0, import_react9.useState)({
+    const [form, setForm] = (0, import_react10.useState)({
       storageMode: settings.storageMode || "server",
       serverUrl: settings.serverUrl || "",
       userName: settings.userName || ""
     });
-    (0, import_react9.useEffect)(() => {
+    (0, import_react10.useEffect)(() => {
       setForm({
         storageMode: settings.storageMode || "server",
         serverUrl: settings.serverUrl || "",
@@ -22885,10 +22901,10 @@ function __inlineNotify(msg, type) {
     ] });
   }
   function EditorPasswordControl() {
-    const [password, setPassword] = (0, import_react9.useState)("");
-    const [error, setError] = (0, import_react9.useState)("");
-    const [placeholder, setPlaceholder] = (0, import_react9.useState)("\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6B0\uBA74 \uC81C\uAC70)");
-    (0, import_react9.useEffect)(() => {
+    const [password, setPassword] = (0, import_react10.useState)("");
+    const [error, setError] = (0, import_react10.useState)("");
+    const [placeholder, setPlaceholder] = (0, import_react10.useState)("\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6B0\uBA74 \uC81C\uAC70)");
+    (0, import_react10.useEffect)(() => {
       window.__reactSetEditorPwError = (message) => setError(message || "");
       window.__reactSetEditorPwPlaceholder = (value2) => setPlaceholder(value2 || "\uC0C8 \uBE44\uBC00\uBC88\uD638 (\uBE44\uC6B0\uBA74 \uC81C\uAC70)");
       return () => {
@@ -22932,7 +22948,7 @@ function __inlineNotify(msg, type) {
 
   // components/ItemModal.jsx
   var import_react_dom4 = __toESM(require_react_dom());
-  var import_react10 = __toESM(require_react());
+  var import_react11 = __toESM(require_react());
   init_modal();
   init_constants();
   init_render();
@@ -22958,30 +22974,30 @@ function __inlineNotify(msg, type) {
     isDelete: "N"
   };
   function ItemModal() {
-    const [container, setContainer] = (0, import_react10.useState)(null);
-    const [activeTab, setActiveTab] = (0, import_react10.useState)("info");
-    const [mdMode, setMdMode] = (0, import_react10.useState)("edit");
-    const [mdPreview, setMdPreview] = (0, import_react10.useState)("");
-    const [mdStats, setMdStats] = (0, import_react10.useState)({ chars: "0\uC790", lines: "0\uC904", words: "0\uB2E8\uC5B4" });
-    const [title, setTitle] = (0, import_react10.useState)("\uAE30\uB2A5 \uCD94\uAC00");
-    const [showHardDel, setShowHardDel] = (0, import_react10.useState)(false);
-    const [form, setForm] = (0, import_react10.useState)(EMPTY_FORM);
+    const [container, setContainer] = (0, import_react11.useState)(null);
+    const [activeTab, setActiveTab] = (0, import_react11.useState)("info");
+    const [mdMode, setMdMode] = (0, import_react11.useState)("edit");
+    const [mdPreview, setMdPreview] = (0, import_react11.useState)("");
+    const [mdStats, setMdStats] = (0, import_react11.useState)({ chars: "0\uC790", lines: "0\uC904", words: "0\uB2E8\uC5B4" });
+    const [title, setTitle] = (0, import_react11.useState)("\uAE30\uB2A5 \uCD94\uAC00");
+    const [showHardDel, setShowHardDel] = (0, import_react11.useState)(false);
+    const [form, setForm] = (0, import_react11.useState)(EMPTY_FORM);
     const items = useAppStore((s) => s.items);
-    const previewRef = (0, import_react10.useRef)(null);
-    const currentKeyRef = (0, import_react10.useRef)(null);
-    const previewTimerRef = (0, import_react10.useRef)(null);
-    const formRef = (0, import_react10.useRef)(EMPTY_FORM);
-    (0, import_react10.useEffect)(() => {
+    const previewRef = (0, import_react11.useRef)(null);
+    const currentKeyRef = (0, import_react11.useRef)(null);
+    const previewTimerRef = (0, import_react11.useRef)(null);
+    const formRef = (0, import_react11.useRef)(EMPTY_FORM);
+    (0, import_react11.useEffect)(() => {
       formRef.current = form;
     }, [form]);
-    const updateMdStats = (0, import_react10.useCallback)((value2) => {
+    const updateMdStats = (0, import_react11.useCallback)((value2) => {
       setMdStats({
         chars: `${value2.length}\uC790`,
         lines: `${value2 ? value2.split("\n").length : 0}\uC904`,
         words: `${value2.trim() ? value2.trim().split(/\s+/).length : 0}\uB2E8\uC5B4`
       });
     }, []);
-    const schedulePreview = (0, import_react10.useCallback)(() => {
+    const schedulePreview = (0, import_react11.useCallback)(() => {
       if (!isSocketConnected() || !currentKeyRef.current) return;
       clearTimeout(previewTimerRef.current);
       previewTimerRef.current = setTimeout(() => {
@@ -23002,10 +23018,10 @@ function __inlineNotify(msg, type) {
         emitPreview(key, user, preview);
       }, 300);
     }, []);
-    const detachInputListeners = (0, import_react10.useCallback)(() => {
+    const detachInputListeners = (0, import_react11.useCallback)(() => {
       clearTimeout(previewTimerRef.current);
     }, []);
-    const updateField = (0, import_react10.useCallback)((field, value2) => {
+    const updateField = (0, import_react11.useCallback)((field, value2) => {
       setForm((current) => {
         const next = { ...current, [field]: value2 };
         formRef.current = next;
@@ -23017,10 +23033,10 @@ function __inlineNotify(msg, type) {
       }
       schedulePreview();
     }, [schedulePreview, updateMdStats]);
-    (0, import_react10.useEffect)(() => {
+    (0, import_react11.useEffect)(() => {
       setContainer(document.getElementById("editModal"));
     }, []);
-    (0, import_react10.useEffect)(() => {
+    (0, import_react11.useEffect)(() => {
       if (!previewRef.current || !window.katex) return;
       previewRef.current.querySelectorAll("[data-math]").forEach((el) => {
         try {
@@ -23033,7 +23049,7 @@ function __inlineNotify(msg, type) {
         }
       });
     }, [mdPreview]);
-    (0, import_react10.useEffect)(() => {
+    (0, import_react11.useEffect)(() => {
       window.__editModalBridge = (mode, key, nextForm = {}) => {
         const mergedForm = { ...EMPTY_FORM, ...nextForm };
         setTitle(mode === "add" ? "\uAE30\uB2A5 \uCD94\uAC00" : `\uAE30\uB2A5 \uC218\uC815 \u2014 ${key}`);
@@ -23323,7 +23339,7 @@ function __inlineNotify(msg, type) {
 
   // components/MatrixView.jsx
   var import_react_dom5 = __toESM(require_react_dom());
-  var import_react11 = __toESM(require_react());
+  var import_react12 = __toESM(require_react());
   init_useAppStore();
   init_render();
   init_theme();
@@ -23385,21 +23401,21 @@ function __inlineNotify(msg, type) {
     const filters = useAppStore((s) => s.filters);
     const searchQ = useAppStore((s) => s.searchQ);
     const cellFold = useAppStore((s) => s.settings.cellFold);
-    const [container, setContainer] = (0, import_react11.useState)(null);
-    const [expandedCells, setExpandedCells] = (0, import_react11.useState)(/* @__PURE__ */ new Set());
-    const [selectedKeys, setSelectedKeys] = (0, import_react11.useState)(() => new Set(mxSel));
-    (0, import_react11.useEffect)(() => {
+    const [container, setContainer] = (0, import_react12.useState)(null);
+    const [expandedCells, setExpandedCells] = (0, import_react12.useState)(/* @__PURE__ */ new Set());
+    const [selectedKeys, setSelectedKeys] = (0, import_react12.useState)(() => new Set(mxSel));
+    (0, import_react12.useEffect)(() => {
       setContainer(document.getElementById("matrixView"));
     }, []);
-    (0, import_react11.useEffect)(() => {
+    (0, import_react12.useEffect)(() => {
       setExpandedCells(/* @__PURE__ */ new Set());
     }, [filters, searchQ, cellFold]);
-    (0, import_react11.useEffect)(() => {
+    (0, import_react12.useEffect)(() => {
       if (container) {
         container.className = `mwrap${settings.matrixWidth === "fluid" ? " fluid" : ""}`;
       }
     }, [container, settings.matrixWidth]);
-    (0, import_react11.useEffect)(() => {
+    (0, import_react12.useEffect)(() => {
       window.expandCell = (event, cellKey) => {
         event.stopPropagation();
         setExpandedCells((prev) => {
@@ -23421,13 +23437,13 @@ function __inlineNotify(msg, type) {
         delete window.collapseCell;
       };
     }, []);
-    (0, import_react11.useEffect)(() => {
+    (0, import_react12.useEffect)(() => {
       const handler = (event) => setSelectedKeys(new Set(event.detail.sel));
       window.addEventListener("mxSelChange", handler);
       return () => window.removeEventListener("mxSelChange", handler);
     }, []);
-    const filteredItems = (0, import_react11.useMemo)(() => getFiltered(), [items, filters, searchQ, settings, display, editLocks2, previews]);
-    const matrix = (0, import_react11.useMemo)(() => getMatrixData(filteredItems), [filteredItems]);
+    const filteredItems = (0, import_react12.useMemo)(() => getFiltered(), [items, filters, searchQ, settings, display, editLocks2, previews]);
+    const matrix = (0, import_react12.useMemo)(() => getMatrixData(filteredItems), [filteredItems]);
     const colors = getColors();
     if (!container) return null;
     if (!filteredItems.length) {
@@ -23544,7 +23560,7 @@ function __inlineNotify(msg, type) {
 
   // components/ListView.jsx
   var import_react_dom6 = __toESM(require_react_dom());
-  var import_react12 = __toESM(require_react());
+  var import_react13 = __toESM(require_react());
   init_constants();
   init_render();
   init_state();
@@ -23607,22 +23623,22 @@ function __inlineNotify(msg, type) {
     const filters = useAppStore((s) => s.filters);
     const searchQ = useAppStore((s) => s.searchQ);
     const sort = useAppStore((s) => s.sort);
-    const [container, setContainer] = (0, import_react12.useState)(null);
-    const [tick, setTick] = (0, import_react12.useState)(0);
-    (0, import_react12.useEffect)(() => {
+    const [container, setContainer] = (0, import_react13.useState)(null);
+    const [tick, setTick] = (0, import_react13.useState)(0);
+    (0, import_react13.useEffect)(() => {
       setContainer(document.getElementById("listView"));
     }, []);
-    (0, import_react12.useEffect)(() => {
+    (0, import_react13.useEffect)(() => {
       window.__listViewRefresh = () => setTick((value2) => value2 + 1);
       return () => {
         delete window.__listViewRefresh;
       };
     }, []);
-    const visibleColumns = (0, import_react12.useMemo)(
+    const visibleColumns = (0, import_react13.useMemo)(
       () => getVisibleCols(),
       [settings]
     );
-    const rows = (0, import_react12.useMemo)(() => {
+    const rows = (0, import_react13.useMemo)(() => {
       const filtered = getFiltered();
       return filtered.slice().sort((a, b) => {
         const va = a[S.sort.key] || "";
@@ -23631,7 +23647,7 @@ function __inlineNotify(msg, type) {
         return S.sort.dir === "asc" ? result : -result;
       });
     }, [items, filters, searchQ, sort, tick, display]);
-    (0, import_react12.useEffect)(() => {
+    (0, import_react13.useEffect)(() => {
       if (rows.length === 0 && bulkSel.keys.size > 0) {
         bulkSel.keys.clear();
         window.renderBulkBar?.();
@@ -24103,7 +24119,7 @@ function __inlineNotify(msg, type) {
   }
 
   // components/BulkActionBar.jsx
-  var import_react13 = __toESM(require_react());
+  var import_react14 = __toESM(require_react());
   init_render();
   init_useAppStore();
   var import_jsx_runtime17 = __toESM(require_jsx_runtime());
@@ -24115,8 +24131,8 @@ function __inlineNotify(msg, type) {
   function BulkActionBar() {
     const view = useAppStore((s) => s.view);
     const { isAdmin: adminOk } = useAuth();
-    const [snapshot, setSnapshot] = (0, import_react13.useState)(getSnapshot);
-    (0, import_react13.useEffect)(() => {
+    const [snapshot, setSnapshot] = (0, import_react14.useState)(getSnapshot);
+    (0, import_react14.useEffect)(() => {
       const refresh = () => setSnapshot(getSnapshot());
       window.__bulkBarRefresh = refresh;
       window.addEventListener("bulkSelChange", refresh);
@@ -24266,7 +24282,7 @@ function __inlineNotify(msg, type) {
   }
 
   // components/ImportModal.jsx
-  var import_react14 = __toESM(require_react());
+  var import_react15 = __toESM(require_react());
   init_constants();
   init_io();
   init_modal();
@@ -24290,13 +24306,13 @@ function __inlineNotify(msg, type) {
     });
   }
   function ImportModal() {
-    const [raw, setRaw] = (0, import_react14.useState)("");
-    const [step, setStep] = (0, import_react14.useState)(1);
-    const [headers, setHeaders] = (0, import_react14.useState)([]);
-    const [rows, setRows] = (0, import_react14.useState)([]);
-    const [mapping, setMapping] = (0, import_react14.useState)({});
-    const [isDragOver, setIsDragOver] = (0, import_react14.useState)(false);
-    const statusText = (0, import_react14.useMemo)(() => `${rows.length}\uAC1C \uD589 \uAC10\uC9C0\uB428, \uCEEC\uB7FC ${headers.length}\uAC1C`, [headers.length, rows.length]);
+    const [raw, setRaw] = (0, import_react15.useState)("");
+    const [step, setStep] = (0, import_react15.useState)(1);
+    const [headers, setHeaders] = (0, import_react15.useState)([]);
+    const [rows, setRows] = (0, import_react15.useState)([]);
+    const [mapping, setMapping] = (0, import_react15.useState)({});
+    const [isDragOver, setIsDragOver] = (0, import_react15.useState)(false);
+    const statusText = (0, import_react15.useMemo)(() => `${rows.length}\uAC1C \uD589 \uAC10\uC9C0\uB428, \uCEEC\uB7FC ${headers.length}\uAC1C`, [headers.length, rows.length]);
     const analyzeText = (value2 = raw) => {
       const text = value2.trim();
       if (!text) {
@@ -24369,7 +24385,7 @@ ${sample}
         renderAll();
       });
     };
-    (0, import_react14.useEffect)(() => {
+    (0, import_react15.useEffect)(() => {
       window.__reactAnalyzeCSV = () => analyzeText();
       window.__reactShowImportStep2 = () => setStep(2);
       window.__reactImportBackToStep1 = () => setStep(1);
@@ -24507,16 +24523,16 @@ ${sample}
   }
 
   // components/LoginModal.jsx
-  var import_react15 = __toESM(require_react());
+  var import_react16 = __toESM(require_react());
   var import_jsx_runtime22 = __toESM(require_jsx_runtime());
   function LoginModal() {
-    const [form, setForm] = (0, import_react15.useState)({ role: "editor", name: "", password: "" });
-    const [error, setError] = (0, import_react15.useState)("");
-    const passwordRef = (0, import_react15.useRef)(null);
+    const [form, setForm] = (0, import_react16.useState)({ role: "editor", name: "", password: "" });
+    const [error, setError] = (0, import_react16.useState)("");
+    const passwordRef = (0, import_react16.useRef)(null);
     const updateField = (field, value2) => {
       setForm((current) => ({ ...current, [field]: value2 }));
     };
-    (0, import_react15.useEffect)(() => {
+    (0, import_react16.useEffect)(() => {
       window.__reactOpenLoginModal = ({ role = "editor", name = "" } = {}) => {
         setForm({ role, name, password: "" });
         setError("");
@@ -24636,7 +24652,7 @@ ${sample}
   }
 
   // components/DiffModal.jsx
-  var import_react16 = __toESM(require_react());
+  var import_react17 = __toESM(require_react());
   init_state();
   var import_jsx_runtime24 = __toESM(require_jsx_runtime());
   var DIFF_FIELDS = ["name", "priority", "status", "owner", "group", "category"];
@@ -24670,8 +24686,8 @@ ${sample}
     };
   }
   function DiffModal() {
-    const [content, setContent] = (0, import_react16.useState)({ empty: "", rows: [] });
-    (0, import_react16.useEffect)(() => {
+    const [content, setContent] = (0, import_react17.useState)({ empty: "", rows: [] });
+    (0, import_react17.useEffect)(() => {
       window.__reactOpenDiffModal = () => {
         setContent(buildDiffRows());
         window.openModal?.("diffModal");
@@ -24719,16 +24735,16 @@ ${sample}
   }
 
   // components/OverlayMenus.jsx
-  var import_react17 = __toESM(require_react());
+  var import_react18 = __toESM(require_react());
   init_constants();
   init_modal();
   init_state();
   var import_jsx_runtime25 = __toESM(require_jsx_runtime());
   function OverlayMenus() {
-    const [contextMenu, setContextMenu] = (0, import_react17.useState)(null);
-    const [statusMenu, setStatusMenu] = (0, import_react17.useState)(null);
-    const [tooltip, setTooltip] = (0, import_react17.useState)(null);
-    const tooltipTimer = (0, import_react17.useRef)(null);
+    const [contextMenu, setContextMenu] = (0, import_react18.useState)(null);
+    const [statusMenu, setStatusMenu] = (0, import_react18.useState)(null);
+    const [tooltip, setTooltip] = (0, import_react18.useState)(null);
+    const tooltipTimer = (0, import_react18.useRef)(null);
     const clearTooltip = () => {
       if (tooltipTimer.current) {
         clearTimeout(tooltipTimer.current);
@@ -24736,7 +24752,7 @@ ${sample}
       }
       setTooltip(null);
     };
-    (0, import_react17.useEffect)(() => {
+    (0, import_react18.useEffect)(() => {
       window.__reactOpenCtxMenu = (event, key) => {
         event.preventDefault();
         event.stopPropagation();
@@ -24787,7 +24803,7 @@ ${sample}
         clearTooltip();
       };
     }, []);
-    (0, import_react17.useEffect)(() => {
+    (0, import_react18.useEffect)(() => {
       if (!contextMenu && !statusMenu) return void 0;
       const closeMenus = () => {
         setContextMenu(null);
@@ -24845,12 +24861,12 @@ ${sample}
   }
 
   // components/AppOverlays.jsx
-  var import_react18 = __toESM(require_react());
+  var import_react19 = __toESM(require_react());
   var import_jsx_runtime26 = __toESM(require_jsx_runtime());
   function UserNameModal() {
-    const [name, setName] = (0, import_react18.useState)("");
-    const inputRef = (0, import_react18.useRef)(null);
-    (0, import_react18.useEffect)(() => {
+    const [name, setName] = (0, import_react19.useState)("");
+    const inputRef = (0, import_react19.useRef)(null);
+    (0, import_react19.useEffect)(() => {
       window.__reactOpenUserNameModal = () => {
         setName("");
         window.openModal?.("userNameModal");
@@ -24908,9 +24924,9 @@ ${sample}
   }
 
   // components/ErrorBoundary.jsx
-  var import_react19 = __toESM(require_react());
+  var import_react20 = __toESM(require_react());
   var import_jsx_runtime27 = __toESM(require_jsx_runtime());
-  var ErrorBoundary = class extends import_react19.Component {
+  var ErrorBoundary = class extends import_react20.Component {
     constructor(props) {
       super(props);
       this.state = { hasError: false, error: null };
@@ -24995,7 +25011,7 @@ ${sample}
   // components/App.jsx
   var import_jsx_runtime28 = __toESM(require_jsx_runtime());
   function App() {
-    (0, import_react20.useEffect)(() => {
+    (0, import_react21.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] failed to initialize legacy bridge:", err);
       });

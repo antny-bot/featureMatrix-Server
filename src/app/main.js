@@ -106,10 +106,10 @@ window.__sobukNotify = (msg, type = false) => {
 /* ── 검색 ── */
 window.onSearch = q => {
   S.searchQ = q.trim();
-  document.getElementById('searchClear').className = 'search-clear' + (S.searchQ ? ' on' : '');
+  setStore({ searchQ: S.searchQ });
   renderAll(true);
 };
-window.clearSearch = () => { document.getElementById('searchInp').value = ''; window.onSearch(''); };
+window.clearSearch = () => window.onSearch('');
 
 /* ── 필터 이벤트 ── */
 window.onPrioChip = inp => {
@@ -208,7 +208,7 @@ document.addEventListener('keydown', e => {
     ['editModal','importModal','settingsModal','shortcutsModal','userNameModal','adminAuthModal','diffModal'].forEach(closeModal);
     clearTT(); window.closeCtxMenu?.(); mxClearSel(); return;
   }
-  if (e.key === '/' && !isInput) { e.preventDefault(); document.getElementById('searchInp').focus(); return; }
+  if (e.key === '/' && !isInput) { e.preventDefault(); window.__focusSearch?.(); return; }
   if (isInput) return;
 
   if (e.ctrlKey || e.metaKey) {

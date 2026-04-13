@@ -4,13 +4,16 @@
    반응형 요소:
    - adminBadge: useAuth().isAdmin + isServerMode
    - adminLogoutBtn: useAuth().(isAdmin||isEditor) + isServerMode
-   - hdrSearchWrap: 기존 vanilla JS syncLayout()이 계속 제어 (id 유지)
+   - hdrSearchWrap/searchInp/searchClear/hdrCountBadge: React 상태로 제어 (id 유지)
 
    나머지 버튼들(설정, 단축키, 테마 등)은 vanilla JS onclick 유지.
 ══════════════════════════════════════════ */
 
+import { useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
+import { getFiltered } from '../app/render.js';
+import { S } from '../app/state.js';
 import { useAppStore } from '../store/useAppStore.js';
 
 /* ── SVG 아이콘 상수 ── */
@@ -73,6 +76,14 @@ export default function Header() {
   const title    = useAppStore(s => s.settings.title    || 'featureMATRIX');
   const subtitle = useAppStore(s => s.settings.subtitle || '기능정의 툴');
   const wsStatus = useAppStore(s => s.wsStatus);
+  const view = useAppStore(s => s.view);
+  const searchQ = useAppStore(s => s.searchQ);
+  useAppStore(s => s.items);
+  useAppStore(s => s.filters);
+
+  const searchRef = useRef(null);
+  const showSearch = view !== 'dashboard';
+  const filteredCount = getFiltered().length;
 
   const showAdminBadge  = isAdmin  && isServerMode;
   const showLogoutBtn   = (isAdmin || isEditor) && isServerMode;
@@ -82,6 +93,19 @@ export default function Header() {
   const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP.idle;
   const showWsDot = isServerMode && wsStatus !== 'idle';
   const wsLabel = wsStatus === 'reconnecting' ? '재연결 중...' : wsStatus === 'connected' ? '실시간' : undefined;
+
+  useEffect(() => {
+    window.__focusSearch = () => searchRef.current?.focus();
+    return () => {
+      if (window.__focusSearch) delete window.__focusSearch;
+    };
+  }, []);
+
+  const updateSearch = value => {
+    S.searchQ = value.trim();
+    useAppStore.getState().setSearchQ(S.searchQ);
+    window.renderAll?.(true);
+  };
 
   return (
     <header className="hdr">
@@ -101,22 +125,23 @@ export default function Header() {
       <span id="stNew"   style={{display:'none'}}>0</span>
 
       <div className="hdr-mid">
-        {/* hdrSearchWrap: vanilla JS syncLayout()이 display 제어 (id 유지) */}
-        <div id="hdrSearchWrap" style={{display:'none', alignItems:'center', gap:'8px', flex:1, minWidth:0}}>
+        <div id="hdrSearchWrap" style={{display: showSearch ? 'flex' : 'none', alignItems:'center', gap:'8px', flex:1, minWidth:0}}>
           <div className="search-wrap">
             <svg className="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input
+              ref={searchRef}
               className="search-inp"
               id="searchInp"
               placeholder="검색 (기능명·Key·담당·경로)"
-              onInput={(e) => window.onSearch?.(e.target.value)}
+              value={searchQ}
+              onChange={(e) => updateSearch(e.target.value)}
             />
-            <button className="search-clear" id="searchClear" onClick={() => window.clearSearch?.()}>✕</button>
+            <button className={`search-clear${searchQ ? ' on' : ''}`} id="searchClear" onClick={() => updateSearch('')}>✕</button>
           </div>
-          <span className="hdr-count-badge" id="hdrCountBadge"></span>
+          <span className="hdr-count-badge" id="hdrCountBadge">{filteredCount ? `${filteredCount}개` : ''}</span>
         </div>
       </div>
 

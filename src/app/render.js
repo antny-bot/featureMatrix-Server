@@ -195,8 +195,6 @@ function syncLayout() {
   if (v !== 'board' && window.hideBoardActionBar) window.hideBoardActionBar();
   const fp = document.getElementById('fpanel');
   if (fp) fp.classList.toggle('fp-hide', v === 'dashboard');
-  const hs = document.getElementById('hdrSearchWrap');
-  if (hs) hs.style.display = v === 'dashboard' ? 'none' : 'flex';
   const contentEl = document.getElementById('contentArea');
   if (contentEl) contentEl.style.overflowY = v === 'board' ? 'hidden' : '';
 }
@@ -241,10 +239,6 @@ export function renderStats() {
   countUp('stTotal', items.length);
   countUp('stHigh', h); countUp('stMid', m); countUp('stLow', l);
   countUp('stImp', imp); countUp('stNew', nw);
-  const cb = document.getElementById('hdrCountBadge');
-  if (cb) cb.textContent = items.length ? `${items.length}개` : '';
-  const fb = document.getElementById('fbadge');
-  if (fb) fb.className = 'fbadge' + (isFilterActive() ? ' on' : '');
 }
 
 /* ── 매트릭스 렌더 — MatrixView.jsx React 포털로 위임, syncToStore()만 호출 ── */
