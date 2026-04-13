@@ -42,8 +42,14 @@ export function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.add('on');
+  if (!window.__modalState) window.__modalState = {};
+  window.__modalState[id] = true;
 }
-export const closeModal = id => document.getElementById(id)?.classList.remove('on');
+export const closeModal = id => {
+  document.getElementById(id)?.classList.remove('on');
+  if (!window.__modalState) window.__modalState = {};
+  window.__modalState[id] = false;
+};
 
 /* ── 편집 탭 전환 — ItemModal.jsx 브릿지로 위임 ── */
 export function switchEditTab(tab) { window.__editModalSwitchEditTab?.(tab); }

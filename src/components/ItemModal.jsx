@@ -145,21 +145,15 @@ export default function ItemModal() {
       }
     };
 
-    /* 모달 닫힘 감지: #editModal 클래스 변화 관찰 → emitUnlock */
-    const modalEl = document.getElementById('editModal');
-    let observer = null;
-    if (modalEl) {
-      observer = new MutationObserver(() => {
-        if (!modalEl.classList.contains('on') && currentKeyRef.current) {
-          const key  = currentKeyRef.current;
-          const user = getStore().settings?.userName || '익명';
-          emitUnlock(key, user);
-          currentKeyRef.current = null;
-          detachInputListeners();
-        }
-      });
-      observer.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
-    }
+    const interval = setInterval(() => {
+      if (!window.__modalState?.editModal && currentKeyRef.current) {
+        const key  = currentKeyRef.current;
+        const user = getStore().settings?.userName || '익명';
+        emitUnlock(key, user);
+        currentKeyRef.current = null;
+        detachInputListeners();
+      }
+    }, 250);
 
     /* 탭 전환: info / md */
     window.__editModalSwitchEditTab = (tab) => {
@@ -215,7 +209,7 @@ export default function ItemModal() {
     };
 
     return () => {
-      observer?.disconnect();
+      clearInterval(interval);
       detachInputListeners();
       delete window.__editModalBridge;
       delete window.__editModalSwitchEditTab;

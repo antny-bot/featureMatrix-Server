@@ -190,7 +190,7 @@ document.addEventListener('keydown', e => {
   const isInput = ['INPUT','TEXTAREA','SELECT'].includes(tag);
 
   if (e.key === 'Escape') {
-    if (document.getElementById('editModal')?.classList.contains('on')) {
+    if (window.__modalState?.editModal) {
       unlockItem(S.editKey);
     }
     ['editModal','importModal','settingsModal','shortcutsModal','userNameModal','adminAuthModal','diffModal'].forEach(closeModal);

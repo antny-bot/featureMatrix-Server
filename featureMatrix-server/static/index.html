@@ -18667,6 +18667,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const el = document.getElementById(id);
     if (!el) return;
     el.classList.add("on");
+    if (!window.__modalState) window.__modalState = {};
+    window.__modalState[id] = true;
   }
   function switchEditTab(tab) {
     window.__editModalSwitchEditTab?.(tab);
@@ -19164,7 +19166,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       init_admin();
       init_useAppStore();
       init_socket3();
-      closeModal = (id) => document.getElementById(id)?.classList.remove("on");
+      closeModal = (id) => {
+        document.getElementById(id)?.classList.remove("on");
+        if (!window.__modalState) window.__modalState = {};
+        window.__modalState[id] = false;
+      };
       window.closeCtxMenu = closeCtxMenu;
       window.openStatusMenu = openStatusMenu;
       window.setItemStatus = setItemStatus;
@@ -20715,7 +20721,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         const tag = document.activeElement?.tagName || "";
         const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(tag);
         if (e.key === "Escape") {
-          if (document.getElementById("editModal")?.classList.contains("on")) {
+          if (window.__modalState?.editModal) {
             unlockItem(S.editKey);
           }
           ["editModal", "importModal", "settingsModal", "shortcutsModal", "userNameModal", "adminAuthModal", "diffModal"].forEach(closeModal);
@@ -23018,20 +23024,15 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           currentKeyRef.current = null;
         }
       };
-      const modalEl = document.getElementById("editModal");
-      let observer = null;
-      if (modalEl) {
-        observer = new MutationObserver(() => {
-          if (!modalEl.classList.contains("on") && currentKeyRef.current) {
-            const key = currentKeyRef.current;
-            const user = getStore().settings?.userName || "\uC775\uBA85";
-            emitUnlock(key, user);
-            currentKeyRef.current = null;
-            detachInputListeners();
-          }
-        });
-        observer.observe(modalEl, { attributes: true, attributeFilter: ["class"] });
-      }
+      const interval = setInterval(() => {
+        if (!window.__modalState?.editModal && currentKeyRef.current) {
+          const key = currentKeyRef.current;
+          const user = getStore().settings?.userName || "\uC775\uBA85";
+          emitUnlock(key, user);
+          currentKeyRef.current = null;
+          detachInputListeners();
+        }
+      }, 250);
       window.__editModalSwitchEditTab = (tab) => {
         setActiveTab(tab);
         if (tab === "md") {
@@ -23075,7 +23076,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         });
       };
       return () => {
-        observer?.disconnect();
+        clearInterval(interval);
         detachInputListeners();
         delete window.__editModalBridge;
         delete window.__editModalSwitchEditTab;
