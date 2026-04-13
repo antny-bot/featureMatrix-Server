@@ -3,10 +3,14 @@
 ══════════════════════════════════════════ */
 
 import { STATUS_CLS, STATUS_LBL, STATUS_OPTS, STATUS_CHIP_COLORS, FLABELS } from './constants.js';
-import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate, editLocks } from './state.js';
+import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate } from './state.js';
 import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
 import { isAdmin, isEditor } from './admin.js';
-import { setStore } from '../store/useAppStore.js';
+import { setStore, getStore } from '../store/useAppStore.js';
+
+// Zustand store에서 실시간 editLocks/previews 읽기 헬퍼
+const getEditLocks  = () => getStore().editLocks  || {};
+const getPreviews   = () => getStore().previews   || {};
 
 /* ── Zustand 동기화: renderAll() 후 React 컴포넌트에 S 상태 반영 ── */
 function syncToStore() {
@@ -373,12 +377,28 @@ export function renderCard(item, c, si = -1, overrides = {}) {
     : '';
   const updatedHtml = S.display.showUpdated && item.updatedAt ? `<div class="item-updated">${fmtDate(item.updatedAt)}</div>` : '';
   const ownerHtml   = S.display.showOwner ? `<div class="item-owner"><span class="owner-dot" style="background:${ownerColor}"></span>${esc(normOwner(item.owner))}</div>` : '';
-  /* 편집 중 락 배지 */
-  const lockInfo  = editLocks[item.key];
-  const myName    = S.settings.userName || '익명';
-  const lockBadge = lockInfo && lockInfo.user !== myName
-    ? `<div style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:6px 6px 0 0;pointer-events:none">🖊 ${esc(lockInfo.user)} 편집 중</div>`
+  /* 편집 중 락 배지 + 미리보기 오버레이 */
+  const editLocksNow = getEditLocks();
+  const previewsNow  = getPreviews();
+  const lockInfo     = editLocksNow[item.key];
+  const myName       = S.settings.userName || '익명';
+  const isLockedByOther = lockInfo && lockInfo.user !== myName;
+  const lockBadge = isLockedByOther
+    ? `<div style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:6px 6px 0 0;pointer-events:none">🔒 ${esc(lockInfo.user)} 편집 중</div>`
     : '';
+  // 편집 미리보기 툴팁 (호버 시 표시)
+  const previewData = isLockedByOther ? previewsNow[item.key] : null;
+  const previewHtml = previewData ? (() => {
+    const p = previewData.preview || {};
+    const rows = [
+      p.name     && p.name     !== item.name     ? `<div>기능명: <b>${esc(p.name)}</b></div>` : '',
+      p.priority && p.priority !== item.priority ? `<div>우선순위: <b>${esc(p.priority)}</b></div>` : '',
+      p.status   && p.status   !== item.status   ? `<div>상태: <b>${esc(p.status)}</b></div>` : '',
+      p.owner    && p.owner    !== item.owner    ? `<div>담당자: <b>${esc(p.owner)}</b></div>` : '',
+    ].filter(Boolean).join('');
+    if (!rows) return '';
+    return `<div class="edit-preview-overlay"><div style="font-weight:700;margin-bottom:4px">✏ ${esc(lockInfo.user)} 편집 중</div>${rows}</div>`;
+  })() : '';
 
   const actions = `<div class="card-actions" onclick="event.stopPropagation()">
     <button class="card-act-btn" title="편집"    onclick="openEditModal('${eattr(item.key)}')">✏</button>
@@ -391,12 +411,12 @@ export function renderCard(item, c, si = -1, overrides = {}) {
   const clickHandler = overrides.onclick     ?? `openEditOrMd('${eattr(item.key)}')`;
   const dblClick     = overrides.ondblclick  ? ` ondblclick="${overrides.ondblclick}"` : '';
   const canDrag = isEditor();
-  return `<div class="mitem${isDel?' item-del':''}${lockInfo && lockInfo.user !== myName ? ' item-locked' : ''}${extraClass}" draggable="${canDrag}" data-key="${eattr(item.key)}"${idAttr}
+  return `<div class="mitem${isDel?' item-del':''}${isLockedByOther ? ' item-locked' : ''}${extraClass}" draggable="${canDrag}" data-key="${eattr(item.key)}"${idAttr}
     style="${css}${delay}"
     ondragstart="${canDrag ? dragStart : ''}" ondragend="${canDrag ? dragEnd : ''}"
     onmouseover="startTT(event,'${eattr(item.key)}')" onmouseout="clearTT()"
     onclick="${clickHandler}"${dblClick}
-    oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${actions}
+    oncontextmenu="openCtxMenu(event,'${eattr(item.key)}')">${lockBadge}${previewHtml}${actions}
   <div class="item-hd">
     <span class="item-key">${esc(item.key)}</span>
     ${item.isImportant==='Y'&&S.display.showStar ? '<span class="item-star">★</span>' : ''}

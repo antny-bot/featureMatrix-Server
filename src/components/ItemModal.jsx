@@ -12,19 +12,63 @@
 ══════════════════════════════════════════ */
 
 import { createPortal } from 'react-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { parseMd } from '../app/modal.js';
 import { STATUS_OPTS } from '../app/constants.js';
+import { emitLock, emitUnlock, emitPreview, isSocketConnected } from '../app/socket.js';
+import { getStore } from '../store/useAppStore.js';
 
 export default function ItemModal() {
-  const [container,   setContainer]   = useState(null);
-  const [activeTab,   setActiveTab]   = useState('info');
-  const [mdMode,      setMdMode]      = useState('edit');
-  const [mdPreview,   setMdPreview]   = useState('');
-  const [mdStats,     setMdStats]     = useState({ chars: '0자', lines: '0줄', words: '0단어' });
-  const [title,       setTitle]       = useState('기능 추가');
-  const [showHardDel, setShowHardDel] = useState(false);
-  const previewRef = useRef(null);
+  const [container,      setContainer]      = useState(null);
+  const [activeTab,      setActiveTab]      = useState('info');
+  const [mdMode,         setMdMode]         = useState('edit');
+  const [mdPreview,      setMdPreview]      = useState('');
+  const [mdStats,        setMdStats]        = useState({ chars: '0자', lines: '0줄', words: '0단어' });
+  const [title,          setTitle]          = useState('기능 추가');
+  const [showHardDel,    setShowHardDel]    = useState(false);
+  const previewRef      = useRef(null);
+  const currentKeyRef   = useRef(null);   // 현재 편집 중인 item key
+  const previewTimerRef = useRef(null);   // 미리보기 디바운스 타이머
+  const inputListeners  = useRef([]);     // attach된 input 리스너 정리용
+
+  /* 편집 미리보기 전송 (300ms 디바운스) */
+  const schedulePreview = useCallback(() => {
+    if (!isSocketConnected() || !currentKeyRef.current) return;
+    clearTimeout(previewTimerRef.current);
+    previewTimerRef.current = setTimeout(() => {
+      const key  = currentKeyRef.current;
+      const user = getStore().settings?.userName || '익명';
+      const preview = {
+        name:     document.getElementById('fName')?.value     || '',
+        priority: document.getElementById('fPriority')?.value || '',
+        status:   document.getElementById('fStatus')?.value   || '',
+        owner:    document.getElementById('fOwner')?.value    || '',
+        desc:     document.getElementById('fDesc')?.value     || '',
+      };
+      emitPreview(key, user, preview);
+    }, 300);
+  }, []);
+
+  /* 모달 내 입력 필드에 리스너 attach */
+  const attachInputListeners = useCallback(() => {
+    const ids = ['fName', 'fPriority', 'fStatus', 'fOwner', 'fDesc', 'fMdContent'];
+    inputListeners.current.forEach(({ el, fn }) => el.removeEventListener('input', fn));
+    inputListeners.current = [];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', schedulePreview);
+        inputListeners.current.push({ el, fn: schedulePreview });
+      }
+    });
+  }, [schedulePreview]);
+
+  /* 입력 리스너 정리 */
+  const detachInputListeners = useCallback(() => {
+    inputListeners.current.forEach(({ el, fn }) => el.removeEventListener('input', fn));
+    inputListeners.current = [];
+    clearTimeout(previewTimerRef.current);
+  }, []);
 
   useEffect(() => {
     setContainer(document.getElementById('editModal'));
@@ -44,7 +88,7 @@ export default function ItemModal() {
 
   /* 브릿지: modal.js → React 상태 동기화 */
   useEffect(() => {
-    /* 모달 열림 알림: title/showHardDel/탭/뷰 초기화 */
+    /* 모달 열림 알림: title/showHardDel/탭/뷰 초기화 + Lock 획득 */
     window.__editModalBridge = (mode, key) => {
       setTitle(mode === 'add' ? '기능 추가' : `기능 수정 — ${key}`);
       setShowHardDel(mode === 'edit');
@@ -52,7 +96,31 @@ export default function ItemModal() {
       setMdMode('edit');
       setMdPreview('');
       setMdStats({ chars: '0자', lines: '0줄', words: '0단어' });
+      // WebSocket Lock 획득 (편집 모드일 때만)
+      if (mode === 'edit' && key) {
+        currentKeyRef.current = key;
+        const user = getStore().settings?.userName || '익명';
+        emitLock(key, user);
+        // 입력 리스너 약간 지연 후 attach (DOM 렌더 완료 후)
+        setTimeout(attachInputListeners, 100);
+      }
     };
+
+    /* 모달 닫힘 감지: #editModal 클래스 변화 관찰 → emitUnlock */
+    const modalEl = document.getElementById('editModal');
+    let observer = null;
+    if (modalEl) {
+      observer = new MutationObserver(() => {
+        if (!modalEl.classList.contains('on') && currentKeyRef.current) {
+          const key  = currentKeyRef.current;
+          const user = getStore().settings?.userName || '익명';
+          emitUnlock(key, user);
+          currentKeyRef.current = null;
+          detachInputListeners();
+        }
+      });
+      observer.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
+    }
 
     /* 탭 전환: info / md */
     window.switchEditTab = (tab) => {
@@ -108,6 +176,8 @@ export default function ItemModal() {
     };
 
     return () => {
+      observer?.disconnect();
+      detachInputListeners();
       delete window.__editModalBridge;
       delete window.switchEditTab;
       delete window.switchMdView;
@@ -115,7 +185,7 @@ export default function ItemModal() {
       delete window.syncMdPreview;
       delete window.updateMdStat;
     };
-  }, []);
+  }, [attachInputListeners, detachInputListeners]);
 
   if (!container) return null;
 

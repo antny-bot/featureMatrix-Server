@@ -58,15 +58,30 @@ function IconMoon() {
   );
 }
 
+/* wsStatus → 점 색상/툴팁 매핑 */
+const WS_STATUS_MAP = {
+  connected:    { bg: '#16a34a', title: 'WebSocket 연결됨 (실시간)' },
+  reconnecting: { bg: '#d97706', title: '재연결 중...' },
+  disconnected: { bg: '#dc2626', title: 'WebSocket 연결 끊김 (폴링 모드)' },
+  connecting:   { bg: '#d97706', title: 'WebSocket 연결 중...' },
+  idle:         { bg: '#aaa',    title: '서버' },
+};
+
 export default function Header() {
   const { isAdmin, isEditor, isServerMode } = useAuth();
   const { isDark } = useTheme();
   const title    = useAppStore(s => s.settings.title    || 'featureMATRIX');
   const subtitle = useAppStore(s => s.settings.subtitle || '기능정의 툴');
+  const wsStatus = useAppStore(s => s.wsStatus);
 
   const showAdminBadge  = isAdmin  && isServerMode;
   const showLogoutBtn   = (isAdmin || isEditor) && isServerMode;
   const logoutTitle     = isAdmin ? '관리자 로그아웃' : '편집자 로그아웃';
+
+  // wsStatus 기반 점 스타일 (서버 모드일 때만 활성)
+  const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP.idle;
+  const showWsDot = isServerMode && wsStatus !== 'idle';
+  const wsLabel = wsStatus === 'reconnecting' ? '재연결 중...' : wsStatus === 'connected' ? '실시간' : undefined;
 
   return (
     <header className="hdr">
@@ -126,11 +141,21 @@ export default function Header() {
           >🔒</button>
         )}
 
-        {/* 서버 상태 버튼: vanilla JS가 serverStatusDot / serverStatusLabel 제어 */}
-        <button className="btn btn-g btn-sm hdr-btn" id="serverStatusBtn" title="서버 상태">
-          <span id="serverStatusDot" style={{width:'7px', height:'7px', borderRadius:'50%', background:'#aaa', flexShrink:0, display:'none', transition:'background .3s'}}></span>
+        {/* 서버 상태 버튼 — wsStatus 기반 점(React) + 라벨(vanilla JS 유지) */}
+        <button className="btn btn-g btn-sm hdr-btn" id="serverStatusBtn"
+          title={showWsDot ? wsDot.title : '서버 상태'}
+          onClick={() => window.openModal?.('settingsModal')}>
+          {/* React 제어 WebSocket 상태 점 */}
+          {showWsDot && (
+            <span style={{width:'7px', height:'7px', borderRadius:'50%', background: wsDot.bg,
+                          flexShrink:0, display:'inline-block', transition:'background .3s'}}></span>
+          )}
+          {/* vanilla JS 제어 점 (서버 REST 상태용, wsStatus가 idle일 때 fallback) */}
+          {!showWsDot && (
+            <span id="serverStatusDot" style={{width:'7px', height:'7px', borderRadius:'50%', background:'#aaa', flexShrink:0, display:'none', transition:'background .3s'}}></span>
+          )}
           {ICON_SERVER}
-          <span id="serverStatusLabel">서버</span>
+          <span id="serverStatusLabel">{wsLabel || '서버'}</span>
         </button>
 
         <span id="storageModeBadge" style={{display:'none'}}></span>

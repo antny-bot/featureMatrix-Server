@@ -224,13 +224,6 @@ export default function SettingsPanel() {
               <div className="ssub">비워두면 현재 도메인 사용</div>
               <input className="inp" id="sServerUrl" placeholder="http://서버IP:5000" style={{ height: '28px', fontSize: '.8rem', fontFamily: 'monospace' }} onKeyDown={e => { if(e.key==='Enter') window.saveServerSettings?.(); }} />
             </div>
-            <div className="srow" style={{ marginTop: '4px' }}>
-              <div><div className="slbl">변경 감지 주기</div><div className="ssub">다른 사용자의 변경을 감지하는 간격</div></div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <input className="inp" id="sPollInterval" type="number" min="5" max="300" defaultValue="10" style={{ width: '60px', height: '28px', textAlign: 'center', fontSize: '.82rem' }} onKeyDown={e => { if(e.key==='Enter') window.saveServerSettings?.(); }} />
-                <span style={{ fontSize: '.78rem', color: 'var(--text-3)' }}>초</span>
-              </div>
-            </div>
             <div style={{ marginTop: '14px' }}>
               <button className="btn btn-p btn-sm" onClick={() => window.saveServerSettings?.()}>저장</button>
             </div>

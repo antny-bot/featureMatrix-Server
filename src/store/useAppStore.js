@@ -66,6 +66,10 @@ const initialState = {
   serverTs: 0,
   isLoading: false,
   serverStatus: 'idle', // 'idle' | 'ok' | 'error'
+  // WebSocket 실시간 상태
+  editLocks: {},    // { [key]: { user, ts } }
+  previews:  {},    // { [key]: { user, preview } }
+  wsStatus: 'idle', // 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
 };
 
 /* ── Zustand 스토어 ── */
@@ -80,6 +84,17 @@ export const useAppStore = create((set, get) => ({
   setIsDragging: (isDragging) => set({ isDragging }),
   setServerStatus: (serverStatus) => set({ serverStatus }),
   setIsLoading: (isLoading) => set({ isLoading }),
+  setWsStatus: (wsStatus) => set({ wsStatus }),
+
+  /* ── WebSocket Lock/Preview 업데이트 ── */
+  updateLocks: (locks) => set({ editLocks: locks || {} }),
+  updatePreview: (key, data) =>
+    set(s => {
+      const next = { ...s.previews };
+      if (data === null) delete next[key];
+      else next[key] = data;
+      return { previews: next };
+    }),
 
   /* ── 필터 업데이트 ── */
   setFilters: (filters) => set({ filters }),
@@ -129,6 +144,7 @@ export const useAppStore = create((set, get) => ({
       settings:   { ...S.settings },
       sort:       { ...S.sort },
       editKey:    S.editKey,
+      editLocks:  { ...S.editLocks },
     });
   },
 }));
