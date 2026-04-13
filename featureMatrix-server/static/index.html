@@ -20437,30 +20437,12 @@ function __inlineNotify(msg, type) {
     }, interval);
   }
   function setServerStatus(status) {
-    const dot = document.getElementById("serverStatusDot");
-    const badge = document.getElementById("storageModeBadge");
-    if (!dot) return;
-    if (S.settings.storageMode !== "server") {
-      dot.style.display = "none";
-      return;
-    }
-    dot.style.display = "inline-block";
-    if (status === "ok") {
-      dot.style.background = "#16a34a";
-      dot.title = "\uC11C\uBC84 \uC5F0\uACB0\uB428";
-      if (badge) badge.style.opacity = "1";
-    } else {
-      dot.style.background = "#dc2626";
-      dot.title = "\uC11C\uBC84 \uC5F0\uACB0 \uC624\uB958";
-      if (badge) badge.style.opacity = "0.7";
-    }
+    S.serverStatus = status;
+    setStore({ serverStatus: status });
   }
   function syncServerSettingsUI() {
     const mode = S.settings.storageMode || "server";
-    const badge = document.getElementById("storageModeBadge");
-    const label = document.getElementById("serverStatusLabel");
-    if (label) label.textContent = mode === "server" ? "\u{1F310}" : "\u{1F4BE}";
-    if (badge) badge.style.color = mode === "server" ? "var(--accent)" : "var(--text-3)";
+    setStore({ settings: { ...S.settings } });
     setServerStatus(mode === "server" ? "ok" : "off");
   }
   function renderDbSectionOrder() {

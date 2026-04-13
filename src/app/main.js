@@ -336,6 +336,7 @@ window.saveServerSettings = async (nextSettings = null) => {
 
   startPolling();
   syncServerSettingsUI();
+  updateAdminUI();
 };
 
 /* ── 사용자 이름 팝업 ── */
@@ -361,29 +362,14 @@ window.loadInlineActivityLog = async () => {
   await window.__reactLoadInlineActivityLog?.();
 };
 function setServerStatus(status) {
-  const dot   = document.getElementById('serverStatusDot');
-  const badge = document.getElementById('storageModeBadge');
-  if (!dot) return;
-  if (S.settings.storageMode !== 'server') { dot.style.display = 'none'; return; }
-  dot.style.display = 'inline-block';
-  if (status === 'ok') {
-    dot.style.background = '#16a34a';
-    dot.title = '서버 연결됨';
-    if (badge) badge.style.opacity = '1';
-  } else {
-    dot.style.background = '#dc2626';
-    dot.title = '서버 연결 오류';
-    if (badge) badge.style.opacity = '0.7';
-  }
+  S.serverStatus = status;
+  setStore({ serverStatus: status });
 }
 window.setServerStatus = setServerStatus;
 
 function syncServerSettingsUI() {
   const mode = S.settings.storageMode || 'server';
-  const badge  = document.getElementById('storageModeBadge');
-  const label  = document.getElementById('serverStatusLabel');
-  if (label) label.textContent = mode === 'server' ? '🌐' : '💾';
-  if (badge) badge.style.color = mode === 'server' ? 'var(--accent)' : 'var(--text-3)';
+  setStore({ settings: { ...S.settings } });
   setServerStatus(mode === 'server' ? 'ok' : 'off');
 }
 

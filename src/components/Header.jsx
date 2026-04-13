@@ -75,6 +75,8 @@ export default function Header() {
   const { isDark } = useTheme();
   const title    = useAppStore(s => s.settings.title    || 'featureMATRIX');
   const subtitle = useAppStore(s => s.settings.subtitle || '기능정의 툴');
+  const storageMode = useAppStore(s => s.settings.storageMode || 'server');
+  const serverStatus = useAppStore(s => s.serverStatus);
   const wsStatus = useAppStore(s => s.wsStatus);
   const view = useAppStore(s => s.view);
   const searchQ = useAppStore(s => s.searchQ);
@@ -89,10 +91,19 @@ export default function Header() {
   const showLogoutBtn   = (isAdmin || isEditor) && isServerMode;
   const logoutTitle     = isAdmin ? '관리자 로그아웃' : '편집자 로그아웃';
 
-  // wsStatus 기반 점 스타일 (서버 모드일 때만 활성)
+  // 서버 연결 상태: WebSocket 상태가 있으면 우선 표시하고, 없으면 REST/polling 상태를 표시한다.
+  const restDot = serverStatus === 'ok'
+    ? { bg: '#16a34a', title: '서버 연결됨' }
+    : serverStatus === 'error'
+      ? { bg: '#dc2626', title: '서버 연결 오류' }
+      : { bg: '#aaa', title: '서버 상태' };
   const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP.idle;
-  const showWsDot = isServerMode && wsStatus !== 'idle';
-  const wsLabel = wsStatus === 'reconnecting' ? '재연결 중...' : wsStatus === 'connected' ? '실시간' : undefined;
+  const showWsDot = storageMode === 'server' && wsStatus !== 'idle';
+  const statusDot = showWsDot ? wsDot : restDot;
+  const showStatusDot = storageMode === 'server';
+  const serverLabel = showWsDot
+    ? (wsStatus === 'reconnecting' ? '재연결 중...' : wsStatus === 'connected' ? '실시간' : '서버')
+    : (storageMode === 'server' ? '🌐' : '💾');
 
   useEffect(() => {
     window.__focusSearch = () => searchRef.current?.focus();
@@ -166,24 +177,17 @@ export default function Header() {
           >🔒</button>
         )}
 
-        {/* 서버 상태 버튼 — wsStatus 기반 점(React) + 라벨(vanilla JS 유지) */}
+        {/* 서버 상태 버튼 */}
         <button className="btn btn-g btn-sm hdr-btn" id="serverStatusBtn"
-          title={showWsDot ? wsDot.title : '서버 상태'}
+          title={statusDot.title}
           onClick={() => window.openModal?.('settingsModal')}>
-          {/* React 제어 WebSocket 상태 점 */}
-          {showWsDot && (
-            <span style={{width:'7px', height:'7px', borderRadius:'50%', background: wsDot.bg,
+          {showStatusDot && (
+            <span id="serverStatusDot" style={{width:'7px', height:'7px', borderRadius:'50%', background: statusDot.bg,
                           flexShrink:0, display:'inline-block', transition:'background .3s'}}></span>
           )}
-          {/* vanilla JS 제어 점 (서버 REST 상태용, wsStatus가 idle일 때 fallback) */}
-          {!showWsDot && (
-            <span id="serverStatusDot" style={{width:'7px', height:'7px', borderRadius:'50%', background:'#aaa', flexShrink:0, display:'none', transition:'background .3s'}}></span>
-          )}
           {ICON_SERVER}
-          <span id="serverStatusLabel">{wsLabel || '서버'}</span>
+          <span id="serverStatusLabel">{serverLabel}</span>
         </button>
-
-        <span id="storageModeBadge" style={{display:'none'}}></span>
 
         <button className="btn btn-g btn-sm hdr-btn" onClick={() => window.openModal?.('settingsModal')} title="환경 설정 (Ctrl+,)">
           {ICON_SETTINGS}
