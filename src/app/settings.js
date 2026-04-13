@@ -3,8 +3,8 @@
 ══════════════════════════════════════════ */
 
 import { DEFAULT_LIST_COLS } from './constants.js';
-import { S, save, notify, today, esc } from './state.js';
-import { applyVars, applyBlurSetting, updateDesignContent, renderThemeGrid, renderPrioStyleRows, renderPreviewCards } from './theme.js';
+import { S, save, notify, today } from './state.js';
+import { applyVars, applyBlurSetting } from './theme.js';
 import { renderAll, renderList, renderMatrix } from './render.js';
 import { dlBlob } from './io.js';
 import { DEMO } from './constants.js';
@@ -13,12 +13,6 @@ import { setStore } from '../store/useAppStore.js';
 
 /* ── 설정 탭 전환 ── */
 export function sstab(btn, paneId) {
-  document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
-  document.querySelectorAll('.spane').forEach(p => p.classList.remove('on'));
-  btn.classList.add('on');
-  document.getElementById(paneId)?.classList.add('on');
-  if (paneId === 'sdesign') { renderPrioStyleRows(); renderPreviewCards(); updateDesignContent(); renderThemeGrid(); syncAnimUI(); }
-  if (paneId === 'scola')   { renderColEditor(); renderAxisEditor(); }
   if (paneId === 'sserv')   window.syncServerSettingsUI?.();
   if (paneId === 'slog')    { window.loadInlineActivityLog?.(); }
   if (paneId === 'sadmin')  { window.renderDbSectionOrder?.(); window.syncEditorPwStatus?.(); }
@@ -61,8 +55,6 @@ export function adjCellFold(d) { S.settings.cellFold   = Math.max(0, Math.min(20
 export function adjChangeLogMax(d) { S.settings.changeLogMax = Math.max(10,Math.min(500,S.settings.changeLogMax+d)); save(); setStore({ settings: { ...S.settings } }); }
 export function adjBoardFoldCount(d) {
   S.settings.boardFoldCount = Math.max(0, Math.min(30, (S.settings.boardFoldCount??6)+d));
-  const v = S.settings.boardFoldCount;
-  document.getElementById('dBoardFoldCount').textContent = v === 0 ? '∞' : v;
   save();
   setStore({ settings: { ...S.settings } });
 }
@@ -79,79 +71,28 @@ export function syncAnimUI() {
 }
 
 /* ── 리스트 컬럼 편집기 ── */
-let _colDragIdx = null;
-
 export function renderColEditor() {
-  const el = document.getElementById('colEditor');
-  if (!el) return;
-  const FLABELS_LOCAL = {key:'Key',name:'기능명',desc:'설명',path:'경로',group:'그룹',subGroup:'서브그룹',category:'카테고리',subCategory:'서브카테고리',priority:'우선순위',status:'진행상태',owner:'담당',isDelete:'삭제여부',isImportant:'중요여부',relSystem:'연관시스템',memo:'메모',mdPath:'MD경로',mdContent:'MD내용'};
-  el.innerHTML = S.settings.listColumns.map((col, i) => `
-    <div class="col-row" draggable="true" data-idx="${i}"
-      ondragstart="colDragStart(event,${i})" ondragover="colDragOver(event,${i})"
-      ondragleave="colDragLeave(event)" ondrop="colDrop(event,${i})" ondragend="colDragEnd()">
-      <span class="col-handle" title="드래그하여 순서 변경">⠿</span>
-      <label class="tgl" style="gap:6px">
-        <input type="checkbox" ${col.visible?'checked':''} onchange="toggleColVisible(${i},this.checked)">
-        <span class="tgl-track"></span>
-      </label>
-      <span class="col-name">${FLABELS_LOCAL[col.key]||col.key}</span>
-    </div>`
-  ).join('');
+  // React SettingsColumnsPanel renders the list column editor.
 }
 
 export function toggleColVisible(idx, checked) { S.settings.listColumns[idx].visible = checked; save(); setStore({ settings: { ...S.settings } }); if (S.view==='list') renderList(); }
-export function colDragStart(e, idx)  { _colDragIdx=idx; e.currentTarget.classList.add('dragging-col'); e.dataTransfer.effectAllowed='move'; }
-export function colDragOver(e, idx)   { e.preventDefault(); if(idx===_colDragIdx)return; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('drag-over-col')); e.currentTarget.classList.add('drag-over-col'); }
-export function colDragLeave(e)       { e.currentTarget.classList.remove('drag-over-col'); }
-export function colDrop(e, toIdx)     { e.preventDefault(); if(_colDragIdx===null||_colDragIdx===toIdx)return; const cols=[...S.settings.listColumns]; const[moved]=cols.splice(_colDragIdx,1); cols.splice(toIdx,0,moved); S.settings.listColumns=cols; save(); setStore({ settings: { ...S.settings } }); renderColEditor(); if(S.view==='list')renderList(); }
-export function colDragEnd()          { _colDragIdx=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }
+export function colDragStart()        {}
+export function colDragOver(e)        { e.preventDefault(); }
+export function colDragLeave()        {}
+export function colDrop(e)            { e.preventDefault(); }
+export function colDragEnd()          {}
 export function resetListCols()       { S.settings.listColumns=JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)); save(); setStore({ settings: { ...S.settings } }); renderColEditor(); if(S.view==='list')renderList(); notify('리스트 컬럼을 기본값으로 복원했습니다.'); }
 
 /* ── 그룹/카테고리 순서 관리 ── */
-let _axisDragIdx = null, _axisField = null;
-
 export function renderAxisEditor() {
-  renderSingleAxis('groupOrder', 'group',    'groupAxisList', '그룹 (X축)');
-  renderSingleAxis('catOrder',   'category', 'catAxisList',   '카테고리 (Y축)');
+  // React SettingsColumnsPanel renders the axis editors.
 }
 
-function renderSingleAxis(orderKey, field, listId, label) {
-  const el = document.getElementById(listId);
-  if (!el) return;
-  // 현재 데이터에서 실제 값 목록
-  const inData = Array.from(new Set(S.items.map(it => it[field]||'(미분류)'))).sort((a,b)=>a.localeCompare(b,'ko'));
-  const order  = S.settings[orderKey] || [];
-  // 순서 적용: order 먼저, 나머지 append
-  const merged = [...order.filter(v => inData.includes(v)), ...inData.filter(v => !order.includes(v))];
-  el.innerHTML = merged.map((val, i) => `
-    <div class="col-row" draggable="true" data-val="${val}" data-field="${field}"
-      ondragstart="axisDragStart(event,'${field}',${i})" ondragover="axisDragOver(event,${i})"
-      ondragleave="axisDragLeave(event)" ondrop="axisDrop(event,'${field}',${i})" ondragend="axisDragEnd()">
-      <span class="col-handle" title="드래그하여 순서 변경">⠿</span>
-      <span style="font-size:.82rem;color:var(--text)">${esc(val)}</span>
-    </div>`).join('');
-  // 순서 저장
-  S.settings[orderKey] = merged;
-}
-
-export function axisDragStart(e, field, idx) { _axisDragIdx=idx; _axisField=field; e.currentTarget.classList.add('dragging-col'); e.dataTransfer.effectAllowed='move'; }
-export function axisDragOver(e, idx)  { e.preventDefault(); document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('drag-over-col')); e.currentTarget.classList.add('drag-over-col'); }
-export function axisDragLeave(e)      { e.currentTarget.classList.remove('drag-over-col'); }
-export function axisDrop(e, field, toIdx) {
-  e.preventDefault();
-  if (_axisDragIdx === null || _axisDragIdx === toIdx) return;
-  const orderKey = field === 'group' ? 'groupOrder' : 'catOrder';
-  const listId   = field === 'group' ? 'groupAxisList' : 'catAxisList';
-  const list = Array.from(document.querySelectorAll(`#${listId} .col-row`)).map(r=>r.dataset.val);
-  const [moved] = list.splice(_axisDragIdx, 1);
-  list.splice(toIdx, 0, moved);
-  S.settings[orderKey] = list;
-  save();
-  setStore({ settings: { ...S.settings } });
-  renderAxisEditor();
-  if (S.view === 'matrix') renderMatrix();
-}
-export function axisDragEnd() { _axisDragIdx=null; _axisField=null; document.querySelectorAll('.col-row').forEach(r=>r.classList.remove('dragging-col','drag-over-col')); }
+export function axisDragStart() {}
+export function axisDragOver(e) { e.preventDefault(); }
+export function axisDragLeave() {}
+export function axisDrop(e)     { e.preventDefault(); }
+export function axisDragEnd()   {}
 export function resetAxisOrder() { S.settings.groupOrder=[]; S.settings.catOrder=[]; save(); setStore({ settings: { ...S.settings } }); renderAxisEditor(); if(S.view==='matrix')renderMatrix(); notify('축 순서를 자동 정렬로 초기화했습니다.'); }
 
 /* ── 설정 JSON Import / Export ── */

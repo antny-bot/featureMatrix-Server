@@ -2,7 +2,7 @@
    theme.js — 색상 계산, CSS 변수 주입, 테마 전환
 ══════════════════════════════════════════ */
 
-import { THEMES, PRESETS } from './constants.js';
+import { THEMES } from './constants.js';
 import { S, save, notify }  from './state.js';
 
 export function getColors() {
@@ -50,28 +50,11 @@ export function applyTheme(tid) {
   save();
   applyVars();
   window.__sobukRenderAll?.();
-  renderThemeGrid();
-  updateDesignContent();
-  renderPrioStyleRows();
-  renderPreviewCards();
   notify(`테마 적용: ${THEMES[tid].name}`);
 }
 
 export function renderThemeGrid() {
-  const el   = document.getElementById('themeGrid');
-  if (!el) return;
-  const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-  el.innerHTML = Object.entries(THEMES).map(([tid, th]) => {
-    const tc = th[mode], on = tid === S.settings.themeId;
-    return `<div class="theme-card${on?' on':''}" onclick="applyTheme('${tid}')">
-      <div class="theme-swatches">
-        <div class="theme-swatch" style="background:${tc.pHigh}"></div>
-        <div class="theme-swatch" style="background:${tc.pMid}"></div>
-        <div class="theme-swatch" style="background:${tc.mxGBg}"></div>
-      </div>
-      <div class="theme-name">${th.name}</div>
-    </div>`;
-  }).join('');
+  // React SettingsDesignPanel renders the theme grid.
 }
 
 export function setCustomColor(k, v) {
@@ -80,52 +63,10 @@ export function setCustomColor(k, v) {
   S.settings.customColors[mode][k] = v;
   save();
   applyVars();
-  updateDesignContent();
-  if (document.getElementById('scs')?.classList.contains('on')) {
-    renderPrioStyleRows();
-    renderPreviewCards();
-  }
 }
 
 export function updateDesignContent() {
-  const el = document.getElementById('designContent');
-  if (!el) return;
-  const c = getColors();
-  const grps = [
-    { ttl:'보더', items:[{id:'mxBorder', lbl:'보더 색상'}] },
-    { ttl:'X축 헤더 (그룹)', items:[
-      {id:'mxGBg', lbl:'배경색'}, {id:'mxGC', lbl:'텍스트 색'}
-    ]},
-    { ttl:'X축 서브헤더 (서브그룹)', items:[
-      {id:'mxSgBg', lbl:'배경색'}, {id:'mxSgC', lbl:'텍스트 색'}
-    ]},
-    { ttl:'Y축 헤더·서브헤더 (카테고리)', items:[
-      {id:'mxCBg', lbl:'배경색'}, {id:'mxCC', lbl:'텍스트 색'}
-    ]}
-  ];
-  const colorRow = (id, lbl) => {
-    const val = c[id] || '#888888';
-    return `<div class="crow">
-      <span class="crow-lbl">${lbl}</span>
-      <div style="display:flex;align-items:center;gap:5px">
-        <input type="color" value="${val}" class="cpick" onchange="onCP(this,'${id}')">
-        <input type="text" value="${val}" class="hexinp" maxlength="7" onchange="onHex(this,'${id}')" onkeyup="onHexKey(this,'${id}')" placeholder="#RRGGBB">
-      </div>
-    </div>`;
-  };
-  let h = `<div class="crow" style="border-bottom:1px solid var(--border);padding:8px 0">
-    <span style="font-size:.8125rem;font-weight:500;color:var(--text)">보더 두께</span>
-    <div style="display:flex;align-items:center;gap:5px">
-      <button class="stepbtn" onclick="adjBW(-1)">−</button>
-      <span id="dBW" style="font-size:.8125rem;font-weight:600;min-width:32px;text-align:center">${c.mxBW}px</span>
-      <button class="stepbtn" onclick="adjBW(1)">+</button>
-    </div>
-  </div>`;
-  grps.forEach(grp => {
-    h += `<div class="sec-ttl">${grp.ttl}</div>`;
-    grp.items.forEach(item => { h += colorRow(item.id, item.lbl); });
-  });
-  el.innerHTML = h;
+  // React SettingsDesignPanel renders design color controls.
 }
 
 export function getPresetCSS(pid, pHex, pBg) {
@@ -142,74 +83,23 @@ export function getPresetCSS(pid, pHex, pBg) {
 }
 
 export function renderPrioStyleRows() {
-  const el = document.getElementById('prioStyleRows');
-  if (!el) return;
-  const c     = getColors();
-  const pDefs = [{val:'상',pk:'high'},{val:'중',pk:'mid'},{val:'하',pk:'low'}];
-  el.innerHTML = pDefs.map(pd => {
-    const pid  = S.settings.priorityStyles[pd.pk];
-    const pkC  = pd.pk[0].toUpperCase() + pd.pk.slice(1);
-    const pHex = c[`p${pkC}`]   || '#888888';
-    const pBg  = c[`p${pkC}Bg`] || '#eeeeee';
-    const presetBtns = PRESETS.map(pr =>
-      `<div class="preset-btn${pid===pr.id?' on':''}" onclick="setPreset('${pd.pk}','${pr.id}')">
-         <div class="preset-prev" style="${getPresetCSS(pr.id,pHex,pBg)}"></div>
-         <div class="preset-lbl">${pr.label}</div>
-       </div>`
-    ).join('');
-    return `<div style="padding:7px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:5px">${pd.val} 우선순위</div>
-      <div class="preset-grid">${presetBtns}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
-        <div>
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:3px">포인트 색상</div>
-          <div style="display:flex;gap:5px;align-items:center">
-            <input type="color" value="${pHex}" class="cpick" onchange="onCP(this,'p${pkC}')">
-            <input type="text" value="${pHex}" class="hexinp" maxlength="7" onchange="onHex(this,'p${pkC}')" onkeyup="onHexKey(this,'p${pkC}')" placeholder="#RRGGBB">
-          </div>
-        </div>
-        <div>
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:3px">배경 색상</div>
-          <div style="display:flex;gap:5px;align-items:center">
-            <input type="color" value="${pBg}" class="cpick" onchange="onCP(this,'p${pkC}Bg')">
-            <input type="text" value="${pBg}" class="hexinp" maxlength="7" onchange="onHex(this,'p${pkC}Bg')" onkeyup="onHexKey(this,'p${pkC}Bg')" placeholder="#RRGGBB">
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  // React SettingsDesignPanel renders priority style rows.
 }
 
 export function renderPreviewCards() {
-  const el = document.getElementById('previewCards');
-  if (!el) return;
-  const c     = getColors();
-  const items = [{pk:'high',name:'결제 처리',key:'N0011'},{pk:'mid',name:'알림 발송',key:'N0014'},{pk:'low',name:'구버전 API',key:'N0013'}];
-  el.innerHTML = items.map(pd => {
-    const pkC  = pd.pk[0].toUpperCase() + pd.pk.slice(1);
-    const pHex = c[`p${pkC}`]   || '#888';
-    const pBg  = c[`p${pkC}Bg`] || '#eee';
-    const cs   = `${getPresetCSS(S.settings.priorityStyles[pd.pk],pHex,pBg)};border-radius:${S.settings.cardRadius}px;padding:5px 7px;flex:1`;
-    return `<div style="${cs}">
-      <div style="font-size:.6rem;color:var(--text-3);margin-bottom:2px">${pd.key}</div>
-      <div style="font-size:.78rem;font-weight:600;color:var(--text)">${pd.name}</div>
-      <div style="font-size:.66rem;color:var(--text-3)">홍길동</div>
-    </div>`;
-  }).join('');
+  // React SettingsDesignPanel renders preview cards.
 }
 
 export function setPreset(pk, pid) {
   S.settings.priorityStyles[pk] = pid;
   save();
   window.__sobukRenderAll?.();
-  renderPrioStyleRows();
-  renderPreviewCards();
 }
 
-export function onCP(inp, ckey)    { inp.parentNode.querySelector('.hexinp').value = inp.value; setCustomColor(ckey, inp.value); }
-export function onHex(inp, ckey)   { const v = inp.value.trim(); if (!/^#[0-9A-Fa-f]{6}$/.test(v)) return; inp.parentNode.querySelector('.cpick').value = v; setCustomColor(ckey, v); }
+export function onCP(inp, ckey)    { setCustomColor(ckey, inp.value); }
+export function onHex(inp, ckey)   { const v = inp.value.trim(); if (/^#[0-9A-Fa-f]{6}$/.test(v)) setCustomColor(ckey, v); }
 export function onHexKey(inp, ckey){ if (/^#[0-9A-Fa-f]{6}$/.test(inp.value.trim())) onHex(inp, ckey); }
-export function adjBW(d)           { const c = getColors(); const next = Math.max(1, Math.min(4, (c.mxBW||1) + d)); setCustomColor('mxBW', next); const el = document.getElementById('dBW'); if (el) el.textContent = `${next}px`; }
+export function adjBW(d)           { const c = getColors(); const next = Math.max(1, Math.min(4, (c.mxBW||1) + d)); setCustomColor('mxBW', next); }
 
 export function applyBlurSetting() {
   const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;

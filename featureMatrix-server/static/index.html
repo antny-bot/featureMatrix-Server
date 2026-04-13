@@ -18156,27 +18156,9 @@ function __inlineNotify(msg, type) {
     save();
     applyVars();
     renderAll();
-    renderThemeGrid();
-    updateDesignContent();
-    renderPrioStyleRows();
-    renderPreviewCards();
     notify(`\uD14C\uB9C8 \uC801\uC6A9: ${THEMES[tid].name}`);
   }
   function renderThemeGrid() {
-    const el = document.getElementById("themeGrid");
-    if (!el) return;
-    const mode = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-    el.innerHTML = Object.entries(THEMES).map(([tid, th]) => {
-      const tc = th[mode], on2 = tid === S.settings.themeId;
-      return `<div class="theme-card${on2 ? " on" : ""}" onclick="applyTheme('${tid}')">
-      <div class="theme-swatches">
-        <div class="theme-swatch" style="background:${tc.pHigh}"></div>
-        <div class="theme-swatch" style="background:${tc.pMid}"></div>
-        <div class="theme-swatch" style="background:${tc.mxGBg}"></div>
-      </div>
-      <div class="theme-name">${th.name}</div>
-    </div>`;
-    }).join("");
   }
   function setCustomColor(k, v) {
     const mode = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
@@ -18184,56 +18166,8 @@ function __inlineNotify(msg, type) {
     S.settings.customColors[mode][k] = v;
     save();
     applyVars();
-    updateDesignContent();
-    if (document.getElementById("scs")?.classList.contains("on")) {
-      renderPrioStyleRows();
-      renderPreviewCards();
-    }
   }
   function updateDesignContent() {
-    const el = document.getElementById("designContent");
-    if (!el) return;
-    const c = getColors();
-    const grps = [
-      { ttl: "\uBCF4\uB354", items: [{ id: "mxBorder", lbl: "\uBCF4\uB354 \uC0C9\uC0C1" }] },
-      { ttl: "X\uCD95 \uD5E4\uB354 (\uADF8\uB8F9)", items: [
-        { id: "mxGBg", lbl: "\uBC30\uACBD\uC0C9" },
-        { id: "mxGC", lbl: "\uD14D\uC2A4\uD2B8 \uC0C9" }
-      ] },
-      { ttl: "X\uCD95 \uC11C\uBE0C\uD5E4\uB354 (\uC11C\uBE0C\uADF8\uB8F9)", items: [
-        { id: "mxSgBg", lbl: "\uBC30\uACBD\uC0C9" },
-        { id: "mxSgC", lbl: "\uD14D\uC2A4\uD2B8 \uC0C9" }
-      ] },
-      { ttl: "Y\uCD95 \uD5E4\uB354\xB7\uC11C\uBE0C\uD5E4\uB354 (\uCE74\uD14C\uACE0\uB9AC)", items: [
-        { id: "mxCBg", lbl: "\uBC30\uACBD\uC0C9" },
-        { id: "mxCC", lbl: "\uD14D\uC2A4\uD2B8 \uC0C9" }
-      ] }
-    ];
-    const colorRow = (id, lbl) => {
-      const val = c[id] || "#888888";
-      return `<div class="crow">
-      <span class="crow-lbl">${lbl}</span>
-      <div style="display:flex;align-items:center;gap:5px">
-        <input type="color" value="${val}" class="cpick" onchange="onCP(this,'${id}')">
-        <input type="text" value="${val}" class="hexinp" maxlength="7" onchange="onHex(this,'${id}')" onkeyup="onHexKey(this,'${id}')" placeholder="#RRGGBB">
-      </div>
-    </div>`;
-    };
-    let h = `<div class="crow" style="border-bottom:1px solid var(--border);padding:8px 0">
-    <span style="font-size:.8125rem;font-weight:500;color:var(--text)">\uBCF4\uB354 \uB450\uAED8</span>
-    <div style="display:flex;align-items:center;gap:5px">
-      <button class="stepbtn" onclick="adjBW(-1)">\u2212</button>
-      <span id="dBW" style="font-size:.8125rem;font-weight:600;min-width:32px;text-align:center">${c.mxBW}px</span>
-      <button class="stepbtn" onclick="adjBW(1)">+</button>
-    </div>
-  </div>`;
-    grps.forEach((grp) => {
-      h += `<div class="sec-ttl">${grp.ttl}</div>`;
-      grp.items.forEach((item) => {
-        h += colorRow(item.id, item.lbl);
-      });
-    });
-    el.innerHTML = h;
   }
   function getPresetCSS(pid, pHex, pBg) {
     switch (pid) {
@@ -18256,76 +18190,20 @@ function __inlineNotify(msg, type) {
     }
   }
   function renderPrioStyleRows() {
-    const el = document.getElementById("prioStyleRows");
-    if (!el) return;
-    const c = getColors();
-    const pDefs = [{ val: "\uC0C1", pk: "high" }, { val: "\uC911", pk: "mid" }, { val: "\uD558", pk: "low" }];
-    el.innerHTML = pDefs.map((pd) => {
-      const pid = S.settings.priorityStyles[pd.pk];
-      const pkC = pd.pk[0].toUpperCase() + pd.pk.slice(1);
-      const pHex = c[`p${pkC}`] || "#888888";
-      const pBg = c[`p${pkC}Bg`] || "#eeeeee";
-      const presetBtns = PRESETS.map(
-        (pr) => `<div class="preset-btn${pid === pr.id ? " on" : ""}" onclick="setPreset('${pd.pk}','${pr.id}')">
-         <div class="preset-prev" style="${getPresetCSS(pr.id, pHex, pBg)}"></div>
-         <div class="preset-lbl">${pr.label}</div>
-       </div>`
-      ).join("");
-      return `<div style="padding:7px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:5px">${pd.val} \uC6B0\uC120\uC21C\uC704</div>
-      <div class="preset-grid">${presetBtns}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
-        <div>
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:3px">\uD3EC\uC778\uD2B8 \uC0C9\uC0C1</div>
-          <div style="display:flex;gap:5px;align-items:center">
-            <input type="color" value="${pHex}" class="cpick" onchange="onCP(this,'p${pkC}')">
-            <input type="text" value="${pHex}" class="hexinp" maxlength="7" onchange="onHex(this,'p${pkC}')" onkeyup="onHexKey(this,'p${pkC}')" placeholder="#RRGGBB">
-          </div>
-        </div>
-        <div>
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:3px">\uBC30\uACBD \uC0C9\uC0C1</div>
-          <div style="display:flex;gap:5px;align-items:center">
-            <input type="color" value="${pBg}" class="cpick" onchange="onCP(this,'p${pkC}Bg')">
-            <input type="text" value="${pBg}" class="hexinp" maxlength="7" onchange="onHex(this,'p${pkC}Bg')" onkeyup="onHexKey(this,'p${pkC}Bg')" placeholder="#RRGGBB">
-          </div>
-        </div>
-      </div>
-    </div>`;
-    }).join("");
   }
   function renderPreviewCards() {
-    const el = document.getElementById("previewCards");
-    if (!el) return;
-    const c = getColors();
-    const items = [{ pk: "high", name: "\uACB0\uC81C \uCC98\uB9AC", key: "N0011" }, { pk: "mid", name: "\uC54C\uB9BC \uBC1C\uC1A1", key: "N0014" }, { pk: "low", name: "\uAD6C\uBC84\uC804 API", key: "N0013" }];
-    el.innerHTML = items.map((pd) => {
-      const pkC = pd.pk[0].toUpperCase() + pd.pk.slice(1);
-      const pHex = c[`p${pkC}`] || "#888";
-      const pBg = c[`p${pkC}Bg`] || "#eee";
-      const cs = `${getPresetCSS(S.settings.priorityStyles[pd.pk], pHex, pBg)};border-radius:${S.settings.cardRadius}px;padding:5px 7px;flex:1`;
-      return `<div style="${cs}">
-      <div style="font-size:.6rem;color:var(--text-3);margin-bottom:2px">${pd.key}</div>
-      <div style="font-size:.78rem;font-weight:600;color:var(--text)">${pd.name}</div>
-      <div style="font-size:.66rem;color:var(--text-3)">\uD64D\uAE38\uB3D9</div>
-    </div>`;
-    }).join("");
   }
   function setPreset(pk, pid) {
     S.settings.priorityStyles[pk] = pid;
     save();
     renderAll();
-    renderPrioStyleRows();
-    renderPreviewCards();
   }
   function onCP(inp, ckey) {
-    inp.parentNode.querySelector(".hexinp").value = inp.value;
     setCustomColor(ckey, inp.value);
   }
   function onHex(inp, ckey) {
     const v = inp.value.trim();
-    if (!/^#[0-9A-Fa-f]{6}$/.test(v)) return;
-    inp.parentNode.querySelector(".cpick").value = v;
-    setCustomColor(ckey, v);
+    if (/^#[0-9A-Fa-f]{6}$/.test(v)) setCustomColor(ckey, v);
   }
   function onHexKey(inp, ckey) {
     if (/^#[0-9A-Fa-f]{6}$/.test(inp.value.trim())) onHex(inp, ckey);
@@ -18334,8 +18212,6 @@ function __inlineNotify(msg, type) {
     const c = getColors();
     const next = Math.max(1, Math.min(4, (c.mxBW || 1) + d));
     setCustomColor("mxBW", next);
-    const el = document.getElementById("dBW");
-    if (el) el.textContent = `${next}px`;
   }
   function applyBlurSetting() {
     const prefersReduced2 = window.matchMedia?.("(prefers-reduced-motion:reduce)").matches ?? false;
@@ -20517,21 +20393,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
 
   // app/settings.js
   function sstab(btn, paneId) {
-    document.querySelectorAll(".stab").forEach((t) => t.classList.remove("on"));
-    document.querySelectorAll(".spane").forEach((p) => p.classList.remove("on"));
-    btn.classList.add("on");
-    document.getElementById(paneId)?.classList.add("on");
-    if (paneId === "sdesign") {
-      renderPrioStyleRows();
-      renderPreviewCards();
-      updateDesignContent();
-      renderThemeGrid();
-      syncAnimUI();
-    }
-    if (paneId === "scola") {
-      renderColEditor();
-      renderAxisEditor();
-    }
     if (paneId === "sserv") window.syncServerSettingsUI?.();
     if (paneId === "slog") {
       window.loadInlineActivityLog?.();
@@ -20630,8 +20491,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   }
   function adjBoardFoldCount(d) {
     S.settings.boardFoldCount = Math.max(0, Math.min(30, (S.settings.boardFoldCount ?? 6) + d));
-    const v = S.settings.boardFoldCount;
-    document.getElementById("dBoardFoldCount").textContent = v === 0 ? "\u221E" : v;
     save();
     setStore({ settings: { ...S.settings } });
   }
@@ -20644,22 +20503,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   function syncAnimUI() {
   }
   function renderColEditor() {
-    const el = document.getElementById("colEditor");
-    if (!el) return;
-    const FLABELS_LOCAL = { key: "Key", name: "\uAE30\uB2A5\uBA85", desc: "\uC124\uBA85", path: "\uACBD\uB85C", group: "\uADF8\uB8F9", subGroup: "\uC11C\uBE0C\uADF8\uB8F9", category: "\uCE74\uD14C\uACE0\uB9AC", subCategory: "\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC", priority: "\uC6B0\uC120\uC21C\uC704", status: "\uC9C4\uD589\uC0C1\uD0DC", owner: "\uB2F4\uB2F9", isDelete: "\uC0AD\uC81C\uC5EC\uBD80", isImportant: "\uC911\uC694\uC5EC\uBD80", relSystem: "\uC5F0\uAD00\uC2DC\uC2A4\uD15C", memo: "\uBA54\uBAA8", mdPath: "MD\uACBD\uB85C", mdContent: "MD\uB0B4\uC6A9" };
-    el.innerHTML = S.settings.listColumns.map(
-      (col, i) => `
-    <div class="col-row" draggable="true" data-idx="${i}"
-      ondragstart="colDragStart(event,${i})" ondragover="colDragOver(event,${i})"
-      ondragleave="colDragLeave(event)" ondrop="colDrop(event,${i})" ondragend="colDragEnd()">
-      <span class="col-handle" title="\uB4DC\uB798\uADF8\uD558\uC5EC \uC21C\uC11C \uBCC0\uACBD">\u283F</span>
-      <label class="tgl" style="gap:6px">
-        <input type="checkbox" ${col.visible ? "checked" : ""} onchange="toggleColVisible(${i},this.checked)">
-        <span class="tgl-track"></span>
-      </label>
-      <span class="col-name">${FLABELS_LOCAL[col.key] || col.key}</span>
-    </div>`
-    ).join("");
   }
   function toggleColVisible(idx, checked) {
     S.settings.listColumns[idx].visible = checked;
@@ -20667,35 +20510,17 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     setStore({ settings: { ...S.settings } });
     if (S.view === "list") renderList();
   }
-  function colDragStart(e, idx) {
-    _colDragIdx = idx;
-    e.currentTarget.classList.add("dragging-col");
-    e.dataTransfer.effectAllowed = "move";
+  function colDragStart() {
   }
-  function colDragOver(e, idx) {
+  function colDragOver(e) {
     e.preventDefault();
-    if (idx === _colDragIdx) return;
-    document.querySelectorAll(".col-row").forEach((r) => r.classList.remove("drag-over-col"));
-    e.currentTarget.classList.add("drag-over-col");
   }
-  function colDragLeave(e) {
-    e.currentTarget.classList.remove("drag-over-col");
+  function colDragLeave() {
   }
-  function colDrop(e, toIdx) {
+  function colDrop(e) {
     e.preventDefault();
-    if (_colDragIdx === null || _colDragIdx === toIdx) return;
-    const cols = [...S.settings.listColumns];
-    const [moved] = cols.splice(_colDragIdx, 1);
-    cols.splice(toIdx, 0, moved);
-    S.settings.listColumns = cols;
-    save();
-    setStore({ settings: { ...S.settings } });
-    renderColEditor();
-    if (S.view === "list") renderList();
   }
   function colDragEnd() {
-    _colDragIdx = null;
-    document.querySelectorAll(".col-row").forEach((r) => r.classList.remove("dragging-col", "drag-over-col"));
   }
   function resetListCols() {
     S.settings.listColumns = JSON.parse(JSON.stringify(DEFAULT_LIST_COLS));
@@ -20706,56 +20531,18 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     notify("\uB9AC\uC2A4\uD2B8 \uCEEC\uB7FC\uC744 \uAE30\uBCF8\uAC12\uC73C\uB85C \uBCF5\uC6D0\uD588\uC2B5\uB2C8\uB2E4.");
   }
   function renderAxisEditor() {
-    renderSingleAxis("groupOrder", "group", "groupAxisList", "\uADF8\uB8F9 (X\uCD95)");
-    renderSingleAxis("catOrder", "category", "catAxisList", "\uCE74\uD14C\uACE0\uB9AC (Y\uCD95)");
   }
-  function renderSingleAxis(orderKey, field, listId, label) {
-    const el = document.getElementById(listId);
-    if (!el) return;
-    const inData = Array.from(new Set(S.items.map((it) => it[field] || "(\uBBF8\uBD84\uB958)"))).sort((a, b) => a.localeCompare(b, "ko"));
-    const order = S.settings[orderKey] || [];
-    const merged = [...order.filter((v) => inData.includes(v)), ...inData.filter((v) => !order.includes(v))];
-    el.innerHTML = merged.map((val, i) => `
-    <div class="col-row" draggable="true" data-val="${val}" data-field="${field}"
-      ondragstart="axisDragStart(event,'${field}',${i})" ondragover="axisDragOver(event,${i})"
-      ondragleave="axisDragLeave(event)" ondrop="axisDrop(event,'${field}',${i})" ondragend="axisDragEnd()">
-      <span class="col-handle" title="\uB4DC\uB798\uADF8\uD558\uC5EC \uC21C\uC11C \uBCC0\uACBD">\u283F</span>
-      <span style="font-size:.82rem;color:var(--text)">${esc(val)}</span>
-    </div>`).join("");
-    S.settings[orderKey] = merged;
+  function axisDragStart() {
   }
-  function axisDragStart(e, field, idx) {
-    _axisDragIdx = idx;
-    _axisField = field;
-    e.currentTarget.classList.add("dragging-col");
-    e.dataTransfer.effectAllowed = "move";
-  }
-  function axisDragOver(e, idx) {
+  function axisDragOver(e) {
     e.preventDefault();
-    document.querySelectorAll(".col-row").forEach((r) => r.classList.remove("drag-over-col"));
-    e.currentTarget.classList.add("drag-over-col");
   }
-  function axisDragLeave(e) {
-    e.currentTarget.classList.remove("drag-over-col");
+  function axisDragLeave() {
   }
-  function axisDrop(e, field, toIdx) {
+  function axisDrop(e) {
     e.preventDefault();
-    if (_axisDragIdx === null || _axisDragIdx === toIdx) return;
-    const orderKey = field === "group" ? "groupOrder" : "catOrder";
-    const listId = field === "group" ? "groupAxisList" : "catAxisList";
-    const list = Array.from(document.querySelectorAll(`#${listId} .col-row`)).map((r) => r.dataset.val);
-    const [moved] = list.splice(_axisDragIdx, 1);
-    list.splice(toIdx, 0, moved);
-    S.settings[orderKey] = list;
-    save();
-    setStore({ settings: { ...S.settings } });
-    renderAxisEditor();
-    if (S.view === "matrix") renderMatrix();
   }
   function axisDragEnd() {
-    _axisDragIdx = null;
-    _axisField = null;
-    document.querySelectorAll(".col-row").forEach((r) => r.classList.remove("dragging-col", "drag-over-col"));
   }
   function resetAxisOrder() {
     S.settings.groupOrder = [];
@@ -20831,7 +20618,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     renderAll();
     notify("\uC124\uC815\uC774 \uCD08\uAE30\uD654\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
   }
-  var _colDragIdx, _axisDragIdx, _axisField;
   var init_settings = __esm({
     "app/settings.js"() {
       init_constants();
@@ -20842,9 +20628,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       init_constants();
       init_admin();
       init_useAppStore();
-      _colDragIdx = null;
-      _axisDragIdx = null;
-      _axisField = null;
     }
   });
 

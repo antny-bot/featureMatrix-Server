@@ -4,8 +4,7 @@
    portal root: #settingsModal (App.jsx의 빈 컨테이너)
    탭 상태: React useState (activeTab)
    설정값: Zustand store에서 직접 읽음 → syncSettingsUI() 불필요
-   복잡한 서브에디터(colEditor, themeGrid 등): 여전히 vanilla innerHTML,
-     activeTab 변경 시 useEffect로 호출
+   복잡한 서브에디터(colEditor, themeGrid 등): React 하위 컴포넌트가 직접 렌더링
 ══════════════════════════════════════════ */
 
 import { createPortal } from 'react-dom';
