@@ -13,17 +13,22 @@ export default function BulkActionBar() {
   const view = useAppStore(s => s.view);
   const { isAdmin: adminOk } = useAuth();
   const [snapshot, setSnapshot] = useState(getSnapshot);
+  const [owner, setOwner] = useState('');
 
   useEffect(() => {
     const refresh = () => setSnapshot(getSnapshot());
     window.__bulkBarRefresh = refresh;
+    window.__bulkOwnerValue = () => owner.trim();
+    window.__bulkOwnerClear = () => setOwner('');
     window.addEventListener('bulkSelChange', refresh);
     refresh();
     return () => {
       window.removeEventListener('bulkSelChange', refresh);
       delete window.__bulkBarRefresh;
+      delete window.__bulkOwnerValue;
+      delete window.__bulkOwnerClear;
     };
-  }, []);
+  }, [owner]);
 
   const visible = view === 'list' && snapshot.count > 0;
   const lockStyle = adminOk ? undefined : { opacity: .45, pointerEvents: 'none' };
@@ -43,6 +48,8 @@ export default function BulkActionBar() {
           className="inp"
           style={{ width: '90px', height: '27px', padding: '0 7px', fontSize: '.78rem' }}
           placeholder="이름 입력"
+          value={owner}
+          onChange={event => setOwner(event.target.value)}
           disabled={!adminOk}
         />
         <button className="rbtn" onClick={() => window.bulkSetOwner?.()} title={lockTitle}>일괄변경</button>

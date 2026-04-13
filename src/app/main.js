@@ -149,15 +149,14 @@ window.bulkSetPrio = val => {
 };
 
 window.bulkSetOwner = () => {
-  const inp = document.getElementById('bulkOwnerInp');
-  if (!inp) return;
-  const val = inp.value.trim();
+  const val = window.__bulkOwnerValue?.() || '';
   if (!val) return;
   requireAdmin(() => {
     const keys = [...bulkSel.keys];
     keys.forEach(k => { const it = S.items.find(i => i.key === k); if (it) it.owner = val; });
     logActivity('일괄변경', `담당→${val} (${keys.join(', ')})`);
     save(); renderList(); renderBulkBar();
+    window.__bulkOwnerClear?.();
   });
 };
 

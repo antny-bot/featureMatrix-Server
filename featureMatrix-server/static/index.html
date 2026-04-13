@@ -20663,9 +20663,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         });
       };
       window.bulkSetOwner = () => {
-        const inp = document.getElementById("bulkOwnerInp");
-        if (!inp) return;
-        const val = inp.value.trim();
+        const val = window.__bulkOwnerValue?.() || "";
         if (!val) return;
         requireAdmin(() => {
           const keys = [...bulkSel.keys];
@@ -20677,6 +20675,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           save();
           renderList();
           renderBulkBar();
+          window.__bulkOwnerClear?.();
         });
       };
       window.openDiffModal = () => {
@@ -24119,16 +24118,21 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const view = useAppStore((s) => s.view);
     const { isAdmin: adminOk } = useAuth();
     const [snapshot, setSnapshot] = (0, import_react15.useState)(getSnapshot);
+    const [owner, setOwner] = (0, import_react15.useState)("");
     (0, import_react15.useEffect)(() => {
       const refresh = () => setSnapshot(getSnapshot());
       window.__bulkBarRefresh = refresh;
+      window.__bulkOwnerValue = () => owner.trim();
+      window.__bulkOwnerClear = () => setOwner("");
       window.addEventListener("bulkSelChange", refresh);
       refresh();
       return () => {
         window.removeEventListener("bulkSelChange", refresh);
         delete window.__bulkBarRefresh;
+        delete window.__bulkOwnerValue;
+        delete window.__bulkOwnerClear;
       };
-    }, []);
+    }, [owner]);
     const visible = view === "list" && snapshot.count > 0;
     const lockStyle = adminOk ? void 0 : { opacity: 0.45, pointerEvents: "none" };
     const lockTitle = adminOk ? void 0 : "\uAD00\uB9AC\uC790 \uC804\uC6A9";
@@ -24150,6 +24154,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             className: "inp",
             style: { width: "90px", height: "27px", padding: "0 7px", fontSize: ".78rem" },
             placeholder: "\uC774\uB984 \uC785\uB825",
+            value: owner,
+            onChange: (event) => setOwner(event.target.value),
             disabled: !adminOk
           }
         ),
