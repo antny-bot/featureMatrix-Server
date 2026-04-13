@@ -158,33 +158,7 @@ export default function SettingsPanel() {
 
         {/* ── 서버 탭 ── */}
         {activeTab === 'sserv' && (
-          <div>
-            <div className="sec-ttl">스토리지 모드</div>
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem', cursor: 'pointer' }}>
-                <input type="radio" name="storageMode" id="modeServer" value="server" onChange={() => window.saveServerSettings?.()} />
-                🌐 서버 (공유, 기본)
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem', cursor: 'pointer' }}>
-                <input type="radio" name="storageMode" id="modeLocal" value="local" onChange={() => window.saveServerSettings?.()} />
-                💾 로컬 (개인)
-              </label>
-            </div>
-            <div className="sec-ttl">연결 설정</div>
-            <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px' }}>
-              <div className="slbl">사용자 이름</div>
-              <div className="ssub">변경 이력 및 활동 로그에 표시되는 이름</div>
-              <input className="inp" id="sUserName" placeholder="홍길동" style={{ height: '28px', fontSize: '.8rem' }} onKeyDown={e => { if(e.key==='Enter') window.saveServerSettings?.(); }} />
-            </div>
-            <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px', marginTop: '4px' }}>
-              <div className="slbl">서버 URL</div>
-              <div className="ssub">비워두면 현재 도메인 사용</div>
-              <input className="inp" id="sServerUrl" placeholder="http://서버IP:5000" style={{ height: '28px', fontSize: '.8rem', fontFamily: 'monospace' }} onKeyDown={e => { if(e.key==='Enter') window.saveServerSettings?.(); }} />
-            </div>
-            <div style={{ marginTop: '14px' }}>
-              <button className="btn btn-p btn-sm" onClick={() => window.saveServerSettings?.()}>저장</button>
-            </div>
-          </div>
+          <ServerSettingsPanel settings={settings} />
         )}
 
         {/* ── 로그 탭 ── */}
@@ -269,6 +243,92 @@ function Stepper({ label, sub, value, onMinus, onPlus }) {
         <button className="stepbtn" onClick={onMinus}>−</button>
         <span>{value}</span>
         <button className="stepbtn" onClick={onPlus}>+</button>
+      </div>
+    </div>
+  );
+}
+
+function ServerSettingsPanel({ settings }) {
+  const [form, setForm] = useState({
+    storageMode: settings.storageMode || 'server',
+    serverUrl: settings.serverUrl || '',
+    userName: settings.userName || '',
+  });
+
+  useEffect(() => {
+    setForm({
+      storageMode: settings.storageMode || 'server',
+      serverUrl: settings.serverUrl || '',
+      userName: settings.userName || '',
+    });
+  }, [settings.storageMode, settings.serverUrl, settings.userName]);
+
+  const saveServerSettings = (nextForm = form) => {
+    window.saveServerSettings?.(nextForm);
+  };
+
+  const setMode = storageMode => {
+    const next = { ...form, storageMode };
+    setForm(next);
+    saveServerSettings(next);
+  };
+
+  return (
+    <div>
+      <div className="sec-ttl">스토리지 모드</div>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem', cursor: 'pointer' }}>
+          <input
+            type="radio"
+            name="storageMode"
+            id="modeServer"
+            value="server"
+            checked={form.storageMode === 'server'}
+            onChange={() => setMode('server')}
+          />
+          🌐 서버 (공유, 기본)
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem', cursor: 'pointer' }}>
+          <input
+            type="radio"
+            name="storageMode"
+            id="modeLocal"
+            value="local"
+            checked={form.storageMode === 'local'}
+            onChange={() => setMode('local')}
+          />
+          💾 로컬 (개인)
+        </label>
+      </div>
+      <div className="sec-ttl">연결 설정</div>
+      <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px' }}>
+        <div className="slbl">사용자 이름</div>
+        <div className="ssub">변경 이력 및 활동 로그에 표시되는 이름</div>
+        <input
+          className="inp"
+          id="sUserName"
+          value={form.userName}
+          onChange={event => setForm(current => ({ ...current, userName: event.target.value }))}
+          placeholder="홍길동"
+          style={{ height: '28px', fontSize: '.8rem' }}
+          onKeyDown={event => { if (event.key === 'Enter') saveServerSettings(); }}
+        />
+      </div>
+      <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px', marginTop: '4px' }}>
+        <div className="slbl">서버 URL</div>
+        <div className="ssub">비워두면 현재 도메인 사용</div>
+        <input
+          className="inp"
+          id="sServerUrl"
+          value={form.serverUrl}
+          onChange={event => setForm(current => ({ ...current, serverUrl: event.target.value }))}
+          placeholder="http://서버IP:5000"
+          style={{ height: '28px', fontSize: '.8rem', fontFamily: 'monospace' }}
+          onKeyDown={event => { if (event.key === 'Enter') saveServerSettings(); }}
+        />
+      </div>
+      <div style={{ marginTop: '14px' }}>
+        <button className="btn btn-p btn-sm" onClick={() => saveServerSettings()}>저장</button>
       </div>
     </div>
   );

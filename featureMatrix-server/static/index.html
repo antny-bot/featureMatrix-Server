@@ -20485,14 +20485,6 @@ function __inlineNotify(msg, type) {
   }
   function syncServerSettingsUI() {
     const mode = S.settings.storageMode || "server";
-    ["modeServer", "modeLocal"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.checked = id === "modeServer" ? mode === "server" : mode === "local";
-    });
-    const urlEl = document.getElementById("sServerUrl");
-    if (urlEl) urlEl.value = S.settings.serverUrl || "";
-    const nameEl = document.getElementById("sUserName");
-    if (nameEl) nameEl.value = S.settings.userName || "";
     const badge = document.getElementById("storageModeBadge");
     const label = document.getElementById("serverStatusLabel");
     if (label) label.textContent = mode === "server" ? "\u{1F310}" : "\u{1F4BE}";
@@ -20903,11 +20895,11 @@ function __inlineNotify(msg, type) {
         syncSettingsUI();
         renderAll();
       };
-      window.saveServerSettings = async () => {
-        const mode = document.querySelector('input[name="storageMode"]:checked')?.value || "local";
+      window.saveServerSettings = async (nextSettings = null) => {
+        const mode = nextSettings?.storageMode || S.settings.storageMode || "local";
         S.settings.storageMode = mode;
-        S.settings.serverUrl = document.getElementById("sServerUrl")?.value.trim() || "";
-        S.settings.userName = document.getElementById("sUserName")?.value.trim() || "";
+        S.settings.serverUrl = nextSettings?.serverUrl?.trim() || "";
+        S.settings.userName = nextSettings?.userName?.trim() || "";
         if (mode === "server") {
           notify("\uC11C\uBC84\uC5D0 \uC5F0\uACB0 \uC911...");
           const ok = await loadFromServer();
@@ -22722,35 +22714,7 @@ function __inlineNotify(msg, type) {
               ] })
             ] })
           ] }),
-          activeTab === "sserv" && /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "sec-ttl", children: "\uC2A4\uD1A0\uB9AC\uC9C0 \uBAA8\uB4DC" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", gap: "12px", marginBottom: "12px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "6px", fontSize: ".82rem", cursor: "pointer" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "radio", name: "storageMode", id: "modeServer", value: "server", onChange: () => window.saveServerSettings?.() }),
-                "\u{1F310} \uC11C\uBC84 (\uACF5\uC720, \uAE30\uBCF8)"
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "6px", fontSize: ".82rem", cursor: "pointer" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "radio", name: "storageMode", id: "modeLocal", value: "local", onChange: () => window.saveServerSettings?.() }),
-                "\u{1F4BE} \uB85C\uCEEC (\uAC1C\uC778)"
-              ] })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "sec-ttl", children: "\uC5F0\uACB0 \uC124\uC815" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "5px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uC0AC\uC6A9\uC790 \uC774\uB984" }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ssub", children: "\uBCC0\uACBD \uC774\uB825 \uBC0F \uD65C\uB3D9 \uB85C\uADF8\uC5D0 \uD45C\uC2DC\uB418\uB294 \uC774\uB984" }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "sUserName", placeholder: "\uD64D\uAE38\uB3D9", style: { height: "28px", fontSize: ".8rem" }, onKeyDown: (e) => {
-                if (e.key === "Enter") window.saveServerSettings?.();
-              } })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "5px", marginTop: "4px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uC11C\uBC84 URL" }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ssub", children: "\uBE44\uC6CC\uB450\uBA74 \uD604\uC7AC \uB3C4\uBA54\uC778 \uC0AC\uC6A9" }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { className: "inp", id: "sServerUrl", placeholder: "http://\uC11C\uBC84IP:5000", style: { height: "28px", fontSize: ".8rem", fontFamily: "monospace" }, onKeyDown: (e) => {
-                if (e.key === "Enter") window.saveServerSettings?.();
-              } })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { style: { marginTop: "14px" }, children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveServerSettings?.(), children: "\uC800\uC7A5" }) })
-          ] }),
+          activeTab === "sserv" && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(ServerSettingsPanel, { settings }),
           activeTab === "slog" && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
             ActivityLogPanel,
             {
@@ -22849,6 +22813,99 @@ function __inlineNotify(msg, type) {
         /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { children: value2 }),
         /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "stepbtn", onClick: onPlus, children: "+" })
       ] })
+    ] });
+  }
+  function ServerSettingsPanel({ settings }) {
+    const [form, setForm] = (0, import_react9.useState)({
+      storageMode: settings.storageMode || "server",
+      serverUrl: settings.serverUrl || "",
+      userName: settings.userName || ""
+    });
+    (0, import_react9.useEffect)(() => {
+      setForm({
+        storageMode: settings.storageMode || "server",
+        serverUrl: settings.serverUrl || "",
+        userName: settings.userName || ""
+      });
+    }, [settings.storageMode, settings.serverUrl, settings.userName]);
+    const saveServerSettings = (nextForm = form) => {
+      window.saveServerSettings?.(nextForm);
+    };
+    const setMode = (storageMode) => {
+      const next = { ...form, storageMode };
+      setForm(next);
+      saveServerSettings(next);
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "sec-ttl", children: "\uC2A4\uD1A0\uB9AC\uC9C0 \uBAA8\uB4DC" }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", gap: "12px", marginBottom: "12px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "6px", fontSize: ".82rem", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            "input",
+            {
+              type: "radio",
+              name: "storageMode",
+              id: "modeServer",
+              value: "server",
+              checked: form.storageMode === "server",
+              onChange: () => setMode("server")
+            }
+          ),
+          "\u{1F310} \uC11C\uBC84 (\uACF5\uC720, \uAE30\uBCF8)"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "6px", fontSize: ".82rem", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            "input",
+            {
+              type: "radio",
+              name: "storageMode",
+              id: "modeLocal",
+              value: "local",
+              checked: form.storageMode === "local",
+              onChange: () => setMode("local")
+            }
+          ),
+          "\u{1F4BE} \uB85C\uCEEC (\uAC1C\uC778)"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "sec-ttl", children: "\uC5F0\uACB0 \uC124\uC815" }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "5px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uC0AC\uC6A9\uC790 \uC774\uB984" }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ssub", children: "\uBCC0\uACBD \uC774\uB825 \uBC0F \uD65C\uB3D9 \uB85C\uADF8\uC5D0 \uD45C\uC2DC\uB418\uB294 \uC774\uB984" }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          "input",
+          {
+            className: "inp",
+            id: "sUserName",
+            value: form.userName,
+            onChange: (event) => setForm((current) => ({ ...current, userName: event.target.value })),
+            placeholder: "\uD64D\uAE38\uB3D9",
+            style: { height: "28px", fontSize: ".8rem" },
+            onKeyDown: (event) => {
+              if (event.key === "Enter") saveServerSettings();
+            }
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "5px", marginTop: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uC11C\uBC84 URL" }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ssub", children: "\uBE44\uC6CC\uB450\uBA74 \uD604\uC7AC \uB3C4\uBA54\uC778 \uC0AC\uC6A9" }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          "input",
+          {
+            className: "inp",
+            id: "sServerUrl",
+            value: form.serverUrl,
+            onChange: (event) => setForm((current) => ({ ...current, serverUrl: event.target.value })),
+            placeholder: "http://\uC11C\uBC84IP:5000",
+            style: { height: "28px", fontSize: ".8rem", fontFamily: "monospace" },
+            onKeyDown: (event) => {
+              if (event.key === "Enter") saveServerSettings();
+            }
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { style: { marginTop: "14px" }, children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => saveServerSettings(), children: "\uC800\uC7A5" }) })
     ] });
   }
 

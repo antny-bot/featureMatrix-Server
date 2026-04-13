@@ -322,11 +322,11 @@ window.reloadFromServer = async () => {
 };
 
 /* ── 서버 설정 저장 ── */
-window.saveServerSettings = async () => {
-  const mode = document.querySelector('input[name="storageMode"]:checked')?.value || 'local';
+window.saveServerSettings = async (nextSettings = null) => {
+  const mode = nextSettings?.storageMode || S.settings.storageMode || 'local';
   S.settings.storageMode  = mode;
-  S.settings.serverUrl    = document.getElementById('sServerUrl')?.value.trim() || '';
-  S.settings.userName     = document.getElementById('sUserName')?.value.trim() || '';
+  S.settings.serverUrl    = nextSettings?.serverUrl?.trim() || '';
+  S.settings.userName     = nextSettings?.userName?.trim() || '';
 
   if (mode === 'server') {
     notify('서버에 연결 중...');
@@ -402,14 +402,6 @@ window.setServerStatus = setServerStatus;
 
 function syncServerSettingsUI() {
   const mode = S.settings.storageMode || 'server';
-  ['modeServer','modeLocal'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.checked = (id === 'modeServer') ? mode === 'server' : mode === 'local';
-  });
-  const urlEl  = document.getElementById('sServerUrl');
-  if (urlEl)  urlEl.value  = S.settings.serverUrl  || '';
-  const nameEl = document.getElementById('sUserName');
-  if (nameEl) nameEl.value = S.settings.userName    || '';
   const badge  = document.getElementById('storageModeBadge');
   const label  = document.getElementById('serverStatusLabel');
   if (label) label.textContent = mode === 'server' ? '🌐' : '💾';
