@@ -1341,10 +1341,10 @@ function __inlineNotify(msg, type) {
       exports.useState = function(initialState2) {
         return ReactSharedInternals.H.useState(initialState2);
       };
-      exports.useSyncExternalStore = function(subscribe, getSnapshot, getServerSnapshot) {
+      exports.useSyncExternalStore = function(subscribe, getSnapshot2, getServerSnapshot) {
         return ReactSharedInternals.H.useSyncExternalStore(
           subscribe,
-          getSnapshot,
+          getSnapshot2,
           getServerSnapshot
         );
       };
@@ -5018,12 +5018,12 @@ function __inlineNotify(msg, type) {
         }
         return [newState, dispatch];
       }
-      function updateSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) {
+      function updateSyncExternalStore(subscribe, getSnapshot2, getServerSnapshot) {
         var fiber = currentlyRenderingFiber, hook = updateWorkInProgressHook(), isHydrating$jscomp$0 = isHydrating;
         if (isHydrating$jscomp$0) {
           if (void 0 === getServerSnapshot) throw Error(formatProdErrorMessage(407));
           getServerSnapshot = getServerSnapshot();
-        } else getServerSnapshot = getSnapshot();
+        } else getServerSnapshot = getSnapshot2();
         var snapshotChanged = !objectIs(
           (currentHook || hook).memoizedState,
           getServerSnapshot
@@ -5033,7 +5033,7 @@ function __inlineNotify(msg, type) {
         updateEffect(subscribeToStore.bind(null, fiber, hook, subscribe), [
           subscribe
         ]);
-        if (hook.getSnapshot !== getSnapshot || snapshotChanged || null !== workInProgressHook && workInProgressHook.memoizedState.tag & 1) {
+        if (hook.getSnapshot !== getSnapshot2 || snapshotChanged || null !== workInProgressHook && workInProgressHook.memoizedState.tag & 1) {
           fiber.flags |= 2048;
           pushSimpleEffect(
             9,
@@ -5043,24 +5043,24 @@ function __inlineNotify(msg, type) {
               fiber,
               hook,
               getServerSnapshot,
-              getSnapshot
+              getSnapshot2
             ),
             null
           );
           if (null === workInProgressRoot) throw Error(formatProdErrorMessage(349));
-          isHydrating$jscomp$0 || 0 !== (renderLanes & 127) || pushStoreConsistencyCheck(fiber, getSnapshot, getServerSnapshot);
+          isHydrating$jscomp$0 || 0 !== (renderLanes & 127) || pushStoreConsistencyCheck(fiber, getSnapshot2, getServerSnapshot);
         }
         return getServerSnapshot;
       }
-      function pushStoreConsistencyCheck(fiber, getSnapshot, renderedSnapshot) {
+      function pushStoreConsistencyCheck(fiber, getSnapshot2, renderedSnapshot) {
         fiber.flags |= 16384;
-        fiber = { getSnapshot, value: renderedSnapshot };
-        getSnapshot = currentlyRenderingFiber.updateQueue;
-        null === getSnapshot ? (getSnapshot = createFunctionComponentUpdateQueue(), currentlyRenderingFiber.updateQueue = getSnapshot, getSnapshot.stores = [fiber]) : (renderedSnapshot = getSnapshot.stores, null === renderedSnapshot ? getSnapshot.stores = [fiber] : renderedSnapshot.push(fiber));
+        fiber = { getSnapshot: getSnapshot2, value: renderedSnapshot };
+        getSnapshot2 = currentlyRenderingFiber.updateQueue;
+        null === getSnapshot2 ? (getSnapshot2 = createFunctionComponentUpdateQueue(), currentlyRenderingFiber.updateQueue = getSnapshot2, getSnapshot2.stores = [fiber]) : (renderedSnapshot = getSnapshot2.stores, null === renderedSnapshot ? getSnapshot2.stores = [fiber] : renderedSnapshot.push(fiber));
       }
-      function updateStoreInstance(fiber, inst, nextSnapshot, getSnapshot) {
+      function updateStoreInstance(fiber, inst, nextSnapshot, getSnapshot2) {
         inst.value = nextSnapshot;
-        inst.getSnapshot = getSnapshot;
+        inst.getSnapshot = getSnapshot2;
         checkIfSnapshotChanged(inst) && forceStoreRerender(fiber);
       }
       function subscribeToStore(fiber, inst, subscribe) {
@@ -5783,20 +5783,20 @@ function __inlineNotify(msg, type) {
           mountWorkInProgressHook().memoizedState = stateHook;
           return [false, stateHook];
         },
-        useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+        useSyncExternalStore: function(subscribe, getSnapshot2, getServerSnapshot) {
           var fiber = currentlyRenderingFiber, hook = mountWorkInProgressHook();
           if (isHydrating) {
             if (void 0 === getServerSnapshot)
               throw Error(formatProdErrorMessage(407));
             getServerSnapshot = getServerSnapshot();
           } else {
-            getServerSnapshot = getSnapshot();
+            getServerSnapshot = getSnapshot2();
             if (null === workInProgressRoot)
               throw Error(formatProdErrorMessage(349));
-            0 !== (workInProgressRootRenderLanes & 127) || pushStoreConsistencyCheck(fiber, getSnapshot, getServerSnapshot);
+            0 !== (workInProgressRootRenderLanes & 127) || pushStoreConsistencyCheck(fiber, getSnapshot2, getServerSnapshot);
           }
           hook.memoizedState = getServerSnapshot;
-          var inst = { value: getServerSnapshot, getSnapshot };
+          var inst = { value: getServerSnapshot, getSnapshot: getSnapshot2 };
           hook.queue = inst;
           mountEffect(subscribeToStore.bind(null, fiber, inst, subscribe), [
             subscribe
@@ -5810,7 +5810,7 @@ function __inlineNotify(msg, type) {
               fiber,
               inst,
               getServerSnapshot,
-              getSnapshot
+              getSnapshot2
             ),
             null
           );
@@ -9545,10 +9545,10 @@ function __inlineNotify(msg, type) {
           var tag = node.tag;
           if ((0 === tag || 11 === tag || 15 === tag) && node.flags & 16384 && (tag = node.updateQueue, null !== tag && (tag = tag.stores, null !== tag)))
             for (var i = 0; i < tag.length; i++) {
-              var check = tag[i], getSnapshot = check.getSnapshot;
+              var check = tag[i], getSnapshot2 = check.getSnapshot;
               check = check.value;
               try {
-                if (!objectIs(getSnapshot(), check)) return false;
+                if (!objectIs(getSnapshot2(), check)) return false;
               } catch (error) {
                 return false;
               }
@@ -18934,28 +18934,8 @@ function __inlineNotify(msg, type) {
     renderList();
   }
   function renderBulkBar() {
-    const bar = document.getElementById("bulkBar");
-    if (!bar) return;
-    const n = bulkSel.keys.size;
-    if (n === 0) {
-      bar.style.display = "none";
-      return;
-    }
-    const adminOk = typeof isAdmin === "function" ? isAdmin() : true;
-    const lockStyle = adminOk ? "" : "opacity:.45;pointer-events:none;";
-    const lockTip = adminOk ? "" : ' title="\uAD00\uB9AC\uC790 \uC804\uC6A9"';
-    bar.style.display = "flex";
-    bar.innerHTML = `<span style="font-size:.8rem;font-weight:600">${n}\uAC1C \uC120\uD0DD\uB428</span>
-    <div style="display:flex;gap:5px;align-items:center;margin-left:8px;${lockStyle}">
-      <span style="font-size:.75rem;color:var(--text-2)">\uC6B0\uC120\uC21C\uC704:</span>
-      <button class="rbtn" onclick="bulkSetPrio('\uC0C1')"${lockTip}>\uC0C1</button>
-      <button class="rbtn" onclick="bulkSetPrio('\uC911')"${lockTip}>\uC911</button>
-      <button class="rbtn" onclick="bulkSetPrio('\uD558')"${lockTip}>\uD558</button>
-      <span style="font-size:.75rem;color:var(--text-2);margin-left:6px">\uB2F4\uB2F9:</span>
-      <input id="bulkOwnerInp" class="inp" style="width:90px;height:27px;padding:0 7px;font-size:.78rem" placeholder="\uC774\uB984 \uC785\uB825"${adminOk ? "" : " disabled"}>
-      <button class="rbtn" onclick="bulkSetOwner()"${lockTip}>\uC77C\uAD04\uBCC0\uACBD</button>
-    </div>
-    <button class="rbtn" style="margin-left:8px;color:var(--danger)" onclick="bulkClear()">\uC120\uD0DD \uD574\uC81C</button>`;
+    window.__bulkBarRefresh?.();
+    window.dispatchEvent(new CustomEvent("bulkSelChange", { detail: { keys: [...bulkSel.keys] } }));
   }
   function bulkClear() {
     bulkSel.keys.clear();
@@ -19048,15 +19028,12 @@ function __inlineNotify(msg, type) {
     if (v !== "matrix") mxClearSel();
     S.view = v;
     syncLayout();
-    if (v === "matrix") {
-      document.getElementById("bulkBar").style.display = "none";
-      renderMatrix();
-    } else if (v === "list") renderList();
+    renderBulkBar();
+    if (v === "matrix") renderMatrix();
+    else if (v === "list") renderList();
     else if (v === "board") {
-      document.getElementById("bulkBar").style.display = "none";
       if (window.renderBoard) window.renderBoard();
     } else {
-      document.getElementById("bulkBar").style.display = "none";
       if (window.renderDashboard) window.renderDashboard();
     }
   }
@@ -21781,7 +21758,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react11 = __toESM(require_react());
+  var import_react12 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react = __toESM(require_react());
@@ -23729,26 +23706,88 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     ] });
   }
 
-  // components/LayoutShell.jsx
+  // components/BulkActionBar.jsx
+  var import_react10 = __toESM(require_react());
+  init_render();
+  init_useAppStore();
   var import_jsx_runtime12 = __toESM(require_jsx_runtime());
-  function LayoutShell() {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "layout", id: "layout", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(NavigationSide, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("main", { className: "content", id: "contentArea", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "dashboardView", style: { display: "none" } }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "matrixView", className: "mwrap fluid" }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "bulkBar", className: "bulk-bar", style: { display: "none" } }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "boardView", className: "bwrap", style: { display: "none" } }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { id: "listView", className: "lwrap", style: { display: "none" } })
+  function getSnapshot() {
+    return {
+      count: bulkSel.keys.size
+    };
+  }
+  function BulkActionBar() {
+    const view = useAppStore((s) => s.view);
+    const { isAdmin: adminOk } = useAuth();
+    const [snapshot, setSnapshot] = (0, import_react10.useState)(getSnapshot);
+    (0, import_react10.useEffect)(() => {
+      const refresh = () => setSnapshot(getSnapshot());
+      window.__bulkBarRefresh = refresh;
+      window.addEventListener("bulkSelChange", refresh);
+      refresh();
+      return () => {
+        window.removeEventListener("bulkSelChange", refresh);
+        delete window.__bulkBarRefresh;
+      };
+    }, []);
+    const visible = view === "list" && snapshot.count > 0;
+    const lockStyle = adminOk ? void 0 : { opacity: 0.45, pointerEvents: "none" };
+    const lockTitle = adminOk ? void 0 : "\uAD00\uB9AC\uC790 \uC804\uC6A9";
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { id: "bulkBar", className: "bulk-bar", style: { display: visible ? "flex" : "none" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { style: { fontSize: ".8rem", fontWeight: 600 }, children: [
+        snapshot.count,
+        "\uAC1C \uC120\uD0DD\uB428"
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(FilterPanel, {})
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { style: { display: "flex", gap: "5px", alignItems: "center", marginLeft: "8px", ...lockStyle }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { style: { fontSize: ".75rem", color: "var(--text-2)" }, children: "\uC6B0\uC120\uC21C\uC704:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "rbtn", onClick: () => window.bulkSetPrio?.("\uC0C1"), title: lockTitle, children: "\uC0C1" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "rbtn", onClick: () => window.bulkSetPrio?.("\uC911"), title: lockTitle, children: "\uC911" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "rbtn", onClick: () => window.bulkSetPrio?.("\uD558"), title: lockTitle, children: "\uD558" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { style: { fontSize: ".75rem", color: "var(--text-2)", marginLeft: "6px" }, children: "\uB2F4\uB2F9:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+          "input",
+          {
+            id: "bulkOwnerInp",
+            className: "inp",
+            style: { width: "90px", height: "27px", padding: "0 7px", fontSize: ".78rem" },
+            placeholder: "\uC774\uB984 \uC785\uB825",
+            disabled: !adminOk
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "rbtn", onClick: () => window.bulkSetOwner?.(), title: lockTitle, children: "\uC77C\uAD04\uBCC0\uACBD" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+        "button",
+        {
+          className: "rbtn",
+          style: { marginLeft: "8px", color: "var(--danger)" },
+          onClick: () => bulkClear(),
+          children: "\uC120\uD0DD \uD574\uC81C"
+        }
+      )
+    ] });
+  }
+
+  // components/LayoutShell.jsx
+  var import_jsx_runtime13 = __toESM(require_jsx_runtime());
+  function LayoutShell() {
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "layout", id: "layout", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(NavigationSide, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("main", { className: "content", id: "contentArea", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { id: "dashboardView", style: { display: "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { id: "matrixView", className: "mwrap fluid" }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(BulkActionBar, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { id: "boardView", className: "bwrap", style: { display: "none" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { id: "listView", className: "lwrap", style: { display: "none" } })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(FilterPanel, {})
     ] });
   }
 
   // components/UpdateBanner.jsx
-  var import_jsx_runtime13 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime14 = __toESM(require_jsx_runtime());
   function UpdateBanner() {
-    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)(
       "div",
       {
         id: "updateBanner",
@@ -23764,8 +23803,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           color: "var(--warning)"
         },
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { id: "updateBannerMsg", children: "\uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4." }),
-          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { id: "updateBannerMsg", children: "\uB2E4\uB978 \uC0AC\uC6A9\uC790\uAC00 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4." }),
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
             "button",
             {
               className: "btn btn-s btn-sm",
@@ -23774,7 +23813,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
               children: "\uC9C0\uAE08 \uC0C8\uB85C\uACE0\uCE68"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
             "button",
             {
               className: "btn btn-g btn-sm",
@@ -23788,59 +23827,59 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   }
 
   // components/ExportModal.jsx
-  var import_jsx_runtime14 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime15 = __toESM(require_jsx_runtime());
   function ExportModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "ov", id: "exportModal", children: /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "mbox", style: { width: "460px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "mhd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "mtitle", children: "\u{1F4E4} \uB370\uC774\uD130 \uB0B4\uBCF4\uB0B4\uAE30" }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("exportModal"), children: "\u2715" })
+    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "ov", id: "exportModal", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mbox", style: { width: "460px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mhd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "mtitle", children: "\u{1F4E4} \uB370\uC774\uD130 \uB0B4\uBCF4\uB0B4\uAE30" }),
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("exportModal"), children: "\u2715" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "mbody", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { style: { marginBottom: "14px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "exp-sec-ttl", children: "CSV / TSV" }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { style: { display: "flex", gap: "6px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expClip?.(), children: "\u{1F4CB} \uD074\uB9BD\uBCF4\uB4DC" }),
-            /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expTSV?.(), children: "\u2B07 TSV" })
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mbody", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { marginBottom: "14px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "exp-sec-ttl", children: "CSV / TSV" }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { display: "flex", gap: "6px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expClip?.(), children: "\u{1F4CB} \uD074\uB9BD\uBCF4\uB4DC" }),
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expTSV?.(), children: "\u2B07 TSV" })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { style: { marginBottom: "14px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "exp-sec-ttl", children: "Excel" }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { style: { display: "flex", gap: "6px" }, children: /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expXLS?.(), children: "\u{1F4CA} .xls \uB2E4\uC6B4\uB85C\uB4DC" }) })
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { marginBottom: "14px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "exp-sec-ttl", children: "Excel" }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { display: "flex", gap: "6px" }, children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expXLS?.(), children: "\u{1F4CA} .xls \uB2E4\uC6B4\uB85C\uB4DC" }) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "exp-sec-ttl", children: "HTML \uB9E4\uD2B8\uB9AD\uC2A4" }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "5px", fontSize: ".8rem", cursor: "pointer" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("input", { type: "radio", name: "htmlW", value: "fluid", defaultChecked: true }),
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "exp-sec-ttl", children: "HTML \uB9E4\uD2B8\uB9AD\uC2A4" }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "5px", fontSize: ".8rem", cursor: "pointer" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("input", { type: "radio", name: "htmlW", value: "fluid", defaultChecked: true }),
               " \uAC00\uBCC0\uD3ED"
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "5px", fontSize: ".8rem", cursor: "pointer" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("input", { type: "radio", name: "htmlW", value: "fixed" }),
+            /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("label", { style: { display: "flex", alignItems: "center", gap: "5px", fontSize: ".8rem", cursor: "pointer" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("input", { type: "radio", name: "htmlW", value: "fixed" }),
               " \uACE0\uC815\uD3ED"
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expHTML?.(), children: "\u{1F310} HTML \uB0B4\uBCF4\uB0B4\uAE30" })
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expHTML?.(), children: "\u{1F310} HTML \uB0B4\uBCF4\uB0B4\uAE30" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { style: { marginTop: "14px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "exp-sec-ttl", children: "\uB9C8\uD06C\uB2E4\uC6B4 \uC77C\uAD04" }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { style: { fontSize: ".74rem", color: "var(--text-3)", marginBottom: "6px" }, children: "MD \uB0B4\uC6A9\uC774 \uC791\uC131\uB41C \uD56D\uBAA9\uB9CC \uD3EC\uD568\uB429\uB2C8\uB2E4." }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expMdZip?.(), children: "\u{1F4E6} MD ZIP \uB0B4\uBCF4\uB0B4\uAE30" })
+        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { marginTop: "14px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "exp-sec-ttl", children: "\uB9C8\uD06C\uB2E4\uC6B4 \uC77C\uAD04" }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { fontSize: ".74rem", color: "var(--text-3)", marginBottom: "6px" }, children: "MD \uB0B4\uC6A9\uC774 \uC791\uC131\uB41C \uD56D\uBAA9\uB9CC \uD3EC\uD568\uB429\uB2C8\uB2E4." }),
+          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expMdZip?.(), children: "\u{1F4E6} MD ZIP \uB0B4\uBCF4\uB0B4\uAE30" })
         ] })
       ] })
     ] }) });
   }
 
   // components/ImportModal.jsx
-  var import_jsx_runtime15 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime16 = __toESM(require_jsx_runtime());
   function ImportModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "ov", id: "importModal", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mbox", style: { width: "600px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mhd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "mtitle", children: "\u{1F4E5} \uB370\uC774\uD130 \uAC00\uC838\uC624\uAE30" }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("importModal"), children: "\u2715" })
+    return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "ov", id: "importModal", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mbox", style: { width: "600px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mhd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "mtitle", children: "\u{1F4E5} \uB370\uC774\uD130 \uAC00\uC838\uC624\uAE30" }),
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("importModal"), children: "\u2715" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mbody", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { id: "impStep1", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(
+      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mbody", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { id: "impStep1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
             "div",
             {
               className: "drop-zone",
@@ -23852,7 +23891,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
               onDragLeave: () => window.dzLeave?.(),
               onDrop: (e) => window.dzDrop?.(e),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
                   "input",
                   {
                     type: "file",
@@ -23862,14 +23901,14 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                     onChange: (e) => window.csvFileSel?.(e)
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { fontSize: "1.3rem", marginBottom: "5px" }, children: "\u{1F4C2}" }),
-                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { children: "\uD30C\uC77C \uB4DC\uB798\uADF8 \uB610\uB294 \uD074\uB9AD" }),
-                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { fontSize: ".7rem", marginTop: "2px", color: "var(--text-3)" }, children: ".csv / .tsv \xB7 Tab \uAD6C\uBD84\uC790" })
+                /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { style: { fontSize: "1.3rem", marginBottom: "5px" }, children: "\u{1F4C2}" }),
+                /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { children: "\uD30C\uC77C \uB4DC\uB798\uADF8 \uB610\uB294 \uD074\uB9AD" }),
+                /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { style: { fontSize: ".7rem", marginTop: "2px", color: "var(--text-3)" }, children: ".csv / .tsv \xB7 Tab \uAD6C\uBD84\uC790" })
               ]
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { marginTop: "8px", fontSize: ".74rem", color: "var(--text-3)" }, children: "\uB610\uB294 \uBD99\uC5EC\uB123\uAE30:" }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { style: { marginTop: "8px", fontSize: ".74rem", color: "var(--text-3)" }, children: "\uB610\uB294 \uBD99\uC5EC\uB123\uAE30:" }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
             "textarea",
             {
               className: "txta",
@@ -23883,11 +23922,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
               }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { style: { display: "flex", gap: "6px", marginTop: "7px" }, children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.analyzeCSV?.(), children: "\u{1F50D} \uBD84\uC11D\uD558\uAE30" }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { marginTop: "14px", paddingTop: "12px", borderTop: "1px solid var(--border)" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "exp-sec-ttl", children: "MD \uD30C\uC77C \uC77C\uAD04 \uAC00\uC838\uC624\uAE30" }),
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { fontSize: ".74rem", color: "var(--text-3)", marginBottom: "8px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { style: { display: "flex", gap: "6px", marginTop: "7px" }, children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.analyzeCSV?.(), children: "\u{1F50D} \uBD84\uC11D\uD558\uAE30" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { style: { marginTop: "14px", paddingTop: "12px", borderTop: "1px solid var(--border)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "exp-sec-ttl", children: "MD \uD30C\uC77C \uC77C\uAD04 \uAC00\uC838\uC624\uAE30" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { style: { fontSize: ".74rem", color: "var(--text-3)", marginBottom: "8px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
                 "code",
                 {
                   style: {
@@ -23901,7 +23940,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
               ),
               " \uD30C\uC77C\uC744 \uBCF5\uC218 \uC120\uD0DD\uD558\uBA74 key\uB85C \uC790\uB3D9 \uB9E4\uD551"
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
               "button",
               {
                 className: "btn btn-s btn-sm",
@@ -23909,7 +23948,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                 children: "\u{1F4C2} MD \uD30C\uC77C \uC120\uD0DD"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
               "input",
               {
                 type: "file",
@@ -23922,12 +23961,12 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             )
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { id: "impStep2", style: { display: "none" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { style: { fontSize: ".82rem", fontWeight: 600, color: "var(--text)" }, children: "\uCEEC\uB7FC \uB9E4\uD551 \uD655\uC778" }),
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.backToStep1?.(), children: "\u2190 \uB4A4\uB85C" })
+        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { id: "impStep2", style: { display: "none" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { style: { fontSize: ".82rem", fontWeight: 600, color: "var(--text)" }, children: "\uCEEC\uB7FC \uB9E4\uD551 \uD655\uC778" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.backToStep1?.(), children: "\u2190 \uB4A4\uB85C" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
             "div",
             {
               id: "mapStatus",
@@ -23942,7 +23981,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
               }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
             "div",
             {
               style: {
@@ -23953,7 +23992,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                 background: "var(--surface)"
               },
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(
+                /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(
                   "div",
                   {
                     style: {
@@ -23964,19 +24003,19 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                       borderBottom: "2px solid var(--border)"
                     },
                     children: [
-                      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "110px" }, children: "\uC18C\uBCF5 \uD544\uB4DC" }),
-                      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", flex: 1 }, children: "CSV \uCEEC\uB7FC" }),
-                      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "100px" }, children: "\uBBF8\uB9AC\uBCF4\uAE30" })
+                      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "110px" }, children: "\uC18C\uBCF5 \uD544\uB4DC" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", flex: 1 }, children: "CSV \uCEEC\uB7FC" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { style: { fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-3)", minWidth: "100px" }, children: "\uBBF8\uB9AC\uBCF4\uAE30" })
                     ]
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { id: "mapRows" })
+                /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { id: "mapRows" })
               ]
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "10px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.doImport?.(false), children: "\u2B07 \uAC00\uC838\uC624\uAE30" }),
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.doImport?.(true), children: "\uBCD1\uD569 \uCD94\uAC00" })
+          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "10px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.doImport?.(false), children: "\u2B07 \uAC00\uC838\uC624\uAE30" }),
+            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.doImport?.(true), children: "\uBCD1\uD569 \uCD94\uAC00" })
           ] })
         ] })
       ] })
@@ -23984,24 +24023,24 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   }
 
   // components/LoginModal.jsx
-  var import_jsx_runtime16 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime17 = __toESM(require_jsx_runtime());
   function LoginModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "ov", id: "loginModal", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mbox", style: { width: "360px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mhd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "mtitle", children: "\u{1F510} \uB85C\uADF8\uC778" }),
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "mclose", onClick: () => window.closeLoginModal?.(), children: "\u2715" })
+    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "ov", id: "loginModal", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mbox", style: { width: "360px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mhd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "mtitle", children: "\u{1F510} \uB85C\uADF8\uC778" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "mclose", onClick: () => window.closeLoginModal?.(), children: "\u2715" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "mbody", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "10px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uC5ED\uD560" }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("select", { className: "inp", id: "loginRoleSelect", style: { height: "38px", fontSize: ".82rem", paddingTop: 0, paddingBottom: 0 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "editor", children: "\uD3B8\uC9D1\uC790" }),
-            /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("option", { value: "admin", children: "\uAD00\uB9AC\uC790" })
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "mbody", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "10px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uC5ED\uD560" }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("select", { className: "inp", id: "loginRoleSelect", style: { height: "38px", fontSize: ".82rem", paddingTop: 0, paddingBottom: 0 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("option", { value: "editor", children: "\uD3B8\uC9D1\uC790" }),
+            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("option", { value: "admin", children: "\uAD00\uB9AC\uC790" })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uC774\uB984" }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uC774\uB984" }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
             "input",
             {
               className: "inp",
@@ -24014,9 +24053,9 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uBE44\uBC00\uBC88\uD638" }),
-          /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("label", { style: { fontSize: ".78rem", fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: "4px" }, children: "\uBE44\uBC00\uBC88\uD638" }),
+          /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
             "input",
             {
               className: "inp",
@@ -24030,17 +24069,17 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { id: "loginErr", style: { color: "var(--danger)", fontSize: ".78rem", minHeight: "16px" } })
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { id: "loginErr", style: { color: "var(--danger)", fontSize: ".78rem", minHeight: "16px" } })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mfoot", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.closeLoginModal?.(), children: "\uCDE8\uC18C" }),
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.submitLogin?.(), children: "\uB85C\uADF8\uC778" })
+      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mfoot", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.closeLoginModal?.(), children: "\uCDE8\uC18C" }),
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.submitLogin?.(), children: "\uB85C\uADF8\uC778" })
       ] })
     ] }) });
   }
 
   // components/ShortcutsModal.jsx
-  var import_jsx_runtime17 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime18 = __toESM(require_jsx_runtime());
   var SHORTCUTS = [
     { keys: ["N"], label: "\uAE30\uB2A5 \uCD94\uAC00" },
     { keys: ["F"], label: "\uD544\uD130 \uD328\uB110 \uD1A0\uAE00" },
@@ -24058,31 +24097,31 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
     { keys: ["Esc"], label: "\uCC3D \uB2EB\uAE30" }
   ];
   function ShortcutsModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "ov", id: "shortcutsModal", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mbox", style: { width: "400px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mhd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "mtitle", children: "\u2328 \uB2E8\uCD95\uD0A4" }),
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("shortcutsModal"), children: "\u2715" })
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ov", id: "shortcutsModal", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mbox", style: { width: "400px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mhd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "mtitle", children: "\u2328 \uB2E8\uCD95\uD0A4" }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("shortcutsModal"), children: "\u2715" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "mbody", children: SHORTCUTS.map(({ keys, label }) => /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "sc-row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { style: { display: "flex", gap: "3px" }, children: keys.map((key) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { className: "kbd", children: key }, key)) }),
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("span", { style: { fontSize: ".8125rem", color: "var(--text-2)" }, children: label })
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "mbody", children: SHORTCUTS.map(({ keys, label }) => /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "sc-row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { style: { display: "flex", gap: "3px" }, children: keys.map((key) => /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "kbd", children: key }, key)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { style: { fontSize: ".8125rem", color: "var(--text-2)" }, children: label })
       ] }, `${keys.join("+")}:${label}`)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.closeModal?.("shortcutsModal"), children: "\uB2EB\uAE30" }) })
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.closeModal?.("shortcutsModal"), children: "\uB2EB\uAE30" }) })
     ] }) });
   }
 
   // components/AppOverlays.jsx
-  var import_jsx_runtime18 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime19 = __toESM(require_jsx_runtime());
   function UserNameModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ov", id: "userNameModal", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mbox", style: { width: "380px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "mhd", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "mtitle", children: "\u{1F44B} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694" }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mbody", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("p", { style: { fontSize: ".85rem", color: "var(--text-2)", marginBottom: "14px", lineHeight: 1.7 }, children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "ov", id: "userNameModal", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "mbox", style: { width: "380px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "mhd", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "mtitle", children: "\u{1F44B} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694" }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "mbody", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { style: { fontSize: ".85rem", color: "var(--text-2)", marginBottom: "14px", lineHeight: 1.7 }, children: [
           "\uB2E4\uB978 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uB204\uAC00 \uC218\uC815\uD588\uB294\uC9C0 \uD45C\uC2DC\uD569\uB2C8\uB2E4.",
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("br", {}),
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { style: { color: "var(--text-3)", fontSize: ".78rem" }, children: "\uC124\uC815 > \uC11C\uBC84 \uD0ED\uC5D0\uC11C \uC5B8\uC81C\uB4E0 \uBCC0\uACBD\uD560 \uC218 \uC788\uC5B4\uC694." })
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("br", {}),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { style: { color: "var(--text-3)", fontSize: ".78rem" }, children: "\uC124\uC815 > \uC11C\uBC84 \uD0ED\uC5D0\uC11C \uC5B8\uC81C\uB4E0 \uBCC0\uACBD\uD560 \uC218 \uC788\uC5B4\uC694." })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
           "input",
           {
             className: "inp",
@@ -24095,41 +24134,41 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mfoot", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.saveUserNamePopup?.(true), children: "\uB098\uC911\uC5D0" }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveUserNamePopup?.(), children: "\uD655\uC778" })
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "mfoot", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.saveUserNamePopup?.(true), children: "\uB098\uC911\uC5D0" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveUserNamePopup?.(), children: "\uD655\uC778" })
       ] })
     ] }) });
   }
   function DiffModal() {
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ov", id: "diffModal", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mbox", style: { width: "640px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mhd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "mtitle", children: "\uBCC0\uACBD \uC774\uB825 (\uB9C8\uC9C0\uB9C9 Undo \uAE30\uC900)" }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("diffModal"), children: "\u2715" })
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "ov", id: "diffModal", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "mbox", style: { width: "640px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "mhd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "mtitle", children: "\uBCC0\uACBD \uC774\uB825 (\uB9C8\uC9C0\uB9C9 Undo \uAE30\uC900)" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("button", { className: "mclose", onClick: () => window.closeModal?.("diffModal"), children: "\u2715" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "mbody", id: "diffBody", style: { fontSize: ".82rem" } }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("button", { className: "btn btn-s", onClick: () => window.closeModal?.("diffModal"), children: "\uB2EB\uAE30" }) })
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "mbody", id: "diffBody", style: { fontSize: ".82rem" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "mfoot", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("button", { className: "btn btn-s", onClick: () => window.closeModal?.("diffModal"), children: "\uB2EB\uAE30" }) })
     ] }) });
   }
   function AppOverlays() {
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(import_jsx_runtime18.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(ImportModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(ExportModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(ShortcutsModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(UserNameModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(LoginModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ov", id: "adminAuthModal", style: { display: "none" } }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DiffModal, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ftt", id: "ftt" }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "notif", id: "notif" }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "boardActionBar", className: "board-action-bar" })
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(import_jsx_runtime19.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ImportModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ExportModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ShortcutsModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(UserNameModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(LoginModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "ov", id: "adminAuthModal", style: { display: "none" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(DiffModal, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "ftt", id: "ftt" }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "notif", id: "notif" }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { id: "boardActionBar", className: "board-action-bar" })
     ] });
   }
 
   // components/ErrorBoundary.jsx
-  var import_react10 = __toESM(require_react());
-  var import_jsx_runtime19 = __toESM(require_jsx_runtime());
-  var ErrorBoundary = class extends import_react10.Component {
+  var import_react11 = __toESM(require_react());
+  var import_jsx_runtime20 = __toESM(require_jsx_runtime());
+  var ErrorBoundary = class extends import_react11.Component {
     constructor(props) {
       super(props);
       this.state = { hasError: false, error: null };
@@ -24148,7 +24187,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       if (!this.state.hasError) return this.props.children;
       const { level = "view", label = "\uC601\uC5ED" } = this.props;
       if (level === "app") {
-        return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { style: {
+        return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -24159,11 +24198,11 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           background: "var(--bg)",
           color: "var(--text)"
         }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: "2rem" }, children: "\u26A0" }),
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: "1rem", fontWeight: 700 }, children: "\uC571\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4" }),
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: ".8rem", color: "var(--text-3)", maxWidth: "400px", textAlign: "center" }, children: this.state.error?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958" }),
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { fontSize: "2rem" }, children: "\u26A0" }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { fontSize: "1rem", fontWeight: 700 }, children: "\uC571\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4" }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { fontSize: ".8rem", color: "var(--text-3)", maxWidth: "400px", textAlign: "center" }, children: this.state.error?.message || "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958" }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
               "button",
               {
                 onClick: () => this.handleReset(),
@@ -24171,7 +24210,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
                 children: "\uB2E4\uC2DC \uC2DC\uB3C4"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
               "button",
               {
                 onClick: () => window.location.reload(),
@@ -24182,7 +24221,7 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
           ] })
         ] });
       }
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { style: {
+      return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -24194,12 +24233,12 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
         fontSize: ".8rem",
         textAlign: "center"
       }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: "1.2rem" }, children: "\u26A0" }),
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { style: { fontSize: "1.2rem" }, children: "\u26A0" }),
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
           label,
           " \uB80C\uB354\uB9C1 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4"
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
           "button",
           {
             onClick: () => this.handleReset(),
@@ -24212,33 +24251,33 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
   };
 
   // components/App.jsx
-  var import_jsx_runtime20 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime21 = __toESM(require_jsx_runtime());
   function App() {
-    (0, import_react11.useEffect)(() => {
+    (0, import_react12.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] failed to initialize legacy bridge:", err);
       });
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(AuthProvider, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Header, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(UpdateBanner, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(LayoutShell, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "ov", id: "editModal" }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "ov", id: "settingsModal" }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(AppOverlays, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(BoardView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(DashboardView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "modal", label: "\uC124\uC815", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(SettingsPanel, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "modal", label: "\uD3B8\uC9D1 \uBAA8\uB2EC", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ItemModal, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(MatrixView, {}) }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uB9AC\uC2A4\uD2B8 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ListView, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(AuthProvider, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Header, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(UpdateBanner, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(LayoutShell, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "ov", id: "editModal" }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "ov", id: "settingsModal" }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(AppOverlays, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(BoardView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(DashboardView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ErrorBoundary, { level: "modal", label: "\uC124\uC815", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(SettingsPanel, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ErrorBoundary, { level: "modal", label: "\uD3B8\uC9D1 \uBAA8\uB2EC", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ItemModal, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ErrorBoundary, { level: "view", label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(MatrixView, {}) }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ErrorBoundary, { level: "view", label: "\uB9AC\uC2A4\uD2B8 \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ListView, {}) })
     ] }) }) });
   }
 
   // main.jsx
-  var import_jsx_runtime21 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime22 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
-  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime21.jsx)(App, {}));
+  (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime22.jsx)(App, {}));
 })();
 /*! Bundled license information:
 

@@ -5,7 +5,7 @@
 import { STATUS_CLS, STATUS_LBL, FLABELS } from './constants.js';
 import { S, save, pushUndo, esc, eattr, normOwner, getPK, getOwnerColor, fmtDate } from './state.js';
 import { getColors, getPresetCSS, renderPrioStyleRows } from './theme.js';
-import { isAdmin, isEditor } from './admin.js';
+import { isEditor } from './admin.js';
 import { setStore, getStore } from '../store/useAppStore.js';
 
 // Zustand store에서 실시간 editLocks/previews 읽기 헬퍼
@@ -450,25 +450,8 @@ export function bulkToggleAll(checked) {
   renderList();
 }
 export function renderBulkBar() {
-  const bar = document.getElementById('bulkBar');
-  if (!bar) return;
-  const n = bulkSel.keys.size;
-  if (n === 0) { bar.style.display = 'none'; return; }
-  const adminOk = typeof isAdmin === 'function' ? isAdmin() : true;
-  const lockStyle = adminOk ? '' : 'opacity:.45;pointer-events:none;';
-  const lockTip   = adminOk ? '' : ' title="관리자 전용"';
-  bar.style.display = 'flex';
-  bar.innerHTML = `<span style="font-size:.8rem;font-weight:600">${n}개 선택됨</span>
-    <div style="display:flex;gap:5px;align-items:center;margin-left:8px;${lockStyle}">
-      <span style="font-size:.75rem;color:var(--text-2)">우선순위:</span>
-      <button class="rbtn" onclick="bulkSetPrio('상')"${lockTip}>상</button>
-      <button class="rbtn" onclick="bulkSetPrio('중')"${lockTip}>중</button>
-      <button class="rbtn" onclick="bulkSetPrio('하')"${lockTip}>하</button>
-      <span style="font-size:.75rem;color:var(--text-2);margin-left:6px">담당:</span>
-      <input id="bulkOwnerInp" class="inp" style="width:90px;height:27px;padding:0 7px;font-size:.78rem" placeholder="이름 입력"${adminOk ? '' : ' disabled'}>
-      <button class="rbtn" onclick="bulkSetOwner()"${lockTip}>일괄변경</button>
-    </div>
-    <button class="rbtn" style="margin-left:8px;color:var(--danger)" onclick="bulkClear()">선택 해제</button>`;
+  window.__bulkBarRefresh?.();
+  window.dispatchEvent(new CustomEvent('bulkSelChange', { detail: { keys: [...bulkSel.keys] } }));
 }
 export function bulkClear() { bulkSel.keys.clear(); renderBulkBar(); renderList(); }
 
@@ -546,10 +529,11 @@ export function switchView(v) {
   if (v !== 'matrix') mxClearSel();
   S.view = v;
   syncLayout();
-  if (v === 'matrix') { document.getElementById('bulkBar').style.display = 'none'; renderMatrix(); }
+  renderBulkBar();
+  if (v === 'matrix') renderMatrix();
   else if (v === 'list') renderList();
-  else if (v === 'board') { document.getElementById('bulkBar').style.display = 'none'; if (window.renderBoard) window.renderBoard(); }
-  else { document.getElementById('bulkBar').style.display = 'none'; if (window.renderDashboard) window.renderDashboard(); }
+  else if (v === 'board') { if (window.renderBoard) window.renderBoard(); }
+  else { if (window.renderDashboard) window.renderDashboard(); }
 }
 
 /* ── 필터 UI ── */
