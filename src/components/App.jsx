@@ -13,11 +13,6 @@ import { AuthProvider } from '../contexts/AuthContext.jsx';
 import { ThemeProvider } from '../contexts/ThemeContext.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 
-const LEGACY_PORTAL_ROOTS = `
-<div class="ov" id="editModal"></div>
-<div class="ov" id="settingsModal"></div>
-`;
-
 export default function App() {
   useEffect(() => {
     import('../app/main.js').catch(err => {
@@ -34,7 +29,8 @@ export default function App() {
           </ErrorBoundary>
           <UpdateBanner />
           <LayoutShell />
-          <div dangerouslySetInnerHTML={{ __html: LEGACY_PORTAL_ROOTS }} />
+          <div className="ov" id="editModal" />
+          <div className="ov" id="settingsModal" />
           <AppOverlays />
           <ErrorBoundary level="view" label="보드 뷰">
             <BoardView />

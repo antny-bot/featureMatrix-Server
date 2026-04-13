@@ -24213,10 +24213,6 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
 
   // components/App.jsx
   var import_jsx_runtime20 = __toESM(require_jsx_runtime());
-  var LEGACY_PORTAL_ROOTS = `
-<div class="ov" id="editModal"></div>
-<div class="ov" id="settingsModal"></div>
-`;
   function App() {
     (0, import_react11.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
@@ -24227,7 +24223,8 @@ ${dups.slice(0, 5).join(", ")}${dups.length > 5 ? "\u2026" : ""}
       /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Header, {}) }),
       /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(UpdateBanner, {}),
       /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(LayoutShell, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { dangerouslySetInnerHTML: { __html: LEGACY_PORTAL_ROOTS } }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "ov", id: "editModal" }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "ov", id: "settingsModal" }),
       /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(AppOverlays, {}),
       /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uBCF4\uB4DC \uBDF0", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(BoardView, {}) }),
       /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ErrorBoundary, { level: "view", label: "\uB300\uC2DC\uBCF4\uB4DC", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(DashboardView, {}) }),
