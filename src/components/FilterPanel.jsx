@@ -189,6 +189,7 @@ function OwnerChips() {
 export default function FilterPanel() {
   const filters = useAppStore(s => s.filters);
   const display = useAppStore(s => s.display);
+  const undoDepth = useAppStore(s => s.undoDepth);
   const panelVisible = useAppStore(s => s.settings.panelVisible);
   const view = useAppStore(s => s.view);
   const panelClassName = [
@@ -309,7 +310,7 @@ export default function FilterPanel() {
           </div>
         </FilterSection>
 
-        <div className="undo-fab" id="undoFab">
+        <div className={`undo-fab${undoDepth ? ' on' : ''}`} id="undoFab">
           <button
             className="btn btn-s"
             onClick={() => window.doUndo?.()}

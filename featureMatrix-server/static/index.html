@@ -17475,6 +17475,7 @@ function __inlineNotify(msg, type) {
         isDragging: false,
         dragKey: null,
         dragCell: null,
+        undoDepth: 0,
         // 서버 동기화 상태
         serverTs: 0,
         isLoading: false,
@@ -17498,6 +17499,7 @@ function __inlineNotify(msg, type) {
             setSearchQ: (searchQ) => set({ searchQ }),
             setEditKey: (editKey) => set({ editKey }),
             setIsDragging: (isDragging) => set({ isDragging }),
+            setUndoDepth: (undoDepth) => set({ undoDepth }),
             setServerStatus: (serverStatus) => set({ serverStatus }),
             setIsLoading: (isLoading) => set({ isLoading }),
             setWsStatus: (wsStatus) => set({ wsStatus }),
@@ -17923,8 +17925,7 @@ function __inlineNotify(msg, type) {
     return undoStack.slice();
   }
   function updateUndoFab() {
-    const f = document.getElementById("undoFab");
-    if (f) f.className = "undo-fab" + (undoStack.length ? " on" : "");
+    setStore({ undoDepth: undoStack.length });
   }
   function genKey() {
     let max = 0;

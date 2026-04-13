@@ -63,6 +63,7 @@ const initialState = {
   isDragging: false,
   dragKey: null,
   dragCell: null,
+  undoDepth: 0,
   // 서버 동기화 상태
   serverTs: 0,
   isLoading: false,
@@ -85,6 +86,7 @@ export const useAppStore = create(
   setSearchQ: (searchQ) => set({ searchQ }),
   setEditKey: (editKey) => set({ editKey }),
   setIsDragging: (isDragging) => set({ isDragging }),
+  setUndoDepth: (undoDepth) => set({ undoDepth }),
   setServerStatus: (serverStatus) => set({ serverStatus }),
   setIsLoading: (isLoading) => set({ isLoading }),
   setWsStatus: (wsStatus) => set({ wsStatus }),

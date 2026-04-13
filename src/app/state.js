@@ -301,8 +301,7 @@ export function doUndo() {
 export function getUndoHistory() { return undoStack.slice(); }
 
 export function updateUndoFab() {
-  const f = document.getElementById('undoFab');
-  if (f) f.className = 'undo-fab' + (undoStack.length ? ' on' : '');
+  setStore({ undoDepth: undoStack.length });
 }
 
 export const esc   = s => s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
