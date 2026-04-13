@@ -3,6 +3,7 @@ import { getFiltered, getUniqSorted, isFilterActive } from '../app/render.js';
 import { S, getOwnerColor, normOwner, save } from '../app/state.js';
 import { getColors } from '../app/theme.js';
 import { setStore, useAppStore } from '../store/useAppStore.js';
+import { useState } from 'react';
 
 const PRIORITY_CHIPS = [
   { val: '상', pk: 'high' },
@@ -30,10 +31,12 @@ function UndoIcon() {
 }
 
 function FilterSection({ title, children }) {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
     <>
-      <div className="fsec">
-        <div className="fsec-ttl">{title}</div>
+      <div className={`fsec${collapsed ? ' sec-collapsed' : ''}`}>
+        <div className="fsec-ttl" onClick={() => setCollapsed(value => !value)}>{title}</div>
         <div className="fsec-body">{children}</div>
       </div>
       <div className="fsep" />

@@ -20495,9 +20495,6 @@ function __inlineNotify(msg, type) {
     if (S.settings.storageMode === "server" && !S.settings.userName) {
       setTimeout(() => window.__reactOpenUserNameModal?.(), 600);
     }
-    document.querySelectorAll("#fpanel .fsec-ttl").forEach((ttl) => {
-      ttl.addEventListener("click", () => ttl.closest(".fsec").classList.toggle("sec-collapsed"));
-    });
   }
   var _pollTimer;
   var init_main = __esm({
@@ -20675,9 +20672,9 @@ function __inlineNotify(msg, type) {
     );
   }
   function UserNameModal() {
-    const [name, setName] = (0, import_react20.useState)("");
-    const inputRef = (0, import_react20.useRef)(null);
-    (0, import_react20.useEffect)(() => {
+    const [name, setName] = (0, import_react21.useState)("");
+    const inputRef = (0, import_react21.useRef)(null);
+    (0, import_react21.useEffect)(() => {
       window.__reactOpenUserNameModal = () => {
         setName("");
         window.openModal?.("userNameModal");
@@ -20735,9 +20732,9 @@ function __inlineNotify(msg, type) {
   }
 
   // components/ErrorBoundary.jsx
-  var import_react21 = __toESM(require_react());
+  var import_react22 = __toESM(require_react());
   var import_jsx_runtime27 = __toESM(require_jsx_runtime());
-  var ErrorBoundary = class extends import_react21.Component {
+  var ErrorBoundary = class extends import_react22.Component {
     constructor(props) {
       super(props);
       this.state = { hasError: false, error: null };
@@ -20822,7 +20819,7 @@ function __inlineNotify(msg, type) {
   // components/App.jsx
   var import_jsx_runtime28 = __toESM(require_jsx_runtime());
   function App() {
-    (0, import_react22.useEffect)(() => {
+    (0, import_react23.useEffect)(() => {
       Promise.resolve().then(() => (init_main(), main_exports)).catch((err) => {
         console.error("[App] failed to initialize legacy bridge:", err);
       });

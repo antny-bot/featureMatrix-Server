@@ -447,11 +447,6 @@ async function init() {
   if (S.settings.storageMode === 'server' && !S.settings.userName) {
     setTimeout(() => window.__reactOpenUserNameModal?.(), 600);
   }
-
-  // 필터 패널 섹션 접기/펼치기
-  document.querySelectorAll('#fpanel .fsec-ttl').forEach(ttl => {
-    ttl.addEventListener('click', () => ttl.closest('.fsec').classList.toggle('sec-collapsed'));
-  });
 }
 init();
 
