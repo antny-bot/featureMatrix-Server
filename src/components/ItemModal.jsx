@@ -49,6 +49,7 @@ export default function ItemModal() {
   const [form,           setForm]           = useState(EMPTY_FORM);
   const items = useAppStore(s => s.items);
   const previewRef      = useRef(null);
+  const mdFileRef       = useRef(null);
   const currentKeyRef   = useRef(null);   // 현재 편집 중인 item key
   const previewTimerRef = useRef(null);   // 미리보기 디바운스 타이머
   const formRef         = useRef(EMPTY_FORM);
@@ -368,8 +369,8 @@ export default function ItemModal() {
               <button className={`vtab${mdMode === 'split'   ? ' on' : ''}`} onClick={() => window.__editModalSwitchMdView?.('split')}   style={{ height: '22px', padding: '0 9px', fontSize: '.7rem' }}>⬜ 분할</button>
             </div>
             <div style={{ width: '1px', height: '16px', background: 'var(--border)', flexShrink: 0 }} />
-            <button className="btn btn-s btn-sm" onClick={() => document.getElementById('mdFileInp')?.click()} style={{ gap: '4px' }}>📂 열기</button>
-            <input type="file" id="mdFileInp" accept=".md,.txt" style={{ display: 'none' }} onChange={(e) => window.impSingleMd?.(e)} />
+            <button className="btn btn-s btn-sm" onClick={() => mdFileRef.current?.click()} style={{ gap: '4px' }}>📂 열기</button>
+            <input type="file" id="mdFileInp" ref={mdFileRef} accept=".md,.txt" style={{ display: 'none' }} onChange={(e) => window.impSingleMd?.(e)} />
             <button className="btn btn-s btn-sm" onClick={() => window.expSingleMd?.()} style={{ gap: '4px' }}>⬇ 저장</button>
             <div style={{ marginLeft: 'auto', fontSize: '.69rem', color: 'var(--text-3)', display: 'flex', gap: '10px' }}>
               <span>{mdStats.chars}</span><span>{mdStats.lines}</span><span>{mdStats.words}</span>

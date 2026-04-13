@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FIELDS, FLABELS } from '../app/constants.js';
 import { parseTSVFull } from '../app/io.js';
 import { closeModal } from '../app/modal.js';
@@ -28,6 +28,8 @@ function readTextFile(file) {
 }
 
 export default function ImportModal() {
+  const csvFileRef = useRef(null);
+  const mdImpRef = useRef(null);
   const [raw, setRaw] = useState('');
   const [step, setStep] = useState(1);
   const [headers, setHeaders] = useState([]);
@@ -147,7 +149,7 @@ export default function ImportModal() {
                 className={`drop-zone${isDragOver ? ' da' : ''}`}
                 id="dropZone"
                 onClick={event => {
-                  if (event.target.id !== 'csvFile') document.getElementById('csvFile')?.click();
+                  if (event.target.id !== 'csvFile') csvFileRef.current?.click();
                 }}
                 onDragOver={event => {
                   event.preventDefault();
@@ -163,6 +165,7 @@ export default function ImportModal() {
                 <input
                   type="file"
                   id="csvFile"
+                  ref={csvFileRef}
                   accept=".csv,.tsv,.txt"
                   onClick={event => event.stopPropagation()}
                   onChange={event => {
@@ -196,12 +199,13 @@ export default function ImportModal() {
                   </code>
                   {' 파일을 복수 선택하면 key로 자동 매핑'}
                 </div>
-                <button className="btn btn-s btn-sm" onClick={() => document.getElementById('mdImpInp')?.click()}>
+                <button className="btn btn-s btn-sm" onClick={() => mdImpRef.current?.click()}>
                   📂 MD 파일 선택
                 </button>
                 <input
                   type="file"
                   id="mdImpInp"
+                  ref={mdImpRef}
                   accept=".md"
                   multiple
                   style={{ display: 'none' }}

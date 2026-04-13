@@ -8,7 +8,7 @@
 ══════════════════════════════════════════ */
 
 import { createPortal } from 'react-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { S, save } from '../app/state.js';
@@ -34,6 +34,8 @@ export default function SettingsPanel() {
 
   const [container, setContainer] = useState(null);
   const [activeTab, setActiveTab] = useState('sg');
+  const settFileRef = useRef(null);
+  const mdImpAdminRef = useRef(null);
 
   useEffect(() => {
     setContainer(document.getElementById('settingsModal'));
@@ -153,8 +155,8 @@ export default function SettingsPanel() {
             <div className="srow">
               <div><div className="slbl">설정 JSON 불러오기</div></div>
               <div>
-                <button className="btn btn-s btn-sm" onClick={() => document.getElementById('settFile')?.click()}>↑ 불러오기</button>
-                <input type="file" id="settFile" accept=".json" style={{ display: 'none' }} onChange={e => window.impSettJSON?.(e)} />
+                <button className="btn btn-s btn-sm" onClick={() => settFileRef.current?.click()}>↑ 불러오기</button>
+                <input type="file" id="settFile" ref={settFileRef} accept=".json" style={{ display: 'none' }} onChange={e => window.impSettJSON?.(e)} />
               </div>
             </div>
           </div>
@@ -204,8 +206,8 @@ export default function SettingsPanel() {
               <div><div className="slbl">가져오기</div><div className="ssub">기존 데이터가 덮어씌워집니다. 관리자 전용.</div></div>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 <button className="btn btn-s btn-sm" onClick={() => window.requireAdmin?.(() => window.openModal?.('importModal'))}>📥 CSV/TSV</button>
-                <button className="btn btn-s btn-sm" onClick={() => window.requireAdmin?.(() => document.getElementById('mdImpInpAdmin')?.click())}>📂 MD ZIP</button>
-                <input type="file" id="mdImpInpAdmin" accept=".md" multiple style={{ display: 'none' }} onChange={e => window.impMdFiles?.(e)} />
+                <button className="btn btn-s btn-sm" onClick={() => window.requireAdmin?.(() => mdImpAdminRef.current?.click())}>📂 MD ZIP</button>
+                <input type="file" id="mdImpInpAdmin" ref={mdImpAdminRef} accept=".md" multiple style={{ display: 'none' }} onChange={e => window.impMdFiles?.(e)} />
               </div>
             </div>
             <div className="srow">

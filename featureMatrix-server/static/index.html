@@ -22473,6 +22473,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const buildId = true ? "20260414.local" : "local";
     const [container, setContainer] = (0, import_react10.useState)(null);
     const [activeTab, setActiveTab] = (0, import_react10.useState)("sg");
+    const settFileRef = (0, import_react10.useRef)(null);
+    const mdImpAdminRef = (0, import_react10.useRef)(null);
     (0, import_react10.useEffect)(() => {
       setContainer(document.getElementById("settingsModal"));
     }, []);
@@ -22674,8 +22676,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", children: [
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uC124\uC815 JSON \uBD88\uB7EC\uC624\uAE30" }) }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => document.getElementById("settFile")?.click(), children: "\u2191 \uBD88\uB7EC\uC624\uAE30" }),
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "file", id: "settFile", accept: ".json", style: { display: "none" }, onChange: (e) => window.impSettJSON?.(e) })
+                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => settFileRef.current?.click(), children: "\u2191 \uBD88\uB7EC\uC624\uAE30" }),
+                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "file", id: "settFile", ref: settFileRef, accept: ".json", style: { display: "none" }, onChange: (e) => window.impSettJSON?.(e) })
               ] })
             ] })
           ] }),
@@ -22725,8 +22727,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               ] }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" }, children: [
                 /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.requireAdmin?.(() => window.openModal?.("importModal")), children: "\u{1F4E5} CSV/TSV" }),
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.requireAdmin?.(() => document.getElementById("mdImpInpAdmin")?.click()), children: "\u{1F4C2} MD ZIP" }),
-                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "file", id: "mdImpInpAdmin", accept: ".md", multiple: true, style: { display: "none" }, onChange: (e) => window.impMdFiles?.(e) })
+                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.requireAdmin?.(() => mdImpAdminRef.current?.click()), children: "\u{1F4C2} MD ZIP" }),
+                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", { type: "file", id: "mdImpInpAdmin", ref: mdImpAdminRef, accept: ".md", multiple: true, style: { display: "none" }, onChange: (e) => window.impMdFiles?.(e) })
               ] })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", children: [
@@ -22935,6 +22937,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const [form, setForm] = (0, import_react11.useState)(EMPTY_FORM);
     const items = useAppStore((s) => s.items);
     const previewRef = (0, import_react11.useRef)(null);
+    const mdFileRef = (0, import_react11.useRef)(null);
     const currentKeyRef = (0, import_react11.useRef)(null);
     const previewTimerRef = (0, import_react11.useRef)(null);
     const formRef = (0, import_react11.useRef)(EMPTY_FORM);
@@ -23225,8 +23228,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
                 /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: `vtab${mdMode === "split" ? " on" : ""}`, onClick: () => window.__editModalSwitchMdView?.("split"), style: { height: "22px", padding: "0 9px", fontSize: ".7rem" }, children: "\u2B1C \uBD84\uD560" })
               ] }),
               /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { style: { width: "1px", height: "16px", background: "var(--border)", flexShrink: 0 } }),
-              /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => document.getElementById("mdFileInp")?.click(), style: { gap: "4px" }, children: "\u{1F4C2} \uC5F4\uAE30" }),
-              /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("input", { type: "file", id: "mdFileInp", accept: ".md,.txt", style: { display: "none" }, onChange: (e) => window.impSingleMd?.(e) }),
+              /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => mdFileRef.current?.click(), style: { gap: "4px" }, children: "\u{1F4C2} \uC5F4\uAE30" }),
+              /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("input", { type: "file", id: "mdFileInp", ref: mdFileRef, accept: ".md,.txt", style: { display: "none" }, onChange: (e) => window.impSingleMd?.(e) }),
               /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expSingleMd?.(), style: { gap: "4px" }, children: "\u2B07 \uC800\uC7A5" }),
               /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { style: { marginLeft: "auto", fontSize: ".69rem", color: "var(--text-3)", display: "flex", gap: "10px" }, children: [
                 /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { children: mdStats.chars }),
@@ -24308,6 +24311,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     });
   }
   function ImportModal() {
+    const csvFileRef = (0, import_react17.useRef)(null);
+    const mdImpRef = (0, import_react17.useRef)(null);
     const [raw, setRaw] = (0, import_react17.useState)("");
     const [step, setStep] = (0, import_react17.useState)(1);
     const [headers, setHeaders] = (0, import_react17.useState)([]);
@@ -24412,7 +24417,7 @@ ${sample}
               className: `drop-zone${isDragOver ? " da" : ""}`,
               id: "dropZone",
               onClick: (event) => {
-                if (event.target.id !== "csvFile") document.getElementById("csvFile")?.click();
+                if (event.target.id !== "csvFile") csvFileRef.current?.click();
               },
               onDragOver: (event) => {
                 event.preventDefault();
@@ -24430,6 +24435,7 @@ ${sample}
                   {
                     type: "file",
                     id: "csvFile",
+                    ref: csvFileRef,
                     accept: ".csv,.tsv,.txt",
                     onClick: (event) => event.stopPropagation(),
                     onChange: (event) => {
@@ -24463,12 +24469,13 @@ ${sample}
               /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("code", { style: { fontFamily: "monospace", background: "var(--surface-2)", padding: "1px 4px", borderRadius: "3px" }, children: "{key}_{\uAE30\uB2A5\uBA85}.md" }),
               " \uD30C\uC77C\uC744 \uBCF5\uC218 \uC120\uD0DD\uD558\uBA74 key\uB85C \uC790\uB3D9 \uB9E4\uD551"
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => document.getElementById("mdImpInp")?.click(), children: "\u{1F4C2} MD \uD30C\uC77C \uC120\uD0DD" }),
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => mdImpRef.current?.click(), children: "\u{1F4C2} MD \uD30C\uC77C \uC120\uD0DD" }),
             /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
               "input",
               {
                 type: "file",
                 id: "mdImpInp",
+                ref: mdImpRef,
                 accept: ".md",
                 multiple: true,
                 style: { display: "none" },
