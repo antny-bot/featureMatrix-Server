@@ -193,8 +193,6 @@ function syncLayout() {
     if (el) el.style.display = id === v + 'View' ? '' : 'none';
   });
   if (v !== 'board' && window.hideBoardActionBar) window.hideBoardActionBar();
-  const fp = document.getElementById('fpanel');
-  if (fp) fp.classList.toggle('fp-hide', v === 'dashboard');
   const contentEl = document.getElementById('contentArea');
   if (contentEl) contentEl.style.overflowY = v === 'board' ? 'hidden' : '';
 }

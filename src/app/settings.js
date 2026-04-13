@@ -22,9 +22,6 @@ export function sstab(btn, paneId) {
 export function syncSettingsUI() {
   /* SettingsPanel.jsx가 Zustand에서 직접 읽으므로 store 동기화만 수행 */
   setStore({ settings: { ...S.settings }, display: { ...S.display }, filters: { ...S.filters } });
-  /* 레이아웃 관련 DOM (설정 모달 외부) */
-  document.getElementById('layout')?.classList.toggle('pr', S.settings.panelPos === 'right');
-  document.getElementById('fpanel')?.classList.toggle('collapsed', !S.settings.panelVisible);
   document.title = S.settings.title || 'featureMATRIX';
   updateAdminUI();
 }
@@ -40,7 +37,7 @@ export function previewTitle() {
 
 /* ── 레이아웃 ── */
 export function setMW(v)   { S.settings.matrixWidth=v; document.getElementById('mwF').className='rbtn'+(v==='fluid'?' on':''); document.getElementById('mwX').className='rbtn'+(v==='fixed'?' on':''); save(); if(S.view==='matrix')renderMatrix(); }
-export function setPPos(v) { S.settings.panelPos=v; document.getElementById('layout').classList.toggle('pr',v==='right'); document.getElementById('ppL').className='rbtn'+(v==='left'?' on':''); document.getElementById('ppR').className='rbtn'+(v==='right'?' on':''); save(); }
+export function setPPos(v) { S.settings.panelPos=v; save(); setStore({ settings: { ...S.settings } }); }
 
 /* ── Stepper 설정값 조절 ── */
 /* adj* 함수: S.settings 업데이트 → save() → setStore() → React 자동 반영 */

@@ -191,7 +191,6 @@ window.quickCellAdd = (g, sg, cat, sc, input) => {
 
 window.togglePanel = () => {
   S.settings.panelVisible = !S.settings.panelVisible;
-  document.getElementById('fpanel').classList.toggle('collapsed', !S.settings.panelVisible);
   save();
   setStore({ settings: { ...S.settings } });
 };

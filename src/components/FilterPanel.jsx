@@ -189,6 +189,13 @@ function OwnerChips() {
 export default function FilterPanel() {
   const filters = useAppStore(s => s.filters);
   const display = useAppStore(s => s.display);
+  const panelVisible = useAppStore(s => s.settings.panelVisible);
+  const view = useAppStore(s => s.view);
+  const panelClassName = [
+    'fpanel',
+    !panelVisible ? 'collapsed' : '',
+    view === 'dashboard' ? 'fp-hide' : '',
+  ].filter(Boolean).join(' ');
 
   const setFilter = (key, value) => {
     S.filters[key] = value;
@@ -203,7 +210,7 @@ export default function FilterPanel() {
   };
 
   return (
-    <aside className="fpanel" id="fpanel">
+    <aside className={panelClassName} id="fpanel">
       <button
         className="fpanel-toggle"
         id="fpanelToggle"

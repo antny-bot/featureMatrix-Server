@@ -18395,8 +18395,6 @@ function __inlineNotify(msg, type) {
       if (el) el.style.display = id === v + "View" ? "" : "none";
     });
     if (v !== "board" && window.hideBoardActionBar) window.hideBoardActionBar();
-    const fp = document.getElementById("fpanel");
-    if (fp) fp.classList.toggle("fp-hide", v === "dashboard");
     const contentEl = document.getElementById("contentArea");
     if (contentEl) contentEl.style.overflowY = v === "board" ? "hidden" : "";
   }
@@ -20195,8 +20193,6 @@ function __inlineNotify(msg, type) {
   }
   function syncSettingsUI() {
     setStore({ settings: { ...S.settings }, display: { ...S.display }, filters: { ...S.filters } });
-    document.getElementById("layout")?.classList.toggle("pr", S.settings.panelPos === "right");
-    document.getElementById("fpanel")?.classList.toggle("collapsed", !S.settings.panelVisible);
     document.title = S.settings.title || "featureMATRIX";
     updateAdminUI();
   }
@@ -20216,10 +20212,8 @@ function __inlineNotify(msg, type) {
   }
   function setPPos(v) {
     S.settings.panelPos = v;
-    document.getElementById("layout").classList.toggle("pr", v === "right");
-    document.getElementById("ppL").className = "rbtn" + (v === "left" ? " on" : "");
-    document.getElementById("ppR").className = "rbtn" + (v === "right" ? " on" : "");
     save();
+    setStore({ settings: { ...S.settings } });
   }
   function adjFont(d) {
     S.settings.baseFont = Math.max(12, Math.min(22, S.settings.baseFont + d));
@@ -20777,7 +20771,6 @@ function __inlineNotify(msg, type) {
       };
       window.togglePanel = () => {
         S.settings.panelVisible = !S.settings.panelVisible;
-        document.getElementById("fpanel").classList.toggle("collapsed", !S.settings.panelVisible);
         save();
         setStore({ settings: { ...S.settings } });
       };
@@ -23996,6 +23989,13 @@ function __inlineNotify(msg, type) {
   function FilterPanel() {
     const filters = useAppStore((s) => s.filters);
     const display = useAppStore((s) => s.display);
+    const panelVisible = useAppStore((s) => s.settings.panelVisible);
+    const view = useAppStore((s) => s.view);
+    const panelClassName = [
+      "fpanel",
+      !panelVisible ? "collapsed" : "",
+      view === "dashboard" ? "fp-hide" : ""
+    ].filter(Boolean).join(" ");
     const setFilter = (key, value2) => {
       S.filters[key] = value2;
       syncFilters();
@@ -24006,7 +24006,7 @@ function __inlineNotify(msg, type) {
       setStore({ display: { ...S.display } });
       window.renderAll?.();
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("aside", { className: "fpanel", id: "fpanel", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("aside", { className: panelClassName, id: "fpanel", children: [
       /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
         "button",
         {
@@ -24181,9 +24181,11 @@ function __inlineNotify(msg, type) {
   }
 
   // components/LayoutShell.jsx
+  init_useAppStore();
   var import_jsx_runtime18 = __toESM(require_jsx_runtime());
   function LayoutShell() {
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "layout", id: "layout", children: [
+    const panelPos = useAppStore((s) => s.settings.panelPos);
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: `layout${panelPos === "right" ? " pr" : ""}`, id: "layout", children: [
       /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(NavigationSide, {}),
       /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("main", { className: "content", id: "contentArea", children: [
         /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { id: "dashboardView", style: { display: "none" } }),
