@@ -15,6 +15,7 @@ import { S, save } from '../app/state.js';
 import { setStore } from '../store/useAppStore.js';
 import { applyVars } from '../app/theme.js';
 import ActivityLogPanel from './ActivityLogPanel.jsx';
+import DashboardSectionOrder from './DashboardSectionOrder.jsx';
 import SettingsColumnsPanel from './SettingsColumnsPanel.jsx';
 import SettingsDesignPanel from './SettingsDesignPanel.jsx';
 
@@ -41,7 +42,6 @@ export default function SettingsPanel() {
     if (activeTab === 'sserv') window.syncServerSettingsUI?.();
     if (activeTab === 'slog')  window.loadInlineActivityLog?.();
     if (activeTab === 'sadmin') {
-      window.renderDbSectionOrder?.();
       window.syncEditorPwStatus?.();
     }
   }, [activeTab]);
@@ -219,7 +219,7 @@ export default function SettingsPanel() {
             </div>
             <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', marginTop: '4px' }}>
               <div><div className="slbl">대시보드 섹션 순서</div><div className="ssub">드래그하거나 ▲▼ 버튼으로 순서를 변경하세요</div></div>
-              <div id="dbSectionOrder" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}></div>
+              <DashboardSectionOrder />
             </div>
             <div className="sec-ttl" style={{ marginTop: '16px' }}>데이터 관리</div>
             <div className="srow">
