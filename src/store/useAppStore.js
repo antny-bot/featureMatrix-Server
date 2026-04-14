@@ -1,19 +1,6 @@
-/* ══════════════════════════════════════════
-   useAppStore.js — Zustand 전역 상태 스토어
-
-   Phase 3: state.js의 S 객체와 동일한 구조를 Zustand로 정의.
-   Phase 4에서 컴포넌트별 전환 시 이 스토어를 직접 사용.
-   전환 완료 후 state.js의 S 객체 제거 예정.
-
-   사용 예:
-     const items = useAppStore(s => s.items);
-     const setView = useAppStore(s => s.setView);
-══════════════════════════════════════════ */
-
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { SK, DEFAULT_LIST_COLS, DATA_VERSION, MIGRATIONS } from '../app/constants.js';
-import { apiFetch } from '../app/state.js';  // Phase 4 전까지 API 함수 재사용
+import { SK, DEFAULT_LIST_COLS, DATA_VERSION, MIGRATIONS, UNDO_MAX } from '../app/constants.js';
 
 /* ── 초기 상태 (state.js의 S와 동일한 구조) ── */
 const initialState = {
@@ -46,7 +33,6 @@ const initialState = {
     priorityStyles: { high: 'left-thick', mid: 'left-thin', low: 'none' },
     customColors: { light: {}, dark: {} },
     listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-    animations: { enabled: true, countUp: true, card: true, filter: true, shimmer: true, blur: false },
     groupOrder: [],
     catOrder: [],
     dbHeroName: '',
@@ -57,14 +43,25 @@ const initialState = {
     serverUrl: '',
     pollInterval: 60,
     userName: '',
+    statusLabels: {
+      '대기': '대기',
+      '시작가능': '시작가능',
+      '진행중': '진행중',
+      '검토중': '검토중',
+      '완료': '완료',
+    },
   },
   sort: { key: 'key', dir: 'asc' },
+  mxSelectionKeys: [],
+  bulkSelectionKeys: [],
+  boardSelectionKeys: [],
+  boardDragKeys: [],
   editKey: null,
   isDragging: false,
   dragKey: null,
   dragCell: null,
+  undoStack: [],
   undoDepth: 0,
-  fadeState: '',
   // 서버 동기화 상태
   serverTs: 0,
   isLoading: false,
@@ -74,6 +71,13 @@ const initialState = {
   previews:  {},    // { [key]: { user, preview } }
   wsStatus: 'idle', // 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
   activeUsers: [],  // [{ sid, user, joinTime }] 현재 사용자 제외
+  // 글로벌 오버레이/UI 상태
+  toast: { visible: false, message: '', type: false, timerId: null },
+  contextMenu: null,
+  statusMenu: null,
+  tooltip: null, // { key, x, y }
+  tooltipTimerId: null,
+  activeModal: null, // 'loginModal', 'importModal', etc.
 };
 
 /* ── Zustand 스토어 ── */
@@ -86,12 +90,16 @@ export const useAppStore = create(
   setItems: (items) => set({ items }),
   setView: (view) => set({ view }),
   setSearchQ: (searchQ) => set({ searchQ }),
+  setMxSelectionKeys: (mxSelectionKeys) => set({ mxSelectionKeys: mxSelectionKeys || [] }),
+  setBulkSelectionKeys: (bulkSelectionKeys) => set({ bulkSelectionKeys: bulkSelectionKeys || [] }),
+  setBoardSelectionKeys: (boardSelectionKeys) => set({ boardSelectionKeys: boardSelectionKeys || [] }),
+  setBoardDragKeys: (boardDragKeys) => set({ boardDragKeys: boardDragKeys || [] }),
   setEditKey: (editKey) => set({ editKey }),
   setIsDragging: (isDragging) => set({ isDragging }),
   setUndoDepth: (undoDepth) => set({ undoDepth }),
-  setFadeState: (fadeState) => set({ fadeState }),
   setServerStatus: (serverStatus) => set({ serverStatus }),
   setIsLoading: (isLoading) => set({ isLoading }),
+  setServerTs: (serverTs) => set({ serverTs }),
   setWsStatus: (wsStatus) => set({ wsStatus }),
   setActiveUsers: (activeUsers) => set({ activeUsers: activeUsers || [] }),
 
@@ -104,6 +112,36 @@ export const useAppStore = create(
       else next[key] = data;
       return { previews: next };
     }),
+
+  /* ── 글로벌 오버레이/UI 업데이트 ── */
+  setContextMenu: (contextMenu) => set({ contextMenu }),
+  setStatusMenu: (statusMenu) => set({ statusMenu }),
+  setActiveModal: (activeModal) => set({ activeModal }),
+  startTooltip: (key, x, y) => {
+    const s = get();
+    if (s.tooltipTimerId) clearTimeout(s.tooltipTimerId);
+    if (!key) {
+      set({ tooltip: null, tooltipTimerId: null });
+      return;
+    }
+    const timerId = setTimeout(() => {
+      set({ tooltip: { key, x, y }, tooltipTimerId: null });
+    }, 900);
+    set({ tooltipTimerId: timerId });
+  },
+  clearTooltip: () => {
+    const s = get();
+    if (s.tooltipTimerId) clearTimeout(s.tooltipTimerId);
+    set({ tooltip: null, tooltipTimerId: null });
+  },
+  notify: (message, type = false) => {
+    const s = get();
+    if (s.toast.timerId) clearTimeout(s.toast.timerId);
+    const timerId = setTimeout(() => {
+      set({ toast: { ...get().toast, visible: false, timerId: null } });
+    }, 2400);
+    set({ toast: { visible: true, message, type, timerId } });
+  },
 
   /* ── 필터 업데이트 ── */
   setFilters: (filters) => set({ filters }),
@@ -119,9 +157,6 @@ export const useAppStore = create(
   setSettings: (settings) => set({ settings }),
   updateSetting: (key, value) =>
     set(s => ({ settings: { ...s.settings, [key]: value } })),
-  updateAnimations: (animations) =>
-    set(s => ({ settings: { ...s.settings, animations: { ...s.settings.animations, ...animations } } })),
-
   /* ── 아이템 CRUD ── */
   addItem: (item) =>
     set(s => ({ items: [...s.items, item] })),
@@ -141,26 +176,49 @@ export const useAppStore = create(
       return { changeLog: next };
     }),
 
-  /* ── state.js의 S로부터 전체 상태 동기화 (Phase 4 전환기 브릿지) ── */
-  syncFromS: (S) => {
-    set({
-      items:      S.items,
-      changeLog:  S.changeLog,
-      view:       S.view,
-      searchQ:    S.searchQ,
-      filters:    { ...S.filters },
-      display:    { ...S.display },
-      settings:   { ...S.settings },
-      sort:       { ...S.sort },
-      editKey:    S.editKey,
-      editLocks:  { ...S.editLocks },
-      activeUsers: get().activeUsers,
-    });
+  /* ── Undo 기능 추가 ── */
+  pushUndo: () => {
+    const { items, settings, undoStack } = get();
+    const snapshot = {
+      items: JSON.parse(JSON.stringify(items)),
+      groupOrder: [...(settings.groupOrder || [])],
+      catOrder: [...(settings.catOrder || [])],
+      dbSections: [...(settings.dbSections || [])],
+      listColumns: JSON.parse(JSON.stringify(settings.listColumns || [])),
+    };
+    const next = [...undoStack, JSON.stringify(snapshot)];
+    if (next.length > UNDO_MAX) next.shift();
+    set({ undoStack: next, undoDepth: next.length });
   },
+  
+  doUndo: () => {
+    const { undoStack, settings } = get();
+    if (!undoStack.length) return null;
+    const nextStack = [...undoStack];
+    const snapshotJson = nextStack.pop();
+    const snapshot = JSON.parse(snapshotJson);
+    
+    const nextSettings = { 
+      ...settings, 
+      groupOrder: snapshot.groupOrder,
+      catOrder: snapshot.catOrder,
+      dbSections: snapshot.dbSections,
+      listColumns: snapshot.listColumns,
+    };
+
+    set({ 
+      items: snapshot.items, 
+      settings: nextSettings,
+      undoStack: nextStack, 
+      undoDepth: nextStack.length 
+    });
+    return snapshot.items;
+  },
+
+  setUndoStack: (undoStack) => set({ undoStack, undoDepth: undoStack.length }),
 }),
     {
       name: 'featureMatrix',
-      // process.env.NODE_ENV는 빌드 시 esbuild define으로 치환됨
       enabled: typeof process !== 'undefined'
         ? process.env.NODE_ENV !== 'production'
         : true,

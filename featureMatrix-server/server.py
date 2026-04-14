@@ -38,7 +38,8 @@ edit_locks = {}  # { key: { user, ts } }
 
 # ── Socket.IO 클라이언트-사용자 매핑 ─────────────────────
 socket_users = {}  # { sid: user }
-active_users = {}  # { sid: { user, joinTime } }
+socket_clients = {}  # { sid: client_id }
+active_users = {}  # { client_id: { user, joinTime, sids } }
 active_users_lock = threading.Lock()
 
 # ── 토큰 파일 저장/로드 (관리자 토큰만 영속) ──────────────
@@ -355,9 +356,15 @@ def _register_socketio_events():
         from flask import request as req
         sid  = req.sid
         user = socket_users.pop(sid, None)
+        client_id = socket_clients.pop(sid, None)
         removed = False
         with active_users_lock:
-            removed = active_users.pop(sid, None) is not None
+            if client_id and client_id in active_users:
+                sids = active_users[client_id].setdefault('sids', set())
+                sids.discard(sid)
+                if not sids:
+                    del active_users[client_id]
+                    removed = True
         if user:
             released = [k for k, v in list(edit_locks.items()) if v['user'] == user]
             for k in released:
@@ -370,20 +377,38 @@ def _register_socketio_events():
     def on_register_user(data):
         """클라이언트가 자신의 사용자명을 등록"""
         from flask import request as req
-        user = ((data or {}).get('user') or '익명').strip() or '익명'
+        data = data or {}
+        user = (data.get('user') or '익명').strip() or '익명'
+        client_id = (data.get('clientId') or req.sid).strip() or req.sid
         socket_users[req.sid] = user
+        socket_clients[req.sid] = client_id
         with active_users_lock:
-            active_users[req.sid] = {'user': user, 'joinTime': int(time.time() * 1000)}
+            current = active_users.get(client_id)
+            if current:
+                current['user'] = user
+                current.setdefault('sids', set()).add(req.sid)
+            else:
+                active_users[client_id] = {
+                    'user': user,
+                    'joinTime': int(time.time() * 1000),
+                    'sids': {req.sid},
+                }
         broadcast_user_list()
 
     @socketio.on('unregister_user')
-    def on_unregister_user():
+    def on_unregister_user(data=None):
         """로그아웃 시 현재 소켓을 접속자 목록에서 제거"""
         from flask import request as req
         sid = req.sid
+        data = data or {}
+        client_id = data.get('clientId') or socket_clients.get(sid)
+        socket_clients.pop(sid, None)
+        socket_users.pop(sid, None)
         removed = False
         with active_users_lock:
-            removed = active_users.pop(sid, None) is not None
+            if client_id and client_id in active_users:
+                del active_users[client_id]
+                removed = True
         if removed:
             broadcast_user_list()
 
@@ -474,8 +499,13 @@ def get_active_user_list():
     """최근 접속자 순으로 정렬된 현재 로그인 사용자 목록."""
     with active_users_lock:
         users = [
-            {'sid': sid, 'user': info.get('user', '익명'), 'joinTime': info.get('joinTime', 0)}
-            for sid, info in active_users.items()
+            {
+                'sid': next(iter(info.get('sids') or {client_id})),
+                'clientId': client_id,
+                'user': info.get('user', '익명'),
+                'joinTime': info.get('joinTime', 0),
+            }
+            for client_id, info in active_users.items()
         ]
     users.sort(key=lambda item: item.get('joinTime', 0), reverse=True)
     return users
@@ -495,7 +525,7 @@ def serve_static(path):
     index = STATIC_DIR / 'index.html'
     if index.exists():
         return send_from_directory(str(STATIC_DIR), 'index.html')
-    return ('static/index.html 없음. node build.js 후 static/ 폴더에 복사하세요.', 404)
+    return ('static/index.html 없음. cd src && npm run build 를 실행하세요.', 404)
 
 # ── 에러 핸들러 ───────────────────────────────────────────
 @app.errorhandler(401)

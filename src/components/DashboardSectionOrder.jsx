@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { S, save } from '../app/state.js';
-import { setStore, useAppStore } from '../store/useAppStore.js';
+import { useAppStore } from '../store/useAppStore.js';
+import { useDBSync } from '../hooks/useDBSync.js';
 
 const SECTION_LABELS = {
   stats: '스탯 카드 4개',
@@ -9,13 +9,6 @@ const SECTION_LABELS = {
 };
 
 const DEFAULT_SECTIONS = ['stats', 'insight', 'heatmap'];
-
-function persistSections(sections) {
-  S.settings.dbSections = sections;
-  save();
-  setStore({ settings: { ...S.settings } });
-  if (S.view === 'dashboard' && window.renderDashboard) window.renderDashboard();
-}
 
 function moveItem(list, fromIndex, toIndex) {
   if (fromIndex === toIndex || fromIndex == null) return list;
@@ -26,9 +19,23 @@ function moveItem(list, fromIndex, toIndex) {
 }
 
 export default function DashboardSectionOrder() {
-  const sections = useAppStore(state => state.settings.dbSections || DEFAULT_SECTIONS);
+  const store = useAppStore();
+  const sections = store.settings.dbSections || DEFAULT_SECTIONS;
+  const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
+  
   const [dragIndex, setDragIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  const persistSections = async (newSections) => {
+    store.pushUndo();
+    store.setSettings({ ...store.settings, dbSections: newSections });
+    if (store.settings.storageMode === 'server') {
+      const ok = await saveToServer();
+      if (ok) broadcastSharedData();
+    } else {
+      saveLocal();
+    }
+  };
 
   const moveSection = (index, direction) => {
     const nextIndex = index + direction;

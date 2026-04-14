@@ -1,238 +1,267 @@
-/* ══════════════════════════════════════════
-   SettingsPanel.jsx — 환경 설정 모달 React 컴포넌트
-
-   portal root: #settingsModal (App.jsx의 빈 컨테이너)
-   탭 상태: React useState (activeTab)
-   설정값: Zustand store에서 직접 읽음 → syncSettingsUI() 불필요
-   복잡한 서브에디터(colEditor, themeGrid 등): React 하위 컴포넌트가 직접 렌더링
-══════════════════════════════════════════ */
-
-import { createPortal } from 'react-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { S, save } from '../app/state.js';
-import { setStore } from '../store/useAppStore.js';
+import { useDBSync } from '../hooks/useDBSync.js';
+import { useModals } from '../hooks/useModals.js';
 import { applyVars } from '../app/theme.js';
+import { DEMO, DEFAULT_LIST_COLS, STATUS_OPTS } from '../app/constants.js';
 import ActivityLogPanel from './ActivityLogPanel.jsx';
 import DashboardSectionOrder from './DashboardSectionOrder.jsx';
 import SettingsColumnsPanel from './SettingsColumnsPanel.jsx';
 import SettingsDesignPanel from './SettingsDesignPanel.jsx';
+import { expClip, expTSV, expXLS, expHTML, expMdZip } from '../app/io.js';
 
-/* ── S.settings 변경 + Zustand 동기화 헬퍼 ── */
-function syncSettings() { setStore({ settings: { ...S.settings } }); }
-function syncDisplay()  { setStore({ display:  { ...S.display  } }); }
-function syncFilters()  { setStore({ filters:  { ...S.filters  } }); }
+function ClipIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>; }
+function TsvIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>; }
+function XlsIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>; }
+function HtmlIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>; }
+function ZipIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>; }
+
 
 export default function SettingsPanel() {
-  const settings = useAppStore(s => s.settings);
-  const display  = useAppStore(s => s.display);
-  const filters  = useAppStore(s => s.filters);
+  const store = useAppStore();
+  const settings = store.settings;
   const { isAdmin } = useAuth();
-  const appVersion = (typeof __APP_VERSION__ !== 'undefined') ? __APP_VERSION__ : 'dev';
-  const buildId = (typeof __BUILD_ID__ !== 'undefined') ? __BUILD_ID__ : 'local';
-
-  const [container, setContainer] = useState(null);
+  const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
+  const { closeModal, openModal } = useModals();
   const [activeTab, setActiveTab] = useState('sg');
-  const settFileRef = useRef(null);
-  const mdImpAdminRef = useRef(null);
+  const settingsFileRef = useRef(null);
 
-  useEffect(() => {
-    setContainer(document.getElementById('settingsModal'));
-  }, []);
+  const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+  const buildId = typeof __BUILD_ID__ !== 'undefined' ? __BUILD_ID__ : 'local';
 
-  /* 탭 전환 시 서브에디터 초기화 */
-  useEffect(() => {
-    if (activeTab === 'sserv') window.syncServerSettingsUI?.();
-    if (activeTab === 'slog')  window.loadInlineActivityLog?.();
-    if (activeTab === 'sadmin') {
-      window.syncEditorPwStatus?.();
+  const persistSettings = useCallback(async (nextSettings = useAppStore.getState().settings) => {
+    if (nextSettings.storageMode === 'server') await saveToServer();
+    else saveLocal();
+  }, [saveLocal, saveToServer]);
+
+  const persistData = useCallback(async () => {
+    if (useAppStore.getState().settings.storageMode === 'server') {
+      const ok = await saveToServer();
+      if (ok) broadcastSharedData();
+    } else {
+      saveLocal();
     }
-  }, [activeTab]);
+  }, [saveLocal, saveToServer, broadcastSharedData]);
 
-  /* 설정 모달이 열릴 때마다 activeTab을 'sg'로 초기화하는 브릿지 */
-  useEffect(() => {
-    window.__settingsPanelOpen = () => setActiveTab('sg');
-    return () => { delete window.__settingsPanelOpen; };
-  }, []);
-
-  if (!container) return null;
-
-  /* ── 탭 클릭 핸들러 ── */
-  const switchTab = (tab) => setActiveTab(tab);
-  const updateSharedSetting = (key, value) => {
-    S.settings[key] = value;
-    if (key === 'title') document.title = value || 'featureMATRIX';
-    save();
-    syncSettings();
-    if (key === 'dbHeroName' && S.view === 'dashboard') window.renderDashboard?.();
+  const updateSetting = async (key, value, { apply = false } = {}) => {
+    const nextSettings = { ...useAppStore.getState().settings, [key]: value };
+    store.setSettings(nextSettings);
+    if (apply) applyVars();
+    await persistSettings(nextSettings);
   };
 
-  return createPortal(
-    <div className="mbox" style={{ width: '760px' }}>
-      <div className="mhd">
-        <span className="mtitle">⚙ 환경 설정</span>
-        <button className="mclose" onClick={() => window.closeModal?.('settingsModal')}>✕</button>
-      </div>
+  const adjSetting = (key, delta, min, max, stepApply = true) => {
+    const current = useAppStore.getState().settings;
+    const nextValue = Math.max(min, Math.min(max, (current[key] ?? 0) + delta));
+    updateSetting(key, nextValue, { apply: stepApply });
+  };
 
-      {/* ── 탭 목록 ── */}
-      <div className="stab-row">
-        <button className={`stab${activeTab === 'sg'      ? ' on' : ''}`} onClick={() => switchTab('sg')}>일반</button>
-        <button className={`stab${activeTab === 'sdesign' ? ' on' : ''}`} onClick={() => switchTab('sdesign')}>디자인</button>
-        <button className={`stab${activeTab === 'scola'   ? ' on' : ''}`} onClick={() => switchTab('scola')}>컬럼·축</button>
-        <button className={`stab${activeTab === 'sdat'    ? ' on' : ''}`} onClick={() => switchTab('sdat')}>데이터</button>
-        <button className={`stab${activeTab === 'sserv'   ? ' on' : ''}`} onClick={() => switchTab('sserv')}>서버</button>
-        <button className={`stab${activeTab === 'slog'    ? ' on' : ''}`} id="slogTab" onClick={() => switchTab('slog')}>로그</button>
-        {isAdmin && (
-          <button className={`stab${activeTab === 'sadmin' ? ' on' : ''}`} id="sadminTab" onClick={() => switchTab('sadmin')}>🔑 관리자</button>
-        )}
-      </div>
+  const exportSettings = () => {
+    const payload = { settings: store.settings, display: store.display };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    Object.assign(document.createElement('a'), {
+      href: url,
+      download: `featurematrix-settings-${new Date().toISOString().slice(0, 10)}.json`,
+    }).click();
+    URL.revokeObjectURL(url);
+  };
 
-      <div className="mbody" style={{ padding: '14px 20px' }}>
+  const importSettings = event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.settings) store.setSettings({ ...store.settings, ...data.settings });
+        if (data.display) store.setDisplay({ ...store.display, ...data.display });
+        applyVars();
+        persistSettings();
+        window.__sobukNotify?.('설정을 불러왔습니다.', 'success');
+      } catch {
+        window.__sobukNotify?.('설정 JSON을 읽을 수 없습니다.', 'error');
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+    event.target.value = '';
+  };
 
-        {/* ── 일반 탭 ── */}
-        {activeTab === 'sg' && (
-          <div>
-            <div className="sec-ttl">폰트 &amp; 카드</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-              <Stepper label="기준 폰트"       value={`${settings.baseFont}px`}   onMinus={() => { S.settings.baseFont    = Math.max(12,Math.min(22,settings.baseFont-1));    save(); applyVars(); syncSettings(); }} onPlus={() => { S.settings.baseFont    = Math.max(12,Math.min(22,settings.baseFont+1));    save(); applyVars(); syncSettings(); }} />
-              <Stepper label="카드 폰트"       value={`${settings.cardFont}px`}   onMinus={() => { S.settings.cardFont    = Math.max(9, Math.min(18,settings.cardFont-1));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.cardFont    = Math.max(9, Math.min(18,settings.cardFont+1));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} />
-              <Stepper label="모서리 반경"     value={`${settings.cardRadius}px`} onMinus={() => { S.settings.cardRadius  = Math.max(0, Math.min(14,settings.cardRadius-1));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.cardRadius  = Math.max(0, Math.min(14,settings.cardRadius+1));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} />
-              <Stepper label="카드 간격"       value={`${settings.cardGap}px`}    onMinus={() => { S.settings.cardGap     = Math.max(0, Math.min(20,settings.cardGap-1));     save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.cardGap     = Math.max(0, Math.min(20,settings.cardGap+1));     save(); applyVars(); syncSettings(); window.renderAll?.(); }} />
-            </div>
-            <div className="sec-ttl" style={{ marginTop: '12px' }}>매트릭스 열 너비</div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <Stepper label="그룹 열 폭"        value={`${settings.colW}px`}                                     onMinus={() => { S.settings.colW   = Math.max(80, Math.min(300,settings.colW-10));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.colW   = Math.max(80, Math.min(300,settings.colW+10));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={10} />
+  const resetSettings = () => {
+    if (!confirm('개인 설정을 기본값으로 초기화할까요?')) return;
+    const nextSettings = {
+      ...store.settings,
+      baseFont: 16, cardFont: 12, cardRadius: 6, cardGap: 4,
+      colW: 130, catW: 52, subCatW: 80, cellFold: 0, boardFoldCount: 6,
+      matrixWidth: 'fluid', panelPos: 'left', panelVisible: true,
+      themeId: 'sobuk',
+      priorityStyles: { high: 'left-thick', mid: 'left-thin', low: 'none' },
+      customColors: { light: {}, dark: {} },
+      listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
+    };
+    store.setSettings(nextSettings);
+    applyVars();
+    persistSettings(nextSettings);
+  };
+
+  const resetData = async () => {
+    if (!confirm('현재 데이터를 데모 데이터로 초기화할까요?')) return;
+    store.pushUndo();
+    store.setItems(JSON.parse(JSON.stringify(DEMO)));
+    store.setChangeLog([]);
+    await persistData();
+    window.__sobukNotify?.('데이터를 초기화했습니다.', 'success');
+  };
+
+  return (
+    <div className="ov" id="settingsModal">
+      <div className="mbox" style={{ width: '760px' }}>
+        <div className="mhd">
+          <span className="mtitle">환경 설정</span>
+          <button className="mclose" onClick={() => closeModal('settingsModal')}>x</button>
+        </div>
+
+        <div className="stab-row">
+          <Tab id="sg" active={activeTab} setActive={setActiveTab}>일반</Tab>
+          <Tab id="sdesign" active={activeTab} setActive={setActiveTab}>디자인</Tab>
+          <Tab id="scola" active={activeTab} setActive={setActiveTab}>컬럼/축</Tab>
+          <Tab id="sdat" active={activeTab} setActive={setActiveTab}>데이터</Tab>
+          <Tab id="sserv" active={activeTab} setActive={setActiveTab}>서버</Tab>
+          <Tab id="slog" active={activeTab} setActive={setActiveTab}>로그</Tab>
+          {isAdmin && <Tab id="sadmin" active={activeTab} setActive={setActiveTab}>관리자</Tab>}
+        </div>
+
+        <div className="mbody" style={{ padding: '14px 20px' }}>
+          {activeTab === 'sg' && (
+            <div>
+              <div className="sec-ttl">폰트 & 카드</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-                <Stepper label="매트릭스 셀 접기 기준" value={settings.cellFold === 0 ? '∞' : settings.cellFold}       sub="0=항상 펼침" onMinus={() => { S.settings.cellFold = Math.max(0,Math.min(20,settings.cellFold-1)); save(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.cellFold = Math.max(0,Math.min(20,settings.cellFold+1)); save(); syncSettings(); window.renderAll?.(); }} />
-                <Stepper label="보드 셀 접기 기준"   value={settings.boardFoldCount === 0 ? '∞' : settings.boardFoldCount} sub="0=항상 펼침" onMinus={() => { S.settings.boardFoldCount = Math.max(0,Math.min(30,(settings.boardFoldCount??6)-1)); save(); syncSettings(); }} onPlus={() => { S.settings.boardFoldCount = Math.max(0,Math.min(30,(settings.boardFoldCount??6)+1)); save(); syncSettings(); }} />
+                <Stepper label="기본 폰트" value={`${settings.baseFont}px`} onMinus={() => adjSetting('baseFont', -1, 12, 22)} onPlus={() => adjSetting('baseFont', 1, 12, 22)} />
+                <Stepper label="카드 폰트" value={`${settings.cardFont}px`} onMinus={() => adjSetting('cardFont', -1, 9, 18)} onPlus={() => adjSetting('cardFont', 1, 9, 18)} />
+                <Stepper label="카드 모서리" value={`${settings.cardRadius}px`} onMinus={() => adjSetting('cardRadius', -1, 0, 14)} onPlus={() => adjSetting('cardRadius', 1, 0, 14)} />
+                <Stepper label="카드 간격" value={`${settings.cardGap}px`} onMinus={() => adjSetting('cardGap', -1, 0, 20)} onPlus={() => adjSetting('cardGap', 1, 0, 20)} />
               </div>
+
+              <div className="sec-ttl" style={{ marginTop: '12px' }}>레이아웃 설정</div>
+              <Stepper label="그룹 열 폭" value={`${settings.colW}px`} onMinus={() => adjSetting('colW', -10, 80, 300)} onPlus={() => adjSetting('colW', 10, 80, 300)} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-                <Stepper label="카테고리 폭"         value={`${settings.catW}px`}                                     onMinus={() => { S.settings.catW   = Math.max(40, Math.min(80, settings.catW-4));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.catW   = Math.max(40, Math.min(80, settings.catW+4));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={4} />
-                <Stepper label="서브카테고리 폭"     value={`${settings.subCatW}px`}                                  onMinus={() => { S.settings.subCatW= Math.max(40, Math.min(200,settings.subCatW-4));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.subCatW= Math.max(40, Math.min(200,settings.subCatW+4));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={4} />
+                <Stepper label="카테고리 폭" value={`${settings.catW}px`} onMinus={() => adjSetting('catW', -5, 40, 120)} onPlus={() => adjSetting('catW', 5, 40, 120)} />
+                <Stepper label="서브카테고리 폭" value={`${settings.subCatW}px`} onMinus={() => adjSetting('subCatW', -10, 40, 240)} onPlus={() => adjSetting('subCatW', 10, 40, 240)} />
+                <Stepper label="매트릭스 접기 기준" value={settings.cellFold === 0 ? '항상 펼침' : settings.cellFold} onMinus={() => adjSetting('cellFold', -1, 0, 20, false)} onPlus={() => adjSetting('cellFold', 1, 0, 20, false)} />
+                <Stepper label="보드 접기 기준" value={settings.boardFoldCount === 0 ? '항상 펼침' : settings.boardFoldCount} onMinus={() => adjSetting('boardFoldCount', -1, 0, 30, false)} onPlus={() => adjSetting('boardFoldCount', 1, 0, 30, false)} />
+              </div>
+
+              <div className="sec-ttl" style={{ marginTop: '12px' }}>빌드 정보</div>
+              <div className="srow">
+                <div><div className="slbl">버전 정보</div></div>
+                <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text-2)' }}>{`v${appVersion} (build ${buildId})`}</span>
               </div>
             </div>
-            <div className="sec-ttl" style={{ marginTop: '12px' }}>빌드 정보</div>
-            <div className="srow">
-              <div><div className="slbl">빌드 넘버</div></div>
-              <span id="buildNumberDisplay" style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text-2)'}}>{`v${appVersion} (build ${buildId})`}</span>
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* ── 디자인 탭 ── */}
-        {activeTab === 'sdesign' && (
-          <SettingsDesignPanel />
-        )}
+          {activeTab === 'sdesign' && <SettingsDesignPanel />}
+          {activeTab === 'scola' && <SettingsColumnsPanel />}
 
-        {/* ── 컬럼·축 탭 ── */}
-        {activeTab === 'scola' && (
-          <SettingsColumnsPanel />
-        )}
-
-        {/* ── 데이터 탭 ── */}
-        {activeTab === 'sdat' && (
-          <div>
-            <div className="sec-ttl">내보내기</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' }}>
-              <button className="btn btn-s btn-sm" onClick={() => window.expClip?.()}>📋 클립보드</button>
-              <button className="btn btn-s btn-sm" onClick={() => window.expTSV?.()}>⬇ TSV</button>
-              <button className="btn btn-s btn-sm" onClick={() => window.expXLS?.()}>📊 Excel</button>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '4px', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ fontSize: '.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="radio" name="htmlW" value="fluid" defaultChecked /> 가변폭</label>
-                <label style={{ fontSize: '.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="radio" name="htmlW" value="fixed" /> 고정폭</label>
+          {activeTab === 'sdat' && (
+            <div>
+              <div className="sec-ttl">내보내기</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                <button className="btn btn-s btn-sm" onClick={() => expClip()}><ClipIcon /> 클립보드</button>
+                <button className="btn btn-s btn-sm" onClick={() => expTSV()}><TsvIcon /> TSV</button>
+                <button className="btn btn-s btn-sm" onClick={() => expXLS()}><XlsIcon /> Excel</button>
+                <button className="btn btn-s btn-sm" onClick={() => expHTML()}><HtmlIcon /> HTML</button>
+                <button className="btn btn-s btn-sm" onClick={() => expMdZip()}><ZipIcon /> MD ZIP</button>
               </div>
-              <button className="btn btn-s btn-sm" onClick={event => window.expHTML?.(event.currentTarget.closest('.mbody'))}>🌐 HTML</button>
-              <button className="btn btn-s btn-sm" onClick={() => window.expMdZip?.()}>📦 MD ZIP</button>
-            </div>
-            <div className="sec-ttl" style={{ marginTop: '12px' }}>설정 파일</div>
-            <div className="srow">
-              <div><div className="slbl">설정 초기화</div><div className="ssub">개인 설정만 기본값으로</div></div>
-              <button className="btn btn-s btn-sm" onClick={() => window.resetSettings?.()}>설정만 초기화</button>
-            </div>
-            <div className="srow">
-              <div><div className="slbl">설정 JSON 저장</div></div>
-              <button className="btn btn-s btn-sm" onClick={() => window.expSettJSON?.()}>⬇ 저장</button>
-            </div>
-            <div className="srow">
-              <div><div className="slbl">설정 JSON 불러오기</div></div>
-              <div>
-                <button className="btn btn-s btn-sm" onClick={() => settFileRef.current?.click()}>↑ 불러오기</button>
-                <input type="file" id="settFile" ref={settFileRef} accept=".json" style={{ display: 'none' }} onChange={e => window.impSettJSON?.(e)} />
+
+              {isAdmin && (
+                <>
+                  <div className="sec-ttl" style={{ marginTop: '16px' }}>데이터 관리</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                    <button className="btn btn-s btn-sm" onClick={() => openModal('importModal')}><TsvIcon /> 가져오기</button>
+                    <button className="btn btn-d btn-sm" onClick={resetData}>데이터 초기화</button>
+                  </div>
+                </>
+              )}
+
+              <div className="sec-ttl" style={{ marginTop: '12px' }}>설정 파일</div>
+              <div className="srow">
+                <div><div className="slbl">설정 JSON</div></div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <button className="btn btn-s btn-sm" onClick={exportSettings}>저장</button>
+                  <button className="btn btn-s btn-sm" onClick={() => settingsFileRef.current?.click()}>불러오기</button>
+                  <button className="btn btn-d btn-sm" onClick={resetSettings}>설정 초기화</button>
+                  <input ref={settingsFileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importSettings} />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── 서버 탭 ── */}
-        {activeTab === 'sserv' && (
-          <ServerSettingsPanel settings={settings} />
-        )}
+          {activeTab === 'sserv' && <ServerSettingsPanel settings={settings} onSave={persistSettings} />}
 
-        {/* ── 로그 탭 ── */}
-        {activeTab === 'slog' && (
-          <ActivityLogPanel
-            changeLogMax={settings.changeLogMax}
-            onChangeLogMax={delta => {
-              S.settings.changeLogMax = Math.max(10, Math.min(500, (settings.changeLogMax ?? 50) + delta));
-              save();
-              syncSettings();
-            }}
-          />
-        )}
+          {activeTab === 'slog' && (
+            <ActivityLogPanel
+              changeLogMax={settings.changeLogMax}
+              onChangeLogMax={delta => adjSetting('changeLogMax', delta, 10, 500, false)}
+            />
+          )}
 
-        {/* ── 관리자 탭 ── */}
-        {activeTab === 'sadmin' && isAdmin && (
-          <div>
-            <div className="sec-ttl">공유 콘텐츠 설정</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-              <div className="srow" style={{ borderBottom: 'none', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-                <div className="slbl">헤더 타이틀</div>
-                <input className="inp" id="sTitle" value={settings.title || ''} style={{ height: '28px', fontSize: '.8rem' }} onChange={event => updateSharedSetting('title', event.target.value)} />
+          {activeTab === 'sadmin' && isAdmin && (
+            <div>
+              <div className="sec-ttl">서버 공통 설정</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
+                <div className="srow-v">
+                  <div className="slbl">타이틀</div>
+                  <input className="inp" value={settings.title || ''} onChange={e => updateSetting('title', e.target.value)} />
+                </div>
+                <div className="srow-v">
+                  <div className="slbl">서브타이틀</div>
+                  <input className="inp" value={settings.subtitle || ''} onChange={e => updateSetting('subtitle', e.target.value)} />
+                </div>
               </div>
-              <div className="srow" style={{ borderBottom: 'none', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-                <div className="slbl">서브 타이틀</div>
-                <input className="inp" id="sSub" value={settings.subtitle || ''} style={{ height: '28px', fontSize: '.8rem' }} onChange={event => updateSharedSetting('subtitle', event.target.value)} />
+              <div className="srow-v" style={{ marginTop: '8px' }}>
+                <div className="slbl">대시보드 히어로 제목</div>
+                <input className="inp" value={settings.dbHeroName || ''} onChange={e => updateSetting('dbHeroName', e.target.value)} />
               </div>
-            </div>
-            <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px' }}>
-              <div><div className="slbl">대시보드 히어로 제목</div><div className="ssub">대시보드 상단에 표시할 프로젝트명</div></div>
-              <input className="inp" id="dbHeroName" value={settings.dbHeroName || ''} placeholder="프로젝트 현황" style={{ height: '28px', fontSize: '.82rem' }} onChange={event => updateSharedSetting('dbHeroName', event.target.value)} />
-            </div>
-            <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', marginTop: '4px' }}>
-              <div><div className="slbl">대시보드 섹션 순서</div><div className="ssub">드래그하거나 ▲▼ 버튼으로 순서를 변경하세요</div></div>
+
+              <div className="sec-ttl" style={{ marginTop: '16px' }}>진행상태 명칭 설정</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', marginBottom: '12px' }}>
+                {STATUS_OPTS.map(key => (
+                  <div key={key} className="srow-v">
+                    <div className="slbl" style={{ opacity: 0.6 }}>{key} (내부키)</div>
+                    <input 
+                      className="inp" 
+                      value={settings.statusLabels?.[key] || key} 
+                      onChange={e => {
+                        const nextLabels = { ...(settings.statusLabels || {}), [key]: e.target.value };
+                        updateSetting('statusLabels', nextLabels);
+                      }} 
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="sec-ttl" style={{ marginTop: '16px' }}>대시보드 섹션 순서</div>
+              <div style={{ fontSize: '.77rem', color: 'var(--text-3)', marginBottom: '10px' }}>
+                드래그하거나 ▲▼ 버튼으로 순서를 변경하세요
+              </div>
               <DashboardSectionOrder />
             </div>
-            <div className="sec-ttl" style={{ marginTop: '16px' }}>데이터 관리</div>
-            <div className="srow">
-              <div><div className="slbl">가져오기</div><div className="ssub">기존 데이터가 덮어씌워집니다. 관리자 전용.</div></div>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <button className="btn btn-s btn-sm" onClick={() => window.requireAdmin?.(() => window.openModal?.('importModal'))}>📥 CSV/TSV</button>
-                <button className="btn btn-s btn-sm" onClick={() => window.requireAdmin?.(() => mdImpAdminRef.current?.click())}>📂 MD ZIP</button>
-                <input type="file" id="mdImpInpAdmin" ref={mdImpAdminRef} accept=".md" multiple style={{ display: 'none' }} onChange={e => window.impMdFiles?.(e)} />
-              </div>
-            </div>
-            <div className="srow">
-              <div><div className="slbl" style={{ color: 'var(--danger)' }}>데이터 초기화</div><div className="ssub">샘플 데이터로 전체 복원</div></div>
-              <button className="btn btn-d btn-sm" onClick={() => window.resetData?.()}>초기화</button>
-            </div>
-            <div className="sec-ttl" style={{ marginTop: '16px' }}>접근 제어</div>
-            <EditorPasswordControl />
-          </div>
-        )}
+          )}
+        </div>
 
+        <div className="mfoot">
+          <button className="btn btn-p btn-sm" onClick={() => closeModal('settingsModal')}>닫기</button>
+        </div>
       </div>
-      <div className="mfoot">
-        <button className="btn btn-p btn-sm" onClick={() => window.closeModal?.('settingsModal')}>닫기</button>
-      </div>
-    </div>,
-    container
+    </div>
   );
 }
 
-/* ── Stepper 서브컴포넌트 ── */
+function Tab({ id, active, setActive, children }) {
+  return <button className={`stab${active === id ? ' on' : ''}`} onClick={() => setActive(id)}>{children}</button>;
+}
+
 function Stepper({ label, sub, value, onMinus, onPlus }) {
   return (
     <div className="srow">
@@ -241,7 +270,7 @@ function Stepper({ label, sub, value, onMinus, onPlus }) {
         {sub && <div className="ssub">{sub}</div>}
       </div>
       <div className="stepper">
-        <button className="stepbtn" onClick={onMinus}>−</button>
+        <button className="stepbtn" onClick={onMinus}>-</button>
         <span>{value}</span>
         <button className="stepbtn" onClick={onPlus}>+</button>
       </div>
@@ -249,117 +278,48 @@ function Stepper({ label, sub, value, onMinus, onPlus }) {
   );
 }
 
-function ServerSettingsPanel({ settings }) {
+function ServerSettingsPanel({ settings, onSave }) {
+  const store = useAppStore();
   const [form, setForm] = useState({
     storageMode: settings.storageMode || 'server',
     userName: settings.userName || '',
   });
 
-  useEffect(() => {
-    setForm({
-      storageMode: settings.storageMode || 'server',
-      userName: settings.userName || '',
-    });
-  }, [settings.storageMode, settings.userName]);
-
-  const saveServerSettings = (nextForm = form) => {
-    window.saveServerSettings?.(nextForm);
+  const save = () => {
+    const nextSettings = { ...settings, ...form };
+    store.setSettings(nextSettings);
+    onSave(nextSettings);
   };
 
-  const setMode = storageMode => {
-    const next = { ...form, storageMode };
-    setForm(next);
-    saveServerSettings(next);
+  const radioStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '.84rem',
+    color: 'var(--text)',
+    fontWeight: 600,
   };
 
   return (
     <div>
-      <div className="sec-ttl">스토리지 모드</div>
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem', cursor: 'pointer' }}>
-          <input
-            type="radio"
-            name="storageMode"
-            id="modeServer"
-            value="server"
-            checked={form.storageMode === 'server'}
-            onChange={() => setMode('server')}
-          />
-          🌐 서버 (공유, 기본)
+      <div className="sec-ttl">데이터 소스</div>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+        <label className="radio-lbl" style={radioStyle}>
+          <input type="radio" checked={form.storageMode === 'server'} onChange={() => setForm({ ...form, storageMode: 'server' })} />
+          서버 저장(공유)
         </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.82rem', cursor: 'pointer' }}>
-          <input
-            type="radio"
-            name="storageMode"
-            id="modeLocal"
-            value="local"
-            checked={form.storageMode === 'local'}
-            onChange={() => setMode('local')}
-          />
-          💾 로컬 (개인)
+        <label className="radio-lbl" style={radioStyle}>
+          <input type="radio" checked={form.storageMode === 'local'} onChange={() => setForm({ ...form, storageMode: 'local' })} />
+          브라우저 저장(개인)
         </label>
       </div>
-      <div className="sec-ttl">연결 설정</div>
-      <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px' }}>
-        <div className="slbl">사용자 이름</div>
-        <div className="ssub">변경 이력 및 활동 로그에 표시되는 이름</div>
-        <input
-          className="inp"
-          id="sUserName"
-          value={form.userName}
-          onChange={event => setForm(current => ({ ...current, userName: event.target.value }))}
-          placeholder="홍길동"
-          style={{ height: '28px', fontSize: '.8rem' }}
-          onKeyDown={event => { if (event.key === 'Enter') saveServerSettings(); }}
-        />
+      <div className="srow-v">
+        <div className="slbl">표시 이름</div>
+        <input className="inp" value={form.userName} onChange={e => setForm({ ...form, userName: e.target.value })} placeholder="익명" />
       </div>
       <div style={{ marginTop: '14px' }}>
-        <button className="btn btn-p btn-sm" onClick={() => saveServerSettings()}>저장</button>
+        <button className="btn btn-p btn-sm" onClick={save}>저장 및 적용</button>
       </div>
     </div>
   );
 }
-
-function EditorPasswordControl() {
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [placeholder, setPlaceholder] = useState('새 비밀번호 (비우면 제거)');
-
-  useEffect(() => {
-    window.__reactSetEditorPwError = message => setError(message || '');
-    window.__reactSetEditorPwPlaceholder = value => setPlaceholder(value || '새 비밀번호 (비우면 제거)');
-    return () => {
-      delete window.__reactSetEditorPwError;
-      delete window.__reactSetEditorPwPlaceholder;
-    };
-  }, []);
-
-  const submit = async () => {
-    const ok = await window.setEditorPassword?.(password);
-    if (ok) setPassword('');
-  };
-
-  return (
-    <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-      <div><div className="slbl">편집자 비밀번호</div><div className="ssub">비워두면 비번 없이 편집 가능</div></div>
-      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-        <input
-          className="inp"
-          id="editorPwInp"
-          type="password"
-          value={password}
-          placeholder={placeholder}
-          onChange={event => {
-            setPassword(event.target.value);
-            setError('');
-          }}
-          style={{ flex: 1, height: '28px', fontSize: '.82rem' }}
-          onKeyDown={event => { if (event.key === 'Enter') submit(); }}
-        />
-        <button className="btn btn-s btn-sm" onClick={submit}>변경</button>
-      </div>
-      <div id="editorPwErr" style={{ color: 'var(--danger)', fontSize: '.78rem', minHeight: '14px' }}>{error}</div>
-    </div>
-  );
-}
-

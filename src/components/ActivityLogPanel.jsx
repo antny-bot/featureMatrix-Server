@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { apiFetch } from '../app/state.js';
+import { apiFetch } from '../utils/api.js';
 
 const ACTION_COLORS = {
   접속: 'var(--accent)',

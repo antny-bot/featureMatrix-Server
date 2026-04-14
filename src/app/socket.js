@@ -17,6 +17,7 @@ import { ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY } from './constants.js';
 let _socket = null;
 let _pendingQueue = []; // 연결 전 대기 중인 emit { event, data }
 const _recentLocalUnlocks = {};
+const CLIENT_ID_KEY = 'fmClientId';
 
 // ── 서버 URL 결정 ──────────────────────────────────────────────────────
 function _getServerUrl() {
@@ -77,20 +78,34 @@ function _currentUserName() {
   return getStore().settings?.userName || '익명';
 }
 
+function _clientId() {
+  try {
+    let id = localStorage.getItem(CLIENT_ID_KEY);
+    if (!id) {
+      id = `client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(CLIENT_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return _socket?.id || '';
+  }
+}
+
 function _syncActiveUser() {
   if (!_socket?.connected) return;
   if (_hasAuthToken()) {
-    _socket.emit('register_user', { user: _currentUserName() });
+    _socket.emit('register_user', { user: _currentUserName(), clientId: _clientId() });
     _socket.emit('get_active_users');
   } else {
-    _socket.emit('unregister_user');
+    _socket.emit('unregister_user', { clientId: _clientId() });
     setStore({ activeUsers: [] });
   }
 }
 
 function _setActiveUsers(users) {
   const ownSid = _socket?.id;
-  const others = (users || []).filter(user => user.sid !== ownSid);
+  const ownClientId = _clientId();
+  const others = (users || []).filter(user => user.sid !== ownSid && user.clientId !== ownClientId);
   setStore({ activeUsers: others });
 }
 
@@ -183,7 +198,7 @@ export function initSocket() {
   const url = _getServerUrl();
 
   _socket = io(url, {
-    transports: ['websocket', 'polling'],
+    transports: ['polling'],
     reconnection: true,
     reconnectionAttempts: 10,
     reconnectionDelay: 1000,
@@ -219,7 +234,7 @@ export function registerActiveUser() {
 
 export function unregisterActiveUser() {
   if (_socket?.connected) {
-    _socket.emit('unregister_user');
+    _socket.emit('unregister_user', { clientId: _clientId() });
   }
   setStore({ activeUsers: [] });
 }

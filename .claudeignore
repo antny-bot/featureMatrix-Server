@@ -1,0 +1,31 @@
+# Data & Config (자동 생성되는 파일 무시)
+config.json
+data.json
+featureMatrix-server/config.json
+featureMatrix-server/data.json
+featureMatrix-server/tokens.json
+featureMatrix-server/activity.json
+
+src/dist
+data
+.env
+featureMatrix-server/__pycache__
+featureMatrix-server/*.pyc
+featureMatrix-server/static/index.html
+featureMatrix-server/config.json
+featureMatrix-server/data.json
+featureMatrix-server/activity.json
+featureMatrix-server/tokens.json
+
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Node & OS
+node_modules/
+src/node_modules
+.DS_Store
+
+# 빌드 아티팩트
+src/dist/

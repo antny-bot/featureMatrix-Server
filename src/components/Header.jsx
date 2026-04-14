@@ -1,22 +1,15 @@
-/* ══════════════════════════════════════════
-   Header.jsx — 앱 헤더 React 컴포넌트 (Phase 4)
+﻿/* ?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧
+   Header.jsx ?????ㅻ뜑 React 而댄룷?뚰듃
+?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧 */
 
-   반응형 요소:
-   - activeUsers / currentUser / role state: useAuth() + Zustand
-   - adminLogoutBtn: useAuth().(isAdmin||isEditor) + isServerMode
-   - hdrSearchWrap/searchInp/searchClear/hdrCountBadge: React 상태로 제어 (id 유지)
-
-   나머지 버튼들(설정, 단축키, 테마 등)은 vanilla JS onclick 유지.
-══════════════════════════════════════════ */
-
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
-import { getFiltered } from '../app/render.js';
-import { S } from '../app/state.js';
 import { useAppStore } from '../store/useAppStore.js';
+import { useModals } from '../hooks/useModals.js';
+import { getFiltered } from '../utils/itemUtils.js';
 
-/* ── SVG 아이콘 상수 ── */
+/* ?? SVG ?꾩씠肄??곸닔 ?? */
 const ICON_SERVER = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <rect x="2" y="2" width="20" height="8" rx="2"/>
@@ -55,7 +48,7 @@ const ICON_LOGOUT = (
     <line x1="21" y1="12" x2="9" y2="12" />
   </svg>
 );
-/* 테마 아이콘: isDark에 따라 달라짐 (Header 함수 내에서 생성) */
+
 function IconSun() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" id="themeBtnIcon">
@@ -79,13 +72,13 @@ function IconMoon() {
   );
 }
 
-/* wsStatus → 점 색상/툴팁 매핑 */
+/* wsStatus ?????됱긽/?댄똻 留ㅽ븨 */
 const WS_STATUS_MAP = {
-  connected:    { bg: '#16a34a', title: 'WebSocket 연결됨 (실시간)' },
-  reconnecting: { bg: '#d97706', title: '재연결 중...' },
-  disconnected: { bg: '#dc2626', title: 'WebSocket 연결 끊김 (폴링 모드)' },
-  connecting:   { bg: '#d97706', title: 'WebSocket 연결 중...' },
-  idle:         { bg: '#aaa',    title: '서버' },
+  connected:    { bg: '#16a34a', title: 'WebSocket connected' },
+  reconnecting: { bg: '#d97706', title: 'Reconnecting...' },
+  disconnected: { bg: '#dc2626', title: 'WebSocket disconnected' },
+  connecting:   { bg: '#d97706', title: 'Connecting...' },
+  idle:         { bg: '#aaa',    title: 'Server' },
 };
 
 function getUserInitial(name = '') {
@@ -106,130 +99,93 @@ function getAvatarTone(name = '') {
 
 function ActiveUserAvatars({ users }) {
   if (!users.length) return null;
-
   const visible = users.slice(0, 5);
   const extra = users.length - visible.length;
-
   return (
-    <div className="active-users" title={`동시 접속자 ${users.length}명`}>
+    <div className="active-users" title={`${users.length} active users`}>
       {visible.map(user => (
-        <span
-          key={user.sid || `${user.user}-${user.joinTime}`}
-          className={`active-avatar active-avatar--${getAvatarTone(user.user)}`}
-          title={user.user}
-        >
+        <span key={user.sid || `${user.user}-${user.joinTime}`} className={`active-avatar active-avatar--${getAvatarTone(user.user)}`} title={user.user}>
           {getUserInitial(user.user)}
         </span>
       ))}
-      {extra > 0 && (
-        <span className="active-avatar active-avatar--more" title={`외 ${extra}명`}>
-          +{extra}
-        </span>
-      )}
+      {extra > 0 && <span className="active-avatar active-avatar--more" title={`${extra} users`}>+{extra}</span>}
     </div>
   );
 }
 
 function OwnUserBadge({ name }) {
   return (
-    <div className="own-user" title={`본인: ${name}`}>
-      <span className={`active-avatar active-avatar--${getAvatarTone(name)}`}>
-        {getUserInitial(name)}
-      </span>
+    <div className="own-user" title={`User: ${name}`}>
+      <span className={`active-avatar active-avatar--${getAvatarTone(name)}`}>{getUserInitial(name)}</span>
       <span className="own-user-name">{name}</span>
     </div>
   );
 }
 
 export default function Header() {
-  const { isAdmin, isEditor, isServerMode } = useAuth();
-  const { isDark } = useTheme();
-  const title    = useAppStore(s => s.settings.title    || 'featureMATRIX');
-  const subtitle = useAppStore(s => s.settings.subtitle || '기능정의 툴');
-  const storageMode = useAppStore(s => s.settings.storageMode || 'server');
-  const serverStatus = useAppStore(s => s.serverStatus);
-  const wsStatus = useAppStore(s => s.wsStatus);
-  const activeUsers = useAppStore(s => s.activeUsers || []);
-  const userName = useAppStore(s => s.settings.userName || '익명');
-  const view = useAppStore(s => s.view);
-  const searchQ = useAppStore(s => s.searchQ);
-  useAppStore(s => s.items);
-  useAppStore(s => s.filters);
+  const { isAdmin, isEditor, isServerMode, logout, openLoginModal } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
+  const { openModal } = useModals();
+  const store = useAppStore();
+  
+  const title    = store.settings.title    || 'featureMATRIX';
+  const subtitle = store.settings.subtitle || 'Function Matrix';
+  const storageMode = store.settings.storageMode || 'server';
+  const { serverStatus, wsStatus, activeUsers, view, searchQ, filters, items } = store;
+  const userName = store.settings.userName || 'Anonymous';
 
   const searchRef = useRef(null);
   const showSearch = view !== 'dashboard';
-  const filteredCount = getFiltered().length;
+  
+  const filteredCount = useMemo(() => getFiltered(items, filters, searchQ).length, [items, filters, searchQ]);
 
   const showLogoutBtn   = (isAdmin || isEditor) && isServerMode;
-  const logoutTitle     = isAdmin ? '관리자 로그아웃' : '편집자 로그아웃';
+  const logoutTitle     = 'Logout';
   const loginState = isAdmin
-    ? { label: '관리자', icon: ICON_ADMIN, active: true }
+    ? { label: 'Admin', icon: ICON_ADMIN, active: true }
     : isEditor
-      ? { label: '편집자', icon: ICON_EDITOR, active: true }
-      : { label: '로그인', icon: ICON_LOGIN, active: false };
+      ? { label: 'Editor', icon: ICON_EDITOR, active: true }
+      : { label: 'Login', icon: ICON_LOGIN, active: false };
 
-  // 서버 연결 상태: WebSocket 상태가 있으면 우선 표시하고, 없으면 REST/polling 상태를 표시한다.
-  const restDot = serverStatus === 'ok'
-    ? { bg: '#16a34a', title: '서버 연결됨' }
-    : serverStatus === 'error'
-      ? { bg: '#dc2626', title: '서버 연결 오류' }
-      : { bg: '#aaa', title: '서버 상태' };
+  const restDot = serverStatus === 'ok' ? { bg: '#16a34a', title: 'Server connected' } : serverStatus === 'error' ? { bg: '#dc2626', title: 'Server error' } : { bg: '#aaa', title: 'Server status' };
   const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP.idle;
   const showWsDot = storageMode === 'server' && wsStatus !== 'idle';
   const statusDot = showWsDot ? wsDot : restDot;
   const showStatusDot = storageMode === 'server';
   const serverLabel = showWsDot
-    ? (wsStatus === 'reconnecting' ? '재연결 중...' : wsStatus === 'connected' ? '실시간' : '서버')
-    : (storageMode === 'server' ? '🌐' : '💾');
+    ? (wsStatus === 'reconnecting' ? '재연결 중' : wsStatus === 'connected' ? '실시간' : '연결끊김')
+    : (storageMode === 'server' ? '서버' : '로컬');
 
   useEffect(() => {
     window.__focusSearch = () => searchRef.current?.focus();
-    return () => {
-      if (window.__focusSearch) delete window.__focusSearch;
-    };
+    return () => { delete window.__focusSearch; };
   }, []);
-
-  const updateSearch = value => {
-    S.searchQ = value.trim();
-    useAppStore.getState().setSearchQ(S.searchQ);
-    window.renderAll?.(true);
-  };
 
   return (
     <header className="hdr">
       <div className="hdr-left">
         <div>
-          <div className="logo-kr" id="dTitle">{title}</div>
-          <div className="logo-sub" id="dSub">{subtitle}</div>
+          <div className="logo-kr">{title}</div>
+          <div className="logo-sub">{subtitle}</div>
         </div>
       </div>
-
-      {/* stats: 대시보드로 이동 (DOM id 유지 → countUp 호환) */}
-      <span id="stTotal" style={{display:'none'}}>0</span>
-      <span id="stHigh"  style={{display:'none'}}>0</span>
-      <span id="stMid"   style={{display:'none'}}>0</span>
-      <span id="stLow"   style={{display:'none'}}>0</span>
-      <span id="stImp"   style={{display:'none'}}>0</span>
-      <span id="stNew"   style={{display:'none'}}>0</span>
 
       <div className="hdr-mid">
         <div id="hdrSearchWrap" style={{display: showSearch ? 'flex' : 'none', alignItems:'center', gap:'8px', flex:1, minWidth:0}}>
           <div className="search-wrap">
             <svg className="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input
               ref={searchRef}
               className="search-inp"
-              id="searchInp"
-              placeholder="검색 (기능명·Key·담당·경로)"
+              placeholder="Search (name / key / owner / path)"
               value={searchQ}
-              onChange={(e) => updateSearch(e.target.value)}
+              onChange={(e) => store.setSearchQ(e.target.value)}
             />
-            <button className={`search-clear${searchQ ? ' on' : ''}`} id="searchClear" onClick={() => updateSearch('')}>✕</button>
+            <button className={`search-clear${searchQ ? ' on' : ''}`} onClick={() => store.setSearchQ('')}>x</button>
           </div>
-          <span className="hdr-count-badge" id="hdrCountBadge">{filteredCount ? `${filteredCount}개` : ''}</span>
+          <span className="hdr-count-badge">{filteredCount ? `${filteredCount}` : ''}</span>
         </div>
       </div>
 
@@ -239,60 +195,35 @@ export default function Header() {
         {showLogoutBtn && <OwnUserBadge name={userName} />}
 
         {showLogoutBtn && (
-          <button
-            type="button"
-            className="btn btn-g btn-sm hdr-btn hdr-role"
-            title={loginState.label}
-          >
-            {loginState.icon}
-            <span>{loginState.label}</span>
+          <button type="button" className="btn btn-g btn-sm hdr-btn hdr-role" title={loginState.label}>
+            {loginState.icon}<span>{loginState.label}</span>
           </button>
         )}
 
-        {/* 로그아웃 버튼: React 제어 */}
         {showLogoutBtn && (
-          <button
-            id="adminLogoutBtn"
-            className="btn btn-g btn-sm hdr-btn hdr-logout"
-            onClick={() => window.logout?.()}
-            title={logoutTitle}
-          >
-            {ICON_LOGOUT}
-            <span>로그아웃</span>
+          <button className="btn btn-g btn-sm hdr-btn hdr-logout" onClick={() => logout()} title={logoutTitle}>
+            {ICON_LOGOUT}<span>Logout</span>
           </button>
         )}
 
-        {/* 서버 상태 버튼 */}
-        <button className="btn btn-g btn-sm hdr-btn" id="serverStatusBtn"
-          title={statusDot.title}
-          onClick={() => window.openModal?.('settingsModal')}>
-          {showStatusDot && (
-            <span id="serverStatusDot" style={{width:'7px', height:'7px', borderRadius:'50%', background: statusDot.bg,
-                          flexShrink:0, display:'inline-block', transition:'background .3s'}}></span>
-          )}
-          {ICON_SERVER}
-          <span id="serverStatusLabel">{serverLabel}</span>
+        <button className="btn btn-g btn-sm hdr-btn" title={statusDot.title}>
+          {showStatusDot && <span style={{width:'7px', height:'7px', borderRadius:'50%', background: statusDot.bg, flexShrink:0, display:'inline-block', transition:'background .3s'}}></span>}
+          {ICON_SERVER}<span>{serverLabel}</span>
         </button>
 
         {isServerMode && !showLogoutBtn && (
-          <button
-            className={`btn btn-g btn-sm hdr-btn hdr-login${loginState.active ? ' hdr-login--on' : ''}`}
-            onClick={() => window.openLoginModal?.()}
-            title="로그인"
-          >
-            {loginState.icon}
-            <span>{loginState.label}</span>
+          <button className={`btn btn-g btn-sm hdr-btn hdr-login${loginState.active ? ' hdr-login--on' : ''}`} onClick={() => openLoginModal()} title="Login">
+            {loginState.icon}<span>{loginState.label}</span>
           </button>
         )}
-        <button className="btn btn-g btn-sm hdr-btn" onClick={() => window.openModal?.('shortcutsModal')} title="단축키 (?)">
-          {ICON_SHORTCUTS}
-          <span>단축키</span>
+        <button className="btn btn-g btn-sm hdr-btn" onClick={() => openModal('shortcutsModal')} title="Keyboard shortcuts (?)">
+          {ICON_SHORTCUTS}<span>Keys</span>
         </button>
-        <button className="btn btn-g btn-sm hdr-btn" onClick={() => window.toggleTheme?.()} id="themeBtn" title="테마">
-          {isDark ? <IconSun /> : <IconMoon />}
-          <span>{isDark ? '라이트' : '다크'}</span>
+        <button className="btn btn-g btn-sm hdr-btn" onClick={() => toggleTheme()} title="Theme">
+          {isDark ? <IconSun /> : <IconMoon />}<span>{isDark ? 'Light' : 'Dark'}</span>
         </button>
       </div>
     </header>
   );
 }
+

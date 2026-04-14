@@ -1,12 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { DEFAULT_LIST_COLS, FLABELS } from '../app/constants.js';
-import { S, notify, save } from '../app/state.js';
-import { renderList, renderMatrix } from '../app/render.js';
-import { setStore, useAppStore } from '../store/useAppStore.js';
-
-function syncSettings() {
-  setStore({ settings: { ...S.settings } });
-}
+import { useAppStore } from '../store/useAppStore.js';
+import { useDBSync } from '../hooks/useDBSync.js';
 
 function getAxisValues(items, settings, orderKey, field) {
   const inData = Array.from(new Set(items.map(item => item[field] || '(미분류)'))).sort((a, b) => a.localeCompare(b, 'ko'));
@@ -23,8 +18,11 @@ function moveItem(list, fromIndex, toIndex) {
 }
 
 export default function SettingsColumnsPanel() {
-  const settings = useAppStore(state => state.settings);
-  const items = useAppStore(state => state.items);
+  const store = useAppStore();
+  const settings = store.settings;
+  const items = store.items;
+  const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
+
   const [drag, setDrag] = useState(null);
   const [dragOver, setDragOver] = useState(null);
 
@@ -37,50 +35,58 @@ export default function SettingsColumnsPanel() {
     [items, settings],
   );
 
+  const handleSave = useCallback(async () => {
+    if (settings.storageMode === 'server') {
+      const ok = await saveToServer();
+      if (ok) broadcastSharedData();
+    } else {
+      saveLocal();
+    }
+  }, [settings.storageMode, saveLocal, saveToServer, broadcastSharedData]);
+
   const toggleColumn = (index, visible) => {
-    S.settings.listColumns = settings.listColumns.map((column, columnIndex) => (
+    store.pushUndo();
+    const nextCols = settings.listColumns.map((column, columnIndex) => (
       columnIndex === index ? { ...column, visible } : column
     ));
-    save();
-    syncSettings();
-    if (S.view === 'list') renderList();
+    store.setSettings({ ...settings, listColumns: nextCols });
+    handleSave();
   };
 
   const dropColumn = toIndex => {
     if (!drag || drag.type !== 'column') return;
-    S.settings.listColumns = moveItem(settings.listColumns, drag.index, toIndex);
-    save();
-    syncSettings();
+    store.pushUndo();
+    const nextCols = moveItem(settings.listColumns, drag.index, toIndex);
+    store.setSettings({ ...settings, listColumns: nextCols });
+    handleSave();
     setDrag(null);
     setDragOver(null);
-    if (S.view === 'list') renderList();
   };
 
   const resetColumns = () => {
-    S.settings.listColumns = JSON.parse(JSON.stringify(DEFAULT_LIST_COLS));
-    save();
-    syncSettings();
-    if (S.view === 'list') renderList();
-    notify('리스트 컬럼을 기본값으로 복원했습니다.');
+    if (!confirm('리스트 컬럼을 초기화하시겠습니까?')) return;
+    store.pushUndo();
+    store.setSettings({ ...settings, listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)) });
+    handleSave();
+    window.__sobukNotify?.('리스트 컬럼을 기본값으로 복원했습니다.', 'success');
   };
 
   const dropAxis = (field, orderKey, values, toIndex) => {
     if (!drag || drag.type !== 'axis' || drag.field !== field) return;
-    S.settings[orderKey] = moveItem(values, drag.index, toIndex);
-    save();
-    syncSettings();
+    store.pushUndo();
+    const nextOrder = moveItem(values, drag.index, toIndex);
+    store.setSettings({ ...settings, [orderKey]: nextOrder });
+    handleSave();
     setDrag(null);
     setDragOver(null);
-    if (S.view === 'matrix') renderMatrix();
   };
 
   const resetAxis = () => {
-    S.settings.groupOrder = [];
-    S.settings.catOrder = [];
-    save();
-    syncSettings();
-    if (S.view === 'matrix') renderMatrix();
-    notify('축 순서를 자동 정렬로 초기화했습니다.');
+    if (!confirm('축 순서를 초기화하시겠습니까?')) return;
+    store.pushUndo();
+    store.setSettings({ ...settings, groupOrder: [], catOrder: [] });
+    handleSave();
+    window.__sobukNotify?.('축 순서를 자동 정렬로 초기화했습니다.', 'success');
   };
 
   const dragClass = (type, key, index) => [
@@ -90,7 +96,7 @@ export default function SettingsColumnsPanel() {
   ].filter(Boolean).join(' ');
 
   const renderAxis = (title, field, orderKey, values) => (
-    <>
+    <div key={field}>
       <div className="sec-ttl" style={{ fontSize: '.62rem' }}>{title}</div>
       <div className="col-editor">
         {values.map((value, index) => (
@@ -123,7 +129,7 @@ export default function SettingsColumnsPanel() {
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 
   return (

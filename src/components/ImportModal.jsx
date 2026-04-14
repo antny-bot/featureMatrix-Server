@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { FIELDS, FLABELS } from '../app/constants.js';
-import { parseTSVFull } from '../app/io.js';
-import { closeModal } from '../app/modal.js';
-import { findItem, notify, pushUndo, S, save } from '../app/state.js';
-import { requireAdmin } from '../app/admin.js';
-import { setStore } from '../store/useAppStore.js';
+import { parseTSVFull, impMdFiles } from '../app/io.js';
+import { useAppStore } from '../store/useAppStore.js';
+import { requireAdmin } from '../contexts/AuthContext.jsx';
+import { useDBSync } from '../hooks/useDBSync.js';
+import { useModals } from '../hooks/useModals.js';
+import { findItem } from '../utils/itemUtils.js';
 
 const IMPORT_REQUIRED = ['key', 'name'];
 
@@ -28,6 +29,10 @@ function readTextFile(file) {
 }
 
 export default function ImportModal() {
+  const store = useAppStore();
+  const { saveLocal, saveToServer, logActivity } = useDBSync();
+  const { closeModal } = useModals();
+
   const csvFileRef = useRef(null);
   const mdImpRef = useRef(null);
   const [raw, setRaw] = useState('');
@@ -37,228 +42,174 @@ export default function ImportModal() {
   const [mapping, setMapping] = useState({});
   const [isDragOver, setIsDragOver] = useState(false);
 
+  const notify = useCallback((msg, isErr) => window.__sobukNotify?.(msg, isErr), []);
+
   const statusText = useMemo(() => `${rows.length}개 행 감지됨, 컬럼 ${headers.length}개`, [headers.length, rows.length]);
 
-  const analyzeText = (value = raw) => {
+  const analyzeText = useCallback((value = raw) => {
     const text = value.trim();
-    if (!text) {
-      notify('데이터를 입력해주세요.', true);
-      return;
-    }
+    if (!text) { notify('데이터를 입력해주세요.', true); return; }
 
     const allRows = parseTSVFull(text);
-    if (allRows.length < 2) {
-      notify('헤더와 데이터 행이 필요합니다.', true);
-      return;
-    }
+    if (allRows.length < 2) { notify('헤더와 데이터 행이 필요합니다.', true); return; }
 
     const nextHeaders = allRows[0];
     const nextRows = allRows.slice(1);
-    S.importData.headers = nextHeaders;
-    S.importData.rows = nextRows;
+    
     setHeaders(nextHeaders);
     setRows(nextRows);
     setMapping(buildDefaultMapping(nextHeaders));
     setStep(2);
-  };
+  }, [raw, notify]);
 
   const loadFile = async file => {
     if (!file) return;
-    const text = await readTextFile(file);
-    setRaw(text);
-    analyzeText(text);
+    try {
+      const text = await readTextFile(file);
+      setRaw(text);
+      analyzeText(text);
+    } catch (e) { notify('파일 읽기 오류', true); }
   };
 
-  const doImport = append => {
-    requireAdmin(() => {
-      const unmapped = IMPORT_REQUIRED.filter(field => (mapping[field] ?? -1) < 0);
-      if (unmapped.length) {
-        notify(`필수 필드 매핑이 없습니다: ${unmapped.map(field => FLABELS[field] || field).join(', ')}`, 'error');
-        return;
-      }
+  const doImport = async (append) => {
+    const unmapped = IMPORT_REQUIRED.filter(field => (mapping[field] ?? -1) < 0);
+    if (unmapped.length) {
+      notify(`필수 필드 매핑이 없습니다: ${unmapped.map(field => FLABELS[field] || field).join(', ')}`, true);
+      return;
+    }
 
-      const items = rows
-        .map(row => Object.fromEntries(FIELDS.map(field => {
-          const columnIndex = mapping[field] ?? -1;
-          return [field, columnIndex >= 0 && columnIndex < row.length ? (row[columnIndex] || '') : ''];
-        })))
-        .filter(item => item.key && item.name);
+    const importedItems = rows
+      .map(row => Object.fromEntries(FIELDS.map(field => {
+        const columnIndex = mapping[field] ?? -1;
+        return [field, columnIndex >= 0 && columnIndex < row.length ? (row[columnIndex] || '') : ''];
+      })))
+      .filter(item => item.key && item.name)
+      .map(item => ({ ...item, updatedAt: Date.now() }));
 
-      if (!items.length) {
-        notify('가져올 데이터가 없습니다.', true);
-        return;
-      }
+    if (!importedItems.length) { notify('가져올 데이터가 없습니다.', true); return; }
 
-      const existingKeys = new Set(S.items.map(item => item.key));
-      const duplicates = items.filter(item => existingKeys.has(item.key)).map(item => item.key);
+    const existingKeys = new Set(store.items.map(it => it.key));
+    const duplicates = importedItems.filter(it => existingKeys.has(it.key)).map(it => it.key);
 
-      if (!append && duplicates.length > 0) {
-        const sample = `${duplicates.slice(0, 5).join(', ')}${duplicates.length > 5 ? '…' : ''}`;
-        if (!confirm(`중복 Key ${duplicates.length}개:\n${sample}\n덮어쓰기?`)) return;
-      }
+    if (!append && duplicates.length > 0) {
+      const sample = `${duplicates.slice(0, 5).join(', ')}${duplicates.length > 5 ? '…' : ''}`;
+      if (!window.confirm(`중복 Key ${duplicates.length}개:\n${sample}\n덮어쓰기?`)) return;
+    }
 
-      pushUndo();
-      if (!append) {
-        if (!confirm(`${items.length}개 항목으로 교체?`)) return;
-        S.items = items;
-        notify(`${items.length}개 항목을 가져왔습니다.`);
-      } else {
-        let added = 0;
-        items.forEach(item => {
-          const existing = findItem(item.key);
-          if (existing) Object.assign(existing, item);
-          else {
-            S.items.push(item);
-            added++;
-          }
-        });
-        notify(`${items.length}개 처리 (신규 ${added}개).`);
-      }
+    store.pushUndo();
+    let nextItems = [];
+    let logMsg = '';
 
-      save();
-      setStore({ items: S.items });
-      closeModal('importModal');
-      window.__sobukRenderAll?.();
-    });
+    if (!append) {
+      if (!window.confirm(`${importedItems.length}개 항목으로 교체하시겠습니까?`)) return;
+      nextItems = importedItems;
+      logMsg = `전체 교체 (${importedItems.length}개)`;
+    } else {
+      const itemsMap = new Map(store.items.map(it => [it.key, it]));
+      let added = 0;
+      importedItems.forEach(it => {
+        if (itemsMap.has(it.key)) {
+          itemsMap.set(it.key, { ...itemsMap.get(it.key), ...it });
+        } else {
+          itemsMap.set(it.key, it);
+          added++;
+        }
+      });
+      nextItems = Array.from(itemsMap.values());
+      logMsg = `병합 추가 (신규 ${added}개 / 총 ${importedItems.length}개)`;
+    }
+
+    store.setItems(nextItems);
+    await logActivity('가져오기', logMsg);
+    
+    if (store.settings.storageMode === 'server') await saveToServer();
+    else saveLocal();
+
+    notify('성공적으로 가져왔습니다.');
+    closeModal('importModal');
   };
-
-  useEffect(() => {
-    window.__reactAnalyzeCSV = () => analyzeText();
-    window.__reactShowImportStep2 = () => setStep(2);
-    window.__reactImportBackToStep1 = () => setStep(1);
-    window.__reactDoImport = doImport;
-    return () => {
-      delete window.__reactAnalyzeCSV;
-      delete window.__reactShowImportStep2;
-      delete window.__reactImportBackToStep1;
-      delete window.__reactDoImport;
-    };
-  });
 
   return (
     <div className="ov" id="importModal">
       <div className="mbox" style={{ width: '600px' }}>
         <div className="mhd">
           <span className="mtitle">📥 데이터 가져오기</span>
-          <button className="mclose" onClick={() => window.closeModal?.('importModal')}>✕</button>
+          <button className="mclose" onClick={() => closeModal('importModal')}>✕</button>
         </div>
-        <div className="mbody">
-          {step === 1 && (
-            <div>
+        <div className="mbody" style={{ padding: '20px' }}>
+          {step === 1 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div
                 className={`drop-zone${isDragOver ? ' da' : ''}`}
-                id="dropZone"
-                onClick={event => {
-                  if (event.target.id !== 'csvFile') csvFileRef.current?.click();
-                }}
-                onDragOver={event => {
-                  event.preventDefault();
-                  setIsDragOver(true);
-                }}
+                onClick={() => csvFileRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
                 onDragLeave={() => setIsDragOver(false)}
-                onDrop={event => {
-                  event.preventDefault();
-                  setIsDragOver(false);
-                  loadFile(event.dataTransfer.files[0]);
-                }}
+                onDrop={e => { e.preventDefault(); setIsDragOver(false); loadFile(e.dataTransfer.files[0]); }}
+                style={{ cursor: 'pointer', padding: '30px', textAlign: 'center', border: '2px dashed var(--border)', borderRadius: '12px', background: 'var(--surface-2)' }}
               >
-                <input
-                  type="file"
-                  id="csvFile"
-                  ref={csvFileRef}
-                  accept=".csv,.tsv,.txt"
-                  onClick={event => event.stopPropagation()}
-                  onChange={event => {
-                    loadFile(event.target.files[0]);
-                    event.target.value = '';
-                  }}
+                <input type="file" ref={csvFileRef} accept=".csv,.tsv,.txt" style={{ display: 'none' }} onChange={e => { loadFile(e.target.files[0]); e.target.value = ''; }} />
+                <div style={{ fontSize: '1.8rem' }}>📂</div>
+                <div style={{ fontWeight: 600, marginTop: '8px' }}>파일 드래그 또는 클릭</div>
+                <div style={{ fontSize: '.7rem', color: 'var(--text-3)' }}>.csv / .tsv / .txt (Tab 구분자)</div>
+              </div>
+              
+              <div style={{ marginTop: '4px' }}>
+                <span style={{ fontSize: '.75rem', color: 'var(--text-3)' }}>직접 붙여넣기:</span>
+                <textarea
+                  className="txta"
+                  value={raw}
+                  onChange={e => setRaw(e.target.value)}
+                  placeholder="헤더 포함 Tab-separated 데이터..."
+                  style={{ marginTop: '6px', minHeight: '100px', fontFamily: 'monospace', fontSize: '.72rem' }}
                 />
-                <div style={{ fontSize: '1.3rem', marginBottom: '5px' }}>📂</div>
-                <div>파일 드래그 또는 클릭</div>
-                <div style={{ fontSize: '.7rem', marginTop: '2px', color: 'var(--text-3)' }}>
-                  .csv / .tsv · Tab 구분자
-                </div>
               </div>
-              <div style={{ marginTop: '8px', fontSize: '.74rem', color: 'var(--text-3)' }}>또는 붙여넣기:</div>
-              <textarea
-                className="txta"
-                id="csvPaste"
-                value={raw}
-                onChange={event => setRaw(event.target.value)}
-                placeholder="헤더 포함 Tab-separated 데이터"
-                style={{ marginTop: '5px', minHeight: '80px', fontFamily: 'monospace', fontSize: '.7rem' }}
-              />
-              <div style={{ display: 'flex', gap: '6px', marginTop: '7px' }}>
-                <button className="btn btn-p btn-sm" onClick={() => analyzeText()}>🔍 분석하기</button>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-p btn-sm" onClick={() => analyzeText()}>분석하기</button>
               </div>
-              <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
-                <div className="exp-sec-ttl">MD 파일 일괄 가져오기</div>
-                <div style={{ fontSize: '.74rem', color: 'var(--text-3)', marginBottom: '8px' }}>
-                  <code style={{ fontFamily: 'monospace', background: 'var(--surface-2)', padding: '1px 4px', borderRadius: '3px' }}>
-                    {'{key}_{기능명}.md'}
-                  </code>
-                  {' 파일을 복수 선택하면 key로 자동 매핑'}
-                </div>
-                <button className="btn btn-s btn-sm" onClick={() => mdImpRef.current?.click()}>
-                  📂 MD 파일 선택
-                </button>
+
+              <div style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px solid var(--border)' }}>
+                <div className="sec-ttl" style={{ marginBottom: '8px' }}>MD 파일 일괄 가져오기</div>
+                <button className="btn btn-s btn-sm" onClick={() => mdImpRef.current?.click()}>MD 파일 선택 (복수)</button>
                 <input
-                  type="file"
-                  id="mdImpInp"
-                  ref={mdImpRef}
-                  accept=".md"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={event => window.impMdFiles?.(event)}
+                  type="file" ref={mdImpRef} accept=".md" multiple style={{ display: 'none' }}
+                  onChange={e => requireAdmin(() => {
+                    impMdFiles(e);
+                    closeModal('importModal');
+                  })}
                 />
               </div>
             </div>
-          )}
-
-          {step === 2 && (
+          ) : (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text)' }}>컬럼 매핑 확인</span>
-                <button className="btn btn-g btn-sm" onClick={() => setStep(1)}>← 뒤로</button>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <span style={{ fontWeight: 600 }}>컬럼 매핑</span>
+                <button className="btn btn-g btn-sm" onClick={() => setStep(1)}>뒤로</button>
               </div>
-              <div style={{ fontSize: '.78rem', color: 'var(--text-2)', marginBottom: '8px', padding: '7px 10px', background: 'var(--accent-l)', borderRadius: '7px', borderLeft: '3px solid var(--accent)' }}>
+              <div style={{ fontSize: '.75rem', padding: '8px 12px', background: 'var(--accent-l)', color: 'var(--accent)', borderRadius: '8px', marginBottom: '12px' }}>
                 {statusText}
               </div>
-              <div style={{ maxHeight: '260px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '7px', background: 'var(--surface)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '5px 8px', background: 'var(--surface-2)', borderBottom: '2px solid var(--border)' }}>
-                  <span style={{ fontSize: '.68rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)', minWidth: '110px' }}>소복 필드</span>
-                  <span style={{ fontSize: '.68rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)', flex: 1 }}>CSV 컬럼</span>
-                  <span style={{ fontSize: '.68rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)', minWidth: '100px' }}>미리보기</span>
-                </div>
-                {FIELDS.map(field => {
-                  const selectedIndex = mapping[field] ?? -1;
-                  const preview = selectedIndex !== -1 && rows.length > 0
-                    ? (rows[0][selectedIndex] || '').replace(/\n/g, '↵').slice(0, 40)
-                    : '';
-                  const required = IMPORT_REQUIRED.includes(field);
+              
+              <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '10px' }}>
+                {FIELDS.map(f => {
+                  const idx = mapping[f] ?? -1;
+                  const preview = (idx !== -1 && rows.length > 0) ? (rows[0][idx] || '').slice(0, 30) : '';
+                  const required = IMPORT_REQUIRED.includes(f);
                   return (
-                    <div className="map-row" key={field}>
-                      <span className="map-lbl" style={required ? { fontWeight: 700, color: 'var(--text)' } : undefined}>
-                        {FLABELS[field] || field}{required ? ' *' : ''}
-                      </span>
-                      <select
-                        className="map-sel"
-                        value={selectedIndex}
-                        onChange={event => setMapping(current => ({ ...current, [field]: parseInt(event.target.value, 10) }))}
-                      >
+                    <div className="map-row" key={f} style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ width: '100px', fontSize: '.72rem', fontWeight: required ? 700 : 400 }}>{FLABELS[f] || f}{required && '*'}</span>
+                      <select className="sel" value={idx} onChange={e => setMapping({ ...mapping, [f]: parseInt(e.target.value) })} style={{ flex: 1, height: '28px', fontSize: '.72rem' }}>
                         <option value={-1}>(매핑 안 함)</option>
-                        {headers.map((header, index) => (
-                          <option value={index} key={`${header}:${index}`}>{header}</option>
-                        ))}
+                        {headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
                       </select>
-                      <span className="map-prev">{preview}</span>
+                      <span style={{ width: '120px', fontSize: '.68rem', color: 'var(--text-3)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preview}</span>
                     </div>
                   );
                 })}
-                <div style={{ fontSize: '.7rem', color: 'var(--text-3)', marginTop: '6px' }}>* 필수 필드</div>
               </div>
-              <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
-                <button className="btn btn-p btn-sm" onClick={() => doImport(false)}>⬇ 가져오기</button>
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                <button className="btn btn-p btn-sm" onClick={() => doImport(false)}>전체 교체</button>
                 <button className="btn btn-s btn-sm" onClick={() => doImport(true)}>병합 추가</button>
               </div>
             </div>

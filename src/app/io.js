@@ -3,26 +3,18 @@
 ══════════════════════════════════════════ */
 
 import { FIELDS, FLABELS } from './constants.js';
-import { S, save, pushUndo, findItem, esc, eattr, normOwner, getPK, today, notify, apiFetch } from './state.js';
+import { useAppStore } from '../store/useAppStore.js';
 import { getColors, getPresetCSS } from './theme.js';
-import { getFiltered } from './render.js';
-import { closeModal } from './modal.js';
-import { requireAdmin } from './admin.js';
 
-/* ── 파일 다운로드 헬퍼 ── */
-export function dlBlob(content, filename, type) {
-  const url = URL.createObjectURL(new Blob([content], {type}));
-  Object.assign(document.createElement('a'), {href:url, download:filename}).click();
-  URL.revokeObjectURL(url);
-}
+const getStore = () => useAppStore.getState();
+import { 
+  esc, eattr, normOwner, getPK, today, 
+  getFiltered, getOwnerColor, sanitizeFilename, dlBlob 
+} from '../utils/itemUtils.js';
+import { apiFetch } from '../utils/api.js';
 
-export function sanitizeFilename(str) {
-  return (str||'').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_').slice(0, 80);
-}
+const notify = (msg, type) => window.__sobukNotify?.(msg, type);
 
-/* ═══════════════════════════════
-   TSV 파서 / 빌더
-═══════════════════════════════ */
 function tsvEncode(val) {
   const s = String(val||'');
   if (s.includes('\t') || s.includes('\n') || s.includes('"'))
@@ -68,7 +60,7 @@ export function parseTSVFull(raw) {
 
 function buildTSV() {
   const rows = [FIELDS.map(f => tsvEncode(FLABELS[f]||f)).join('\t')];
-  S.items.forEach(it => { rows.push(FIELDS.map(f => tsvEncode(it[f]||'')).join('\t')); });
+  getStore().items.forEach(it => { rows.push(FIELDS.map(f => tsvEncode(it[f]||'')).join('\t')); });
   return rows.join('\n');
 }
 
@@ -76,7 +68,6 @@ function buildTSV() {
    Export
 ═══════════════════════════════ */
 export function expClip() {
-  // LEGACY-DOM: 클립보드/textarea 폴백은 DOM 접근이 필요.
   const tsv = buildTSV();
   navigator.clipboard?.writeText(tsv)
     .then(() => notify('클립보드에 복사되었습니다.'))
@@ -88,7 +79,6 @@ export function expClip() {
 }
 
 export function expTSV() {
-  // LEGACY-DOM: 다운로드는 anchor + ObjectURL 방식 유지.
   dlBlob('\uFEFF' + buildTSV(), `sobuk-${today()}.tsv`, 'text/tab-separated-values;charset=utf-8');
   notify('TSV 다운로드.');
 }
@@ -97,7 +87,7 @@ export function expXLS() {
   let h = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table border="1"><thead><tr>';
   FIELDS.forEach(f => { h += `<th style="background:#EBF2FB;font-weight:bold;padding:5px 8px">${esc(FLABELS[f]||f)}</th>`; });
   h += '</tr></thead><tbody>';
-  S.items.forEach(it => {
+  getStore().items.forEach(it => {
     h += '<tr>';
     FIELDS.forEach(f => {
       const v  = (it[f]||'').replace(/\n/g,' ');
@@ -117,9 +107,7 @@ function getExportCss() {
     try {
       const rules = Array.from(sheet.cssRules || []).map(rule => rule.cssText).join('\n');
       if (rules) chunks.push(rules);
-    } catch {
-      // Cross-origin stylesheets are skipped; app styles are same-origin.
-    }
+    } catch { }
   });
   const dyn = document.getElementById('dynStyle')?.textContent || '';
   if (dyn) chunks.push(dyn);
@@ -127,16 +115,15 @@ function getExportCss() {
 }
 
 export function expHTML(root = document) {
-  // LEGACY-DOM: 현재 스타일/라디오 상태를 읽어 내보내기 위해 DOM 접근 유지.
   const htmlWidthInput = root?.querySelector?.('input[name="htmlW"]:checked')
     || document.querySelector('input[name="htmlW"]:checked');
   const isFluid = htmlWidthInput?.value === 'fluid';
-  const items   = getFiltered();
+  const store = getStore();
+  const items = getFiltered(store.items, store.filters, store.searchQ);
   const isDark  = document.documentElement.getAttribute('data-theme') === 'dark';
-  const ss      = S.settings;
+  const ss      = store.settings;
   const c       = getColors();
 
-  // groupOrder/catOrder 적용
   const gm = {}, cm2 = {};
   items.forEach(it => {
     const g=it.group||'(미분류)', sg=it.subGroup||'', cat=it.category||'(미분류)', sc=it.subCategory||'';
@@ -154,8 +141,8 @@ export function expHTML(root = document) {
     const set = new Set(autoList);
     return [...orderArr.filter(v=>set.has(v)), ...autoList.filter(v=>!orderArr.includes(v))];
   };
-  const groups = applyOrder(uniqSorted('group', S.items).filter(g=>!!gm[g]), ss.groupOrder);
-  const cats   = applyOrder(uniqSorted('category', S.items).filter(cat=>!!cm2[cat]), ss.catOrder);
+  const groups = applyOrder(uniqSorted('group', store.items).filter(g=>!!gm[g]), ss.groupOrder);
+  const cats   = applyOrder(uniqSorted('category', store.items).filter(cat=>!!cm2[cat]), ss.catOrder);
   const gsubs={}, csubs={};
   for (const g in gm)    gsubs[g]   = Object.keys(gm[g]).sort(sk);
   for (const cat in cm2) csubs[cat] = Object.keys(cm2[cat]).sort(sk);
@@ -175,11 +162,12 @@ export function expHTML(root = document) {
 
   const exportDate = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
   const filterInfo = [];
-  if (S.filters.priorities.length) filterInfo.push('우선순위: ' + S.filters.priorities.join('·'));
-  if ((S.filters.statuses||[]).length) filterInfo.push('상태: ' + S.filters.statuses.join('·'));
-  if (S.filters.owners.length) filterInfo.push('담당: ' + S.filters.owners.join('·'));
-  if (S.filters.importantOnly) filterInfo.push('중요만');
-  if (S.filters.showDeleted) filterInfo.push('삭제 포함');
+  const filters = store.filters;
+  if (filters.priorities.length) filterInfo.push('우선순위: ' + filters.priorities.join('·'));
+  if ((filters.statuses||[]).length) filterInfo.push('상태: ' + filters.statuses.join('·'));
+  if (filters.owners.length) filterInfo.push('담당: ' + filters.owners.join('·'));
+  if (filters.importantOnly) filterInfo.push('중요만');
+  if (filters.showDeleted) filterInfo.push('삭제 포함');
   const filterStr = filterInfo.length ? filterInfo.join(' / ') : '전체';
 
   let doc = `<!DOCTYPE html><html lang="ko" data-theme="${isDark?'dark':'light'}"><head><meta charset="UTF-8"><title>${esc(ss.title)}</title><style>${css}
@@ -226,7 +214,7 @@ export function expHTML(root = document) {
           const pk=getPK(itm.priority), pkC=pk[0].toUpperCase()+pk.slice(1);
           const pHex=c[`p${pkC}`]||'#888', pBg=c[`p${pkC}Bg`]||'#eee';
           const cs2=`${getPresetCSS(ss.priorityStyles[pk],pHex,pBg)};border-radius:${ss.cardRadius}px;margin-bottom:${ss.cardGap}px;padding:5px 7px`;
-          const di=S.display;
+          const di=store.display;
           const ownerColor=getOwnerColor(itm.owner);
           const ownerHt=di.showOwner?`<div style="font-size:.65rem;color:var(--text-3);display:flex;align-items:center;gap:3px;margin-top:2px"><span style="width:6px;height:6px;border-radius:50%;background:${ownerColor};display:inline-block"></span>${esc(normOwner(itm.owner))}</div>`:'';
           const statusHt=di.showStatus&&itm.status?`<span style="font-size:.55rem;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:2px;background:var(--surface-2);color:var(--text-2)">${esc(itm.status)}</span>`:'';
@@ -253,12 +241,13 @@ export function expHTML(root = document) {
    전체 백업 JSON Import / Export
 ═══════════════════════════════ */
 export function expFullJSON() {
+  const store = getStore();
   const backup = {
     _version: 1,
     _exportedAt: new Date().toISOString(),
-    items: S.items,
-    settings: S.settings,
-    display: S.display,
+    items: store.items,
+    settings: store.settings,
+    display: store.display,
   };
   dlBlob(JSON.stringify(backup, null, 2), `sobuk-backup-${today()}.json`, 'application/json');
   notify('전체 백업이 JSON 파일로 저장되었습니다.');
@@ -273,11 +262,12 @@ export function impFullJSON(event) {
     try {
       const d = JSON.parse(e.target.result);
       if (!d.items || !Array.isArray(d.items)) { notify('올바른 백업 파일이 아닙니다.', true); return; }
-      pushUndo();
-      S.items = d.items;
-      if (d.settings) Object.keys(d.settings).forEach(k => { if (k in S.settings) S.settings[k] = d.settings[k]; });
-      if (d.display)  Object.keys(d.display).forEach(k  => { if (k in S.display)  S.display[k]  = d.display[k]; });
-      save();
+      const store = useAppStore.getState();
+      store.pushUndo();
+      store.setItems(d.items);
+      if (d.settings) store.setSettings(d.settings);
+      if (d.display)  store.setDisplay(d.display);
+
       window.__sobukRenderAll?.();
       const exportedAt = d._exportedAt ? ` (${new Date(d._exportedAt).toLocaleString('ko-KR')})` : '';
       notify(`백업 복원 완료${exportedAt} — ${d.items.length}개 항목`);
@@ -291,7 +281,8 @@ export function impFullJSON(event) {
    MD ZIP
 ═══════════════════════════════ */
 export function expMdZip() {
-  const mdItems = S.items.filter(it => it.mdContent && it.mdContent.trim());
+  const store = getStore();
+  const mdItems = store.items.filter(it => it.mdContent && it.mdContent.trim());
   if (!mdItems.length) { notify('MD 내용이 있는 항목이 없습니다.', true); return; }
   const files = mdItems.map(it => ({
     name:    (it.key || 'unknown') + '.md',
@@ -307,10 +298,8 @@ export function expMdZip() {
 
 export function impMdFiles(e) {
   const fileList = e.target.files; if (!fileList || !fileList.length) return;
-  requireAdmin(() => _doImpMdFiles(e, fileList));
-}
-function _doImpMdFiles(e, fileList) {
   const total = fileList.length; let done = 0, updated = 0, notFound = 0;
+  const store = getStore();
   for (let i = 0; i < fileList.length; i++) {
     (file => {
       const r = new FileReader();
@@ -318,50 +307,18 @@ function _doImpMdFiles(e, fileList) {
         const content = ev.target.result;
         const rawName = file.name.replace(/\.md$/i,'');
         const key = rawName.split('_')[0];
-        const it  = findItem(key);
+        const it  = store.items.find(candidate => candidate.key === key);
         if (it) { it.mdContent = content; updated++; } else notFound++;
         done++;
         if (done === total) {
-          save(); window.__sobukRenderAll?.();
-          notify(`MD 가져오기 완료: 업데이트 ${updated}개${notFound?' / 미매핑 '+notFound+'개':''}.`);
+          useAppStore.getState().setItems([...store.items]);
+          notify(`MD 가져오기 완료: 업데이트 ${updated}개${notFound?' / 미매핑 '+notFound+'개':''}.`, 'success');
           e.target.value = '';
-          closeModal('importModal');
         }
       };
       r.readAsText(file, 'UTF-8');
     })(fileList[i]);
   }
-}
-
-/* ═══════════════════════════════
-   CSV / TSV Import
-═══════════════════════════════ */
-export function dzOver(e)  { e.preventDefault(); }
-export function dzLeave()  {}
-export function dzDrop(e)  { e.preventDefault(); }
-export function csvFileSel(e) { e.target.value = ''; }
-
-function readCSVFile(file) {
-  // React ImportModal handles file reading directly.
-}
-
-export function analyzeCSV() {
-  window.__reactAnalyzeCSV?.();
-}
-
-function showImportStep2() {
-  window.__reactShowImportStep2?.();
-}
-
-export function backToStep1() {
-  window.__reactImportBackToStep1?.();
-}
-
-export function doImport(append) {
-  window.__reactDoImport?.(append);
-}
-function _doImport(append) {
-  window.__reactDoImport?.(append);
 }
 
 /* ═══════════════════════════════

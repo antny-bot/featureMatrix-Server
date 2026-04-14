@@ -1,11 +1,8 @@
+import { useCallback } from 'react';
 import { THEMES, PRESETS } from '../app/constants.js';
-import { S, save, notify } from '../app/state.js';
-import { applyBlurSetting, applyVars, getColors, getPresetCSS, setCustomColor } from '../app/theme.js';
-import { setStore, useAppStore } from '../store/useAppStore.js';
-
-function syncSettings() {
-  setStore({ settings: { ...S.settings } });
-}
+import { useAppStore } from '../store/useAppStore.js';
+import { useDBSync } from '../hooks/useDBSync.js';
+import { applyVars, getColors, getPresetCSS, setCustomColor } from '../app/theme.js';
 
 function cssTextToStyle(cssText) {
   if (!cssText) return {};
@@ -29,49 +26,7 @@ function cssTextToStyle(cssText) {
     }, {});
 }
 
-function updateAnimation(key, value) {
-  S.settings.animations[key] = value;
-  save();
-  if (key === 'enabled' || key === 'blur') applyBlurSetting();
-  syncSettings();
-  if (key !== 'blur') window.renderAll?.();
-}
-
-function applyThemeReact(themeId) {
-  if (!THEMES[themeId]) return;
-
-  S.settings.themeId = themeId;
-  S.settings.customColors = { light: {}, dark: {} };
-  save();
-  applyVars();
-  syncSettings();
-  window.__sobukRenderAll?.();
-  notify(`테마 적용: ${THEMES[themeId].name}`);
-}
-
-function setPresetReact(priorityKey, presetId) {
-  S.settings.priorityStyles[priorityKey] = presetId;
-  save();
-  syncSettings();
-  window.__sobukRenderAll?.();
-}
-
-function setColorReact(colorKey, value) {
-  if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return;
-  setCustomColor(colorKey, value);
-  syncSettings();
-  window.__sobukRenderAll?.();
-}
-
-function adjustBorderWidth(delta) {
-  const colors = getColors();
-  const next = Math.max(1, Math.min(4, (colors.mxBW || 1) + delta));
-  setCustomColor('mxBW', next);
-  syncSettings();
-  window.__sobukRenderAll?.();
-}
-
-function ColorInput({ colorKey, label, value }) {
+function ColorInput({ colorKey, label, value, onChange }) {
   return (
     <div className="crow">
       <span className="crow-lbl">{label}</span>
@@ -80,14 +35,14 @@ function ColorInput({ colorKey, label, value }) {
           type="color"
           value={value}
           className="cpick"
-          onChange={event => setColorReact(colorKey, event.target.value)}
+          onChange={event => onChange(colorKey, event.target.value)}
         />
         <input
           type="text"
           value={value}
           className="hexinp"
           maxLength={7}
-          onChange={event => setColorReact(colorKey, event.target.value.trim())}
+          onChange={event => onChange(colorKey, event.target.value.trim())}
           placeholder="#RRGGBB"
         />
       </div>
@@ -95,26 +50,11 @@ function ColorInput({ colorKey, label, value }) {
   );
 }
 
-function AnimationToggle({ id, label, sub, checked, onChange }) {
-  return (
-    <div className="srow">
-      <div>
-        <div className="slbl">{label}</div>
-        {sub && <div className="ssub">{sub}</div>}
-      </div>
-      <label className="tgl">
-        <input type="checkbox" id={id} checked={checked} onChange={event => onChange(event.target.checked)} />
-        <span className="tgl-track" />
-      </label>
-    </div>
-  );
-}
-
-function PriorityStyleEditor({ priorityKey, label, colors, settings }) {
+function PriorityStyleEditor({ priorityKey, label, colors, settings, onSetPreset, onSetColor }) {
   const selectedPreset = settings.priorityStyles[priorityKey];
-  const colorKey = priorityKey[0].toUpperCase() + priorityKey.slice(1);
-  const lineColorKey = `p${colorKey}`;
-  const bgColorKey = `p${colorKey}Bg`;
+  const colorKeyPrefix = priorityKey[0].toUpperCase() + priorityKey.slice(1);
+  const lineColorKey = `p${colorKeyPrefix}`;
+  const bgColorKey = `p${colorKeyPrefix}Bg`;
   const lineColor = colors[lineColorKey] || '#888888';
   const bgColor = colors[bgColorKey] || '#eeeeee';
 
@@ -129,7 +69,7 @@ function PriorityStyleEditor({ priorityKey, label, colors, settings }) {
             type="button"
             className={`preset-btn${selectedPreset === preset.id ? ' on' : ''}`}
             key={preset.id}
-            onClick={() => setPresetReact(priorityKey, preset.id)}
+            onClick={() => onSetPreset(priorityKey, preset.id)}
           >
             <div className="preset-prev" style={cssTextToStyle(getPresetCSS(preset.id, lineColor, bgColor))} />
             <div className="preset-lbl">{preset.label}</div>
@@ -140,15 +80,15 @@ function PriorityStyleEditor({ priorityKey, label, colors, settings }) {
         <div>
           <div style={{ fontSize: '.72rem', color: 'var(--text-3)', marginBottom: '3px' }}>라인 색상</div>
           <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-            <input type="color" value={lineColor} className="cpick" onChange={event => setColorReact(lineColorKey, event.target.value)} />
-            <input type="text" value={lineColor} className="hexinp" maxLength={7} onChange={event => setColorReact(lineColorKey, event.target.value.trim())} placeholder="#RRGGBB" />
+            <input type="color" value={lineColor} className="cpick" onChange={event => onSetColor(lineColorKey, event.target.value)} />
+            <input type="text" value={lineColor} className="hexinp" maxLength={7} onChange={event => onSetColor(lineColorKey, event.target.value.trim())} placeholder="#RRGGBB" />
           </div>
         </div>
         <div>
           <div style={{ fontSize: '.72rem', color: 'var(--text-3)', marginBottom: '3px' }}>배경 색상</div>
           <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-            <input type="color" value={bgColor} className="cpick" onChange={event => setColorReact(bgColorKey, event.target.value)} />
-            <input type="text" value={bgColor} className="hexinp" maxLength={7} onChange={event => setColorReact(bgColorKey, event.target.value.trim())} placeholder="#RRGGBB" />
+            <input type="color" value={bgColor} className="cpick" onChange={event => onSetColor(bgColorKey, event.target.value)} />
+            <input type="text" value={bgColor} className="hexinp" maxLength={7} onChange={event => onSetColor(bgColorKey, event.target.value.trim())} placeholder="#RRGGBB" />
           </div>
         </div>
       </div>
@@ -189,8 +129,58 @@ function PreviewCards({ colors, settings }) {
 }
 
 export default function SettingsDesignPanel() {
-  const settings = useAppStore(state => state.settings);
+  const store = useAppStore();
+  const settings = store.settings;
   const colors = getColors();
+  const { saveLocal, saveToServer } = useDBSync();
+
+  const handleSave = useCallback(async () => {
+    if (settings.storageMode === 'server') await saveToServer();
+    else saveLocal();
+  }, [settings.storageMode, saveLocal, saveToServer]);
+
+  const applyThemeReact = (themeId) => {
+    if (!THEMES[themeId]) return;
+    const nextSettings = { 
+      ...settings, 
+      themeId, 
+      customColors: { light: {}, dark: {} } 
+    };
+    store.setSettings(nextSettings);
+    handleSave();
+    // DOM 갱신 필요 시 적용
+    setTimeout(() => {
+        applyVars();
+        window.__sobukRenderAll?.();
+        window.__sobukNotify?.(`테마 적용: ${THEMES[themeId].name}`);
+    }, 0);
+  };
+
+  const setPresetReact = (priorityKey, presetId) => {
+    const nextStyles = { ...settings.priorityStyles, [priorityKey]: presetId };
+    store.setSettings({ ...settings, priorityStyles: nextStyles });
+    handleSave();
+    window.__sobukRenderAll?.();
+  };
+
+  const setColorReact = (colorKey, value) => {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return;
+    setCustomColor(colorKey, value); // Local direct DOM update (legacy bridge)
+    // store 업데이트는 setCustomColor 내부에서 setStore 호출 여부에 따라 다름. 
+    // 여기서는 명시적으로 store 갱신
+    store.setSettings({ ...store.settings }); 
+    handleSave();
+    window.__sobukRenderAll?.();
+  };
+
+  const adjustBorderWidth = (delta) => {
+    const next = Math.max(1, Math.min(4, (colors.mxBW || 1) + delta));
+    setCustomColor('mxBW', next);
+    store.setSettings({ ...store.settings });
+    handleSave();
+    window.__sobukRenderAll?.();
+  };
+
   const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   const colorGroups = [
     { title: '보더', items: [{ id: 'mxBorder', label: '보더 색상' }] },
@@ -229,9 +219,9 @@ export default function SettingsDesignPanel() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px', marginTop: '16px' }}>
         <div>
           <div className="sec-ttl">카드 스타일</div>
-          <PriorityStyleEditor priorityKey="high" label="높음" colors={colors} settings={settings} />
-          <PriorityStyleEditor priorityKey="mid" label="중간" colors={colors} settings={settings} />
-          <PriorityStyleEditor priorityKey="low" label="낮음" colors={colors} settings={settings} />
+          <PriorityStyleEditor priorityKey="high" label="높음" colors={colors} settings={settings} onSetPreset={setPresetReact} onSetColor={setColorReact} />
+          <PriorityStyleEditor priorityKey="mid" label="중간" colors={colors} settings={settings} onSetPreset={setPresetReact} onSetColor={setColorReact} />
+          <PriorityStyleEditor priorityKey="low" label="낮음" colors={colors} settings={settings} onSetPreset={setPresetReact} onSetColor={setColorReact} />
         </div>
         <div>
           <div className="sec-ttl">포인트·배경 색상</div>
@@ -254,6 +244,7 @@ export default function SettingsDesignPanel() {
                   label={item.label}
                   value={colors[item.id] || '#888888'}
                   key={item.id}
+                  onChange={setColorReact}
                 />
               ))}
             </div>
@@ -263,14 +254,6 @@ export default function SettingsDesignPanel() {
 
       <div className="sec-ttl" style={{ marginTop: '12px' }}>카드 미리보기</div>
       <PreviewCards colors={colors} settings={settings} />
-
-      <div className="sec-ttl" style={{ marginTop: '12px' }}>애니메이션</div>
-      <AnimationToggle id="animEnabled" label="애니메이션 전체" sub="모든 애니메이션 일괄 on/off" checked={settings.animations.enabled} onChange={value => updateAnimation('enabled', value)} />
-      <AnimationToggle id="animCountUp" label="숫자 카운트업" sub="헤더 통계 숫자 증가 효과" checked={settings.animations.countUp} onChange={value => updateAnimation('countUp', value)} />
-      <AnimationToggle id="animCard" label="카드 등장 효과" sub="카드 렌더 시 순서대로 fade-in" checked={settings.animations.card} onChange={value => updateAnimation('card', value)} />
-      <AnimationToggle id="animFilter" label="필터 전환 페이드" sub="필터 변경 시 콘텐츠 fade 전환" checked={settings.animations.filter} onChange={value => updateAnimation('filter', value)} />
-      <AnimationToggle id="animShimmer" label="행 Hover Shimmer" sub="리스트 뷰 행 hover 광택 효과" checked={settings.animations.shimmer} onChange={value => updateAnimation('shimmer', value)} />
-      <AnimationToggle id="animBlur" label="모달 Backdrop Blur" sub="모달 배경 블러 처리" checked={settings.animations.blur} onChange={value => updateAnimation('blur', value)} />
     </div>
   );
 }

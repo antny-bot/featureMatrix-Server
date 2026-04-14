@@ -1,15 +1,8 @@
 #!/usr/bin/env node
-/* ══════════════════════════════════════════
-   build-esbuild.js — esbuild 기반 번들러
-   사용법: npm run build  (또는 node build-esbuild.js)
-   결과:  dist/index.html (서버 없이 더블클릭 실행 가능)
-
-   기존 build.js 와의 차이점:
-   - esbuild 가 ES Module import/export 를 올바르게 처리
-   - 정규표현식 문자열 치환이 아니라 실제 번들링
-   - 의존성 순서를 수동으로 지정할 필요 없음
-   - Tree-shaking 으로 미사용 코드 자동 제거
-══════════════════════════════════════════ */
+/* React/esbuild single-file bundle.
+   Usage: npm run build
+   Output: dist/index.html, then copied to featureMatrix-server/static/index.html.
+*/
 
 const fs     = require('fs');
 const path   = require('path');
@@ -53,9 +46,7 @@ async function build() {
   } catch(e) {
     console.error('❌ esbuild 가 설치되지 않았습니다. 먼저 실행하세요:');
     console.error('   cd src && npm install');
-    console.error('\n기존 번들러(build.js)로 대신 빌드합니다...\n');
-    require('./build.js');
-    return;
+    process.exit(1);
   }
 
   if (!fs.existsSync(DIST)) fs.mkdirSync(DIST, { recursive: true });
@@ -65,12 +56,14 @@ async function build() {
 
   /* ── 1. esbuild 로 JS 번들 생성 ── */
   // main.jsx(React) 우선, 없으면 기존 main.js fallback
-  const entryJs  = path.join(ROOT, 'app/main.js');
   const entryJsx = path.join(ROOT, 'main.jsx');
-  const entry = fs.existsSync(entryJsx) ? entryJsx : entryJs;
+  if (!fs.existsSync(entryJsx)) {
+    console.error('React entry not found: src/main.jsx');
+    process.exit(1);
+  }
 
   const bundleResult = await esbuild.build({
-    entryPoints: [entry],
+    entryPoints: [entryJsx],
     bundle: true,
     write: false,          // 메모리에서 결과 받기
     format: 'iife',        // 즉시실행함수 래핑 → 전역 오염 없음
@@ -103,7 +96,8 @@ async function build() {
   const fullScript = safeScript;
 
   /* ── 3. HTML 읽기 & 치환 ── */
-  const css  = fs.readFileSync(path.join(ROOT, 'style.css'), 'utf8');
+  const katexCss = fs.readFileSync(require.resolve('katex/dist/katex.min.css'), 'utf8');
+  const css  = `${katexCss}\n${fs.readFileSync(path.join(ROOT, 'style.css'), 'utf8')}`;
   let html   = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
   html = html.replace(

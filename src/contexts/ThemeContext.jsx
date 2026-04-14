@@ -9,8 +9,9 @@
 ══════════════════════════════════════════ */
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { toggleTheme } from '../app/theme.js';
 
-const ThemeContext = createContext({ isDark: false });
+const ThemeContext = createContext({ isDark: false, toggleTheme: () => {} });
 
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(
@@ -24,7 +25,7 @@ export function ThemeProvider({ children }) {
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ isDark }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

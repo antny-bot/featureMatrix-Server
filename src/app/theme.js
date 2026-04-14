@@ -3,18 +3,24 @@
 ══════════════════════════════════════════ */
 
 import { THEMES } from './constants.js';
-import { S, save, notify }  from './state.js';
+import { useAppStore } from '../store/useAppStore.js';
+
+const getStore = () => useAppStore.getState();
+const save = () => window.__sobukSave?.();
+const notify = (msg, isErr) => window.__sobukNotify?.(msg, isErr);
 
 export function getColors() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const base   = (THEMES[S.settings.themeId] || THEMES.sobuk)[isDark ? 'dark' : 'light'];
-  const custom = S.settings.customColors[isDark ? 'dark' : 'light'] || {};
-  return Object.assign({}, base, ...Object.entries(custom).filter(([,v]) => v).map(([k,v]) => ({[k]:v})));
+  const ss = getStore().settings;
+  const tid = ss.themeId || 'sobuk';
+  const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const base = (THEMES[tid] && THEMES[tid][mode]) ? THEMES[tid][mode] : THEMES.sobuk[mode];
+  const custom = (ss.customColors && ss.customColors[mode]) ? ss.customColors[mode] : {};
+  return { ...base, ...custom };
 }
 
 export function applyVars() {
   const c  = getColors();
-  const ss = S.settings;
+  const ss = getStore().settings;
   let css = `html{font-size:${ss.baseFont}px !important}\n`;
   css += `:root{--p-high:${c.pHigh};--p-high-bg:${c.pHighBg};--p-mid:${c.pMid};--p-mid-bg:${c.pMidBg};--p-low:${c.pLow};--p-low-bg:${c.pLowBg};--db-theme-c:${c.mxGC};--db-theme-bg:${c.mxGBg}}\n`;
   css += `.mtable,.mtable th,.mtable td{border:${c.mxBW}px solid ${c.mxBorder}}\n`;
@@ -29,7 +35,8 @@ export function applyVars() {
   css += `.cell-cnt{background:${c.mxCBg};color:${c.mxGC}}\n`;
   css += `.mitem{margin-bottom:${ss.cardGap}px;border-radius:${ss.cardRadius}px}\n`;
   css += `.item-name{font-size:${ss.cardFont}px}\n`;
-  document.getElementById('dynStyle').textContent = css;
+  const el = document.getElementById('dynStyle');
+  if (el) el.textContent = css;
 }
 
 export function toggleTheme() {
@@ -45,29 +52,27 @@ export function toggleTheme() {
 
 export function applyTheme(tid) {
   if (!THEMES[tid]) return;
-  S.settings.themeId = tid;
-  S.settings.customColors = { light:{}, dark:{} };
+  const ss = getStore().settings;
+  ss.themeId = tid;
+  ss.customColors = { light:{}, dark:{} };
   save();
   applyVars();
   window.__sobukRenderAll?.();
   notify(`테마 적용: ${THEMES[tid].name}`);
 }
 
-export function renderThemeGrid() {
-  // React SettingsDesignPanel renders the theme grid.
-}
+export function renderThemeGrid() {}
 
 export function setCustomColor(k, v) {
   const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-  if (!S.settings.customColors[mode]) S.settings.customColors[mode] = {};
-  S.settings.customColors[mode][k] = v;
+  const ss = getStore().settings;
+  if (!ss.customColors[mode]) ss.customColors[mode] = {};
+  ss.customColors[mode][k] = v;
   save();
   applyVars();
 }
 
-export function updateDesignContent() {
-  // React SettingsDesignPanel renders design color controls.
-}
+export function updateDesignContent() {}
 
 export function getPresetCSS(pid, pHex, pBg) {
   switch(pid) {
@@ -82,16 +87,11 @@ export function getPresetCSS(pid, pHex, pBg) {
   }
 }
 
-export function renderPrioStyleRows() {
-  // React SettingsDesignPanel renders priority style rows.
-}
-
-export function renderPreviewCards() {
-  // React SettingsDesignPanel renders preview cards.
-}
+export function renderPrioStyleRows() {}
+export function renderPreviewCards() {}
 
 export function setPreset(pk, pid) {
-  S.settings.priorityStyles[pk] = pid;
+  getStore().settings.priorityStyles[pk] = pid;
   save();
   window.__sobukRenderAll?.();
 }
@@ -100,8 +100,3 @@ export function onCP(inp, ckey)    { setCustomColor(ckey, inp.value); }
 export function onHex(inp, ckey)   { const v = inp.value.trim(); if (/^#[0-9A-Fa-f]{6}$/.test(v)) setCustomColor(ckey, v); }
 export function onHexKey(inp, ckey){ if (/^#[0-9A-Fa-f]{6}$/.test(inp.value.trim())) onHex(inp, ckey); }
 export function adjBW(d)           { const c = getColors(); const next = Math.max(1, Math.min(4, (c.mxBW||1) + d)); setCustomColor('mxBW', next); }
-
-export function applyBlurSetting() {
-  const prefersReduced = window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;
-  window.__applyOverlayBlur?.(!prefersReduced && S.settings.animations?.blur);
-}

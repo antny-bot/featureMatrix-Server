@@ -30,7 +30,6 @@ featureMatrix-ServerAdmin/
 |   |   |-- admin.js
 |   |   |-- board.js
 |   |   |-- constants.js
-|   |   |-- dashboard.js
 |   |   |-- io.js
 |   |   |-- main.js
 |   |   |-- modal.js

@@ -5,31 +5,12 @@ import ShortcutsModal from './ShortcutsModal.jsx';
 import DiffModal from './DiffModal.jsx';
 import OverlayMenus from './OverlayMenus.jsx';
 import { useEffect, useRef, useState } from 'react';
+import { useAppStore } from '../store/useAppStore.js';
+import { useModals } from '../hooks/useModals.js';
+import { useDBSync } from '../hooks/useDBSync.js';
 
 function NotificationToast() {
-  const [toast, setToast] = useState({ visible: false, message: '', type: false });
-  const timerRef = useRef(null);
-
-  useEffect(() => {
-    const showToast = (message, type = false) => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      setToast({ visible: true, message, type });
-      timerRef.current = setTimeout(() => {
-        setToast(current => ({ ...current, visible: false }));
-        timerRef.current = null;
-      }, 2400);
-    };
-    window.__sobukNotify = showToast;
-    if (window.__pendingNotify) {
-      showToast(window.__pendingNotify.msg, window.__pendingNotify.type);
-      delete window.__pendingNotify;
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      delete window.__sobukNotify;
-    };
-  }, []);
-
+  const toast = useAppStore(s => s.toast);
   const key = toast.type === true ? 'error' : toast.type;
   const background = {
     error: 'var(--danger)',
@@ -49,21 +30,22 @@ function NotificationToast() {
 }
 
 function UserNameModal() {
+  const store = useAppStore();
+  const { closeModal } = useModals();
+  const { saveLocal } = useDBSync();
   const [name, setName] = useState('');
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    window.__reactOpenUserNameModal = () => {
-      setName('');
-      window.openModal?.('userNameModal');
-      setTimeout(() => inputRef.current?.focus(), 120);
-    };
-    window.__reactGetUserNamePopup = () => name.trim();
-    return () => {
-      delete window.__reactOpenUserNameModal;
-      delete window.__reactGetUserNamePopup;
-    };
-  }, [name]);
+  const saveUserNamePopup = (skip = false) => {
+    if (!skip) {
+      const trimmed = name.trim();
+      if (trimmed) {
+        store.setSettings({ ...store.settings, userName: trimmed });
+        saveLocal();
+      }
+    }
+    closeModal('userNameModal');
+  };
 
   return (
     <div className="ov" id="userNameModal">
@@ -83,12 +65,12 @@ function UserNameModal() {
             onChange={event => setName(event.target.value)}
             placeholder="이름 입력"
             style={{ marginBottom: '6px' }}
-            onKeyDown={e => { if (e.key === 'Enter') window.saveUserNamePopup?.(); }}
+            onKeyDown={e => { if (e.key === 'Enter') saveUserNamePopup(); }}
           />
         </div>
         <div className="mfoot">
-          <button className="btn btn-g btn-sm" onClick={() => window.saveUserNamePopup?.(true)}>나중에</button>
-          <button className="btn btn-p btn-sm" onClick={() => window.saveUserNamePopup?.()}>확인</button>
+          <button className="btn btn-g btn-sm" onClick={() => saveUserNamePopup(true)}>나중에</button>
+          <button className="btn btn-p btn-sm" onClick={() => saveUserNamePopup()}>확인</button>
         </div>
       </div>
     </div>
@@ -96,17 +78,6 @@ function UserNameModal() {
 }
 
 export default function AppOverlays() {
-  useEffect(() => {
-    window.__applyOverlayBlur = enabled => {
-      const overlays = document.querySelectorAll('.ov');
-      overlays.forEach(el => {
-        if (enabled) el.classList.add('blur-bg');
-        else el.classList.remove('blur-bg');
-      });
-    };
-    return () => { delete window.__applyOverlayBlur; };
-  }, []);
-
   return (
     <>
       <ImportModal />

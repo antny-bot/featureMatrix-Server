@@ -1,4 +1,5 @@
 import { useAppStore } from '../store/useAppStore.js';
+import { useModals } from '../hooks/useModals.js';
 
 function DashboardIcon() {
   return (
@@ -53,66 +54,41 @@ function SettingsIcon() {
   );
 }
 
-function NavButton({ id, title, label, icon, active = false, onClick, className = '', style }) {
+function NavButton({ id, title, label, icon, active = false, onClick, className = '' }) {
   return (
-    <button
-      className={`nav-item${active ? ' on' : ''}${className ? ` ${className}` : ''}`}
-      id={id}
-      onClick={onClick}
-      title={title}
-      style={style}
-    >
-      {icon}
-      <span>{label}</span>
+    <button className={`nav-item${active ? ' on' : ''}${className ? ` ${className}` : ''}`} id={id} onClick={onClick} title={title}>
+      {icon}<span>{label}</span>
     </button>
   );
 }
 
 export default function NavigationSide() {
-  const view = useAppStore(s => s.view);
+  const store = useAppStore();
+  const { openModal } = useModals();
+  const view = store.view;
 
   return (
     <nav className="nav-side" id="navSide">
       <NavButton
-        id="navD"
-        title="대시보드"
-        label="대시보드"
-        icon={<DashboardIcon />}
-        active={view === 'dashboard'}
-        onClick={() => window.switchView?.('dashboard')}
+        title="대시보드" label="대시보드" icon={<DashboardIcon />}
+        active={view === 'dashboard'} onClick={() => store.setView('dashboard')}
       />
       <NavButton
-        id="navM"
-        title="매트릭스"
-        label="매트릭스"
-        icon={<MatrixIcon />}
-        active={view === 'matrix'}
-        onClick={() => window.switchView?.('matrix')}
+        title="매트릭스" label="매트릭스" icon={<MatrixIcon />}
+        active={view === 'matrix'} onClick={() => store.setView('matrix')}
       />
       <NavButton
-        id="navB"
-        title="보드"
-        label="보드"
-        icon={<BoardIcon />}
-        active={view === 'board'}
-        onClick={() => window.switchView?.('board')}
+        title="보드" label="보드" icon={<BoardIcon />}
+        active={view === 'board'} onClick={() => store.setView('board')}
       />
       <NavButton
-        id="navL"
-        title="리스트"
-        label="리스트"
-        icon={<ListIcon />}
-        active={view === 'list'}
-        onClick={() => window.switchView?.('list')}
+        title="리스트" label="리스트" icon={<ListIcon />}
+        active={view === 'list'} onClick={() => store.setView('list')}
       />
       <div className="nav-spacer" />
       <NavButton
-        id="navSettings"
-        title="환경 설정 (Ctrl+,)"
-        label="설정"
-        icon={<SettingsIcon />}
-        className="nav-bottom-action"
-        onClick={() => window.openModal?.('settingsModal')}
+        title="환경 설정 (Ctrl+,)" label="설정" icon={<SettingsIcon />}
+        className="nav-bottom-action" onClick={() => openModal('settingsModal')}
       />
     </nav>
   );

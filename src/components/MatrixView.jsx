@@ -1,18 +1,20 @@
-import { createPortal } from 'react-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
-import { buildStruct, getFiltered, mxSel, sortCell } from '../app/render.js';
+import { buildStruct, getFiltered, sortCell } from '../utils/itemUtils.js';
 import { getColors } from '../app/theme.js';
-import { S } from '../app/state.js';
-import { isEditor } from '../app/admin.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import FeatureCard from './FeatureCard.jsx';
+import { useMatrixActions } from '../hooks/useMatrixActions.js';
+import { useDBSync } from '../hooks/useDBSync.js';
+import { useModals } from '../hooks/useModals.js';
 
 function CountBadge({ value }) {
   return <span className="gcnt">{value}</span>;
 }
 
 function EmptyState() {
-  if (S.settings.storageMode === 'server') {
+  const storageMode = useAppStore(s => s.settings.storageMode);
+  if (storageMode === 'server') {
     return (
       <div className="empty">
         <div style={{ fontSize: '2rem', opacity: .3 }}>🌐</div>
@@ -66,84 +68,80 @@ function getMatrixData(items) {
 }
 
 export default function MatrixView() {
-  const items = useAppStore(s => s.items);
-  const editLocks = useAppStore(s => s.editLocks);
-  const previews = useAppStore(s => s.previews);
-  const settings = useAppStore(s => s.settings);
-  const display = useAppStore(s => s.display);
-  const filters = useAppStore(s => s.filters);
-  const searchQ = useAppStore(s => s.searchQ);
-  const cellFold = useAppStore(s => s.settings.cellFold);
+  const store = useAppStore();
+  const items = store.items;
+  const editLocks = store.editLocks;
+  const previews = store.previews;
+  const settings = store.settings;
+  const display = store.display;
+  const filters = store.filters;
+  const searchQ = store.searchQ;
+  const cellFold = store.settings.cellFold;
+  const selectedKeys = store.mxSelectionKeys;
+  const isDragging = store.isDragging;
+  const dragKey = store.dragKey;
 
-  const [container, setContainer] = useState(null);
+  const { handleCardClick, moveItems, lockKeys, unlockKeys } = useMatrixActions();
+  const { lockItem, unlockItem } = useDBSync();
+  const { openEditModal, openAddInCell } = useModals();
+  const { isEditor: editorOk } = useAuth();
+
   const [expandedCells, setExpandedCells] = useState(new Set());
-  const [selectedKeys, setSelectedKeys] = useState(() => new Set(mxSel));
-  const [dragKeys, setDragKeys] = useState(() => new Set());
   const [dropCellKey, setDropCellKey] = useState(null);
 
   useEffect(() => {
-    setContainer(document.getElementById('matrixView'));
-  }, []);
-
-  useEffect(() => {
     setExpandedCells(new Set());
-  }, [filters, searchQ, cellFold]);
+  }, [filters, searchQ, settings.cellFold]);
 
-  useEffect(() => {
-    if (container) {
-      container.className = `mwrap${settings.matrixWidth === 'fluid' ? ' fluid' : ''}`;
-    }
-  }, [container, settings.matrixWidth]);
-
-  useEffect(() => {
-    window.expandCell = (event, cellKey) => {
-      event.stopPropagation();
-      setExpandedCells(prev => {
-        const next = new Set(prev);
-        next.add(cellKey);
-        return next;
-      });
-    };
-    window.collapseCell = (event, cellKey) => {
-      event.stopPropagation();
-      setExpandedCells(prev => {
-        const next = new Set(prev);
-        next.delete(cellKey);
-        return next;
-      });
-    };
-    return () => {
-      delete window.expandCell;
-      delete window.collapseCell;
-    };
+  const toggleExpand = useCallback((e, cellKey, expand) => {
+    e.stopPropagation();
+    setExpandedCells(prev => {
+      const next = new Set(prev);
+      if (expand) next.add(cellKey);
+      else next.delete(cellKey);
+      return next;
+    });
   }, []);
 
-  useEffect(() => {
-    const handler = event => setSelectedKeys(new Set(event.detail.sel));
-    window.addEventListener('mxSelChange', handler);
-    return () => window.removeEventListener('mxSelChange', handler);
-  }, []);
-
-  useEffect(() => {
-    const handler = event => setDragKeys(new Set(event.detail.keys || []));
-    window.addEventListener('mxDragState', handler);
-    return () => window.removeEventListener('mxDragState', handler);
-  }, []);
-
-  useEffect(() => {
-    const handler = event => setDropCellKey(event.detail.cellKey || null);
-    window.addEventListener('mxDropCellChange', handler);
-    return () => window.removeEventListener('mxDropCellChange', handler);
-  }, []);
-
-  const filteredItems = useMemo(() => getFiltered(), [items, filters, searchQ, settings, display, editLocks, previews]);
+  const filteredItems = useMemo(() => getFiltered(items, filters, searchQ), [items, filters, searchQ]);
   const matrix = useMemo(() => getMatrixData(filteredItems), [filteredItems]);
   const colors = getColors();
 
-  if (!container) return null;
+  // 드래그 핸들러
+  const onDragStart = useCallback((e, key) => {
+    store.setIsDragging(true);
+    store.setMxSelectionKeys(selectedKeys.includes(key) ? selectedKeys : [key]);
+    
+    // 타 사용자 락 확인
+    const keysToMove = selectedKeys.includes(key) ? selectedKeys : [key];
+    const lockedOther = keysToMove.filter(k => editLocks[k] && editLocks[k].user !== (settings.userName || '익명'));
+    if (lockedOther.length) {
+      window.__sobukNotify?.(`${editLocks[lockedOther[0]].user}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
+      store.setIsDragging(false);
+      e.preventDefault();
+      return;
+    }
+    
+    lockKeys(keysToMove);
+    e.dataTransfer.effectAllowed = 'move';
+  }, [store, selectedKeys, editLocks, settings.userName, lockKeys]);
+
+  const onDragEnd = useCallback(() => {
+    const keys = store.mxSelectionKeys;
+    unlockKeys(keys);
+    store.setIsDragging(false);
+    setDropCellKey(null);
+  }, [store, unlockKeys]);
+
+  const onDrop = useCallback((e, target) => {
+    e.preventDefault();
+    setDropCellKey(null);
+    if (!store.isDragging) return;
+    moveItems(store.mxSelectionKeys, target);
+  }, [store, moveItems]);
 
   if (!filteredItems.length) {
-    return createPortal(<EmptyState />, container);
+    return <EmptyState />;
   }
 
   const { structure, cellMap, counts } = matrix;
@@ -153,7 +151,7 @@ export default function MatrixView() {
   const subCatW = settings.subCatW || 72;
   const tableMinW = catW + subCatW + totalSubCols * (settings.colW || 130);
 
-  return createPortal(
+  return (
     <div className="mscroll">
       <table className="mtable" style={{ minWidth: `${tableMinW}px` }}>
         <thead className="mx-thead-sticky">
@@ -206,48 +204,42 @@ export default function MatrixView() {
                       const isExpanded = expandedCells.has(cellKey) || !!searchQ || fold === 0;
                       const visible = isExpanded ? cellItems : cellItems.slice(0, fold);
                       const hidden = cellItems.length - visible.length;
-                      const canQuickAdd = isEditor() && display.showQuickAdd;
+                      const canQuickAdd = editorOk && display.showQuickAdd;
 
                       return (
                         <td
                           className={`m-cell${dropCellKey === cellKey ? ' dov' : ''}`}
                           style={{ background: 'var(--bg)' }}
-                          data-g={group}
-                          data-sg={subGroup}
-                          data-c={category}
-                          data-sc={subCategory}
                           key={cellKey}
-                          onDragEnter={event => window.onDE?.(event)}
-                          onDragOver={event => window.onDO?.(event)}
-                          onDragLeave={event => window.onDL?.(event)}
-                          onDrop={event => window.onDrop?.(event)}
+                          onDragEnter={() => setDropCellKey(cellKey)}
+                          onDragOver={e => e.preventDefault()}
+                          onDragLeave={e => {
+                            if (!e.currentTarget.contains(e.relatedTarget)) setDropCellKey(null);
+                          }}
+                          onDrop={e => onDrop(e, { g: group, sg: subGroup, c: category, sc: subCategory })}
                         >
                           {visible.map(item => (
                             <FeatureCard
                               key={item.key}
                               item={item}
                               colors={colors}
-                              animationIndex={-1}
                               extraClass={[
-                                selectedKeys.has(item.key) ? 'mxsel' : '',
-                                dragKeys.has(item.key) ? 'dragging' : '',
+                                selectedKeys.includes(item.key) ? 'mxsel' : '',
+                                isDragging && selectedKeys.includes(item.key) ? 'dragging' : '',
                               ].filter(Boolean).join(' ')}
-                              onClick={event => {
-                                window.mxCardClick?.(event, item.key);
-                                setSelectedKeys(new Set(mxSel));
-                              }}
-                              onDoubleClick={() => window.openEditOrMd?.(item.key)}
-                              onDragStart={event => window.onDS?.(event, item.key)}
-                              onDragEnd={event => window.onDEnd?.(event)}
+                              onClick={event => handleCardClick(event, item.key)}
+                              onDoubleClick={() => openEditModal(item.key)}
+                              onDragStart={event => onDragStart(event, item.key)}
+                              onDragEnd={onDragEnd}
                             />
                           ))}
                           {hidden > 0 && (
-                            <button className="cell-more-btn" onClick={event => window.expandCell?.(event, cellKey)}>
+                            <button className="cell-more-btn" onClick={event => toggleExpand(event, cellKey, true)}>
                               ▼ {hidden}개 더보기
                             </button>
                           )}
                           {isExpanded && cellItems.length > fold && fold > 0 && (
-                            <button className="cell-more-btn" onClick={event => window.collapseCell?.(event, cellKey)}>
+                            <button className="cell-more-btn" onClick={event => toggleExpand(event, cellKey, false)}>
                               ▲ 접기
                             </button>
                           )}
@@ -256,7 +248,7 @@ export default function MatrixView() {
                               className="cell-quick-add-btn"
                               onClick={event => {
                                 event.stopPropagation();
-                                window.openAddInCell?.(group, subGroup, category, subCategory);
+                                openAddInCell(group, subGroup, category, subCategory);
                               }}
                             >
                               + 추가
@@ -272,7 +264,6 @@ export default function MatrixView() {
           ))}
         </tbody>
       </table>
-    </div>,
-    container
+    </div>
   );
 }

@@ -1,9 +1,9 @@
-import { createPortal } from 'react-dom';
-import { useEffect, useMemo, useState } from 'react';
-import { FLABELS, STATUS_CLS, STATUS_LBL } from '../app/constants.js';
-import { bulkSel, bulkToggle, bulkToggleAll, getFiltered, getVisibleCols, sortL } from '../app/render.js';
-import { S, normOwner } from '../app/state.js';
+import { useEffect, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
+import { FLABELS, STATUS_CLS } from '../app/constants.js';
+import { getFiltered, getVisibleCols, normOwner } from '../utils/itemUtils.js';
+import { useListActions } from '../hooks/useListActions.js';
+import { useModals } from '../hooks/useModals.js';
 
 function highlightText(value, query) {
   const text = String(value || '');
@@ -26,9 +26,9 @@ function PriorityPill({ priority }) {
   return <span className={`pp ${cls}`}>{priority}</span>;
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, labels }) {
   if (!status) return null;
-  return <span className={`status-badge ${STATUS_CLS[status] || ''}`}>{STATUS_LBL[status] || status}</span>;
+  return <span className={`status-badge ${STATUS_CLS[status] || ''}`}>{labels?.[status] || status}</span>;
 }
 
 function TextCell({ value, query, className, title }) {
@@ -42,83 +42,86 @@ function ListCell({ item, columnKey, query }) {
     case 'name':
       return <TextCell className="cn" value={item.name} query={query} />;
     case 'priority':
-      return <td><PriorityPill priority={item.priority} /></td>;
-    case 'status':
-      return <td><StatusBadge status={item.status} /></td>;
+      return <td key="priority"><PriorityPill priority={item.priority} /></td>;
+    case 'status': {
+      const settings = useAppStore.getState().settings;
+      return <td key="status"><StatusBadge status={item.status} labels={settings.statusLabels} /></td>;
+    }
     case 'isImportant':
-      return <td style={{ textAlign: 'center' }}>{item.isImportant === 'Y' && <span style={{ color: 'var(--accent)' }}>★</span>}</td>;
+      return <td key="isImportant" style={{ textAlign: 'center' }}>{item.isImportant === 'Y' && <span style={{ color: 'var(--accent)' }}>★</span>}</td>;
     case 'isDelete':
-      return <td style={{ textAlign: 'center' }}>{item.isDelete === 'Y' && <span style={{ color: 'var(--danger)', fontSize: '.7rem', fontWeight: 700 }}>삭제</span>}</td>;
+      return <td key="isDelete" style={{ textAlign: 'center' }}>{item.isDelete === 'Y' && <span style={{ color: 'var(--danger)', fontSize: '.7rem', fontWeight: 700 }}>삭제</span>}</td>;
     case 'owner': {
       const owner = normOwner(item.owner);
-      return <TextCell value={owner} query={query} />;
+      return <TextCell key="owner" value={owner} query={query} />;
     }
     case 'desc':
     case 'memo': {
       const raw = item[columnKey] || '';
       const text = raw.replace(/\n/g, ' ');
       const display = text.length > 60 ? `${text.slice(0, 60)}…` : text;
-      return <TextCell className="desc-cell" title={raw} value={display} query={query} />;
+      return <TextCell key={columnKey} className="desc-cell" title={raw} value={display} query={query} />;
     }
     default:
-      return <TextCell value={item[columnKey] || ''} query={query} />;
+      return <TextCell key={columnKey} value={item[columnKey] || ''} query={query} />;
   }
 }
 
 export default function ListView() {
-  const items = useAppStore(s => s.items);
-  const settings = useAppStore(s => s.settings);
-  const display = useAppStore(s => s.display);
-  const filters = useAppStore(s => s.filters);
-  const searchQ = useAppStore(s => s.searchQ);
-  const sort = useAppStore(s => s.sort);
+  const store = useAppStore();
+  const items = store.items;
+  const settings = store.settings;
+  const filters = store.filters;
+  const searchQ = store.searchQ;
+  const sort = store.sort;
+  const bulkSelectionKeys = store.bulkSelectionKeys;
+  
+  const { bulkToggle, bulkToggleAll, bulkClearSelection } = useListActions();
+  const { openEditModal, openMdModal } = useModals();
 
-  const [container, setContainer] = useState(null);
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    setContainer(document.getElementById('listView'));
-  }, []);
-
-  useEffect(() => {
-    window.__listViewRefresh = () => setTick(value => value + 1);
-    return () => { delete window.__listViewRefresh; };
-  }, []);
+  const selectedKeySet = useMemo(() => new Set(bulkSelectionKeys), [bulkSelectionKeys]);
 
   const visibleColumns = useMemo(
-    () => getVisibleCols(),
-    [settings]
+    () => getVisibleCols(settings.columns),
+    [settings.columns]
   );
 
   const rows = useMemo(() => {
-    const filtered = getFiltered();
+    const filtered = getFiltered(items, filters, searchQ);
     return filtered.slice().sort((a, b) => {
-      const va = a[S.sort.key] || '';
-      const vb = b[S.sort.key] || '';
+      const va = a[sort.key] || '';
+      const vb = b[sort.key] || '';
       const result = va < vb ? -1 : va > vb ? 1 : 0;
-      return S.sort.dir === 'asc' ? result : -result;
+      return sort.dir === 'asc' ? result : -result;
     });
-  }, [items, filters, searchQ, sort, tick, display]);
+  }, [items, filters, searchQ, sort]);
 
   useEffect(() => {
-    if (rows.length === 0 && bulkSel.keys.size > 0) {
-      bulkSel.keys.clear();
-      window.renderBulkBar?.();
+    if (rows.length === 0 && bulkSelectionKeys.length > 0) {
+      bulkClearSelection();
     }
-  }, [rows.length]);
-
-  if (!container) return null;
+  }, [bulkSelectionKeys.length, rows.length, bulkClearSelection]);
 
   if (!rows.length) {
-    return createPortal(
-      <div className="empty"><div style={{ fontSize: '.875rem' }}>표시할 기능이 없습니다.</div></div>,
-      container
+    return (
+      <div className="empty"><div style={{ fontSize: '.875rem' }}>표시할 기능이 없습니다.</div></div>
     );
   }
 
-  const allChecked = rows.length > 0 && rows.every(item => bulkSel.keys.has(item.key));
+  const allChecked = rows.length > 0 && rows.every(item => selectedKeySet.has(item.key));
 
-  return createPortal(
+  const toggleSort = (key) => {
+    const s = { ...store.sort };
+    if (s.key === key) {
+      s.dir = s.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      s.key = key;
+      s.dir = 'asc';
+    }
+    store.setState({ sort: s });
+  };
+
+  return (
     <div className="ltbl-wrap">
       <div className="ltbl-scroll">
         <table className="ltbl">
@@ -128,14 +131,14 @@ export default function ListView() {
                 <input
                   type="checkbox"
                   checked={allChecked}
-                  onChange={event => bulkToggleAll(event.target.checked)}
+                  onChange={event => bulkToggleAll(event.target.checked, rows)}
                   title="전체 선택"
                 />
               </th>
               {visibleColumns.map(column => {
-                const sortClass = S.sort.key === column.key ? (S.sort.dir === 'asc' ? 'sa' : 'sd') : '';
+                const sortClass = sort.key === column.key ? (sort.dir === 'asc' ? 'sa' : 'sd') : '';
                 return (
-                  <th className={sortClass} onClick={() => sortL(column.key)} key={column.key}>
+                  <th className={sortClass} onClick={() => toggleSort(column.key)} key={column.key}>
                     {FLABELS[column.key]}
                   </th>
                 );
@@ -144,34 +147,31 @@ export default function ListView() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((item, rowIndex) => {
-              const checked = bulkSel.keys.has(item.key);
+            {rows.map(item => {
+              const checked = selectedKeySet.has(item.key);
               const rowClass = [
                 item.isDelete === 'Y' ? 'rdel' : '',
                 checked ? 'bulk-selected' : '',
               ].filter(Boolean).join(' ');
 
               return (
-                <tr className={rowClass} key={item.key} style={{ animationDelay: `${rowIndex * 18}ms` }}>
+                <tr className={rowClass} key={item.key}>
                   <td style={{ textAlign: 'center' }}>
                     <input
                       type="checkbox"
                       checked={checked}
-                      onChange={() => {
-                        bulkToggle(item.key);
-                        setTick(value => value + 1);
-                      }}
+                      onChange={() => bulkToggle(item.key)}
                     />
                   </td>
                   {visibleColumns.map(column => (
-                    <ListCell item={item} columnKey={column.key} query={S.searchQ} key={column.key} />
+                    <ListCell item={item} columnKey={column.key} query={searchQ} key={column.key} />
                   ))}
                   <td>
-                    <button className="btn btn-g btn-sm" onClick={() => window.openEditModal?.(item.key)}>편집</button>
+                    <button className="btn btn-g btn-sm" onClick={() => openEditModal(item.key)}>편집</button>
                     {item.mdContent && (
                       <button
                         className="btn btn-g btn-sm"
-                        onClick={() => window.openMdModal?.(item.key)}
+                        onClick={() => openMdModal(item.key)}
                         style={{ marginLeft: '3px' }}
                       >
                         MD
@@ -184,7 +184,6 @@ export default function ListView() {
           </tbody>
         </table>
       </div>
-    </div>,
-    container
+    </div>
   );
 }

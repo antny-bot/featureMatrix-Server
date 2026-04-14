@@ -1,3 +1,5 @@
+import { useModals } from '../hooks/useModals.js';
+
 const SHORTCUTS = [
   { keys: ['N'], label: '기능 추가' },
   { keys: ['F'], label: '필터 패널 토글' },
@@ -16,25 +18,27 @@ const SHORTCUTS = [
 ];
 
 export default function ShortcutsModal() {
+  const { closeModal } = useModals();
+
   return (
     <div className="ov" id="shortcutsModal">
       <div className="mbox" style={{ width: '400px' }}>
         <div className="mhd">
           <span className="mtitle">⌨ 단축키</span>
-          <button className="mclose" onClick={() => window.closeModal?.('shortcutsModal')}>✕</button>
+          <button className="mclose" onClick={() => closeModal('shortcutsModal')}>✕</button>
         </div>
-        <div className="mbody">
+        <div className="mbody" style={{ padding: '20px' }}>
           {SHORTCUTS.map(({ keys, label }) => (
             <div className="sc-row" key={`${keys.join('+')}:${label}`}>
               <div style={{ display: 'flex', gap: '3px' }}>
-                {keys.map(key => <span className="kbd" key={key}>{key}</span>)}
+                {keys.map((key, i) => <span className="kbd" key={i}>{key}</span>)}
               </div>
               <span style={{ fontSize: '.8125rem', color: 'var(--text-2)' }}>{label}</span>
             </div>
           ))}
         </div>
         <div className="mfoot">
-          <button className="btn btn-p btn-sm" onClick={() => window.closeModal?.('shortcutsModal')}>닫기</button>
+          <button className="btn btn-p btn-sm" onClick={() => closeModal('shortcutsModal')}>닫기</button>
         </div>
       </div>
     </div>

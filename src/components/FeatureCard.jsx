@@ -1,8 +1,11 @@
+import { forwardRef } from 'react';
 import { STATUS_CLS, STATUS_LBL } from '../app/constants.js';
-import { isEditor } from '../app/admin.js';
-import { fmtDate, getOwnerColor, getPK, normOwner } from '../app/state.js';
+import { fmtDate, getOwnerColor, getPK, normOwner } from '../utils/itemUtils.js';
 import { getPresetCSS } from '../app/theme.js';
 import { useAppStore } from '../store/useAppStore.js';
+import { useModals } from '../hooks/useModals.js';
+import { getStore } from '../store/useAppStore.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 function highlightText(value, query) {
   const text = String(value || '');
@@ -70,23 +73,26 @@ function PreviewOverlay({ item, lockInfo, previewData }) {
   );
 }
 
-export default function FeatureCard({
+const FeatureCard = forwardRef(function FeatureCard({
   item,
   colors,
   id,
   extraClass = '',
-  animationIndex = -1,
   onClick,
   onDoubleClick,
   onDragStart,
   onDragEnd,
   onContextMenu,
-}) {
+  style,
+  ...props
+}, ref) {
   const display = useAppStore(s => s.display);
   const settings = useAppStore(s => s.settings);
   const searchQ = useAppStore(s => s.searchQ);
   const editLocks = useAppStore(s => s.editLocks);
   const previews = useAppStore(s => s.previews);
+  const { openEditModal } = useModals();
+  const { isEditor: editorOk } = useAuth();
 
   const pk = getPK(item.priority);
   const pkColorKey = pk[0].toUpperCase() + pk.slice(1);
@@ -100,7 +106,7 @@ export default function FeatureCard({
   const myName = settings.userName || '익명';
   const isLockedByOther = lockInfo && lockInfo.user !== myName;
   const previewData = isLockedByOther ? previews[item.key] : null;
-  const canDrag = isEditor();
+  const canDrag = editorOk;
 
   return (
     <div
@@ -111,21 +117,35 @@ export default function FeatureCard({
         extraClass,
       ].filter(Boolean).join(' ')}
       draggable={canDrag}
+      ref={ref}
       data-key={item.key}
       id={id}
       style={{
         ...priorityStyle,
         borderRadius: `${settings.cardRadius}px`,
         marginBottom: `${settings.cardGap}px`,
-        animationDelay: animationIndex >= 0 ? `${animationIndex * 40}ms` : undefined,
+        ...style,
       }}
+      {...props}
       onDragStart={canDrag ? onDragStart : undefined}
       onDragEnd={canDrag ? onDragEnd : undefined}
-      onMouseOver={event => window.startTT?.(event, item.key)}
-      onMouseOut={() => window.clearTT?.()}
+      onMouseOver={event => {
+        if (getStore().isDragging) return;
+        getStore().startTooltip(item.key, event.clientX + 14, event.clientY + 14);
+      }}
+      onMouseOut={() => getStore().clearTooltip()}
       onClick={onClick}
-      onDoubleClick={onDoubleClick}
-      onContextMenu={onContextMenu || (event => window.openCtxMenu?.(event, item.key))}
+      onDoubleClick={onDoubleClick || (() => openEditModal(item.key))}
+      onContextMenu={onContextMenu || (event => {
+        event.preventDefault();
+        event.stopPropagation();
+        getStore().setContextMenu({
+          key: item.key,
+          isDeleted: item.isDelete === 'Y',
+          x: Math.min(event.clientX, window.innerWidth - 160),
+          y: Math.min(event.clientY, window.innerHeight - 180),
+        });
+      })}
     >
       {isLockedByOther && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: '.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '6px 6px 0 0', pointerEvents: 'none' }}>
@@ -135,7 +155,7 @@ export default function FeatureCard({
       <PreviewOverlay item={item} lockInfo={lockInfo} previewData={previewData} />
       {canDrag && (
         <div className="card-actions" onClick={event => event.stopPropagation()}>
-          <button className="card-act-btn" title="편집" onClick={() => window.openEditModal?.(item.key)}>✏</button>
+          <button className="card-act-btn" title="편집" onClick={() => openEditModal(item.key)}>✏</button>
           <button className="card-act-btn" title="복제" onClick={() => window.duplicateItem?.(item.key)}>⧉</button>
         </div>
       )}
@@ -148,7 +168,7 @@ export default function FeatureCard({
             className="md-badge"
             onClick={event => {
               event.stopPropagation();
-              window.openMdModal?.(item.key);
+              openMdModal(item.key);
             }}
             title="마크다운 보기"
             style={{ cursor: 'pointer' }}
@@ -162,10 +182,15 @@ export default function FeatureCard({
               className={`status-badge ${STATUS_CLS[item.status] || ''}`}
               onClick={event => {
                 event.stopPropagation();
-                window.openStatusMenu?.(event, item.key);
+                getStore().setStatusMenu({
+                  key: item.key,
+                  currentStatus: item.status || '',
+                  x: Math.min(event.clientX, window.innerWidth - 120),
+                  y: Math.min(event.clientY + 4, window.innerHeight - 160),
+                });
               }}
             >
-              {STATUS_LBL[item.status] || item.status}
+              {settings.statusLabels?.[item.status] || item.status}
             </span>
           ) : (
             <span
@@ -173,7 +198,12 @@ export default function FeatureCard({
               style={{ background: 'var(--surface-3)', color: 'var(--text-3)', opacity: .6 }}
               onClick={event => {
                 event.stopPropagation();
-                window.openStatusMenu?.(event, item.key);
+                getStore().setStatusMenu({
+                  key: item.key,
+                  currentStatus: '',
+                  x: Math.min(event.clientX, window.innerWidth - 120),
+                  y: Math.min(event.clientY + 4, window.innerHeight - 160),
+                });
               }}
             >
               —
@@ -193,4 +223,6 @@ export default function FeatureCard({
       {display.showUpdated && item.updatedAt && <div className="item-updated">{fmtDate(item.updatedAt)}</div>}
     </div>
   );
-}
+});
+
+export default FeatureCard;

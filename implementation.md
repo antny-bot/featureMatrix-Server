@@ -14,7 +14,6 @@ featureMatrix-ServerAdmin/
 ├─ src/
 │  ├─ index.html
 │  ├─ style.css
-│  ├─ build.js
 │  ├─ build-esbuild.js
 │  ├─ package.json
 │  ├─ dist/
@@ -23,7 +22,6 @@ featureMatrix-ServerAdmin/
 │  │  ├─ admin.js
 │  │  ├─ board.js
 │  │  ├─ constants.js
-│  │  ├─ dashboard.js
 │  │  ├─ io.js
 │  │  ├─ main.js
 │  │  ├─ modal.js
@@ -251,13 +249,6 @@ const setView  = useAppStore(s => s.setView);
 
 검색은 단순 텍스트와 `field:value` 문법을 함께 처리한다.
 
-### `src/app/dashboard.js`
-
-- 대시보드 화면 렌더링
-- stats / insight / heatmap 섹션 출력
-- `S.settings.dbSections` 순서 반영
-- 히트맵 모드 전환
-
 ### `src/app/board.js`
 
 - 상태별 보드 뷰 렌더링 (카드 HTML 생성)
@@ -334,7 +325,7 @@ const setView  = useAppStore(s => s.setView);
 ### `src/components/DashboardView.jsx`
 
 - 대시보드 컨테이너 (`.dbwrap` 포털)
-- `dashboard.js`의 `renderDashboard()` HTML을 `dangerouslySetInnerHTML`로 주입
+- React 컴포넌트에서 stats / insight / heatmap 섹션을 직접 렌더링
 - Zustand 변경 시 자동 리렌더
 
 ### `src/components/SettingsPanel.jsx`
@@ -499,14 +490,6 @@ export const DATA_VERSION = 2;
 - 우선 `../VERSION`
 - 없으면 `src/package.json`
 
-### 레거시 빌드: `src/build.js`
-
-- 정규식 기반 문자열 치환 방식
-- ES module 문법을 제거해 단일 HTML로 합침
-- JSX와 React를 지원하지 않으므로 현재 구조 기준으로 사용할 수 없다
-
-실사용 빌드는 `npm run build` 기준으로 맞추는 편이 안전하다.
-
 ## 배포 구조
 
 ### `Dockerfile`
@@ -564,7 +547,7 @@ export const DATA_VERSION = 2;
 - 인증: `src/app/admin.js`
 - 매트릭스/리스트 렌더링: `src/app/render.js` + `src/components/MatrixView.jsx` / `ListView.jsx`
 - 보드 뷰: `src/app/board.js` + `src/components/BoardView.jsx`
-- 대시보드: `src/app/dashboard.js` + `src/components/DashboardView.jsx`
+- 대시보드: `src/components/DashboardView.jsx`
 - 편집 모달: `src/app/modal.js` + `src/components/ItemModal.jsx`
 - 설정 패널: `src/app/settings.js` + `src/components/SettingsPanel.jsx`
 - 가져오기/내보내기: `src/app/io.js`
