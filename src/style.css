@@ -139,6 +139,22 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .hdr-actions{display:flex;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
 .hdr-btn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;height:auto!important;padding:5px 8px!important;font-size:.55rem!important;color:var(--text-3);font-weight:600;letter-spacing:.02em}
 .hdr-btn:hover{color:var(--text-2)}
+.hdr-login--on{color:var(--accent)}
+.hdr-role{color:var(--accent)}
+.hdr-logout{color:var(--text-3)}
+.hdr-logout:hover{color:var(--danger);border-color:var(--danger)}
+.active-users{display:flex;align-items:center;padding:0 4px 0 2px}
+.active-avatar{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--surface);box-shadow:var(--shadow-xs);font-size:.64rem;font-weight:800;color:white;line-height:1;margin-left:-5px;letter-spacing:0}
+.active-avatar:first-child{margin-left:0}
+.active-avatar--teal{background:#0f766e}
+.active-avatar--rose{background:#be123c}
+.active-avatar--amber{background:#b45309}
+.active-avatar--blue{background:#2563eb}
+.active-avatar--green{background:#15803d}
+.active-avatar--more{background:var(--text-3);font-size:.6rem}
+.hdr-user-sep{width:1px;height:26px;background:var(--border);margin:0 3px}
+.own-user{display:inline-flex;align-items:center;gap:5px;max-width:120px;padding:0 5px 0 2px;color:var(--text-2);font-size:.68rem;font-weight:700;min-width:0}
+.own-user-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vtabs{display:none}
 .vtab{height:25px;padding:0 10px;border:none;border-radius:5px;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.77rem;font-weight:500;color:var(--text-3);cursor:pointer;transition:all .14s}
 .vtab.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow-xs)}
@@ -152,8 +168,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .nav-item.on{color:var(--accent);background:var(--accent-l)}
 .nav-item svg{flex-shrink:0;transition:color .15s}
 .nav-spacer{flex:1}
-.nav-login{color:var(--text-3);border-top:1px solid var(--border);margin-top:4px}
-.nav-login--on{color:var(--accent)}
+.nav-bottom-action{border-top:1px solid var(--border);margin-top:4px;color:var(--text-3)}
 /* 오른쪽 필터 패널 */
 .fpanel{width:200px;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
 .fpanel.collapsed{width:36px}
@@ -219,6 +234,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .mitem.item-locked{outline:2px dashed var(--warning);outline-offset:-2px;opacity:.75;pointer-events:none}
 .edit-preview-overlay{position:absolute;bottom:100%;left:0;right:0;z-index:10;background:var(--text);color:var(--bg);font-size:.68rem;padding:6px 8px;border-radius:6px 6px 0 0;line-height:1.5;display:none;pointer-events:none}
 .mitem.item-locked:hover .edit-preview-overlay{display:block}
+.modal-view-fieldset{border:0;margin:0;padding:0;min-width:0}
+.modal-view-fieldset:disabled{opacity:1}
+.modal-view-fieldset:disabled .inp,.modal-view-fieldset:disabled .sel,.modal-view-fieldset:disabled .txta{color:var(--text);background:var(--surface);border-color:var(--border);cursor:default}
 [data-theme="dark"] .mitem{border:1px solid var(--border)}
 .card-actions{position:absolute;top:3px;right:3px;display:flex;gap:2px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:3}
 .card-act-btn{width:20px;height:20px;border:none;border-radius:4px;background:var(--surface-2);color:var(--text-3);font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;line-height:1}

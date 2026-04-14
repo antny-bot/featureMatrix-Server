@@ -16,7 +16,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { parseMd } from '../app/modal.js';
 import { STATUS_OPTS } from '../app/constants.js';
 import { getUniqSorted } from '../app/render.js';
-import { emitLock, emitUnlock, emitPreview, isSocketConnected } from '../app/socket.js';
+import { emitUnlock, emitPreview, isSocketConnected } from '../app/socket.js';
 import { getStore, useAppStore } from '../store/useAppStore.js';
 
 const EMPTY_FORM = {
@@ -46,6 +46,7 @@ export default function ItemModal() {
   const [mdStats,        setMdStats]        = useState({ chars: '0자', lines: '0줄', words: '0단어' });
   const [title,          setTitle]          = useState('기능 추가');
   const [showHardDel,    setShowHardDel]    = useState(false);
+  const [modalMode,      setModalMode]      = useState('add');
   const [form,           setForm]           = useState(EMPTY_FORM);
   const items = useAppStore(s => s.items);
   const previewRef      = useRef(null);
@@ -53,6 +54,7 @@ export default function ItemModal() {
   const currentKeyRef   = useRef(null);   // 현재 편집 중인 item key
   const previewTimerRef = useRef(null);   // 미리보기 디바운스 타이머
   const formRef         = useRef(EMPTY_FORM);
+  const modalModeRef    = useRef('add');
 
   useEffect(() => {
     formRef.current = form;
@@ -128,10 +130,12 @@ export default function ItemModal() {
     /* 모달 열림 알림: title/showHardDel/탭/뷰 초기화 + Lock 획득 */
     window.__editModalBridge = (mode, key, nextForm = {}) => {
       const mergedForm = { ...EMPTY_FORM, ...nextForm };
-      setTitle(mode === 'add' ? '기능 추가' : `기능 수정 — ${key}`);
+      modalModeRef.current = mode;
+      setModalMode(mode);
+      setTitle(mode === 'add' ? '기능 추가' : mode === 'detail' ? `기능 상세 - ${key}` : `기능 수정 - ${key}`);
       setShowHardDel(mode === 'edit');
       setActiveTab('info');
-      setMdMode('edit');
+      setMdMode(mode === 'detail' ? 'preview' : 'edit');
       setForm(mergedForm);
       formRef.current = mergedForm;
       setMdPreview(parseMd(mergedForm.mdContent || ''));
@@ -139,8 +143,6 @@ export default function ItemModal() {
       // WebSocket Lock 획득 (편집 모드일 때만)
       if (mode === 'edit' && key) {
         currentKeyRef.current = key;
-        const user = getStore().settings?.userName || '익명';
-        emitLock(key, user);
       } else {
         currentKeyRef.current = null;
       }
@@ -161,11 +163,20 @@ export default function ItemModal() {
       setActiveTab(tab);
       if (tab === 'md') {
         updateMdStats(formRef.current.mdContent || '');
+        if (modalModeRef.current !== 'add') {
+          setMdMode('preview');
+          setMdPreview(parseMd(formRef.current.mdContent || ''));
+        }
       }
     };
 
     /* MD 뷰 전환: edit / preview / split */
     window.__editModalSwitchMdView = (mode) => {
+      if (modalModeRef.current === 'detail' && mode !== 'preview') {
+        setMdMode('preview');
+        setMdPreview(parseMd(formRef.current.mdContent || ''));
+        return;
+      }
       setMdMode(mode);
       if (mode !== 'edit') {
         setMdPreview(parseMd(formRef.current.mdContent || ''));
@@ -235,6 +246,8 @@ export default function ItemModal() {
   };
 
   const infoVisible = activeTab === 'info';
+  const isReadOnly = modalMode === 'detail';
+  const canEditMd = !isReadOnly;
   const taStyle  = { display: mdMode === 'preview' ? 'none' : '', flex: mdMode !== 'preview' ? '1' : '' };
   const pvStyle  = { display: mdMode === 'edit'    ? 'none' : '', flex: mdMode !== 'edit'    ? '1' : '' };
 
@@ -255,6 +268,7 @@ export default function ItemModal() {
 
       {/* ── 기본 정보 탭 ── */}
       <div className="mbody" style={{ padding: '16px 20px', display: infoVisible ? '' : 'none' }}>
+        <fieldset className="modal-view-fieldset" disabled={isReadOnly}>
         <div className="mg">
           <div className="field">
             <label className="lbl">Key</label>
@@ -323,13 +337,14 @@ export default function ItemModal() {
             <label className="tgl"><input type="checkbox" id="fIsDel" checked={form.isDelete === 'Y'} onChange={event => updateField('isDelete', event.target.checked ? 'Y' : 'N')} /><span className="tgl-track" /><span className="tgl-lbl">삭제 처리</span></label>
           </div>
         </div>
+        </fieldset>
       </div>
 
       {/* ── 마크다운 탭 ── */}
       <div className="mbody" style={{ display: !infoVisible ? 'flex' : 'none', padding: '10px 16px', flexDirection: 'column', gap: '8px' }}>
 
         {/* MD 툴바 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0 }}>
+        <div style={{ display: canEditMd ? 'flex' : 'none', flexDirection: 'column', gap: '4px', flexShrink: 0 }}>
           {/* 1행: 서식 + 구조 + 수식 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', gap: '2px' }}>
@@ -378,6 +393,7 @@ export default function ItemModal() {
           <textarea
             id="fMdContent"
             value={form.mdContent}
+            readOnly={!canEditMd}
             style={{
               ...taStyle,
               minHeight: '300px',
@@ -388,7 +404,7 @@ export default function ItemModal() {
               background: 'var(--surface-2)', color: 'var(--text)', outline: 'none',
             }}
             placeholder={"# 기능 제목\n\n## 개요\n마크다운으로 작성\n\n| 컬럼1 | 컬럼2 |\n|-------|-------|\n| 값1   | 값2   |\n\n수식: $E=mc^2$"}
-            onChange={event => updateField('mdContent', event.target.value)}
+            onChange={event => canEditMd && updateField('mdContent', event.target.value)}
           />
           <div
             ref={previewRef}
@@ -407,11 +423,17 @@ export default function ItemModal() {
 
       {/* 푸터 */}
       <div className="mfoot">
+        {isReadOnly ? (
+          <button className="btn btn-p btn-sm" onClick={() => window.closeModal?.('editModal')}>닫기</button>
+        ) : (
+          <>
         {showHardDel && (
           <button className="btn btn-d btn-sm" onClick={() => window.hardDelete?.()} style={{ marginRight: 'auto' }}>완전 삭제</button>
         )}
         <button className="btn btn-g btn-sm" onClick={() => window.closeModal?.('editModal')}>취소</button>
         <button className="btn btn-p btn-sm" onClick={() => window.saveItem?.()}>저장</button>
+          </>
+        )}
       </div>
 
     </div>,

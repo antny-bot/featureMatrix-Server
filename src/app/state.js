@@ -3,7 +3,7 @@
 ══════════════════════════════════════════ */
 
 import { SK, UNDO_MAX, DEFAULT_LIST_COLS, ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY, DATA_VERSION, MIGRATIONS } from './constants.js';
-import { emitLock, emitUnlock, isSocketConnected } from './socket.js';
+import { emitLock, emitUnlock, emitDataSave, isSocketConnected, releaseLocalLock } from './socket.js';
 import { setStore } from '../store/useAppStore.js';
 
 /** 전역 상태 — 앱 전체에서 import해서 사용 */
@@ -225,6 +225,11 @@ export async function saveToServer() {
   }
 }
 
+export function broadcastSharedData(serverTs = lastServerTs) {
+  if (S.settings.storageMode !== 'server') return;
+  emitDataSave(S.settings.userName || '익명', buildServerPayload(), serverTs);
+}
+
 export async function loadFromServer() {
   try {
     const json = await apiFetch('/api/data');
@@ -280,6 +285,14 @@ export function resolveConflictUseServer(serverData) {
   notify('서버 데이터로 업데이트됐습니다.', 'success');
 }
 
+export function applyRemoteSharedData(payload, serverTs = lastServerTs) {
+  if (serverTs && lastServerTs && serverTs <= lastServerTs) return false;
+  applyServerPayload(payload);
+  if (serverTs) lastServerTs = serverTs;
+  saveLocal();
+  return true;
+}
+
 const undoStack = [];
 
 export function pushUndo() {
@@ -288,10 +301,15 @@ export function pushUndo() {
   updateUndoFab();
 }
 
-export function doUndo() {
+export async function doUndo() {
   if (!undoStack.length) return;
   S.items = JSON.parse(undoStack.pop());
-  save();
+  if (S.settings.storageMode === 'server') {
+    const saved = await saveToServer();
+    if (saved) broadcastSharedData(lastServerTs);
+  } else {
+    saveLocal();
+  }
   window.__sobukRenderAll?.();
   updateUndoFab();
   logActivity('되돌리기', `${S.items.length}개 항목으로 복원`);
@@ -413,6 +431,7 @@ export function lockItem(key) {
 export function unlockItem(key) {
   if (S.settings.storageMode !== 'server' || !key) return;
   if (_lockTimers[key]) { clearTimeout(_lockTimers[key]); delete _lockTimers[key]; }
+  releaseLocalLock(key);
   const user = S.settings.userName || '익명';
   if (isSocketConnected()) {
     emitUnlock(key, user);

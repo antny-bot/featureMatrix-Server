@@ -73,6 +73,7 @@ const initialState = {
   editLocks: {},    // { [key]: { user, ts } }
   previews:  {},    // { [key]: { user, preview } }
   wsStatus: 'idle', // 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
+  activeUsers: [],  // [{ sid, user, joinTime }] 현재 사용자 제외
 };
 
 /* ── Zustand 스토어 ── */
@@ -92,6 +93,7 @@ export const useAppStore = create(
   setServerStatus: (serverStatus) => set({ serverStatus }),
   setIsLoading: (isLoading) => set({ isLoading }),
   setWsStatus: (wsStatus) => set({ wsStatus }),
+  setActiveUsers: (activeUsers) => set({ activeUsers: activeUsers || [] }),
 
   /* ── WebSocket Lock/Preview 업데이트 ── */
   updateLocks: (locks) => set({ editLocks: locks || {} }),
@@ -152,6 +154,7 @@ export const useAppStore = create(
       sort:       { ...S.sort },
       editKey:    S.editKey,
       editLocks:  { ...S.editLocks },
+      activeUsers: get().activeUsers,
     });
   },
 }),

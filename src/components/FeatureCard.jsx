@@ -133,10 +133,12 @@ export default function FeatureCard({
         </div>
       )}
       <PreviewOverlay item={item} lockInfo={lockInfo} previewData={previewData} />
-      <div className="card-actions" onClick={event => event.stopPropagation()}>
-        <button className="card-act-btn" title="편집" onClick={() => window.openEditModal?.(item.key)}>✏</button>
-        <button className="card-act-btn" title="복제" onClick={() => window.duplicateItem?.(item.key)}>⧉</button>
-      </div>
+      {canDrag && (
+        <div className="card-actions" onClick={event => event.stopPropagation()}>
+          <button className="card-act-btn" title="편집" onClick={() => window.openEditModal?.(item.key)}>✏</button>
+          <button className="card-act-btn" title="복제" onClick={() => window.duplicateItem?.(item.key)}>⧉</button>
+        </div>
+      )}
       <div className="item-hd">
         <span className="item-key">{item.key}</span>
         {item.isImportant === 'Y' && display.showStar && <span className="item-star">★</span>}

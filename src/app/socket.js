@@ -11,10 +11,12 @@
 
 import { io } from 'socket.io-client';
 import { setStore, getStore } from '../store/useAppStore.js';
+import { ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY } from './constants.js';
 
 // ── 내부 상태 ──────────────────────────────────────────────────────────
 let _socket = null;
 let _pendingQueue = []; // 연결 전 대기 중인 emit { event, data }
+const _recentLocalUnlocks = {};
 
 // ── 서버 URL 결정 ──────────────────────────────────────────────────────
 function _getServerUrl() {
@@ -26,6 +28,10 @@ function _getServerUrl() {
 
 // ── Zustand editLocks 패치 헬퍼 ───────────────────────────────────────
 function _addLock(key, lockedBy, lockedAt) {
+  const releasedAt = _recentLocalUnlocks[key] || 0;
+  if (lockedBy === _currentUserName() && releasedAt && Date.now() - releasedAt < 3000) {
+    return;
+  }
   const prev = getStore().editLocks || {};
   setStore({ editLocks: { ...prev, [key]: { user: lockedBy, ts: lockedAt } } });
 }
@@ -51,6 +57,43 @@ function _setPreview(key, data) {
   }
 }
 
+export function releaseLocalLock(key) {
+  if (!key) return;
+  _recentLocalUnlocks[key] = Date.now();
+  setTimeout(() => {
+    if (_recentLocalUnlocks[key] && Date.now() - _recentLocalUnlocks[key] >= 3000) {
+      delete _recentLocalUnlocks[key];
+    }
+  }, 3500);
+  _removeLock(key);
+  _setPreview(key, null);
+}
+
+function _hasAuthToken() {
+  return !!(sessionStorage.getItem(ADMIN_TOKEN_KEY) || sessionStorage.getItem(EDITOR_TOKEN_KEY));
+}
+
+function _currentUserName() {
+  return getStore().settings?.userName || '익명';
+}
+
+function _syncActiveUser() {
+  if (!_socket?.connected) return;
+  if (_hasAuthToken()) {
+    _socket.emit('register_user', { user: _currentUserName() });
+    _socket.emit('get_active_users');
+  } else {
+    _socket.emit('unregister_user');
+    setStore({ activeUsers: [] });
+  }
+}
+
+function _setActiveUsers(users) {
+  const ownSid = _socket?.id;
+  const others = (users || []).filter(user => user.sid !== ownSid);
+  setStore({ activeUsers: others });
+}
+
 // ── 큐에 쌓인 메시지 재전송 ───────────────────────────────────────────
 function _flushQueue() {
   if (!_socket?.connected) return;
@@ -64,13 +107,12 @@ function _flushQueue() {
 function _registerListeners() {
   _socket.on('connect', () => {
     setStore({ wsStatus: 'connected' });
-    const user = getStore().settings?.userName || '익명';
-    _socket.emit('register_user', { user });
+    _syncActiveUser();
     _flushQueue();
   });
 
   _socket.on('disconnect', () => {
-    setStore({ wsStatus: 'disconnected' });
+    setStore({ wsStatus: 'disconnected', activeUsers: [] });
   });
 
   _socket.on('connect_error', () => {
@@ -83,8 +125,7 @@ function _registerListeners() {
 
   _socket.io.on('reconnect', () => {
     setStore({ wsStatus: 'connected' });
-    const user = getStore().settings?.userName || '익명';
-    _socket.emit('register_user', { user });
+    _syncActiveUser();
     _flushQueue();
   });
 
@@ -118,6 +159,14 @@ function _registerListeners() {
     _removeLock(key);
     _setPreview(key, null);
     window.__onItemSaved?.(key, user, item);
+  });
+
+  _socket.on('data_saved', ({ user, payload, serverTs }) => {
+    window.__onDataSaved?.(user, payload, serverTs);
+  });
+
+  _socket.on('user_list_updated', ({ users }) => {
+    _setActiveUsers(users);
   });
 }
 
@@ -154,7 +203,7 @@ export function disconnectSocket() {
     _socket = null;
   }
   _pendingQueue = [];
-  setStore({ wsStatus: 'idle', editLocks: {}, previews: {} });
+  setStore({ wsStatus: 'idle', editLocks: {}, previews: {}, activeUsers: [] });
 }
 
 /**
@@ -162,6 +211,17 @@ export function disconnectSocket() {
  */
 export function isSocketConnected() {
   return !!_socket?.connected;
+}
+
+export function registerActiveUser() {
+  _syncActiveUser();
+}
+
+export function unregisterActiveUser() {
+  if (_socket?.connected) {
+    _socket.emit('unregister_user');
+  }
+  setStore({ activeUsers: [] });
 }
 
 /**
@@ -211,4 +271,8 @@ export function emitPreview(key, user, preview) {
  */
 export function emitSave(key, user, item) {
   _emit('save_item', { key, user, item });
+}
+
+export function emitDataSave(user, payload, serverTs) {
+  _emit('save_data', { user, payload, serverTs });
 }

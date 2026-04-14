@@ -30,7 +30,7 @@ export default function ExportModal() {
                 <input type="radio" name="htmlW" value="fixed" /> 고정폭
               </label>
             </div>
-            <button className="btn btn-s btn-sm" onClick={() => window.expHTML?.()}>🌐 HTML 내보내기</button>
+            <button className="btn btn-s btn-sm" onClick={event => window.expHTML?.(event.currentTarget.closest('.mbody'))}>🌐 HTML 내보내기</button>
           </div>
           <div style={{ marginTop: '14px' }}>
             <div className="exp-sec-ttl">마크다운 일괄</div>

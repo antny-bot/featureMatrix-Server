@@ -26,7 +26,7 @@ function notifyDrag(keys = []) {
 
 
 function currentUser() {
-  return S.settings.userName || 'anonymous';
+  return S.settings.userName || '익명';
 }
 
 function getLockedByOther(keys) {
@@ -71,7 +71,7 @@ export function boardCardDblClick(key) {
 }
 
 /* ── 카드 이동 공통 ── */
-function _moveItems(keys, toStatus) {
+function _moveItems(keys, toStatus, { lockBeforeMove = true } = {}) {
   if (!window.isEditor?.()) { window.__sobukNotify?.('편집 권한이 없습니다.', true); return; }
   const lockedKeys = getLockedByOther(keys);
   if (lockedKeys.length) {
@@ -80,7 +80,7 @@ function _moveItems(keys, toStatus) {
     notify(`${lockedBy}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
     return;
   }
-  lockKeys(keys);
+  if (lockBeforeMove) lockKeys(keys);
   pushUndo();
   const movedItems = [];
   S.items.forEach(it => {
@@ -96,6 +96,8 @@ function _moveItems(keys, toStatus) {
   });
   _boardSel.clear();
   notifySel();
+  _dragKey = null;
+  notifyDrag();
   save();
   movedItems.forEach(item => {
     broadcastItemSaved(item);
@@ -155,6 +157,6 @@ export function boardDragLeave(_e, colKey) {
 
 export function boardDrop(e, colKey) {
   e.preventDefault();
-  if (!_dragKey) return;
-  _moveItems(_boardSel.size > 0 ? new Set(_boardSel) : new Set([_dragKey]), colKey);
+  if (!_dragKey) { notifyDrag(); return; }
+  _moveItems(_boardSel.size > 0 ? new Set(_boardSel) : new Set([_dragKey]), colKey, { lockBeforeMove: false });
 }

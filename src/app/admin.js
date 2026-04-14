@@ -6,6 +6,8 @@
 
 import { S, notify, apiFetch } from './state.js';
 import { ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY } from './constants.js';
+import { registerActiveUser, unregisterActiveUser } from './socket.js';
+import { setStore } from '../store/useAppStore.js';
 
 /* ── 서버 모드 여부 ── */
 function isServerMode() {
@@ -70,9 +72,13 @@ export async function submitLogin() {
       } else {
         sessionStorage.setItem(EDITOR_TOKEN_KEY, json.token);
       }
-      if (name) { S.settings.userName = name; }
+      if (name) {
+        S.settings.userName = name;
+        setStore({ settings: { ...S.settings } });
+      }
       closeLoginModal();
       updateAdminUI();
+      registerActiveUser();
       notify(role === 'admin' ? '관리자로 로그인됐습니다.' : '편집자로 로그인됐습니다.');
       const cb = _loginCallback;
       _loginCallback = null;
@@ -87,6 +93,7 @@ export async function submitLogin() {
 
 /* ── 로그아웃 ── */
 export function logout() {
+  unregisterActiveUser();
   sessionStorage.removeItem(ADMIN_TOKEN_KEY);
   sessionStorage.removeItem(EDITOR_TOKEN_KEY);
   updateAdminUI();

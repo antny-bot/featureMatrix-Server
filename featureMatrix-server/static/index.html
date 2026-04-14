@@ -147,6 +147,22 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .hdr-actions{display:flex;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
 .hdr-btn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;height:auto!important;padding:5px 8px!important;font-size:.55rem!important;color:var(--text-3);font-weight:600;letter-spacing:.02em}
 .hdr-btn:hover{color:var(--text-2)}
+.hdr-login--on{color:var(--accent)}
+.hdr-role{color:var(--accent)}
+.hdr-logout{color:var(--text-3)}
+.hdr-logout:hover{color:var(--danger);border-color:var(--danger)}
+.active-users{display:flex;align-items:center;padding:0 4px 0 2px}
+.active-avatar{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--surface);box-shadow:var(--shadow-xs);font-size:.64rem;font-weight:800;color:white;line-height:1;margin-left:-5px;letter-spacing:0}
+.active-avatar:first-child{margin-left:0}
+.active-avatar--teal{background:#0f766e}
+.active-avatar--rose{background:#be123c}
+.active-avatar--amber{background:#b45309}
+.active-avatar--blue{background:#2563eb}
+.active-avatar--green{background:#15803d}
+.active-avatar--more{background:var(--text-3);font-size:.6rem}
+.hdr-user-sep{width:1px;height:26px;background:var(--border);margin:0 3px}
+.own-user{display:inline-flex;align-items:center;gap:5px;max-width:120px;padding:0 5px 0 2px;color:var(--text-2);font-size:.68rem;font-weight:700;min-width:0}
+.own-user-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vtabs{display:none}
 .vtab{height:25px;padding:0 10px;border:none;border-radius:5px;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.77rem;font-weight:500;color:var(--text-3);cursor:pointer;transition:all .14s}
 .vtab.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow-xs)}
@@ -160,8 +176,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .nav-item.on{color:var(--accent);background:var(--accent-l)}
 .nav-item svg{flex-shrink:0;transition:color .15s}
 .nav-spacer{flex:1}
-.nav-login{color:var(--text-3);border-top:1px solid var(--border);margin-top:4px}
-.nav-login--on{color:var(--accent)}
+.nav-bottom-action{border-top:1px solid var(--border);margin-top:4px;color:var(--text-3)}
 /* 오른쪽 필터 패널 */
 .fpanel{width:200px;background:var(--surface);border-left:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1),border-width .22s}
 .fpanel.collapsed{width:36px}
@@ -227,6 +242,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .mitem.item-locked{outline:2px dashed var(--warning);outline-offset:-2px;opacity:.75;pointer-events:none}
 .edit-preview-overlay{position:absolute;bottom:100%;left:0;right:0;z-index:10;background:var(--text);color:var(--bg);font-size:.68rem;padding:6px 8px;border-radius:6px 6px 0 0;line-height:1.5;display:none;pointer-events:none}
 .mitem.item-locked:hover .edit-preview-overlay{display:block}
+.modal-view-fieldset{border:0;margin:0;padding:0;min-width:0}
+.modal-view-fieldset:disabled{opacity:1}
+.modal-view-fieldset:disabled .inp,.modal-view-fieldset:disabled .sel,.modal-view-fieldset:disabled .txta{color:var(--text);background:var(--surface);border-color:var(--border);cursor:default}
 [data-theme="dark"] .mitem{border:1px solid var(--border)}
 .card-actions{position:absolute;top:3px;right:3px;display:flex;gap:2px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:3}
 .card-act-btn{width:20px;height:20px;border:none;border-radius:4px;background:var(--surface-2);color:var(--text-3);font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;line-height:1}
@@ -17474,8 +17492,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         // { [key]: { user, ts } }
         previews: {},
         // { [key]: { user, preview } }
-        wsStatus: "idle"
+        wsStatus: "idle",
         // 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
+        activeUsers: []
+        // [{ sid, user, joinTime }] 현재 사용자 제외
       };
       useAppStore = create(
         devtools(
@@ -17492,6 +17512,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             setServerStatus: (serverStatus) => set({ serverStatus }),
             setIsLoading: (isLoading) => set({ isLoading }),
             setWsStatus: (wsStatus) => set({ wsStatus }),
+            setActiveUsers: (activeUsers) => set({ activeUsers: activeUsers || [] }),
             /* ── WebSocket Lock/Preview 업데이트 ── */
             updateLocks: (locks) => set({ editLocks: locks || {} }),
             updatePreview: (key, data) => set((s) => {
@@ -17535,7 +17556,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
                 settings: { ...S2.settings },
                 sort: { ...S2.sort },
                 editKey: S2.editKey,
-                editLocks: { ...S2.editLocks }
+                editLocks: { ...S2.editLocks },
+                activeUsers: get().activeUsers
               });
             }
           }),
@@ -17558,6 +17580,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return window.location.origin;
   }
   function _addLock(key, lockedBy, lockedAt) {
+    const releasedAt = _recentLocalUnlocks[key] || 0;
+    if (lockedBy === _currentUserName() && releasedAt && Date.now() - releasedAt < 3e3) {
+      return;
+    }
     const prev = getStore().editLocks || {};
     setStore({ editLocks: { ...prev, [key]: { user: lockedBy, ts: lockedAt } } });
   }
@@ -17579,6 +17605,38 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       setStore({ previews: { ...prev, [key]: data } });
     }
   }
+  function releaseLocalLock(key) {
+    if (!key) return;
+    _recentLocalUnlocks[key] = Date.now();
+    setTimeout(() => {
+      if (_recentLocalUnlocks[key] && Date.now() - _recentLocalUnlocks[key] >= 3e3) {
+        delete _recentLocalUnlocks[key];
+      }
+    }, 3500);
+    _removeLock(key);
+    _setPreview(key, null);
+  }
+  function _hasAuthToken() {
+    return !!(sessionStorage.getItem(ADMIN_TOKEN_KEY2) || sessionStorage.getItem(EDITOR_TOKEN_KEY2));
+  }
+  function _currentUserName() {
+    return getStore().settings?.userName || "\uC775\uBA85";
+  }
+  function _syncActiveUser() {
+    if (!_socket?.connected) return;
+    if (_hasAuthToken()) {
+      _socket.emit("register_user", { user: _currentUserName() });
+      _socket.emit("get_active_users");
+    } else {
+      _socket.emit("unregister_user");
+      setStore({ activeUsers: [] });
+    }
+  }
+  function _setActiveUsers(users) {
+    const ownSid = _socket?.id;
+    const others = (users || []).filter((user) => user.sid !== ownSid);
+    setStore({ activeUsers: others });
+  }
   function _flushQueue() {
     if (!_socket?.connected) return;
     const q = _pendingQueue.splice(0);
@@ -17589,12 +17647,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function _registerListeners() {
     _socket.on("connect", () => {
       setStore({ wsStatus: "connected" });
-      const user = getStore().settings?.userName || "\uC775\uBA85";
-      _socket.emit("register_user", { user });
+      _syncActiveUser();
       _flushQueue();
     });
     _socket.on("disconnect", () => {
-      setStore({ wsStatus: "disconnected" });
+      setStore({ wsStatus: "disconnected", activeUsers: [] });
     });
     _socket.on("connect_error", () => {
       setStore({ wsStatus: "disconnected" });
@@ -17604,8 +17661,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     });
     _socket.io.on("reconnect", () => {
       setStore({ wsStatus: "connected" });
-      const user = getStore().settings?.userName || "\uC775\uBA85";
-      _socket.emit("register_user", { user });
+      _syncActiveUser();
       _flushQueue();
     });
     _socket.on("locks_sync", ({ locks }) => {
@@ -17632,6 +17688,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       _setPreview(key, null);
       window.__onItemSaved?.(key, user, item);
     });
+    _socket.on("data_saved", ({ user, payload, serverTs }) => {
+      window.__onDataSaved?.(user, payload, serverTs);
+    });
+    _socket.on("user_list_updated", ({ users }) => {
+      _setActiveUsers(users);
+    });
   }
   function initSocket() {
     if (_socket) return;
@@ -17653,10 +17715,19 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       _socket = null;
     }
     _pendingQueue = [];
-    setStore({ wsStatus: "idle", editLocks: {}, previews: {} });
+    setStore({ wsStatus: "idle", editLocks: {}, previews: {}, activeUsers: [] });
   }
   function isSocketConnected() {
     return !!_socket?.connected;
+  }
+  function registerActiveUser() {
+    _syncActiveUser();
+  }
+  function unregisterActiveUser() {
+    if (_socket?.connected) {
+      _socket.emit("unregister_user");
+    }
+    setStore({ activeUsers: [] });
   }
   function _emit(event, data) {
     if (_socket?.connected) {
@@ -17677,13 +17748,18 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function emitSave(key, user, item) {
     _emit("save_item", { key, user, item });
   }
-  var _socket, _pendingQueue;
+  function emitDataSave(user, payload, serverTs) {
+    _emit("save_data", { user, payload, serverTs });
+  }
+  var _socket, _pendingQueue, _recentLocalUnlocks;
   var init_socket3 = __esm({
     "app/socket.js"() {
       init_esm5();
       init_useAppStore();
+      init_constants();
       _socket = null;
       _pendingQueue = [];
+      _recentLocalUnlocks = {};
     }
   });
 
@@ -17857,6 +17933,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       return false;
     }
   }
+  function broadcastSharedData(serverTs = lastServerTs) {
+    if (S.settings.storageMode !== "server") return;
+    emitDataSave(S.settings.userName || "\uC775\uBA85", buildServerPayload(), serverTs);
+  }
   async function loadFromServer() {
     try {
       const json = await apiFetch("/api/data");
@@ -17896,15 +17976,27 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       await loadFromServer();
     }
   }
+  function applyRemoteSharedData(payload, serverTs = lastServerTs) {
+    if (serverTs && lastServerTs && serverTs <= lastServerTs) return false;
+    applyServerPayload(payload);
+    if (serverTs) lastServerTs = serverTs;
+    saveLocal();
+    return true;
+  }
   function pushUndo() {
     undoStack.push(JSON.stringify(S.items));
     if (undoStack.length > UNDO_MAX) undoStack.shift();
     updateUndoFab();
   }
-  function doUndo() {
+  async function doUndo() {
     if (!undoStack.length) return;
     S.items = JSON.parse(undoStack.pop());
-    save();
+    if (S.settings.storageMode === "server") {
+      const saved = await saveToServer();
+      if (saved) broadcastSharedData(lastServerTs);
+    } else {
+      saveLocal();
+    }
     window.__sobukRenderAll?.();
     updateUndoFab();
     logActivity("\uB418\uB3CC\uB9AC\uAE30", `${S.items.length}\uAC1C \uD56D\uBAA9\uC73C\uB85C \uBCF5\uC6D0`);
@@ -17991,6 +18083,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       clearTimeout(_lockTimers[key]);
       delete _lockTimers[key];
     }
+    releaseLocalLock(key);
     const user = S.settings.userName || "\uC775\uBA85";
     if (isSocketConnected()) {
       emitUnlock(key, user);
@@ -18572,9 +18665,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         }
         if (name) {
           S.settings.userName = name;
+          setStore({ settings: { ...S.settings } });
         }
         closeLoginModal();
         updateAdminUI();
+        registerActiveUser();
         notify(role === "admin" ? "\uAD00\uB9AC\uC790\uB85C \uB85C\uADF8\uC778\uB410\uC2B5\uB2C8\uB2E4." : "\uD3B8\uC9D1\uC790\uB85C \uB85C\uADF8\uC778\uB410\uC2B5\uB2C8\uB2E4.");
         const cb = _loginCallback;
         _loginCallback = null;
@@ -18587,6 +18682,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }
   }
   function logout() {
+    unregisterActiveUser();
     sessionStorage.removeItem(ADMIN_TOKEN_KEY2);
     sessionStorage.removeItem(EDITOR_TOKEN_KEY2);
     updateAdminUI();
@@ -18638,6 +18734,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     "app/admin.js"() {
       init_state();
       init_constants();
+      init_socket3();
+      init_useAppStore();
       _loginCallback = null;
     }
   });
@@ -18645,10 +18743,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   // app/modal.js
   function broadcastItemSaved(item) {
     if (S.settings.storageMode !== "server" || !item) return;
-    emitSave(item.key, S.settings.userName || "anonymous", { ...item });
+    emitSave(item.key, S.settings.userName || "\uC775\uBA85", { ...item });
   }
   function currentUser() {
-    return S.settings.userName || "anonymous";
+    return S.settings.userName || "\uC775\uBA85";
   }
   function getLockedByOther(keys) {
     const locks = getStore().editLocks || {};
@@ -18813,7 +18911,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     setStore({ editKey: key });
     const item = findItem(key);
     if (!item) return;
-    window.__editModalBridge?.("edit", key, {
+    const mode = isEditor() ? "edit" : "detail";
+    window.__editModalBridge?.(mode, key, {
       key: item.key || "",
       priority: item.priority || "\uC911",
       name: item.name || "",
@@ -18831,7 +18930,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       isImportant: item.isImportant || "N",
       isDelete: item.isDelete || "N"
     });
-    lockItem(key);
+    if (mode === "edit") lockItem(key);
     openModal("editModal");
   }
   function openAddModal() {
@@ -18883,11 +18982,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     if (!it) return;
     openEditModal(key);
     switchEditTab("md");
-    if (it.mdContent && it.mdContent.trim()) {
-      switchMdView("preview");
-    } else {
-      switchMdView("edit");
-    }
+    switchMdView("preview");
   }
   function saveItem() {
     if (!isEditor()) {
@@ -19112,7 +19207,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const cell = e.currentTarget;
     S.dragCell = null;
     notifyMxDropCell(null);
-    if (!S.dragKey) return;
+    if (!S.dragKey) {
+      notifyMxDrag();
+      return;
+    }
     const keysToMove = mxSel.size > 0 ? new Set(mxSel) : /* @__PURE__ */ new Set([S.dragKey]);
     const g = cell.getAttribute("data-g") === "(\uBBF8\uBD84\uB958)" ? "" : cell.getAttribute("data-g");
     const sg = cell.getAttribute("data-sg");
@@ -19131,7 +19229,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       logActivity("\uC774\uB3D9", `${item.key} ${item.name}: ${from} \u2192 ${to}`);
     });
     mxSel.clear();
+    notifyMxSelection();
+    S.isDragging = false;
+    setStore({ isDragging: false });
     S.dragKey = null;
+    notifyMxDrag();
     save();
     keysToMove.forEach((k) => {
       broadcastItemSaved(findItem(k));
@@ -19285,8 +19387,22 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     dlBlob2("\uFEFF" + h, `sobuk-${today()}.xls`, "application/vnd.ms-excel;charset=utf-8");
     notify("\uC5D1\uC140 \uB2E4\uC6B4\uB85C\uB4DC.");
   }
-  function expHTML() {
-    const isFluid = document.querySelector('input[name="htmlW"]:checked')?.value === "fluid";
+  function getExportCss() {
+    const chunks = [];
+    Array.from(document.styleSheets).forEach((sheet) => {
+      try {
+        const rules = Array.from(sheet.cssRules || []).map((rule) => rule.cssText).join("\n");
+        if (rules) chunks.push(rules);
+      } catch {
+      }
+    });
+    const dyn = document.getElementById("dynStyle")?.textContent || "";
+    if (dyn) chunks.push(dyn);
+    return chunks.join("\n");
+  }
+  function expHTML(root = document) {
+    const htmlWidthInput = root?.querySelector?.('input[name="htmlW"]:checked') || document.querySelector('input[name="htmlW"]:checked');
+    const isFluid = htmlWidthInput?.value === "fluid";
     const items = getFiltered();
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
     const ss = S.settings;
@@ -19340,7 +19456,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       prioCount[getPK(it.priority)]++;
     });
     const impCount = items.filter((it) => it.isImportant === "Y").length;
-    let css = document.querySelector("style").textContent + "\n" + document.getElementById("dynStyle").textContent;
+    let css = getExportCss();
     if (isFluid) css += ".mtable{width:100%}";
     const exportDate = (/* @__PURE__ */ new Date()).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
     const filterInfo = [];
@@ -20019,7 +20135,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     window.dispatchEvent(new CustomEvent("boardDragState", { detail: { keys: [...keys] } }));
   }
   function currentUser2() {
-    return S.settings.userName || "anonymous";
+    return S.settings.userName || "\uC775\uBA85";
   }
   function getLockedByOther2(keys) {
     const locks = getStore().editLocks || {};
@@ -20053,7 +20169,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     notifySel();
     window.openEditModal?.(key);
   }
-  function _moveItems(keys, toStatus) {
+  function _moveItems(keys, toStatus, { lockBeforeMove = true } = {}) {
     if (!window.isEditor?.()) {
       window.__sobukNotify?.("\uD3B8\uC9D1 \uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.", true);
       return;
@@ -20065,7 +20181,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       notify(`${lockedBy}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC778 \uD56D\uBAA9\uC740 \uC774\uB3D9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`, "warning");
       return;
     }
-    lockKeys2(keys);
+    if (lockBeforeMove) lockKeys2(keys);
     pushUndo();
     const movedItems = [];
     S.items.forEach((it) => {
@@ -20081,6 +20197,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     });
     _boardSel.clear();
     notifySel();
+    _dragKey = null;
+    notifyDrag();
     save();
     movedItems.forEach((item) => {
       broadcastItemSaved2(item);
@@ -20137,8 +20255,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
   function boardDrop(e, colKey) {
     e.preventDefault();
-    if (!_dragKey) return;
-    _moveItems(_boardSel.size > 0 ? new Set(_boardSel) : /* @__PURE__ */ new Set([_dragKey]), colKey);
+    if (!_dragKey) {
+      notifyDrag();
+      return;
+    }
+    _moveItems(_boardSel.size > 0 ? new Set(_boardSel) : /* @__PURE__ */ new Set([_dragKey]), colKey, { lockBeforeMove: false });
   }
   var _dragKey, _boardSel;
   var init_board = __esm({
@@ -20407,7 +20528,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           const changed = updateLocks(result.locks);
           if (changed && S.view !== "dashboard") renderAll();
         }
-        if (result.serverTs > lastServerTs) {
+        if (!isSocketConnected() && result.serverTs > lastServerTs) {
           const editor = result.lastEditor || "\uB204\uAD70\uAC00";
           const ago = result.lastEditTime ? fmtDate(result.lastEditTime) : "";
           window.__showUpdateBanner?.(`\u26A0 ${editor}${ago ? ("\uC774" === editor.slice(-1) ? "\uAC00" : "\uC774") + " " + ago + "\uC5D0" : "\uAC00"} \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.`);
@@ -20800,6 +20921,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         }
         renderAll();
       };
+      window.__onDataSaved = (user, payload, serverTs) => {
+        if (!payload) return;
+        const applied = applyRemoteSharedData(payload, serverTs);
+        if (!applied) return;
+        renderAll();
+        notify(`${user || "\uB2E4\uB978 \uC0AC\uC6A9\uC790"}\uB2D8\uC758 \uBCC0\uACBD\uC0AC\uD56D\uC774 \uBC18\uC601\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`, "success");
+      };
       window.__onPreviewChanged = () => {
         if (S.view !== "dashboard") renderAll();
       };
@@ -20848,6 +20976,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           notify("\uB85C\uCEEC \uBAA8\uB4DC\uB85C \uC124\uC815\uB410\uC2B5\uB2C8\uB2E4.");
         }
         startPolling();
+        registerActiveUser();
         syncServerSettingsUI();
         updateAdminUI();
       };
@@ -20979,13 +21108,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "6", y1: "6", x2: "6.01", y2: "6" }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "6", y1: "18", x2: "6.01", y2: "18" })
   ] });
-  var ICON_SETTINGS = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: "12", cy: "12", r: "3" }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" })
-  ] });
   var ICON_SHORTCUTS = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("rect", { x: "2", y: "6", width: "20", height: "12", rx: "2" }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" })
+  ] });
+  var ICON_LOGIN = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("rect", { x: "3", y: "11", width: "18", height: "11", rx: "2" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" })
+  ] });
+  var ICON_ADMIN = /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" }) });
+  var ICON_EDITOR = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" })
+  ] });
+  var ICON_LOGOUT = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("polyline", { points: "16 17 21 12 16 7" }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: "21", y1: "12", x2: "9", y2: "12" })
   ] });
   function IconSun() {
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", id: "themeBtnIcon", children: [
@@ -21010,6 +21149,46 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     connecting: { bg: "#d97706", title: "WebSocket \uC5F0\uACB0 \uC911..." },
     idle: { bg: "#aaa", title: "\uC11C\uBC84" }
   };
+  function getUserInitial(name = "") {
+    const trimmed = name.trim();
+    if (!trimmed) return "?";
+    const parts2 = trimmed.split(/\s+/).filter(Boolean);
+    if (parts2.length >= 2 && /^[a-z0-9]/i.test(parts2[0]) && /^[a-z0-9]/i.test(parts2[1])) {
+      return `${parts2[0][0]}${parts2[1][0]}`.toUpperCase();
+    }
+    return Array.from(trimmed)[0].toUpperCase();
+  }
+  function getAvatarTone(name = "") {
+    const tones = ["teal", "rose", "amber", "blue", "green"];
+    const sum = Array.from(name).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return tones[sum % tones.length];
+  }
+  function ActiveUserAvatars({ users }) {
+    if (!users.length) return null;
+    const visible = users.slice(0, 5);
+    const extra = users.length - visible.length;
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "active-users", title: `\uB3D9\uC2DC \uC811\uC18D\uC790 ${users.length}\uBA85`, children: [
+      visible.map((user) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+        "span",
+        {
+          className: `active-avatar active-avatar--${getAvatarTone(user.user)}`,
+          title: user.user,
+          children: getUserInitial(user.user)
+        },
+        user.sid || `${user.user}-${user.joinTime}`
+      )),
+      extra > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "active-avatar active-avatar--more", title: `\uC678 ${extra}\uBA85`, children: [
+        "+",
+        extra
+      ] })
+    ] });
+  }
+  function OwnUserBadge({ name }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "own-user", title: `\uBCF8\uC778: ${name}`, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: `active-avatar active-avatar--${getAvatarTone(name)}`, children: getUserInitial(name) }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "own-user-name", children: name })
+    ] });
+  }
   function Header() {
     const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode: isServerMode2 } = useAuth();
     const { isDark } = useTheme();
@@ -21018,6 +21197,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const storageMode = useAppStore((s) => s.settings.storageMode || "server");
     const serverStatus = useAppStore((s) => s.serverStatus);
     const wsStatus = useAppStore((s) => s.wsStatus);
+    const activeUsers = useAppStore((s) => s.activeUsers || []);
+    const userName = useAppStore((s) => s.settings.userName || "\uC775\uBA85");
     const view = useAppStore((s) => s.view);
     const searchQ = useAppStore((s) => s.searchQ);
     useAppStore((s) => s.items);
@@ -21025,9 +21206,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const searchRef = (0, import_react4.useRef)(null);
     const showSearch = view !== "dashboard";
     const filteredCount = getFiltered().length;
-    const showAdminBadge = isAdmin2 && isServerMode2;
     const showLogoutBtn = (isAdmin2 || isEditor2) && isServerMode2;
     const logoutTitle = isAdmin2 ? "\uAD00\uB9AC\uC790 \uB85C\uADF8\uC544\uC6C3" : "\uD3B8\uC9D1\uC790 \uB85C\uADF8\uC544\uC6C3";
+    const loginState = isAdmin2 ? { label: "\uAD00\uB9AC\uC790", icon: ICON_ADMIN, active: true } : isEditor2 ? { label: "\uD3B8\uC9D1\uC790", icon: ICON_EDITOR, active: true } : { label: "\uB85C\uADF8\uC778", icon: ICON_LOGIN, active: false };
     const restDot = serverStatus === "ok" ? { bg: "#16a34a", title: "\uC11C\uBC84 \uC5F0\uACB0\uB428" } : serverStatus === "error" ? { bg: "#dc2626", title: "\uC11C\uBC84 \uC5F0\uACB0 \uC624\uB958" } : { bg: "#aaa", title: "\uC11C\uBC84 \uC0C1\uD0DC" };
     const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP.idle;
     const showWsDot = storageMode === "server" && wsStatus !== "idle";
@@ -21078,24 +21259,32 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "hdr-count-badge", id: "hdrCountBadge", children: filteredCount ? `${filteredCount}\uAC1C` : "" })
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "hdr-actions", children: [
-        showAdminBadge && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-          "span",
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(ActiveUserAvatars, { users: activeUsers }),
+        showLogoutBtn && activeUsers.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "hdr-user-sep", "aria-hidden": "true" }),
+        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(OwnUserBadge, { name: userName }),
+        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "button",
           {
-            id: "adminBadge",
-            style: { fontSize: ".68rem", fontWeight: 700, padding: "2px 7px", borderRadius: "5px", background: "var(--warning-bg)", color: "var(--warning)", border: "1px solid var(--warning)" },
-            title: "\uAD00\uB9AC\uC790 \uBAA8\uB4DC",
-            children: "\u{1F511}"
+            type: "button",
+            className: "btn btn-g btn-sm hdr-btn hdr-role",
+            title: loginState.label,
+            children: [
+              loginState.icon,
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: loginState.label })
+            ]
           }
         ),
-        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "button",
           {
             id: "adminLogoutBtn",
-            className: "btn btn-g btn-sm",
+            className: "btn btn-g btn-sm hdr-btn hdr-logout",
             onClick: () => window.logout?.(),
-            style: { width: "27px", padding: 0, fontSize: ".82rem" },
             title: logoutTitle,
-            children: "\u{1F512}"
+            children: [
+              ICON_LOGOUT,
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "\uB85C\uADF8\uC544\uC6C3" })
+            ]
           }
         ),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
@@ -21120,10 +21309,18 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.openModal?.("settingsModal"), title: "\uD658\uACBD \uC124\uC815 (Ctrl+,)", children: [
-          ICON_SETTINGS,
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "\uC124\uC815" })
-        ] }),
+        isServerMode2 && !showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "button",
+          {
+            className: `btn btn-g btn-sm hdr-btn hdr-login${loginState.active ? " hdr-login--on" : ""}`,
+            onClick: () => window.openLoginModal?.(),
+            title: "\uB85C\uADF8\uC778",
+            children: [
+              loginState.icon,
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: loginState.label })
+            ]
+          }
+        ),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", onClick: () => window.openModal?.("shortcutsModal"), title: "\uB2E8\uCD95\uD0A4 (?)", children: [
           ICON_SHORTCUTS,
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "\uB2E8\uCD95\uD0A4" })
@@ -21264,7 +21461,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             " \uD3B8\uC9D1 \uC911"
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(PreviewOverlay, { item, lockInfo, previewData }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "card-actions", onClick: (event) => event.stopPropagation(), children: [
+          canDrag && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "card-actions", onClick: (event) => event.stopPropagation(), children: [
             /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { className: "card-act-btn", title: "\uD3B8\uC9D1", onClick: () => window.openEditModal?.(item.key), children: "\u270F" }),
             /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { className: "card-act-btn", title: "\uBCF5\uC81C", onClick: () => window.duplicateItem?.(item.key), children: "\u29C9" })
           ] }),
@@ -21325,6 +21522,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const items = useAppStore((s) => s.items);
     const editLocks2 = useAppStore((s) => s.editLocks);
     const previews = useAppStore((s) => s.previews);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
     const foldCount = useAppStore((s) => s.settings.boardFoldCount ?? 6);
     const [boardContainer, setBoardContainer] = (0, import_react5.useState)(null);
     const [barContainer, setBarContainer] = (0, import_react5.useState)(null);
@@ -21362,9 +21561,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         delete window.boardCollapseCol;
       };
     }, []);
-    if (!boardContainer || !barContainer) return null;
-    const filteredItems = isFilterActive() ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y");
+    const filteredItems = (0, import_react5.useMemo)(
+      () => isFilterActive() ? getFiltered() : S.items.filter((it) => it.isDelete !== "Y"),
+      [items, filters, searchQ, editLocks2, previews]
+    );
     const c = getColors();
+    if (!boardContainer || !barContainer) return null;
     const byCol = Object.fromEntries(STATUS_OPTS.map((k) => [k, []]));
     filteredItems.forEach((it) => {
       if (byCol[it.status]) byCol[it.status].push(it);
@@ -22573,7 +22775,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               } })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px" }, children: "\uB9E4\uD2B8\uB9AD\uC2A4 \uC5F4 \uB108\uBE44" }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "flex", flexDirection: "column" }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uADF8\uB8F9 \uC5F4 \uD3ED", value: `${settings.colW}px`, onMinus: () => {
                 S.settings.colW = Math.max(80, Math.min(300, settings.colW - 10));
                 save();
@@ -22587,57 +22789,61 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
                 syncSettings3();
                 window.renderAll?.();
               }, step: 10 }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uC140 \uC811\uAE30 \uAE30\uC900", value: settings.cellFold === 0 ? "\u221E" : settings.cellFold, sub: "0=\uD56D\uC0C1 \uD3BC\uCE68", onMinus: () => {
-                S.settings.cellFold = Math.max(0, Math.min(20, settings.cellFold - 1));
-                save();
-                syncSettings3();
-                window.renderAll?.();
-              }, onPlus: () => {
-                S.settings.cellFold = Math.max(0, Math.min(20, settings.cellFold + 1));
-                save();
-                syncSettings3();
-                window.renderAll?.();
-              } }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uBCF4\uB4DC \uC140 \uC811\uAE30 \uAE30\uC900", value: settings.boardFoldCount === 0 ? "\u221E" : settings.boardFoldCount, sub: "0=\uD56D\uC0C1 \uD3BC\uCE68", onMinus: () => {
-                S.settings.boardFoldCount = Math.max(0, Math.min(30, (settings.boardFoldCount ?? 6) - 1));
-                save();
-                syncSettings3();
-              }, onPlus: () => {
-                S.settings.boardFoldCount = Math.max(0, Math.min(30, (settings.boardFoldCount ?? 6) + 1));
-                save();
-                syncSettings3();
-              } }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uCE74\uD14C\uACE0\uB9AC \uD3ED", value: `${settings.catW}px`, onMinus: () => {
-                S.settings.catW = Math.max(40, Math.min(80, settings.catW - 4));
-                save();
-                applyVars();
-                syncSettings3();
-                window.renderAll?.();
-              }, onPlus: () => {
-                S.settings.catW = Math.max(40, Math.min(80, settings.catW + 4));
-                save();
-                applyVars();
-                syncSettings3();
-                window.renderAll?.();
-              }, step: 4 }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC \uD3ED", value: `${settings.subCatW}px`, onMinus: () => {
-                S.settings.subCatW = Math.max(40, Math.min(200, settings.subCatW - 4));
-                save();
-                applyVars();
-                syncSettings3();
-                window.renderAll?.();
-              }, onPlus: () => {
-                S.settings.subCatW = Math.max(40, Math.min(200, settings.subCatW + 4));
-                save();
-                applyVars();
-                syncSettings3();
-                window.renderAll?.();
-              }, step: 4 })
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uB9E4\uD2B8\uB9AD\uC2A4 \uC140 \uC811\uAE30 \uAE30\uC900", value: settings.cellFold === 0 ? "\u221E" : settings.cellFold, sub: "0=\uD56D\uC0C1 \uD3BC\uCE68", onMinus: () => {
+                  S.settings.cellFold = Math.max(0, Math.min(20, settings.cellFold - 1));
+                  save();
+                  syncSettings3();
+                  window.renderAll?.();
+                }, onPlus: () => {
+                  S.settings.cellFold = Math.max(0, Math.min(20, settings.cellFold + 1));
+                  save();
+                  syncSettings3();
+                  window.renderAll?.();
+                } }),
+                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uBCF4\uB4DC \uC140 \uC811\uAE30 \uAE30\uC900", value: settings.boardFoldCount === 0 ? "\u221E" : settings.boardFoldCount, sub: "0=\uD56D\uC0C1 \uD3BC\uCE68", onMinus: () => {
+                  S.settings.boardFoldCount = Math.max(0, Math.min(30, (settings.boardFoldCount ?? 6) - 1));
+                  save();
+                  syncSettings3();
+                }, onPlus: () => {
+                  S.settings.boardFoldCount = Math.max(0, Math.min(30, (settings.boardFoldCount ?? 6) + 1));
+                  save();
+                  syncSettings3();
+                } })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uCE74\uD14C\uACE0\uB9AC \uD3ED", value: `${settings.catW}px`, onMinus: () => {
+                  S.settings.catW = Math.max(40, Math.min(80, settings.catW - 4));
+                  save();
+                  applyVars();
+                  syncSettings3();
+                  window.renderAll?.();
+                }, onPlus: () => {
+                  S.settings.catW = Math.max(40, Math.min(80, settings.catW + 4));
+                  save();
+                  applyVars();
+                  syncSettings3();
+                  window.renderAll?.();
+                }, step: 4 }),
+                /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Stepper, { label: "\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC \uD3ED", value: `${settings.subCatW}px`, onMinus: () => {
+                  S.settings.subCatW = Math.max(40, Math.min(200, settings.subCatW - 4));
+                  save();
+                  applyVars();
+                  syncSettings3();
+                  window.renderAll?.();
+                }, onPlus: () => {
+                  S.settings.subCatW = Math.max(40, Math.min(200, settings.subCatW + 4));
+                  save();
+                  applyVars();
+                  syncSettings3();
+                  window.renderAll?.();
+                }, step: 4 })
+              ] })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px" }, children: "\uBE4C\uB4DC \uC815\uBCF4" }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", children: [
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uBE4C\uB4DC \uB118\uBC84" }) }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { id: "buildNumberDisplay", style: { fontSize: ".82rem", fontWeight: 600, color: "var(--text-2)", fontFamily: "monospace" }, children: `v${appVersion} (build ${buildId})` })
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { id: "buildNumberDisplay", style: { fontSize: ".82rem", fontWeight: 600, color: "var(--text-2)" }, children: `v${appVersion} (build ${buildId})` })
             ] })
           ] }),
           activeTab === "sdesign" && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SettingsDesignPanel, {}),
@@ -22660,7 +22866,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
                   " \uACE0\uC815\uD3ED"
                 ] })
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expHTML?.(), children: "\u{1F310} HTML" }),
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: (event) => window.expHTML?.(event.currentTarget.closest(".mbody")), children: "\u{1F310} HTML" }),
               /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expMdZip?.(), children: "\u{1F4E6} MD ZIP" })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "sec-ttl", style: { marginTop: "12px" }, children: "\uC124\uC815 \uD30C\uC77C" }),
@@ -22765,16 +22971,14 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function ServerSettingsPanel({ settings }) {
     const [form, setForm] = (0, import_react10.useState)({
       storageMode: settings.storageMode || "server",
-      serverUrl: settings.serverUrl || "",
       userName: settings.userName || ""
     });
     (0, import_react10.useEffect)(() => {
       setForm({
         storageMode: settings.storageMode || "server",
-        serverUrl: settings.serverUrl || "",
         userName: settings.userName || ""
       });
-    }, [settings.storageMode, settings.serverUrl, settings.userName]);
+    }, [settings.storageMode, settings.userName]);
     const saveServerSettings = (nextForm = form) => {
       window.saveServerSettings?.(nextForm);
     };
@@ -22828,24 +23032,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             onChange: (event) => setForm((current) => ({ ...current, userName: event.target.value })),
             placeholder: "\uD64D\uAE38\uB3D9",
             style: { height: "28px", fontSize: ".8rem" },
-            onKeyDown: (event) => {
-              if (event.key === "Enter") saveServerSettings();
-            }
-          }
-        )
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "srow", style: { flexDirection: "column", alignItems: "flex-start", gap: "5px", marginTop: "4px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "slbl", children: "\uC11C\uBC84 URL" }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ssub", children: "\uBE44\uC6CC\uB450\uBA74 \uD604\uC7AC \uB3C4\uBA54\uC778 \uC0AC\uC6A9" }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
-          "input",
-          {
-            className: "inp",
-            id: "sServerUrl",
-            value: form.serverUrl,
-            onChange: (event) => setForm((current) => ({ ...current, serverUrl: event.target.value })),
-            placeholder: "http://\uC11C\uBC84IP:5000",
-            style: { height: "28px", fontSize: ".8rem", fontFamily: "monospace" },
             onKeyDown: (event) => {
               if (event.key === "Enter") saveServerSettings();
             }
@@ -22936,6 +23122,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const [mdStats, setMdStats] = (0, import_react11.useState)({ chars: "0\uC790", lines: "0\uC904", words: "0\uB2E8\uC5B4" });
     const [title, setTitle] = (0, import_react11.useState)("\uAE30\uB2A5 \uCD94\uAC00");
     const [showHardDel, setShowHardDel] = (0, import_react11.useState)(false);
+    const [modalMode, setModalMode] = (0, import_react11.useState)("add");
     const [form, setForm] = (0, import_react11.useState)(EMPTY_FORM);
     const items = useAppStore((s) => s.items);
     const previewRef = (0, import_react11.useRef)(null);
@@ -22943,6 +23130,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const currentKeyRef = (0, import_react11.useRef)(null);
     const previewTimerRef = (0, import_react11.useRef)(null);
     const formRef = (0, import_react11.useRef)(EMPTY_FORM);
+    const modalModeRef = (0, import_react11.useRef)("add");
     (0, import_react11.useEffect)(() => {
       formRef.current = form;
     }, [form]);
@@ -23008,18 +23196,18 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     (0, import_react11.useEffect)(() => {
       window.__editModalBridge = (mode, key, nextForm = {}) => {
         const mergedForm = { ...EMPTY_FORM, ...nextForm };
-        setTitle(mode === "add" ? "\uAE30\uB2A5 \uCD94\uAC00" : `\uAE30\uB2A5 \uC218\uC815 \u2014 ${key}`);
+        modalModeRef.current = mode;
+        setModalMode(mode);
+        setTitle(mode === "add" ? "\uAE30\uB2A5 \uCD94\uAC00" : mode === "detail" ? `\uAE30\uB2A5 \uC0C1\uC138 - ${key}` : `\uAE30\uB2A5 \uC218\uC815 - ${key}`);
         setShowHardDel(mode === "edit");
         setActiveTab("info");
-        setMdMode("edit");
+        setMdMode(mode === "detail" ? "preview" : "edit");
         setForm(mergedForm);
         formRef.current = mergedForm;
         setMdPreview(parseMd(mergedForm.mdContent || ""));
         updateMdStats(mergedForm.mdContent || "");
         if (mode === "edit" && key) {
           currentKeyRef.current = key;
-          const user = getStore().settings?.userName || "\uC775\uBA85";
-          emitLock(key, user);
         } else {
           currentKeyRef.current = null;
         }
@@ -23037,9 +23225,18 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         setActiveTab(tab);
         if (tab === "md") {
           updateMdStats(formRef.current.mdContent || "");
+          if (modalModeRef.current !== "add") {
+            setMdMode("preview");
+            setMdPreview(parseMd(formRef.current.mdContent || ""));
+          }
         }
       };
       window.__editModalSwitchMdView = (mode) => {
+        if (modalModeRef.current === "detail" && mode !== "preview") {
+          setMdMode("preview");
+          setMdPreview(parseMd(formRef.current.mdContent || ""));
+          return;
+        }
         setMdMode(mode);
         if (mode !== "edit") {
           setMdPreview(parseMd(formRef.current.mdContent || ""));
@@ -23098,6 +23295,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       owner: getUniqSorted("owner", items)
     };
     const infoVisible = activeTab === "info";
+    const isReadOnly = modalMode === "detail";
+    const canEditMd = !isReadOnly;
     const taStyle = { display: mdMode === "preview" ? "none" : "", flex: mdMode !== "preview" ? "1" : "" };
     const pvStyle = { display: mdMode === "edit" ? "none" : "", flex: mdMode !== "edit" ? "1" : "" };
     return (0, import_react_dom4.createPortal)(
@@ -23110,7 +23309,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: `stab${activeTab === "info" ? " on" : ""}`, onClick: () => window.__editModalSwitchEditTab?.("info"), children: "\u{1F4CB} \uAE30\uBCF8 \uC815\uBCF4" }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: `stab${activeTab === "md" ? " on" : ""}`, onClick: () => window.__editModalSwitchEditTab?.("md"), children: "\u{1F4DD} \uAE30\uB2A5\uC815\uC758\uC694\uAD6C\uC11C" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "mbody", style: { padding: "16px 20px", display: infoVisible ? "" : "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "mg", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "mbody", style: { padding: "16px 20px", display: infoVisible ? "" : "none" }, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("fieldset", { className: "modal-view-fieldset", disabled: isReadOnly, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "mg", children: [
           /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "field", children: [
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("label", { className: "lbl", children: "Key" }),
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("input", { className: "inp", id: "fKey", value: form.key, readOnly: true, tabIndex: -1, style: { background: "var(--surface-2)", color: "var(--text-3)" } })
@@ -23190,9 +23389,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "tgl-lbl", children: "\uC0AD\uC81C \uCC98\uB9AC" })
             ] })
           ] })
-        ] }) }),
+        ] }) }) }),
         /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "mbody", style: { display: !infoVisible ? "flex" : "none", padding: "10px 16px", flexDirection: "column", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", flexShrink: 0 }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { style: { display: canEditMd ? "flex" : "none", flexDirection: "column", gap: "4px", flexShrink: 0 }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "3px", flexWrap: "wrap" }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { style: { display: "flex", gap: "2px" }, children: [
                 /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.mdInsert?.("**", "**"), title: "\uAD75\uAC8C", style: { width: "26px", padding: 0 }, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("b", { children: "B" }) }),
@@ -23241,6 +23440,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               {
                 id: "fMdContent",
                 value: form.mdContent,
+                readOnly: !canEditMd,
                 style: {
                   ...taStyle,
                   minHeight: "300px",
@@ -23256,7 +23456,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
                   outline: "none"
                 },
                 placeholder: "# \uAE30\uB2A5 \uC81C\uBAA9\n\n## \uAC1C\uC694\n\uB9C8\uD06C\uB2E4\uC6B4\uC73C\uB85C \uC791\uC131\n\n| \uCEEC\uB7FC1 | \uCEEC\uB7FC2 |\n|-------|-------|\n| \uAC121   | \uAC122   |\n\n\uC218\uC2DD: $E=mc^2$",
-                onChange: (event) => updateField("mdContent", event.target.value)
+                onChange: (event) => canEditMd && updateField("mdContent", event.target.value)
               }
             ),
             /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
@@ -23278,11 +23478,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             )
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "mfoot", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "mfoot", children: isReadOnly ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.closeModal?.("editModal"), children: "\uB2EB\uAE30" }) : /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(import_jsx_runtime12.Fragment, { children: [
           showHardDel && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "btn btn-d btn-sm", onClick: () => window.hardDelete?.(), style: { marginRight: "auto" }, children: "\uC644\uC804 \uC0AD\uC81C" }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "btn btn-g btn-sm", onClick: () => window.closeModal?.("editModal"), children: "\uCDE8\uC18C" }),
           /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { className: "btn btn-p btn-sm", onClick: () => window.saveItem?.(), children: "\uC800\uC7A5" })
-        ] })
+        ] }) })
       ] }),
       container
     );
@@ -23718,19 +23918,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("circle", { cx: "4", cy: "18", r: "1.2", fill: "currentColor" })
     ] });
   }
-  function LoginIcon() {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("svg", { width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("rect", { x: "3", y: "11", width: "18", height: "11", rx: "2" }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" })
-    ] });
-  }
-  function AdminIcon() {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("svg", { width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("path", { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" }) });
-  }
-  function EditorIcon() {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("svg", { width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("path", { d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("path", { d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" })
+  function SettingsIcon() {
+    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("circle", { cx: "12", cy: "12", r: "3" }),
+      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("path", { d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" })
     ] });
   }
   function NavButton({ id, title, label, icon, active = false, onClick, className = "", style }) {
@@ -23750,9 +23941,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     );
   }
   function NavigationSide() {
-    const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode: isServerMode2 } = useAuth();
     const view = useAppStore((s) => s.view);
-    const loginState = isAdmin2 ? { label: "\uAD00\uB9AC\uC790", icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(AdminIcon, {}), active: true } : isEditor2 ? { label: "\uD3B8\uC9D1\uC790", icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(EditorIcon, {}), active: true } : { label: "\uB85C\uADF8\uC778", icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(LoginIcon, {}), active: false };
     return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("nav", { className: "nav-side", id: "navSide", children: [
       /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
         NavButton,
@@ -23802,13 +23991,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
         NavButton,
         {
-          id: "navLogin",
-          title: "\uB85C\uADF8\uC778",
-          label: loginState.label,
-          icon: loginState.icon,
-          className: `nav-login${loginState.active ? " nav-login--on" : ""}`,
-          style: { display: isServerMode2 ? "" : "none" },
-          onClick: () => window.openLoginModal?.()
+          id: "navSettings",
+          title: "\uD658\uACBD \uC124\uC815 (Ctrl+,)",
+          label: "\uC124\uC815",
+          icon: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(SettingsIcon, {}),
+          className: "nav-bottom-action",
+          onClick: () => window.openModal?.("settingsModal")
         }
       )
     ] });
@@ -24273,7 +24461,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               " \uACE0\uC815\uD3ED"
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-s btn-sm", onClick: () => window.expHTML?.(), children: "\u{1F310} HTML \uB0B4\uBCF4\uB0B4\uAE30" })
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("button", { className: "btn btn-s btn-sm", onClick: (event) => window.expHTML?.(event.currentTarget.closest(".mbody")), children: "\u{1F310} HTML \uB0B4\uBCF4\uB0B4\uAE30" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { style: { marginTop: "14px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "exp-sec-ttl", children: "\uB9C8\uD06C\uB2E4\uC6B4 \uC77C\uAD04" }),

@@ -111,9 +111,26 @@ export function expXLS() {
   notify('엑셀 다운로드.');
 }
 
-export function expHTML() {
+function getExportCss() {
+  const chunks = [];
+  Array.from(document.styleSheets).forEach(sheet => {
+    try {
+      const rules = Array.from(sheet.cssRules || []).map(rule => rule.cssText).join('\n');
+      if (rules) chunks.push(rules);
+    } catch {
+      // Cross-origin stylesheets are skipped; app styles are same-origin.
+    }
+  });
+  const dyn = document.getElementById('dynStyle')?.textContent || '';
+  if (dyn) chunks.push(dyn);
+  return chunks.join('\n');
+}
+
+export function expHTML(root = document) {
   // LEGACY-DOM: 현재 스타일/라디오 상태를 읽어 내보내기 위해 DOM 접근 유지.
-  const isFluid = document.querySelector('input[name="htmlW"]:checked')?.value === 'fluid';
+  const htmlWidthInput = root?.querySelector?.('input[name="htmlW"]:checked')
+    || document.querySelector('input[name="htmlW"]:checked');
+  const isFluid = htmlWidthInput?.value === 'fluid';
   const items   = getFiltered();
   const isDark  = document.documentElement.getAttribute('data-theme') === 'dark';
   const ss      = S.settings;
@@ -153,7 +170,7 @@ export function expHTML() {
   items.forEach(it => { const g=it.group||'(미분류)'; gCnt[g]=(gCnt[g]||0)+1; prioCount[getPK(it.priority)]++; });
   const impCount = items.filter(it=>it.isImportant==='Y').length;
 
-  let css = document.querySelector('style').textContent + '\n' + document.getElementById('dynStyle').textContent;
+  let css = getExportCss();
   if (isFluid) css += '.mtable{width:100%}';
 
   const exportDate = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});

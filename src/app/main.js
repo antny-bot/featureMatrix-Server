@@ -6,9 +6,9 @@ import 'drag-drop-touch'; // 터치 디바이스 드래그앤드롭 폴리필
 import { DEMO } from './constants.js';
 import { S, save, load, doUndo, updateUndoFab, pushUndo, genKey,
          pollServerTs, lastServerTs, resolveConflictKeepMine, resolveConflictUseServer,
-         loadFromServer, saveToServer, logActivity, notify, fmtDate,
+         applyRemoteSharedData, loadFromServer, saveToServer, logActivity, notify, fmtDate,
          lockItem, unlockItem, updateLocks, editLocks } from './state.js';
-import { initSocket, disconnectSocket, isSocketConnected } from './socket.js';
+import { initSocket, disconnectSocket, isSocketConnected, registerActiveUser } from './socket.js';
 import { setStore } from '../store/useAppStore.js';
 import { isAdmin, isEditor, requireAdmin, requireEditor,
          openLoginModal, closeLoginModal, submitLogin,
@@ -251,6 +251,13 @@ window.__onItemSaved = (key, user, item) => {
   }
   renderAll();
 };
+window.__onDataSaved = (user, payload, serverTs) => {
+  if (!payload) return;
+  const applied = applyRemoteSharedData(payload, serverTs);
+  if (!applied) return;
+  renderAll();
+  notify(`${user || '다른 사용자'}님의 변경사항이 반영되었습니다.`, 'success');
+};
 window.__onPreviewChanged = () => {
   // 미리보기 변경 시 카드 re-render (렌더 비용 최소화 위해 debounce 없이 직접)
   if (S.view !== 'dashboard') renderAll();
@@ -281,7 +288,7 @@ function startPolling() {
         const changed = updateLocks(result.locks);
         if (changed && S.view !== 'dashboard') renderAll();
       }
-      if (result.serverTs > lastServerTs) {
+      if (!isSocketConnected() && result.serverTs > lastServerTs) {
         const editor = result.lastEditor || '누군가';
         const ago    = result.lastEditTime ? fmtDate(result.lastEditTime) : '';
         window.__showUpdateBanner?.(`⚠ ${editor}${ago ? ('이' === editor.slice(-1) ? '가' : '이') + ' ' + ago + '에' : '가'} 데이터를 변경했습니다.`);
@@ -334,6 +341,7 @@ window.saveServerSettings = async (nextSettings = null) => {
   }
 
   startPolling();
+  registerActiveUser();
   syncServerSettingsUI();
   updateAdminUI();
 };

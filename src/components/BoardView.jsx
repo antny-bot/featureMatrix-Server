@@ -13,7 +13,7 @@
 ══════════════════════════════════════════ */
 
 import { createPortal } from 'react-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { STATUS_OPTS, STATUS_LBL, STATUS_ACCENT } from '../app/constants.js';
 import { getFiltered, isFilterActive } from '../app/render.js';
@@ -26,6 +26,8 @@ export default function BoardView() {
   const items    = useAppStore(s => s.items);   // 데이터 변경 시 리렌더 트리거
   const editLocks = useAppStore(s => s.editLocks); // 동시 편집 락 변경 시 리렌더 트리거
   const previews  = useAppStore(s => s.previews);  // 편집 미리보기 변경 시 리렌더 트리거
+  const filters = useAppStore(s => s.filters);
+  const searchQ = useAppStore(s => s.searchQ);
   const foldCount = useAppStore(s => s.settings.boardFoldCount ?? 6);
 
   const [boardContainer, setBoardContainer] = useState(null);
@@ -64,13 +66,18 @@ export default function BoardView() {
     return () => { delete window.boardExpandCol; delete window.boardCollapseCol; };
   }, []);
 
-  if (!boardContainer || !barContainer) return null;
-
   /* ── 컬럼 데이터 계산 ── */
-  const filteredItems = isFilterActive()
-    ? getFiltered()
-    : S.items.filter(it => it.isDelete !== 'Y');
+  const filteredItems = useMemo(
+    () => (
+      isFilterActive()
+        ? getFiltered()
+        : S.items.filter(it => it.isDelete !== 'Y')
+    ),
+    [items, filters, searchQ, editLocks, previews]
+  );
   const c = getColors();
+
+  if (!boardContainer || !barContainer) return null;
 
   const byCol = Object.fromEntries(STATUS_OPTS.map(k => [k, []]));
   filteredItems.forEach(it => {

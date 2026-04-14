@@ -101,17 +101,21 @@ export default function SettingsPanel() {
               <Stepper label="카드 간격"       value={`${settings.cardGap}px`}    onMinus={() => { S.settings.cardGap     = Math.max(0, Math.min(20,settings.cardGap-1));     save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.cardGap     = Math.max(0, Math.min(20,settings.cardGap+1));     save(); applyVars(); syncSettings(); window.renderAll?.(); }} />
             </div>
             <div className="sec-ttl" style={{ marginTop: '12px' }}>매트릭스 열 너비</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-              <Stepper label="그룹 열 폭"          value={`${settings.colW}px`}                                     onMinus={() => { S.settings.colW   = Math.max(80, Math.min(300,settings.colW-10));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.colW   = Math.max(80, Math.min(300,settings.colW+10));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={10} />
-              <Stepper label="셀 접기 기준"        value={settings.cellFold === 0 ? '∞' : settings.cellFold}       sub="0=항상 펼침" onMinus={() => { S.settings.cellFold = Math.max(0,Math.min(20,settings.cellFold-1)); save(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.cellFold = Math.max(0,Math.min(20,settings.cellFold+1)); save(); syncSettings(); window.renderAll?.(); }} />
-              <Stepper label="보드 셀 접기 기준"   value={settings.boardFoldCount === 0 ? '∞' : settings.boardFoldCount} sub="0=항상 펼침" onMinus={() => { S.settings.boardFoldCount = Math.max(0,Math.min(30,(settings.boardFoldCount??6)-1)); save(); syncSettings(); }} onPlus={() => { S.settings.boardFoldCount = Math.max(0,Math.min(30,(settings.boardFoldCount??6)+1)); save(); syncSettings(); }} />
-              <Stepper label="카테고리 폭"         value={`${settings.catW}px`}                                     onMinus={() => { S.settings.catW   = Math.max(40, Math.min(80, settings.catW-4));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.catW   = Math.max(40, Math.min(80, settings.catW+4));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={4} />
-              <Stepper label="서브카테고리 폭"     value={`${settings.subCatW}px`}                                  onMinus={() => { S.settings.subCatW= Math.max(40, Math.min(200,settings.subCatW-4));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.subCatW= Math.max(40, Math.min(200,settings.subCatW+4));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={4} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <Stepper label="그룹 열 폭"        value={`${settings.colW}px`}                                     onMinus={() => { S.settings.colW   = Math.max(80, Math.min(300,settings.colW-10));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.colW   = Math.max(80, Math.min(300,settings.colW+10));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={10} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+                <Stepper label="매트릭스 셀 접기 기준" value={settings.cellFold === 0 ? '∞' : settings.cellFold}       sub="0=항상 펼침" onMinus={() => { S.settings.cellFold = Math.max(0,Math.min(20,settings.cellFold-1)); save(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.cellFold = Math.max(0,Math.min(20,settings.cellFold+1)); save(); syncSettings(); window.renderAll?.(); }} />
+                <Stepper label="보드 셀 접기 기준"   value={settings.boardFoldCount === 0 ? '∞' : settings.boardFoldCount} sub="0=항상 펼침" onMinus={() => { S.settings.boardFoldCount = Math.max(0,Math.min(30,(settings.boardFoldCount??6)-1)); save(); syncSettings(); }} onPlus={() => { S.settings.boardFoldCount = Math.max(0,Math.min(30,(settings.boardFoldCount??6)+1)); save(); syncSettings(); }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+                <Stepper label="카테고리 폭"         value={`${settings.catW}px`}                                     onMinus={() => { S.settings.catW   = Math.max(40, Math.min(80, settings.catW-4));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.catW   = Math.max(40, Math.min(80, settings.catW+4));    save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={4} />
+                <Stepper label="서브카테고리 폭"     value={`${settings.subCatW}px`}                                  onMinus={() => { S.settings.subCatW= Math.max(40, Math.min(200,settings.subCatW-4));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} onPlus={() => { S.settings.subCatW= Math.max(40, Math.min(200,settings.subCatW+4));  save(); applyVars(); syncSettings(); window.renderAll?.(); }} step={4} />
+              </div>
             </div>
             <div className="sec-ttl" style={{ marginTop: '12px' }}>빌드 정보</div>
             <div className="srow">
               <div><div className="slbl">빌드 넘버</div></div>
-              <span id="buildNumberDisplay" style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text-2)', fontFamily: 'monospace' }}>{`v${appVersion} (build ${buildId})`}</span>
+              <span id="buildNumberDisplay" style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text-2)'}}>{`v${appVersion} (build ${buildId})`}</span>
             </div>
           </div>
         )}
@@ -140,7 +144,7 @@ export default function SettingsPanel() {
                 <label style={{ fontSize: '.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="radio" name="htmlW" value="fluid" defaultChecked /> 가변폭</label>
                 <label style={{ fontSize: '.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}><input type="radio" name="htmlW" value="fixed" /> 고정폭</label>
               </div>
-              <button className="btn btn-s btn-sm" onClick={() => window.expHTML?.()}>🌐 HTML</button>
+              <button className="btn btn-s btn-sm" onClick={event => window.expHTML?.(event.currentTarget.closest('.mbody'))}>🌐 HTML</button>
               <button className="btn btn-s btn-sm" onClick={() => window.expMdZip?.()}>📦 MD ZIP</button>
             </div>
             <div className="sec-ttl" style={{ marginTop: '12px' }}>설정 파일</div>
@@ -248,17 +252,15 @@ function Stepper({ label, sub, value, onMinus, onPlus }) {
 function ServerSettingsPanel({ settings }) {
   const [form, setForm] = useState({
     storageMode: settings.storageMode || 'server',
-    serverUrl: settings.serverUrl || '',
     userName: settings.userName || '',
   });
 
   useEffect(() => {
     setForm({
       storageMode: settings.storageMode || 'server',
-      serverUrl: settings.serverUrl || '',
       userName: settings.userName || '',
     });
-  }, [settings.storageMode, settings.serverUrl, settings.userName]);
+  }, [settings.storageMode, settings.userName]);
 
   const saveServerSettings = (nextForm = form) => {
     window.saveServerSettings?.(nextForm);
@@ -308,19 +310,6 @@ function ServerSettingsPanel({ settings }) {
           onChange={event => setForm(current => ({ ...current, userName: event.target.value }))}
           placeholder="홍길동"
           style={{ height: '28px', fontSize: '.8rem' }}
-          onKeyDown={event => { if (event.key === 'Enter') saveServerSettings(); }}
-        />
-      </div>
-      <div className="srow" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px', marginTop: '4px' }}>
-        <div className="slbl">서버 URL</div>
-        <div className="ssub">비워두면 현재 도메인 사용</div>
-        <input
-          className="inp"
-          id="sServerUrl"
-          value={form.serverUrl}
-          onChange={event => setForm(current => ({ ...current, serverUrl: event.target.value }))}
-          placeholder="http://서버IP:5000"
-          style={{ height: '28px', fontSize: '.8rem', fontFamily: 'monospace' }}
           onKeyDown={event => { if (event.key === 'Enter') saveServerSettings(); }}
         />
       </div>

@@ -15,11 +15,11 @@ import { emitSave } from './socket.js';
 
 function broadcastItemSaved(item) {
   if (S.settings.storageMode !== 'server' || !item) return;
-  emitSave(item.key, S.settings.userName || 'anonymous', { ...item });
+  emitSave(item.key, S.settings.userName || '익명', { ...item });
 }
 
 function currentUser() {
-  return S.settings.userName || 'anonymous';
+  return S.settings.userName || '익명';
 }
 
 function getLockedByOther(keys) {
@@ -221,7 +221,8 @@ export function openEditModal(key) {
   setStore({ editKey: key });
   const item = findItem(key);
   if (!item) return;
-  window.__editModalBridge?.('edit', key, {
+  const mode = isEditor() ? 'edit' : 'detail';
+  window.__editModalBridge?.(mode, key, {
     key: item.key || '',
     priority: item.priority || '중',
     name: item.name || '',
@@ -240,7 +241,7 @@ export function openEditModal(key) {
     isDelete: item.isDelete || 'N',
   });
   // 편집 중 락 등록 (서버 모드) — 충돌 알림은 lock_denied 이벤트로 처리
-  lockItem(key);
+  if (mode === 'edit') lockItem(key);
   openModal('editModal');
 }
 
@@ -291,11 +292,7 @@ export function openMdModal(key) {
   const it = findItem(key); if (!it) return;
   openEditModal(key);
   switchEditTab('md');
-  if (it.mdContent && it.mdContent.trim()) {
-    switchMdView('preview');
-  } else {
-    switchMdView('edit');
-  }
+  switchMdView('preview');
 }
 
 /* ── 저장 ── */
@@ -487,7 +484,7 @@ export function onDrop(e) {
   e.preventDefault();
   const cell = e.currentTarget;
   S.dragCell=null; notifyMxDropCell(null);
-  if (!S.dragKey) return;
+  if (!S.dragKey) { notifyMxDrag(); return; }
   const keysToMove = mxSel.size > 0 ? new Set(mxSel) : new Set([S.dragKey]);
   const g  = cell.getAttribute('data-g')==='(미분류)' ? '' : cell.getAttribute('data-g');
   const sg = cell.getAttribute('data-sg');
@@ -502,7 +499,11 @@ export function onDrop(e) {
     logActivity('이동', `${item.key} ${item.name}: ${from} → ${to}`);
   });
   mxSel.clear();
-  S.dragKey=null; save();
+  notifyMxSelection();
+  S.isDragging=false; setStore({ isDragging: false });
+  S.dragKey=null;
+  notifyMxDrag();
+  save();
   keysToMove.forEach(k => {
     broadcastItemSaved(findItem(k));
     unlockItem(k);

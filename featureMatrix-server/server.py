@@ -38,6 +38,8 @@ edit_locks = {}  # { key: { user, ts } }
 
 # ── Socket.IO 클라이언트-사용자 매핑 ─────────────────────
 socket_users = {}  # { sid: user }
+active_users = {}  # { sid: { user, joinTime } }
+active_users_lock = threading.Lock()
 
 # ── 토큰 파일 저장/로드 (관리자 토큰만 영속) ──────────────
 def load_tokens():
@@ -349,23 +351,46 @@ def _register_socketio_events():
 
     @socketio.on('disconnect')
     def on_disconnect():
-        """연결 끊김 시 해당 사용자의 모든 락 자동 해제"""
+        """연결 끊김 시 해당 사용자의 모든 락 자동 해제 및 접속자 목록 갱신"""
         from flask import request as req
         sid  = req.sid
         user = socket_users.pop(sid, None)
-        if not user:
-            return
-        released = [k for k, v in list(edit_locks.items()) if v['user'] == user]
-        for k in released:
-            del edit_locks[k]
-            socketio.emit('item_unlocked', {'key': k})
+        removed = False
+        with active_users_lock:
+            removed = active_users.pop(sid, None) is not None
+        if user:
+            released = [k for k, v in list(edit_locks.items()) if v['user'] == user]
+            for k in released:
+                del edit_locks[k]
+                socketio.emit('item_unlocked', {'key': k})
+        if removed:
+            broadcast_user_list()
 
     @socketio.on('register_user')
     def on_register_user(data):
         """클라이언트가 자신의 사용자명을 등록"""
         from flask import request as req
-        user = (data or {}).get('user', '익명')
+        user = ((data or {}).get('user') or '익명').strip() or '익명'
         socket_users[req.sid] = user
+        with active_users_lock:
+            active_users[req.sid] = {'user': user, 'joinTime': int(time.time() * 1000)}
+        broadcast_user_list()
+
+    @socketio.on('unregister_user')
+    def on_unregister_user():
+        """로그아웃 시 현재 소켓을 접속자 목록에서 제거"""
+        from flask import request as req
+        sid = req.sid
+        removed = False
+        with active_users_lock:
+            removed = active_users.pop(sid, None) is not None
+        if removed:
+            broadcast_user_list()
+
+    @socketio.on('get_active_users')
+    def on_get_active_users():
+        """현재 접속 중인 사용자 목록 조회"""
+        emit('user_list_updated', {'users': get_active_user_list()})
 
     @socketio.on('lock_item')
     def on_lock_item(data):
@@ -424,6 +449,11 @@ def _register_socketio_events():
             del edit_locks[key]
         socketio.emit('item_saved', data)
 
+    @socketio.on('save_data')
+    def on_save_data(data):
+        from flask import request as req
+        socketio.emit('data_saved', data or {}, skip_sid=req.sid)
+
 
 def _start_lock_timeout_task():
     """5분 비활성 Lock 자동 해제 백그라운드 태스크"""
@@ -438,6 +468,22 @@ def _start_lock_timeout_task():
                 socketio.emit('item_unlocked', {'key': k})
     t = threading.Thread(target=_task, daemon=True)
     t.start()
+
+
+def get_active_user_list():
+    """최근 접속자 순으로 정렬된 현재 로그인 사용자 목록."""
+    with active_users_lock:
+        users = [
+            {'sid': sid, 'user': info.get('user', '익명'), 'joinTime': info.get('joinTime', 0)}
+            for sid, info in active_users.items()
+        ]
+    users.sort(key=lambda item: item.get('joinTime', 0), reverse=True)
+    return users
+
+
+def broadcast_user_list():
+    """현재 로그인 사용자 목록을 전체 클라이언트에 브로드캐스트."""
+    socketio.emit('user_list_updated', {'users': get_active_user_list()})
 
 
 # ── 정적 파일 서빙 ────────────────────────────────────────
