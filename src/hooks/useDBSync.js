@@ -124,7 +124,7 @@ export function useDBSync() {
 
       if (!isSocketConnected() && json.serverTs > store.serverTs) {
         const editor = json.lastEditor || '누군가';
-        window.__showUpdateBanner?.(`⚠ ${editor}님이 데이터를 변경했습니다.`);
+        store.setBanner(true, `⚠ ${editor}님이 데이터를 변경했습니다.`);
       }
       return json;
     } catch(e) {
@@ -174,46 +174,16 @@ export function useDBSync() {
 
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     if (store.settings.storageMode === 'server') {
-      pollTimerRef.current = setInterval(pollServer, 60000);
+      const pollMs = Math.max(10, Number(store.settings.pollInterval) || 60) * 1000;
+      pollTimerRef.current = setInterval(pollServer, pollMs);
     }
 
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  }, [store.settings.storageMode, pollServer]);
+  }, [store.settings.storageMode, store.settings.pollInterval, pollServer]);
 
-  useEffect(() => {
-    window.__onDataSaved = (user, payload, serverTs) => {
-      if (!payload) return;
-      applyServerPayload(payload);
-      if (serverTs) store.setServerTs(serverTs);
-      store.setServerStatus('ok');
-      saveLocal();
-      store.notify(`${user || '다른 사용자'}님의 변경사항이 반영되었습니다.`, 'success');
-    };
 
-    window.__onItemSaved = (key, user, item) => {
-      if (!key || !item) return;
-      const current = getStore();
-      const idx = current.items.findIndex(it => it.key === key);
-      const items = idx === -1
-        ? [...current.items, item]
-        : current.items.map(it => it.key === key ? { ...it, ...item } : it);
-      store.setItems(items);
-      store.setServerStatus('ok');
-      saveLocal();
-    };
-
-    window.__onLockDenied = (key, lockedBy) => {
-      store.notify(`${lockedBy}님이 편집 중입니다. 잠시 후 다시 시도하세요.`, 'warning');
-    };
-
-    return () => {
-      delete window.__onDataSaved;
-      delete window.__onItemSaved;
-      delete window.__onLockDenied;
-    };
-  }, [applyServerPayload, saveLocal, store]);
 
   return {
     saveToServer,

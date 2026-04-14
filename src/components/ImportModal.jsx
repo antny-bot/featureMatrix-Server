@@ -42,7 +42,7 @@ export default function ImportModal() {
   const [mapping, setMapping] = useState({});
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const notify = useCallback((msg, isErr) => window.__sobukNotify?.(msg, isErr), []);
+  const notify = useCallback((msg, isErr) => store.notify(msg, isErr ? 'error' : 'success'), [store]);
 
   const statusText = useMemo(() => `${rows.length}개 행 감지됨, 컬럼 ${headers.length}개`, [headers.length, rows.length]);
 
@@ -129,8 +129,10 @@ export default function ImportModal() {
     closeModal('importModal');
   };
 
+  if (store.activeModal !== 'importModal') return null;
+
   return (
-    <div className="ov" id="importModal">
+    <div className="ov on" id="importModal">
       <div className="mbox" style={{ width: '600px' }}>
         <div className="mhd">
           <span className="mtitle">📥 데이터 가져오기</span>

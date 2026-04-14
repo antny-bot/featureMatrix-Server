@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
 
@@ -7,7 +7,6 @@ const DIFF_FIELDS = ['name', 'priority', 'status', 'owner', 'group', 'category']
 export default function DiffModal() {
   const store = useAppStore();
   const { closeModal } = useModals();
-  const [content, setContent] = useState({ empty: '', rows: [] });
 
   const buildDiffRows = useMemo(() => {
     const stack = store.undoStack || [];
@@ -49,16 +48,15 @@ export default function DiffModal() {
     };
   }, [store.items, store.undoStack]);
 
-  useEffect(() => {
-    window.__reactOpenDiffModal = () => {
-      setContent(buildDiffRows);
-      window.__reactOpenModal?.('diffModal'); // Bridge to generic modal opening if needed, or use store
-    };
-    return () => { delete window.__reactOpenDiffModal; };
-  }, [buildDiffRows]);
+  const content = useMemo(() => {
+    if (store.activeModal !== 'diffModal') return { empty: '', rows: [] };
+    return buildDiffRows;
+  }, [store.activeModal, buildDiffRows]);
+
+  if (store.activeModal !== 'diffModal') return null;
 
   return (
-    <div className="ov" id="diffModal">
+    <div className="ov on" id="diffModal">
       <div className="mbox" style={{ width: '640px' }}>
         <div className="mhd">
           <span className="mtitle">변경 이력 (마지막 Undo 기준)</span>

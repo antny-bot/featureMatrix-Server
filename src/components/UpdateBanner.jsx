@@ -1,23 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useAppStore } from '../store/useAppStore.js';
 
 export default function UpdateBanner() {
-  const [banner, setBanner] = useState({ visible: false, message: '다른 사용자가 데이터를 변경했습니다.' });
+  const store = useAppStore();
+  const banner = store.banner;
 
-  useEffect(() => {
-    window.__showUpdateBanner = message => setBanner({ visible: true, message: message || '다른 사용자가 데이터를 변경했습니다.' });
-    window.__hideUpdateBanner = () => setBanner(current => ({ ...current, visible: false }));
-    return () => {
-      delete window.__showUpdateBanner;
-      delete window.__hideUpdateBanner;
-    };
-  }, []);
+  if (!banner.visible) return null;
 
   return (
     <div
       id="updateBanner"
-      className={banner.visible ? 'on' : ''}
+      className="on"
       style={{
-        display: banner.visible ? 'flex' : 'none',
+        display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: '10px',
@@ -30,15 +24,16 @@ export default function UpdateBanner() {
     >
       <span id="updateBannerMsg">{banner.message}</span>
       <button
+        id="reloadBtn"
         className="btn btn-s btn-sm"
-        onClick={() => window.reloadFromServer?.()}
+        onClick={() => window.location.reload()}
         style={{ borderColor: 'var(--warning)', color: 'var(--warning)' }}
       >
         지금 새로고침
       </button>
       <button
         className="btn btn-g btn-sm"
-        onClick={() => window.__hideUpdateBanner?.()}
+        onClick={() => store.setBanner(false)}
       >
         나중에
       </button>

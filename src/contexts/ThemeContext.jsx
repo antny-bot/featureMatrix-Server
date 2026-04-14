@@ -1,15 +1,5 @@
-/* ══════════════════════════════════════════
-   ThemeContext.jsx — 다크/라이트 모드 React Context
-
-   vanilla JS toggleTheme()이 data-theme 속성을 변경한 뒤
-   window.__themeRefresh(isDark) 를 호출해 React 상태 동기화.
-
-   사용 예:
-     const { isDark } = useTheme();
-══════════════════════════════════════════ */
-
-import { createContext, useContext, useState, useEffect } from 'react';
-import { toggleTheme } from '../app/theme.js';
+import { createContext, useCallback, useContext, useState } from 'react';
+import { toggleTheme as toggleDocumentTheme } from '../app/theme.js';
 
 const ThemeContext = createContext({ isDark: false, toggleTheme: () => {} });
 
@@ -18,10 +8,8 @@ export function ThemeProvider({ children }) {
     () => document.documentElement.getAttribute('data-theme') === 'dark'
   );
 
-  useEffect(() => {
-    // vanilla JS toggleTheme() / applyTheme() 호출 후 React 상태 동기화
-    window.__themeRefresh = (dark) => setIsDark(!!dark);
-    return () => { delete window.__themeRefresh; };
+  const toggleTheme = useCallback(() => {
+    setIsDark(toggleDocumentTheme());
   }, []);
 
   return (

@@ -79,9 +79,9 @@ export default function SettingsPanel() {
         if (data.display) store.setDisplay({ ...store.display, ...data.display });
         applyVars();
         persistSettings();
-        window.__sobukNotify?.('설정을 불러왔습니다.', 'success');
+        store.notify('설정을 불러왔습니다.', 'success');
       } catch {
-        window.__sobukNotify?.('설정 JSON을 읽을 수 없습니다.', 'error');
+        store.notify('설정 JSON을 읽을 수 없습니다.', 'error');
       }
     };
     reader.readAsText(file, 'UTF-8');
@@ -111,11 +111,13 @@ export default function SettingsPanel() {
     store.setItems(JSON.parse(JSON.stringify(DEMO)));
     store.setChangeLog([]);
     await persistData();
-    window.__sobukNotify?.('데이터를 초기화했습니다.', 'success');
+    store.notify('데이터를 초기화했습니다.', 'success');
   };
 
+  if (store.activeModal !== 'settingsModal') return null;
+
   return (
-    <div className="ov" id="settingsModal">
+    <div className="ov on" id="settingsModal">
       <div className="mbox" style={{ width: '760px' }}>
         <div className="mhd">
           <span className="mtitle">환경 설정</span>
@@ -170,7 +172,7 @@ export default function SettingsPanel() {
                 <button className="btn btn-s btn-sm" onClick={() => expClip()}><ClipIcon /> 클립보드</button>
                 <button className="btn btn-s btn-sm" onClick={() => expTSV()}><TsvIcon /> TSV</button>
                 <button className="btn btn-s btn-sm" onClick={() => expXLS()}><XlsIcon /> Excel</button>
-                <button className="btn btn-s btn-sm" onClick={() => expHTML()}><HtmlIcon /> HTML</button>
+                <button className="btn btn-s btn-sm" onClick={() => expHTML({ fluid: settings.matrixWidth === 'fluid' })}><HtmlIcon /> HTML</button>
                 <button className="btn btn-s btn-sm" onClick={() => expMdZip()}><ZipIcon /> MD ZIP</button>
               </div>
 

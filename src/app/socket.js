@@ -138,6 +138,15 @@ function _registerListeners() {
     setStore({ wsStatus: 'reconnecting' });
   });
 
+
+  _socket.on('connect_error', () => {
+    setStore({ wsStatus: 'disconnected' });
+  });
+
+  _socket.io.on('reconnect_attempt', () => {
+    setStore({ wsStatus: 'reconnecting' });
+  });
+
   _socket.io.on('reconnect', () => {
     setStore({ wsStatus: 'connected' });
     _syncActiveUser();
@@ -151,33 +160,43 @@ function _registerListeners() {
 
   _socket.on('item_locked', ({ key, lockedBy, lockedAt }) => {
     _addLock(key, lockedBy, lockedAt || Date.now());
-    // 락 상태 변경 → 뷰 리렌더
-    window.__onLocksChanged?.();
   });
 
   _socket.on('item_unlocked', ({ key }) => {
     _removeLock(key);
-    _setPreview(key, null); // 미리보기도 제거
-    window.__onLocksChanged?.();
+    _setPreview(key, null);
   });
 
   _socket.on('lock_denied', ({ key, lockedBy }) => {
-    window.__onLockDenied?.(key, lockedBy);
+    getStore().notify(`${lockedBy}님이 편집 중입니다. 잠시 후 다시 시도하세요.`, 'warning');
   });
 
   _socket.on('editing_preview', ({ key, user, preview }) => {
     _setPreview(key, { user, preview });
-    window.__onPreviewChanged?.();
   });
 
   _socket.on('item_saved', ({ key, user, item }) => {
     _removeLock(key);
     _setPreview(key, null);
-    window.__onItemSaved?.(key, user, item);
+
+    const store = getStore();
+    const idx = store.items.findIndex(it => it.key === key);
+    const items = idx === -1
+      ? [...store.items, item]
+      : store.items.map(it => it.key === key ? { ...it, ...item } : it);
+    setStore({ items, serverStatus: 'ok' });
   });
 
   _socket.on('data_saved', ({ user, payload, serverTs }) => {
-    window.__onDataSaved?.(user, payload, serverTs);
+    if (!payload) return;
+    const store = getStore();
+    setStore({
+      items: payload.items || store.items,
+      settings: payload.settings ? { ...store.settings, ...payload.settings } : store.settings,
+      serverTs: serverTs || store.serverTs,
+      serverStatus: 'ok'
+    });
+    store.notify(`${user || '다른 사용자'}님의 변경사항이 반영되었습니다.`, 'success');
   });
 
   _socket.on('user_list_updated', ({ users }) => {

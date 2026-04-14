@@ -8,6 +8,7 @@ export function useMatrixActions() {
   const { saveToServer, saveLocal, lockItem, unlockItem, logActivity, broadcastSharedData } = useDBSync();
 
   const handleCardClick = useCallback((e, key) => {
+    e.stopPropagation();
     const prev = new Set(store.mxSelectionKeys);
     if (e.shiftKey) {
       if (prev.has(key)) prev.delete(key);
@@ -64,7 +65,7 @@ export function useMatrixActions() {
       saveLocal();
     }
     
-    window.__sobukNotify?.(movedKeys.length > 1 ? `${movedKeys.length}개 이동 완료.` : '이동 완료.', 'success');
+    store.notify(movedKeys.length > 1 ? `${movedKeys.length}개 이동 완료.` : '이동 완료.', 'success');
   }, [store, logActivity, saveToServer, saveLocal, unlockItem, broadcastSharedData]);
 
   return {

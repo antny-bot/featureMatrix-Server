@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '../utils/api.js';
+import { updateAdminUI } from '../contexts/AuthContext.jsx';
 
 const ACTION_COLORS = {
   접속: 'var(--accent)',
@@ -38,18 +39,13 @@ export default function ActivityLogPanel({ changeLogMax, onChangeLogMax }) {
       setStatus('error');
       if (err.status === 403) {
         sessionStorage.removeItem('fmAdminToken');
-        window.updateAdminUI?.();
+        updateAdminUI();
         setMessage('세션이 만료됐습니다. 관리자 재인증이 필요합니다.');
       } else {
         setMessage('서버에 연결할 수 없습니다.');
       }
     }
   }, [limit]);
-
-  useEffect(() => {
-    window.__reactLoadInlineActivityLog = loadLog;
-    return () => { delete window.__reactLoadInlineActivityLog; };
-  }, [loadLog]);
 
   useEffect(() => {
     loadLog();

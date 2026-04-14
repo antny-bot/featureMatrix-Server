@@ -11,6 +11,41 @@ const SECTION_DEFAULTS = ['stats', 'insight', 'heatmap'];
 const SECTION_KEYS = new Set(SECTION_DEFAULTS);
 const LEGEND_OPACITY = [0.06, 0.30, 0.55, 0.80, 1.00];
 
+function useCountUp(value, duration = 1000) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let frameId = 0;
+    const startValue = displayValue;
+    const diff = value - startValue;
+    if (!diff) {
+      setDisplayValue(value);
+      return undefined;
+    }
+
+    const startedAt = performance.now();
+    const tick = (now) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(startValue + diff * eased));
+      if (progress < 1) frameId = requestAnimationFrame(tick);
+    };
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [value, duration]);
+
+  return displayValue;
+}
+
+function CountUpNumber({ value, className = '', style }) {
+  const displayValue = useCountUp(value);
+  return (
+    <div className={className} style={style}>
+      {displayValue.toLocaleString()}
+    </div>
+  );
+}
+
 export default function DashboardView() {
   const store = useAppStore();
   const { openEditModal } = useModals();
@@ -154,15 +189,13 @@ function StatsSection({ data, settings }) {
     <div className="db-cards">
       <div className="db-card db-card--theme">
         <div className="db-card-label">전체 기능</div>
-        <div className="db-card-value">{data.total.toLocaleString()}</div>
+        <CountUpNumber className="db-card-value" value={data.total} />
         <div className="db-card-sub">중요 <strong>{data.imp}</strong>개 포함</div>
       </div>
       {STATUS_OPTS.map(status => (
         <div className="db-card db-card--mini" key={status}>
           <div className="db-card-label">{settings.statusLabels?.[status] || status}</div>
-          <div className="db-card-value db-card-value--mini" style={{ color: STATUS_ACCENT[status] }}>
-            {data.statusCount[status]}
-          </div>
+          <CountUpNumber className="db-card-value db-card-value--mini" style={{ color: STATUS_ACCENT[status] }} value={data.statusCount[status]} />
           <div className="db-card-sub">{data.total > 0 ? Math.round(data.statusCount[status] / data.total * 100) : 0}%</div>
         </div>
       ))}
@@ -381,7 +414,7 @@ function Timeline({ recent, openEditModal, switchView }) {
           const isDeleted = entry.action === '완전삭제' || entry.action === '삭제처리';
 
           return (
-            <div className="db-tl-item" key={`${entry.ts}:${entry.key}:${index}`}>
+          <div className="db-tl-item" style={{ '--stagger': index }} key={`${entry.ts}:${entry.key}:${index}`}>
               <div className="db-tl-line-wrap">
                 <div className="db-tl-dot" style={{ background: actionColor }} />
                 {index < recent.length - 1 && <div className="db-tl-line" />}

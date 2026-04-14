@@ -8,6 +8,7 @@ const initialState = {
   changeLog: [],
   view: 'matrix',
   searchQ: '',
+  searchFocusNonce: 0,
   filters: {
     priorities: [],
     statuses: [],
@@ -78,6 +79,9 @@ const initialState = {
   tooltip: null, // { key, x, y }
   tooltipTimerId: null,
   activeModal: null, // 'loginModal', 'importModal', etc.
+  banner: { visible: false, message: '' },
+  editModal: { visible: false, mode: 'add', key: null, item: null, activeTab: 'info', mdMode: null },
+  loginModal: { visible: false, role: 'editor', error: '', callback: null },
 };
 
 /* ── Zustand 스토어 ── */
@@ -90,6 +94,7 @@ export const useAppStore = create(
   setItems: (items) => set({ items }),
   setView: (view) => set({ view }),
   setSearchQ: (searchQ) => set({ searchQ }),
+  requestSearchFocus: () => set(s => ({ searchFocusNonce: s.searchFocusNonce + 1 })),
   setMxSelectionKeys: (mxSelectionKeys) => set({ mxSelectionKeys: mxSelectionKeys || [] }),
   setBulkSelectionKeys: (bulkSelectionKeys) => set({ bulkSelectionKeys: bulkSelectionKeys || [] }),
   setBoardSelectionKeys: (boardSelectionKeys) => set({ boardSelectionKeys: boardSelectionKeys || [] }),
@@ -117,6 +122,29 @@ export const useAppStore = create(
   setContextMenu: (contextMenu) => set({ contextMenu }),
   setStatusMenu: (statusMenu) => set({ statusMenu }),
   setActiveModal: (activeModal) => set({ activeModal }),
+  setBanner: (visible, message = '') => set({ banner: { visible, message } }),
+  openEditModal: (mode, key, item, activeTab = 'info', mdMode = null) => set({
+    editModal: { visible: true, mode, key, item, activeTab, mdMode },
+    activeModal: 'editModal'
+  }),
+  closeEditModal: () => set(s => ({
+    editModal: { ...s.editModal, visible: false },
+    activeModal: s.activeModal === 'editModal' ? null : s.activeModal
+  })),
+  setEditModalTab: (activeTab, mdMode = null) => set(s => ({
+    editModal: { ...s.editModal, activeTab, mdMode }
+  })),
+  openLoginModal: (role, callback) => set({
+    loginModal: { visible: true, role, error: '', callback },
+    activeModal: 'loginModal'
+  }),
+  closeLoginModal: () => set(s => ({
+    loginModal: { ...s.loginModal, visible: false },
+    activeModal: s.activeModal === 'loginModal' ? null : s.activeModal
+  })),
+  setLoginError: (error) => set(s => ({
+    loginModal: { ...s.loginModal, error }
+  })),
   startTooltip: (key, x, y) => {
     const s = get();
     if (s.tooltipTimerId) clearTimeout(s.tooltipTimerId);

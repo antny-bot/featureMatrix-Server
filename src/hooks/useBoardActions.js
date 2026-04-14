@@ -9,6 +9,7 @@ export function useBoardActions() {
   const { saveToServer, saveLocal, lockItem, unlockItem, logActivity, broadcastSharedData } = useDBSync();
 
   const handleCardClick = useCallback((e, key) => {
+    e.stopPropagation();
     const prev = new Set(store.boardSelectionKeys);
     if (e.shiftKey) {
       if (prev.has(key)) prev.delete(key);

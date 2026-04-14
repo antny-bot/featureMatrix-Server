@@ -185,6 +185,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .hdr-count-badge{font-size:.65rem;font-weight:700;color:var(--text-3);white-space:nowrap;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:2px 8px;flex-shrink:0}
 .content.fading{opacity:0;transition:opacity .15s}
 .content.fading-in{opacity:1;transition:opacity .2s}
+.view-pane{animation:viewIn .24s cubic-bezier(.16,1,.3,1) both}
 
 /* ── 매트릭스 ── */
 .mwrap{padding:14px;overflow-x:clip} /* clip: scroll 컨테이너 생성 안함 → thead sticky 통과 */
@@ -203,8 +204,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .m-cathd .gcnt{writing-mode:horizontal-tb;display:inline}
 .m-sghd{padding:5px 8px;text-align:center;font-size:.68rem;font-weight:600;color:var(--text-3);white-space:nowrap}
 .m-cathd{padding:10px 10px;font-size:.72rem;font-weight:700;color:var(--text-2);text-align:center;vertical-align:middle;writing-mode:vertical-rl;letter-spacing:.05em}
-.m-cell{padding:5px;vertical-align:top;min-height:46px;position:relative;transition:background .1s}
-.m-cell.dov{outline:2px dashed var(--accent);outline-offset:-2px}
+.m-cell{padding:5px;vertical-align:top;min-height:46px;position:relative;transition:background .16s,box-shadow .16s}
+.m-cell.dov{outline:2px dashed var(--accent);outline-offset:-2px;animation:dropGlow 1.1s ease-in-out infinite}
 .cell-cnt{position:absolute;top:3px;right:3px;font-size:.55rem;font-weight:700;border-radius:10px;padding:1px 5px;line-height:1.5;pointer-events:none}
 .cell-more-btn{width:100%;border:none;border-radius:4px;background:var(--surface-2);color:var(--text-3);font-size:.68rem;padding:4px;cursor:pointer;text-align:center;transition:all .14s;display:block;margin-top:3px;font-family:'Noto Sans KR',sans-serif;border:1px solid var(--border)}
 .cell-more-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
@@ -215,11 +216,12 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .mx-thead-sticky .m-corner{background:var(--surface-2)}
 
 /* ── 카드 ── */
-.mitem{background:var(--surface);border-radius:6px;padding:5px 7px;cursor:pointer;position:relative;transition:box-shadow .15s,transform .15s;min-width:60px}
+.mitem{background:var(--surface);border-radius:6px;padding:5px 7px;cursor:pointer;position:relative;transition:box-shadow .15s,transform .15s,border-color .15s,background .18s;min-width:60px;animation:cardIn .22s cubic-bezier(.16,1,.3,1) both}
 .mitem:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);z-index:2}
 .mitem:hover .card-actions{opacity:1;pointer-events:auto}
 .mitem.dragging{opacity:.3}
 .mitem.item-locked{outline:2px dashed var(--warning);outline-offset:-2px;opacity:.75;pointer-events:none}
+.mitem.item-locked::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(110deg,transparent 0%,rgba(255,255,255,.18) 45%,transparent 70%);transform:translateX(-100%);animation:lockSweep 1.8s ease-in-out infinite;pointer-events:none}
 .edit-preview-overlay{position:absolute;bottom:100%;left:0;right:0;z-index:10;background:var(--text);color:var(--bg);font-size:.68rem;padding:6px 8px;border-radius:6px 6px 0 0;line-height:1.5;display:none;pointer-events:none}
 .mitem.item-locked:hover .edit-preview-overlay{display:block}
 .modal-view-fieldset{border:0;margin:0;padding:0;min-width:0}
@@ -269,7 +271,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 
 /* ── 리스트 ── */
 .lwrap{padding:14px}
-.ltbl-wrap{overflow-x:clip;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-sm)}
+.ltbl-wrap{overflow-x:clip;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-sm);animation:viewIn .22s cubic-bezier(.16,1,.3,1) both}
 .ltbl-scroll{overflow-x:auto}
 .ltbl{width:100%;border-collapse:collapse;background:var(--surface)}
 /* #10 - 리스트 헤더 sticky: .content(overflow-y:auto) 기준 */
@@ -278,7 +280,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .ltbl th.sa::after{content:' ↑'}.ltbl th.sd::after{content:' ↓'}
 .ltbl td{padding:6px 10px;font-size:.8rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text-2)}
 .ltbl tr:last-child td{border-bottom:none}
-.ltbl tbody tr{transition:background .12s}
+.ltbl tbody tr{transition:background .14s,transform .14s,box-shadow .14s;animation:rowIn .18s ease-out both}
+.ltbl tbody tr:nth-child(1){animation-delay:10ms}.ltbl tbody tr:nth-child(2){animation-delay:20ms}.ltbl tbody tr:nth-child(3){animation-delay:30ms}.ltbl tbody tr:nth-child(4){animation-delay:40ms}.ltbl tbody tr:nth-child(5){animation-delay:50ms}.ltbl tbody tr:nth-child(n+6){animation-delay:60ms}
+.ltbl tbody tr:hover{transform:translateX(2px)}
 .ltbl tbody tr:hover td{background:var(--surface-2)}
 .ltbl tr.rdel td{opacity:.5}.ltbl tr.rdel .cn{text-decoration:line-through}
 .ck{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;font-size:.7rem;font-weight:700;color:var(--text-3)}
@@ -292,17 +296,18 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* ── 보드 뷰 ── */
 .bwrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
 .board-cols{display:flex;gap:10px;padding:12px 14px;flex:1;overflow-x:auto;overflow-y:hidden;align-items:stretch}
-.board-col{display:flex;flex-direction:column;flex:1;min-width:200px;max-width:320px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);height:100%;overflow:hidden}
+.board-col{display:flex;flex-direction:column;flex:1;min-width:200px;max-width:320px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);height:100%;overflow:hidden;animation:panelIn .24s cubic-bezier(.16,1,.3,1) both}
+.board-col:nth-child(1){animation-delay:20ms}.board-col:nth-child(2){animation-delay:45ms}.board-col:nth-child(3){animation-delay:70ms}.board-col:nth-child(4){animation-delay:95ms}.board-col:nth-child(5){animation-delay:120ms}
 .board-col-hd{padding:10px 12px 8px;font-size:.72rem;font-weight:700;letter-spacing:.03em;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .board-col-cnt{font-size:.65rem;font-weight:400;background:var(--surface-3);color:var(--text-3);border-radius:10px;padding:1px 7px;margin-left:4px}
 /* 기본: 스크롤 없음(아이템 개수만큼만 높이), 펼침 시 스크롤 허용 */
 .board-col-body{flex:1;overflow-y:hidden;padding:4px 7px 6px;display:flex;flex-direction:column;gap:6px;min-height:0}
 .board-col-body--expanded{overflow-y:auto}
-.board-col-body.drag-over{background:var(--accent-l);outline:2px dashed var(--accent);outline-offset:-3px}
-.mitem.board-selected,.mitem.mxsel{outline:2px solid var(--accent);outline-offset:1px;background:var(--accent-l) !important}
+.board-col-body.drag-over{background:var(--accent-l);outline:2px dashed var(--accent);outline-offset:-3px;animation:dropGlow 1.1s ease-in-out infinite}
+.mitem.board-selected,.mitem.mxsel{outline:2px solid var(--accent);outline-offset:1px;background:var(--accent-l) !important;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}
 .mitem.dragging{opacity:.45;transform:scale(.97)}
 .board-action-bar{display:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);border-radius:24px;padding:8px 16px;gap:10px;align-items:center;font-size:.75rem;box-shadow:0 4px 20px var(--shadow);z-index:300;white-space:nowrap}
-.board-action-bar.on{display:flex}
+.board-action-bar.on{display:flex;animation:barIn .18s cubic-bezier(.16,1,.3,1) both}
 .board-action-bar button{background:rgba(255,255,255,.15);border:none;color:inherit;border-radius:12px;padding:4px 12px;cursor:pointer;font-size:.72rem;transition:background .15s}
 .board-action-bar button:hover{background:rgba(255,255,255,.25)}
 .board-action-bar .bar-close{margin-left:4px;padding:4px 8px;opacity:.7}
@@ -343,8 +348,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .tt-name{font-size:.84rem;font-weight:600;color:var(--text);margin-bottom:5px}
 
 /* ── 알림 / Undo FAB ── */
-.notif{position:fixed;bottom:18px;right:18px;z-index:3000;background:var(--text);color:var(--bg);padding:8px 15px;border-radius:8px;font-size:.79rem;font-weight:500;box-shadow:var(--shadow-lg);transform:translateY(8px);opacity:0;transition:all .22s;pointer-events:none}
-.notif.on{transform:translateY(0);opacity:1}
+.notif{position:fixed;bottom:18px;right:18px;z-index:3000;background:var(--text);color:var(--bg);padding:8px 15px;border-radius:8px;font-size:.79rem;font-weight:500;box-shadow:var(--shadow-lg);transform:translateY(12px) scale(.98);opacity:0;transition:opacity .22s,transform .22s;pointer-events:none}
+.notif.on{transform:translateY(0) scale(1);opacity:1}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:56px 16px;color:var(--text-3)}
 .undo-fab{display:none}
 .undo-fab.on{display:block}
@@ -378,6 +383,21 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 /* #5 - 마크다운 테이블 */
 .md-viewer table{border-collapse:collapse;width:100%;margin:6px 0;font-size:.78rem}
 .md-viewer th{background:var(--surface-2);padding:5px 8px;text-align:left;font-weight:700;border:1px solid var(--border);color:var(--text)}
+
+/* ── Motion ── */
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes panelIn{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes heatCellIn{from{opacity:0;transform:scale(.86)}to{opacity:var(--op,0.06);transform:scale(1)}}
+@keyframes dropGlow{0%,100%{box-shadow:inset 0 0 0 0 color-mix(in srgb,var(--accent) 0%,transparent)}50%{box-shadow:inset 0 0 0 999px color-mix(in srgb,var(--accent) 8%,transparent)}}
+@keyframes lockSweep{0%{transform:translateX(-100%)}55%,100%{transform:translateX(100%)}}
+@keyframes barIn{from{opacity:0;transform:translate(-50%,8px) scale(.98)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
+  .mitem:hover,.db-card:hover,.ltbl tbody tr:hover{transform:none!important}
+}
 .md-viewer td{padding:5px 8px;border:1px solid var(--border);color:var(--text-2)}
 .md-viewer tr:nth-child(even) td{background:var(--surface-2)}
 /* #5 - KaTeX 수식 */
@@ -387,6 +407,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
    대시보드 뷰
 ══════════════════════════════════════════ */
 .db-wrap{width:100%;box-sizing:border-box;padding:28px 32px;max-width:1400px;display:flex;flex-direction:column;gap:22px}
+.db-hero{animation:panelIn .28s cubic-bezier(.16,1,.3,1) both}
 
 /* 히어로 */
 .db-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
@@ -399,8 +420,9 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 @media(max-width:800px){.db-cards{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:480px){.db-cards{grid-template-columns:repeat(2,1fr)}}
 
-.db-card{background:var(--surface-2);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:8px;transition:background .18s}
-.db-card:hover{background:var(--surface-3)}
+.db-card{background:var(--surface-2);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:8px;transition:background .18s,transform .18s,box-shadow .18s;animation:panelIn .26s cubic-bezier(.16,1,.3,1) both}
+.db-card:nth-child(1){animation-delay:20ms}.db-card:nth-child(2){animation-delay:55ms}.db-card:nth-child(3){animation-delay:90ms}.db-card:nth-child(4){animation-delay:125ms}.db-card:nth-child(5){animation-delay:160ms}.db-card:nth-child(6){animation-delay:195ms}
+.db-card:hover{background:var(--surface-3);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
 .db-card--primary{border-left:4px solid var(--accent)}
 .db-card--mini{padding:14px 16px}
 .db-card--mini .db-card-value{font-size:1.6rem}
@@ -465,7 +487,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-gp-leg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 
 /* 공통 패널 */
-.db-panel{background:var(--surface-2);border-radius:16px;padding:22px 24px}
+.db-panel{background:var(--surface-2);border-radius:16px;padding:22px 24px;animation:panelIn .3s cubic-bezier(.16,1,.3,1) both}
+.db-body-left>.db-panel:nth-child(1){animation-delay:70ms}.db-body-left>.db-panel:nth-child(2){animation-delay:115ms}.db-body-left>.db-panel:nth-child(3){animation-delay:160ms}.db-body-right>.db-panel{animation-delay:130ms}
 .db-panel-hd{margin-bottom:18px}
 .db-panel-title{font-size:1rem;font-weight:700;color:var(--text);letter-spacing:-.02em}
 .db-panel-sub{font-size:.72rem;color:var(--text-3);margin-top:3px}
@@ -483,7 +506,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-hm-corner{width:80px}
 .db-hm-col-hd{font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);text-align:center;padding:0 2px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .db-hm-row-hd{font-size:.62rem;font-weight:600;color:var(--text-2);width:80px;text-align:right;padding-right:10px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--text);transition:opacity .2s,transform .15s}
+.db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--text);transition:opacity .2s,transform .15s;animation:heatCellIn .24s ease-out both}
 .db-hm-cell:hover{transform:scale(1.1);z-index:2}
 .db-hm-legend{display:flex;align-items:center;gap:8px;margin-top:14px}
 .db-hm-legend-lbl{font-size:.6rem;color:var(--text-3);letter-spacing:.04em}
@@ -498,7 +521,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-body-right .db-timeline-panel{flex:1;min-height:0;max-height:none}
 .db-timeline{display:flex;flex-direction:column;gap:0;flex:1;overflow-y:auto;min-height:0;max-height:240px}
 .db-body-right .db-timeline{max-height:none;overflow-y:hidden}
-.db-tl-item{display:flex;gap:12px}
+.db-tl-item{display:flex;gap:12px;animation:rowIn .2s ease-out both;animation-delay:calc(var(--stagger,0) * 22ms)}
 .db-tl-line-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
 .db-tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
 .db-tl-line{width:1px;flex:1;background:var(--border-2);margin:4px 0;min-height:12px}

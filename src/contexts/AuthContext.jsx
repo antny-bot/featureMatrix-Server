@@ -2,8 +2,7 @@
    AuthContext.jsx — 인증 상태 React Context
 
    admin.js의 sessionStorage 기반 토큰을 React 상태로 래핑.
-   vanilla JS의 updateAdminUI()가 호출될 때마다
-   window.__authRefresh() 를 통해 이 Context를 재평가.
+   인증 변경 시 Context를 재평가.
 
    사용 예:
      const { isAdmin, isEditor, isServerMode } = useAuth();
@@ -15,7 +14,7 @@ import { registerActiveUser, unregisterActiveUser } from '../app/socket.js';
 import { getStore, setStore, useAppStore } from '../store/useAppStore.js';
 import { apiFetch } from '../utils/api.js';
 
-let loginCallback = null;
+let authRefresh = null;
 
 const notify = (message, type = false) => {
   useAppStore.getState().notify(message, type);
@@ -59,60 +58,34 @@ export function getEditorToken() {
 }
 
 export function updateAdminUI() {
-  const admin = isAdmin();
-  const editor = isEditor();
-
-  document.querySelectorAll('[data-admin]').forEach(el => {
-    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
-      el.disabled = !admin;
-    } else {
-      el.classList.toggle('admin-locked', !admin);
-    }
-  });
-
-  document.querySelectorAll('[data-editor]').forEach(el => {
-    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
-      el.disabled = !editor;
-    } else {
-      el.classList.toggle('admin-locked', !editor);
-    }
-  });
-
-  window.__authRefresh?.();
+  authRefresh?.();
 }
 
 export function openLoginModal(role = 'editor', callback = null) {
-  loginCallback = callback;
-  if (!window.__reactOpenLoginModal) {
-    if (callback) callback();
-    return;
-  }
-
-  const userName = getStore().settings?.userName || '';
-  window.__reactOpenLoginModal({ role, name: userName });
+  const store = getStore();
+  store.openLoginModal(role, callback);
 }
 
 export function closeLoginModal() {
-  window.__reactCloseLoginModal?.();
-  loginCallback = null;
+  const store = getStore();
+  store.closeLoginModal();
 }
 
 export async function submitLogin() {
-  const form = window.__reactGetLoginForm?.() || {};
-  const name = (form.name || '').trim();
-  const password = form.password || '';
-  const role = form.role || 'editor';
+  const store = getStore();
+  const { role, password, name, callback: loginCallback } = store.loginModal;
+  const trimmedName = (name || '').trim();
 
-  window.__reactSetLoginError?.('');
+  store.setLoginError('');
 
   try {
     const json = await apiFetch('/api/auth', {
       method: 'POST',
-      body: JSON.stringify({ password, role, name }),
+      body: JSON.stringify({ password, role, name: trimmedName }),
     });
 
     if (!json.ok) {
-      window.__reactSetLoginError?.(json.error || '비밀번호가 올바르지 않습니다.');
+      store.setLoginError(json.error || '비밀번호가 올바르지 않습니다.');
       return;
     }
 
@@ -122,20 +95,17 @@ export async function submitLogin() {
       sessionStorage.setItem(EDITOR_TOKEN_KEY, json.token);
     }
 
-    if (name) {
-      const store = getStore();
-      setStore({ settings: { ...store.settings, userName: name } });
+    if (trimmedName) {
+      setStore({ settings: { ...store.settings, userName: trimmedName } });
     }
 
-    const callback = loginCallback;
-    closeLoginModal();
+    store.closeLoginModal();
     updateAdminUI();
     registerActiveUser();
     notify(role === 'admin' ? '관리자로 로그인됐습니다.' : '편집자로 로그인됐습니다.', 'success');
-    loginCallback = null;
-    callback?.();
+    loginCallback?.();
   } catch (e) {
-    window.__reactSetLoginError?.('서버에 연결할 수 없습니다.');
+    store.setLoginError(e.payload?.error || e.message || '서버에 연결할 수 없습니다.');
   }
 }
 
@@ -179,9 +149,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // vanilla JS의 updateAdminUI()가 호출될 때 React 상태도 갱신
-    window.__authRefresh = refresh;
-    return () => { delete window.__authRefresh; };
+    authRefresh = refresh;
+    return () => {
+      if (authRefresh === refresh) authRefresh = null;
+    };
   }, [refresh]);
 
   return (

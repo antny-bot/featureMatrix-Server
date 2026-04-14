@@ -81,7 +81,7 @@ export default function MatrixView() {
   const isDragging = store.isDragging;
   const dragKey = store.dragKey;
 
-  const { handleCardClick, moveItems, lockKeys, unlockKeys } = useMatrixActions();
+  const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useMatrixActions();
   const { lockItem, unlockItem } = useDBSync();
   const { openEditModal, openAddInCell } = useModals();
   const { isEditor: editorOk } = useAuth();
@@ -116,7 +116,7 @@ export default function MatrixView() {
     const keysToMove = selectedKeys.includes(key) ? selectedKeys : [key];
     const lockedOther = keysToMove.filter(k => editLocks[k] && editLocks[k].user !== (settings.userName || '익명'));
     if (lockedOther.length) {
-      window.__sobukNotify?.(`${editLocks[lockedOther[0]].user}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
+      store.notify(`${editLocks[lockedOther[0]].user}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
       store.setIsDragging(false);
       e.preventDefault();
       return;
@@ -140,6 +140,10 @@ export default function MatrixView() {
     moveItems(store.mxSelectionKeys, target);
   }, [store, moveItems]);
 
+  const handleCanvasClick = useCallback(() => {
+    if (store.mxSelectionKeys.length > 0) clearSelection();
+  }, [store.mxSelectionKeys.length, clearSelection]);
+
   if (!filteredItems.length) {
     return <EmptyState />;
   }
@@ -152,7 +156,7 @@ export default function MatrixView() {
   const tableMinW = catW + subCatW + totalSubCols * (settings.colW || 130);
 
   return (
-    <div className="mscroll">
+    <div className="mscroll" onClick={handleCanvasClick}>
       <table className="mtable" style={{ minWidth: `${tableMinW}px` }}>
         <thead className="mx-thead-sticky">
           <tr>

@@ -16,13 +16,13 @@ export default function LayoutShell() {
     <div className={`layout${panelPos === 'right' ? ' pr' : ''}`} id="layout">
       <NavigationSide />
       <main className="content" id="contentArea" style={{ overflowY: view === 'board' ? 'hidden' : undefined }}>
-        <div id="dashboardView" style={{ display: view === 'dashboard' ? '' : 'none' }}>
+        <div id="dashboardView" className="view-pane" style={{ display: view === 'dashboard' ? '' : 'none' }}>
           <ErrorBoundary level="view" label="대시보드">
             <DashboardView />
           </ErrorBoundary>
         </div>
         
-        <div id="matrixView" className="mwrap fluid" style={{ display: view === 'matrix' ? '' : 'none' }}>
+        <div id="matrixView" className="view-pane mwrap fluid" style={{ display: view === 'matrix' ? '' : 'none' }}>
           <ErrorBoundary level="view" label="매트릭스 뷰">
             <MatrixView />
           </ErrorBoundary>
@@ -30,13 +30,13 @@ export default function LayoutShell() {
 
         <BulkActionBar />
         
-        <div id="boardView" className="bwrap" style={{ display: view === 'board' ? '' : 'none' }}>
+        <div id="boardView" className="view-pane bwrap" style={{ display: view === 'board' ? '' : 'none' }}>
           <ErrorBoundary level="view" label="보드 뷰">
             <BoardView />
           </ErrorBoundary>
         </div>
         
-        <div id="listView" className="lwrap" style={{ display: view === 'list' ? '' : 'none' }}>
+        <div id="listView" className="view-pane lwrap" style={{ display: view === 'list' ? '' : 'none' }}>
           <ErrorBoundary level="view" label="리스트 뷰">
             <ListView />
           </ErrorBoundary>

@@ -1,3 +1,4 @@
+import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
 
 const SHORTCUTS = [
@@ -18,10 +19,13 @@ const SHORTCUTS = [
 ];
 
 export default function ShortcutsModal() {
+  const store = useAppStore();
   const { closeModal } = useModals();
 
+  if (store.activeModal !== 'shortcutsModal') return null;
+
   return (
-    <div className="ov" id="shortcutsModal">
+    <div className="ov on" id="shortcutsModal">
       <div className="mbox" style={{ width: '400px' }}>
         <div className="mhd">
           <span className="mtitle">⌨ 단축키</span>

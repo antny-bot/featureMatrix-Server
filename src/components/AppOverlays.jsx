@@ -3,7 +3,10 @@ import ImportModal from './ImportModal.jsx';
 import LoginModal from './LoginModal.jsx';
 import ShortcutsModal from './ShortcutsModal.jsx';
 import DiffModal from './DiffModal.jsx';
+import SettingsPanel from './SettingsPanel.jsx';
+import ItemModal from './ItemModal.jsx';
 import OverlayMenus from './OverlayMenus.jsx';
+import ErrorBoundary from './ErrorBoundary.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
@@ -47,8 +50,10 @@ function UserNameModal() {
     closeModal('userNameModal');
   };
 
+  if (store.activeModal !== 'userNameModal') return null;
+
   return (
-    <div className="ov" id="userNameModal">
+    <div className="ov on" id="userNameModal">
       <div className="mbox" style={{ width: '380px' }}>
         <div className="mhd"><span className="mtitle">👋 이름을 알려주세요</span></div>
         <div className="mbody">
@@ -87,6 +92,12 @@ export default function AppOverlays() {
       <LoginModal />
       <div className="ov" id="adminAuthModal" style={{ display: 'none' }} />
       <DiffModal />
+      <ErrorBoundary level="modal" label="설정">
+        <SettingsPanel />
+      </ErrorBoundary>
+      <ErrorBoundary level="modal" label="편집 모달">
+        <ItemModal />
+      </ErrorBoundary>
       <OverlayMenus />
       <NotificationToast />
     </>

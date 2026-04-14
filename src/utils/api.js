@@ -23,10 +23,16 @@ export async function apiFetch(path, options = {}) {
     ...options,
     headers: { ...apiHeaders(), ...(options.headers || {}) }
   });
+  const contentType = res.headers.get('content-type') || '';
+  const payload = contentType.includes('application/json')
+    ? await res.json()
+    : null;
+
   if (!res.ok) {
-    const err = new Error(res.statusText || String(res.status));
+    const err = new Error(payload?.error || res.statusText || String(res.status));
     err.status = res.status;
+    err.payload = payload;
     throw err;
   }
-  return res.json();
+  return payload;
 }

@@ -13,7 +13,7 @@ import {
 } from '../utils/itemUtils.js';
 import { apiFetch } from '../utils/api.js';
 
-const notify = (msg, type) => window.__sobukNotify?.(msg, type);
+const notify = (msg, type = 'success') => getStore().notify?.(msg, type);
 
 function tsvEncode(val) {
   const s = String(val||'');
@@ -114,10 +114,8 @@ function getExportCss() {
   return chunks.join('\n');
 }
 
-export function expHTML(root = document) {
-  const htmlWidthInput = root?.querySelector?.('input[name="htmlW"]:checked')
-    || document.querySelector('input[name="htmlW"]:checked');
-  const isFluid = htmlWidthInput?.value === 'fluid';
+export function expHTML({ fluid = false } = {}) {
+  const isFluid = !!fluid;
   const store = getStore();
   const items = getFiltered(store.items, store.filters, store.searchQ);
   const isDark  = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -235,46 +233,6 @@ export function expHTML(root = document) {
   doc += '</tbody></table></body></html>';
   dlBlob(doc, `sobuk-${today()}.html`, 'text/html;charset=utf-8');
   notify('HTML 내보내기 완료.');
-}
-
-/* ═══════════════════════════════
-   전체 백업 JSON Import / Export
-═══════════════════════════════ */
-export function expFullJSON() {
-  const store = getStore();
-  const backup = {
-    _version: 1,
-    _exportedAt: new Date().toISOString(),
-    items: store.items,
-    settings: store.settings,
-    display: store.display,
-  };
-  dlBlob(JSON.stringify(backup, null, 2), `sobuk-backup-${today()}.json`, 'application/json');
-  notify('전체 백업이 JSON 파일로 저장되었습니다.');
-}
-
-export function impFullJSON(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (!confirm('현재 데이터와 설정을 백업 파일로 교체하겠습니까?')) { event.target.value = ''; return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const d = JSON.parse(e.target.result);
-      if (!d.items || !Array.isArray(d.items)) { notify('올바른 백업 파일이 아닙니다.', true); return; }
-      const store = useAppStore.getState();
-      store.pushUndo();
-      store.setItems(d.items);
-      if (d.settings) store.setSettings(d.settings);
-      if (d.display)  store.setDisplay(d.display);
-
-      window.__sobukRenderAll?.();
-      const exportedAt = d._exportedAt ? ` (${new Date(d._exportedAt).toLocaleString('ko-KR')})` : '';
-      notify(`백업 복원 완료${exportedAt} — ${d.items.length}개 항목`);
-    } catch { notify('JSON 파일 파싱 오류입니다.', true); }
-  };
-  reader.readAsText(file, 'UTF-8');
-  event.target.value = '';
 }
 
 /* ═══════════════════════════════

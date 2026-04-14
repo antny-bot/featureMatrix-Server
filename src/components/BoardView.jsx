@@ -12,7 +12,7 @@ function BoardActionBar({ boardSel, onMove, onClear }) {
   if (boardSel.length === 0) return null;
 
   return (
-    <div id="boardActionBar" className="board-action-bar on">
+    <div id="boardActionBar" className="board-action-bar on" onClick={event => event.stopPropagation()}>
       <span>{boardSel.length}개 선택</span>
       {STATUS_OPTS.map(st => (
         <button key={st} onClick={() => onMove(st)}>
@@ -35,7 +35,7 @@ export default function BoardView() {
   const boardSel = store.boardSelectionKeys || [];
   const foldCount = store.settings.boardFoldCount ?? 6;
   const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useBoardActions();
-  const { openEditModal } = useModals();
+  const { openMdModal } = useModals();
 
   const [expanded, setExpanded] = useState(new Set());
   const [dragOverCol, setDragOverCol] = useState(null);
@@ -84,9 +84,13 @@ export default function BoardView() {
     moveItems(new Set(store.boardSelectionKeys), colKey);
   }, [store, moveItems]);
 
+  const handleBoardClick = useCallback(() => {
+    if (store.boardSelectionKeys.length > 0) clearSelection();
+  }, [store.boardSelectionKeys.length, clearSelection]);
+
   return (
     <>
-      <div className="board-cols">
+      <div className="board-cols" onClick={handleBoardClick}>
         {STATUS_OPTS.map(colKey => {
           const colItems      = byCol[colKey] || [];
           const alwaysExpanded = foldCount === 0;
@@ -132,10 +136,7 @@ export default function BoardView() {
                       store.isDragging && boardSel.includes(item.key) ? 'dragging' : '',
                     ].filter(Boolean).join(' ')}
                     onClick={event => handleCardClick(event, item.key)}
-                    onDoubleClick={() => {
-                      window.__editModalSwitchEditTab?.('md');
-                      openEditModal(item.key);
-                    }}
+                    onDoubleClick={() => openMdModal(item.key)}
                     onDragStart={event => onDragStart(event, item.key)}
                     onDragEnd={onDragEnd}
                   />

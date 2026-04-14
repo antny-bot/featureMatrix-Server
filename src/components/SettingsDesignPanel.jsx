@@ -148,11 +148,9 @@ export default function SettingsDesignPanel() {
     };
     store.setSettings(nextSettings);
     handleSave();
-    // DOM 갱신 필요 시 적용
     setTimeout(() => {
-        applyVars();
-        window.__sobukRenderAll?.();
-        window.__sobukNotify?.(`테마 적용: ${THEMES[themeId].name}`);
+      applyVars();
+      store.notify(`테마 적용: ${THEMES[themeId].name}`, 'success');
     }, 0);
   };
 
@@ -160,25 +158,18 @@ export default function SettingsDesignPanel() {
     const nextStyles = { ...settings.priorityStyles, [priorityKey]: presetId };
     store.setSettings({ ...settings, priorityStyles: nextStyles });
     handleSave();
-    window.__sobukRenderAll?.();
   };
 
   const setColorReact = (colorKey, value) => {
     if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return;
     setCustomColor(colorKey, value); // Local direct DOM update (legacy bridge)
-    // store 업데이트는 setCustomColor 내부에서 setStore 호출 여부에 따라 다름. 
-    // 여기서는 명시적으로 store 갱신
-    store.setSettings({ ...store.settings }); 
     handleSave();
-    window.__sobukRenderAll?.();
   };
 
   const adjustBorderWidth = (delta) => {
     const next = Math.max(1, Math.min(4, (colors.mxBW || 1) + delta));
     setCustomColor('mxBW', next);
-    store.setSettings({ ...store.settings });
     handleSave();
-    window.__sobukRenderAll?.();
   };
 
   const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';

@@ -26,7 +26,6 @@ export function useKeyboardShortcuts(actions) {
         if (e.key === 'i' || e.key === 'I') { e.preventDefault(); actions.openModal?.('importModal'); return; }
         if (e.key === 'e' || e.key === 'E') { e.preventDefault(); actions.openModal?.('exportModal'); return; }
         if (e.key === ',') { e.preventDefault(); actions.openModal?.('settingsModal'); return; }
-        if (e.key === 's' || e.key === 'S') { e.preventDefault(); actions.expSettJSON?.(); return; }
         return;
       }
 

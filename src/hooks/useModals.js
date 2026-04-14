@@ -9,38 +9,33 @@ export function useModals() {
 
   const openModal = useCallback((id) => {
     store.setActiveModal(id);
-    const el = document.getElementById(id);
-    if (el) el.classList.add('on');
   }, [store]);
 
   const closeModal = useCallback((id) => {
     const current = useAppStore.getState().activeModal;
     if (current === id) store.setActiveModal(null);
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('on');
   }, [store]);
 
   const closeEditModal = useCallback(() => {
     const editKey = useAppStore.getState().editKey;
     if (editKey) unlockItem(editKey);
     useAppStore.getState().setEditKey(null);
-    closeModal('editModal');
-  }, [closeModal, unlockItem]);
+    useAppStore.getState().closeEditModal();
+  }, [unlockItem]);
 
   const openEditModal = useCallback((key) => {
     store.setEditKey(key);
     const item = findItem(key, store.items);
     if (!item) return;
 
-    window.__editModalBridge?.('edit', key, { ...item });
+    store.openEditModal('edit', key, { ...item });
     if (store.settings.storageMode === 'server') lockItem(key);
-    openModal('editModal');
-  }, [store, lockItem, openModal]);
+  }, [store, lockItem]);
 
   const openAddModal = useCallback((defaults = {}) => {
     store.setEditKey(null);
     const newKey = genKey();
-    window.__editModalBridge?.('add', null, {
+    const newItem = {
       key: newKey,
       priority: '중',
       name: '',
@@ -58,9 +53,9 @@ export function useModals() {
       isImportant: 'N',
       isDelete: 'N',
       ...defaults
-    });
-    openModal('editModal');
-  }, [store, openModal]);
+    };
+    store.openEditModal('add', newKey, newItem);
+  }, [store]);
 
   const openAddInCell = useCallback((group, subGroup, category, subCategory) => {
     openAddModal({
@@ -72,12 +67,14 @@ export function useModals() {
   }, [openAddModal]);
 
   const openMdModal = useCallback((key) => {
-    openEditModal(key);
-    requestAnimationFrame(() => {
-      window.__editModalSwitchEditTab?.('md');
-      window.__editModalSwitchMdView?.('preview');
-    });
-  }, [openEditModal]);
+    store.setEditKey(key);
+    const item = findItem(key, store.items);
+    if (!item) return;
+
+    const nextMdMode = item.mdContent?.trim() ? 'preview' : 'edit';
+    store.openEditModal('edit', key, { ...item }, 'md', nextMdMode);
+    if (store.settings.storageMode === 'server') lockItem(key);
+  }, [store, lockItem]);
 
   const saveItem = useCallback(async (form) => {
     const name = (form.name || '').trim();
@@ -110,7 +107,7 @@ export function useModals() {
     }
 
     store.setItems(items);
-    closeModal('editModal');
+    useAppStore.getState().closeEditModal();
     
     if (editKey) unlockItem(editKey);
     store.setEditKey(null);
@@ -123,7 +120,7 @@ export function useModals() {
     }
     
     store.notify('저장되었습니다.', 'success');
-  }, [store, logActivity, closeModal, unlockItem, saveToServer, saveLocal, broadcastSharedData]);
+  }, [store, logActivity, unlockItem, saveToServer, saveLocal, broadcastSharedData]);
 
   const hardDelete = useCallback(async (key) => {
     const it = findItem(key, store.items);
@@ -136,7 +133,7 @@ export function useModals() {
     logActivity('완전삭제', `${key} ${it.name || ''}`);
     pushChangeLog('완전삭제', key, it.name || key);
     
-    closeModal('editModal');
+    useAppStore.getState().closeEditModal();
     unlockItem(key);
     store.setEditKey(null);
 
@@ -147,7 +144,7 @@ export function useModals() {
       saveLocal();
     }
     store.notify('완전 삭제되었습니다.', 'success');
-  }, [store, logActivity, closeModal, unlockItem, saveToServer, saveLocal, broadcastSharedData]);
+  }, [store, logActivity, unlockItem, saveToServer, saveLocal, broadcastSharedData]);
 
   const duplicateItem = useCallback(async (key) => {
     const src = findItem(key, store.items);

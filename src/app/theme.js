@@ -6,8 +6,7 @@ import { THEMES } from './constants.js';
 import { useAppStore } from '../store/useAppStore.js';
 
 const getStore = () => useAppStore.getState();
-const save = () => window.__sobukSave?.();
-const notify = (msg, isErr) => window.__sobukNotify?.(msg, isErr);
+const notify = (msg, type = 'success') => getStore().notify?.(msg, type);
 
 export function getColors() {
   const ss = getStore().settings;
@@ -45,34 +44,22 @@ export function toggleTheme() {
   const next   = !isDark;
   html.setAttribute('data-theme', next ? 'dark' : 'light');
   applyVars();
-  window.__sobukRenderAll?.();
-  /* React ThemeContext 동기화 (Header.jsx 아이콘 전환) */
-  window.__themeRefresh?.(next);
+  return next;
 }
-
-export function applyTheme(tid) {
-  if (!THEMES[tid]) return;
-  const ss = getStore().settings;
-  ss.themeId = tid;
-  ss.customColors = { light:{}, dark:{} };
-  save();
-  applyVars();
-  window.__sobukRenderAll?.();
-  notify(`테마 적용: ${THEMES[tid].name}`);
-}
-
-export function renderThemeGrid() {}
 
 export function setCustomColor(k, v) {
   const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   const ss = getStore().settings;
-  if (!ss.customColors[mode]) ss.customColors[mode] = {};
-  ss.customColors[mode][k] = v;
-  save();
+  const customColors = {
+    ...(ss.customColors || {}),
+    [mode]: {
+      ...((ss.customColors && ss.customColors[mode]) || {}),
+      [k]: v,
+    },
+  };
+  useAppStore.setState({ settings: { ...ss, customColors } });
   applyVars();
 }
-
-export function updateDesignContent() {}
 
 export function getPresetCSS(pid, pHex, pBg) {
   switch(pid) {
@@ -86,17 +73,3 @@ export function getPresetCSS(pid, pHex, pBg) {
     default:           return `border:1px solid var(--border);border-left:4px solid ${pHex};background:var(--surface)`;
   }
 }
-
-export function renderPrioStyleRows() {}
-export function renderPreviewCards() {}
-
-export function setPreset(pk, pid) {
-  getStore().settings.priorityStyles[pk] = pid;
-  save();
-  window.__sobukRenderAll?.();
-}
-
-export function onCP(inp, ckey)    { setCustomColor(ckey, inp.value); }
-export function onHex(inp, ckey)   { const v = inp.value.trim(); if (/^#[0-9A-Fa-f]{6}$/.test(v)) setCustomColor(ckey, v); }
-export function onHexKey(inp, ckey){ if (/^#[0-9A-Fa-f]{6}$/.test(inp.value.trim())) onHex(inp, ckey); }
-export function adjBW(d)           { const c = getColors(); const next = Math.max(1, Math.min(4, (c.mxBW||1) + d)); setCustomColor('mxBW', next); }

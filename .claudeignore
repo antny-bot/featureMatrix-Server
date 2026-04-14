@@ -29,3 +29,13 @@ src/node_modules
 
 # 빌드 아티팩트
 src/dist/
+
+# Review/build outputs managed from src/
+src/dist/**
+featureMatrix-server/static/index.html
+featureMatrix-server/static/fonts/*.woff2
+src/package-lock.json
+
+# Runtime/generated data
+featureMatrix-server/activity.json
+featureMatrix-server/tokens.json

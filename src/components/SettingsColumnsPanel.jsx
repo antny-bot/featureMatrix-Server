@@ -68,7 +68,7 @@ export default function SettingsColumnsPanel() {
     store.pushUndo();
     store.setSettings({ ...settings, listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)) });
     handleSave();
-    window.__sobukNotify?.('리스트 컬럼을 기본값으로 복원했습니다.', 'success');
+    store.notify('리스트 컬럼을 기본값으로 복원했습니다.', 'success');
   };
 
   const dropAxis = (field, orderKey, values, toIndex) => {
@@ -86,7 +86,7 @@ export default function SettingsColumnsPanel() {
     store.pushUndo();
     store.setSettings({ ...settings, groupOrder: [], catOrder: [] });
     handleSave();
-    window.__sobukNotify?.('축 순서를 자동 정렬로 초기화했습니다.', 'success');
+    store.notify('축 순서를 자동 정렬로 초기화했습니다.', 'success');
   };
 
   const dragClass = (type, key, index) => [

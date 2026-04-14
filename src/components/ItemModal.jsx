@@ -40,6 +40,7 @@ export default function ItemModal() {
   
   const previewRef      = useRef(null);
   const mdFileRef       = useRef(null);
+  const textareaRef     = useRef(null);
   const previewTimerRef = useRef(null);
   const formRef         = useRef(EMPTY_FORM);
 
@@ -97,7 +98,7 @@ export default function ItemModal() {
     }
     setMdMode(nextMode);
     if (nextMode === 'edit') {
-      requestAnimationFrame(() => document.getElementById('fMdContent')?.focus());
+      requestAnimationFrame(() => textareaRef.current?.focus());
     }
   }, []);
 
@@ -105,6 +106,7 @@ export default function ItemModal() {
     const content = formRef.current.mdContent || '';
     setActiveTab('md');
     setMdPreview(parseMd(content));
+    setMdMode(content.trim() ? 'preview' : 'edit');
   }, []);
 
   /* KaTeX 렌더링 — mdPreview 변경 후 DOM 반영 */
@@ -119,63 +121,39 @@ export default function ItemModal() {
     });
   }, [mdPreview]);
 
-  /* 브릿지: useModals (or Legacy) → React 상태 동기화 */
+  /* 전역 스토어 상태 동기화 */
   useEffect(() => {
-    window.__editModalBridge = (mode, key, nextForm = {}) => {
-      const mergedForm = { ...EMPTY_FORM, ...nextForm };
-      setModalMode(mode);
-      setTitle(mode === 'add' ? '기능 추가' : mode === 'detail' ? `기능 상세 - ${key}` : `기능 수정 - ${key}`);
-      setShowHardDel(mode === 'edit');
-      setActiveTab('info');
-      setMdMode(mode === 'detail' ? 'preview' : 'edit');
-      setForm(mergedForm);
-      formRef.current = mergedForm;
-      setMdPreview(parseMd(mergedForm.mdContent || ''));
-      updateMdStats(mergedForm.mdContent || '');
-    };
+    const { visible, mode, key, item, activeTab, mdMode } = store.editModal;
+    if (!visible) return;
 
-    window.__editModalSwitchEditTab = (tab) => {
-      if (tab === 'md') {
-        openMdTab();
-      } else {
-        setActiveTab(tab);
-      }
-      if (tab === 'md') {
-        const v = formRef.current.mdContent || '';
-        if (modalMode !== 'add') {
-          setMdMode('preview');
-          setMdPreview(parseMd(v));
-        }
-      }
-    };
-    window.__editModalSwitchMdView = mode => switchMdMode(mode);
+    const mergedForm = { ...EMPTY_FORM, ...(item || {}) };
+    setModalMode(mode);
+    setTitle(mode === 'add' ? '기능 추가' : mode === 'detail' ? `기능 상세 - ${key}` : `기능 수정 - ${key}`);
+    setShowHardDel(mode === 'edit');
+    setActiveTab(activeTab || 'info');
+    setMdMode(mdMode || (mode === 'detail' ? 'preview' : 'edit'));
+    setForm(mergedForm);
+    formRef.current = mergedForm;
+    setMdPreview(parseMd(mergedForm.mdContent || ''));
+    updateMdStats(mergedForm.mdContent || '');
+  }, [store.editModal]);
 
-    window.__editModalApplyMdEdit = (editor) => {
-      const textarea = document.getElementById('fMdContent');
-      const current = formRef.current.mdContent || '';
-      const selectionStart = textarea?.selectionStart ?? current.length;
-      const selectionEnd = textarea?.selectionEnd ?? current.length;
-      const result = editor(current, selectionStart, selectionEnd);
-      updateField('mdContent', result.value);
-      requestAnimationFrame(() => {
-        const nextTextarea = document.getElementById('fMdContent');
-        if (!nextTextarea) return;
-        nextTextarea.focus();
-        nextTextarea.selectionStart = result.selectionStart;
-        nextTextarea.selectionEnd = result.selectionEnd;
-      });
-    };
-
-    return () => {
-      delete window.__editModalBridge;
-      delete window.__editModalSwitchEditTab;
-      delete window.__editModalSwitchMdView;
-      delete window.__editModalApplyMdEdit;
-    };
-  }, [modalMode, openMdTab, switchMdMode, updateField]);
+  const applyMdEdit = useCallback((editor) => {
+    const textarea = textareaRef.current;
+    const current = formRef.current.mdContent || '';
+    const selectionStart = textarea?.selectionStart ?? current.length;
+    const selectionEnd = textarea?.selectionEnd ?? current.length;
+    const result = editor(current, selectionStart, selectionEnd);
+    updateField('mdContent', result.value);
+    requestAnimationFrame(() => {
+      if (!textarea) return;
+      textarea.focus();
+      textarea.setSelectionRange(result.selectionStart, result.selectionEnd);
+    });
+  }, [updateField]);
 
   const insertMd = useCallback((before, after = '') => {
-    window.__editModalApplyMdEdit?.((value, start, end) => {
+    applyMdEdit((value, start, end) => {
       const selected = value.substring(start, end);
       const fallback = selected || '텍스트';
       return {
@@ -184,10 +162,10 @@ export default function ItemModal() {
         selectionEnd: start + before.length + fallback.length,
       };
     });
-  }, []);
+  }, [applyMdEdit]);
 
   const insertMdLine = useCallback((prefix) => {
-    window.__editModalApplyMdEdit?.((value, start) => {
+    applyMdEdit((value, start) => {
       const lineStart = value.lastIndexOf('\n', start - 1) + 1;
       return {
         value: value.substring(0, lineStart) + prefix + value.substring(lineStart),
@@ -195,10 +173,10 @@ export default function ItemModal() {
         selectionEnd: start + prefix.length,
       };
     });
-  }, []);
+  }, [applyMdEdit]);
 
   const insertMdBlock = useCallback((block) => {
-    window.__editModalApplyMdEdit?.((value, start, end) => {
+    applyMdEdit((value, start, end) => {
       const selected = value.substring(start, end);
       const content = selected || block;
       const needsBefore = start > 0 && value[start - 1] !== '\n';
@@ -210,14 +188,14 @@ export default function ItemModal() {
         selectionEnd: start + before.length + content.length,
       };
     });
-  }, []);
+  }, [applyMdEdit]);
 
   const onImpMd = (e) => {
     const file = e.target.files[0]; if (!file) return;
     const r = new FileReader();
     r.onload = ev => {
       updateField('mdContent', ev.target.result);
-      window.__sobukNotify?.('MD 파일 불러왔습니다: ' + file.name, 'success');
+      store.notify('MD 파일 불러왔습니다: ' + file.name, 'success');
       setMdMode('preview');
     };
     r.readAsText(file, 'UTF-8'); e.target.value = '';
@@ -237,8 +215,10 @@ export default function ItemModal() {
   const taStyle  = { display: showEditor ? 'block' : 'none', flex: showEditor ? '1 1 0' : undefined, width: showEditor ? '100%' : undefined };
   const pvStyle  = { display: showPreview ? 'block' : 'none', flex: showPreview ? '1 1 0' : undefined, width: showPreview ? '100%' : undefined };
 
+  if (!store.editModal.visible) return null;
+
   return (
-    <div className="ov" id="editModal">
+    <div className="ov on" id="editModal">
       <div className="mbox" style={{ width: '760px', maxHeight: '92vh' }}>
 
       <div className="mhd" style={{ paddingBottom: 0, borderBottom: 'none' }}>
@@ -359,6 +339,7 @@ export default function ItemModal() {
           <div style={{ display: 'flex', gap: '8px', flex: 1, minHeight: 0 }}>
             <textarea
               id="fMdContent"
+              ref={textareaRef}
               value={form.mdContent}
               readOnly={isReadOnly}
               placeholder="기능정의요구서를 Markdown으로 작성하세요."

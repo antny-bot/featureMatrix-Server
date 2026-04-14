@@ -6,7 +6,7 @@ import { findItem, normOwner } from '../utils/itemUtils.js';
 
 export default function OverlayMenus() {
   const store = useAppStore();
-  const { openEditModal, duplicateItem, quickToggleDel, setItemStatus } = useModals();
+  const { openEditModal, openMdModal, duplicateItem, quickToggleDel, setItemStatus } = useModals();
   const contextMenu = store.contextMenu;
   const statusMenu = store.statusMenu;
   const tooltip = store.tooltip;
@@ -33,8 +33,7 @@ export default function OverlayMenus() {
   };
 
   const openMd = (key) => {
-    window.__editModalSwitchEditTab?.('md');
-    openEditModal(key);
+    openMdModal(key);
   };
 
   return (
@@ -57,7 +56,7 @@ export default function OverlayMenus() {
             <button
               className={`status-quick-item${statusMenu.currentStatus === value ? ' on' : ''}`}
               key={value || 'none'}
-              onClick={() => { setStatusMenu(null); setItemStatus(statusMenu.key, value); }}
+              onClick={() => { store.setStatusMenu(null); setItemStatus(statusMenu.key, value); }}
             >
               {label}
             </button>
@@ -67,7 +66,7 @@ export default function OverlayMenus() {
 
       <div className={`ftt${tooltip ? ' on' : ''}`} style={tooltip ? { left: tooltip.x, top: tooltip.y } : undefined}>
         {tooltip && (() => {
-          const item = findItem(store.items, tooltip.key);
+          const item = findItem(tooltip.key, store.items);
           if (!item) return null;
           return (
             <>

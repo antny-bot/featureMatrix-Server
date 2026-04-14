@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { STATUS_CLS, STATUS_LBL } from '../app/constants.js';
+import { STATUS_CLS } from '../app/constants.js';
 import { fmtDate, getOwnerColor, getPK, normOwner } from '../utils/itemUtils.js';
 import { getPresetCSS } from '../app/theme.js';
 import { useAppStore } from '../store/useAppStore.js';
@@ -91,7 +91,7 @@ const FeatureCard = forwardRef(function FeatureCard({
   const searchQ = useAppStore(s => s.searchQ);
   const editLocks = useAppStore(s => s.editLocks);
   const previews = useAppStore(s => s.previews);
-  const { openEditModal } = useModals();
+  const { openEditModal, openMdModal, duplicateItem } = useModals();
   const { isEditor: editorOk } = useAuth();
 
   const pk = getPK(item.priority);
@@ -156,7 +156,7 @@ const FeatureCard = forwardRef(function FeatureCard({
       {canDrag && (
         <div className="card-actions" onClick={event => event.stopPropagation()}>
           <button className="card-act-btn" title="편집" onClick={() => openEditModal(item.key)}>✏</button>
-          <button className="card-act-btn" title="복제" onClick={() => window.duplicateItem?.(item.key)}>⧉</button>
+          <button className="card-act-btn" title="복제" onClick={() => duplicateItem(item.key)}>⧉</button>
         </div>
       )}
       <div className="item-hd">

@@ -131,7 +131,7 @@ export default function Header() {
   const title    = store.settings.title    || 'featureMATRIX';
   const subtitle = store.settings.subtitle || 'Function Matrix';
   const storageMode = store.settings.storageMode || 'server';
-  const { serverStatus, wsStatus, activeUsers, view, searchQ, filters, items } = store;
+  const { serverStatus, wsStatus, activeUsers, view, searchQ, filters, items, searchFocusNonce } = store;
   const userName = store.settings.userName || 'Anonymous';
 
   const searchRef = useRef(null);
@@ -157,9 +157,8 @@ export default function Header() {
     : (storageMode === 'server' ? '서버' : '로컬');
 
   useEffect(() => {
-    window.__focusSearch = () => searchRef.current?.focus();
-    return () => { delete window.__focusSearch; };
-  }, []);
+    if (searchFocusNonce > 0) searchRef.current?.focus();
+  }, [searchFocusNonce]);
 
   return (
     <header className="hdr">
