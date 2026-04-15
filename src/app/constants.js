@@ -12,11 +12,12 @@ export const EDITOR_TOKEN_KEY = 'fmEditorToken';
  * 데이터 스키마 버전 — 아이템 필드 구조가 변경될 때마다 올린다.
  * MIGRATIONS 에 이전 버전 → 현재 버전 변환 함수를 추가한다.
  */
-export const DATA_VERSION = 2;
+export const DATA_VERSION = 3;
 
 /**
  * 마이그레이션 맵: { [fromVersion]: (item) => migratedItem }
  * v1 → v2: mdContent, status, updatedAt 기본값 보장
+ * v2 → v3: status 내부 키를 영문 값으로 변경
  */
 export const MIGRATIONS = {
   1: item => ({
@@ -24,6 +25,10 @@ export const MIGRATIONS = {
     mdContent: item.mdContent ?? '',
     status:    item.status    ?? '',
     updatedAt: item.updatedAt ?? 0,
+  }),
+  2: item => ({
+    ...item,
+    status: STATUS_KEY_MAP[item.status] || item.status || '',
   }),
 };
 
@@ -40,26 +45,34 @@ export const FLABELS = {
   mdPath:'MD경로', mdContent:'MD내용'
 };
 
-export const STATUS_OPTS = ['대기','시작가능','진행중','검토중','완료'];
-export const STATUS_CLS  = { 대기:'status-backlog', 시작가능:'status-ready', 진행중:'status-progress', 검토중:'status-review', 완료:'status-done' };
-export const STATUS_LBL  = { 대기:'대기', 시작가능:'시작가능', 진행중:'진행중', 검토중:'검토중', 완료:'완료' };
+export const STATUS_KEY_MAP = {
+  '대기': 'backlog',
+  '시작가능': 'ready',
+  '진행중': 'progress',
+  '검토중': 'review',
+  '완료': 'done',
+};
+
+export const STATUS_OPTS = ['backlog','ready','progress','review','done'];
+export const STATUS_CLS  = { backlog:'status-backlog', ready:'status-ready', progress:'status-progress', review:'status-review', done:'status-done' };
+export const STATUS_LBL  = { backlog:'대기', ready:'시작가능', progress:'진행중', review:'검토중', done:'완료' };
 
 /** 상태별 강조 색상 (바 세그먼트, 컬럼 상단 테두리, 텍스트 강조용) */
 export const STATUS_ACCENT = {
-  '대기':    'var(--text-3)',
-  '시작가능': '#7C3AED',
-  '진행중':  'var(--accent)',
-  '검토중':  '#D97706',
-  '완료':    'var(--success)',
+  backlog:  'var(--text-3)',
+  ready:    '#7C3AED',
+  progress: 'var(--accent)',
+  review:   '#D97706',
+  done:     'var(--success)',
 };
 
 /** 상태별 칩/뱃지 색상 (필터 버튼, 툴팁 등) */
 export const STATUS_CHIP_COLORS = {
-  '대기':    { col:'#6B7280', bg:'#F3F4F6' },
-  '시작가능': { col:'#7C3AED', bg:'#F5F3FF' },
-  '진행중':  { col:'#2563A8', bg:'#EBF2FB' },
-  '검토중':  { col:'#D97706', bg:'#FFF7ED' },
-  '완료':    { col:'#1D7A4F', bg:'#EAF5EF' },
+  backlog:  { col:'#6B7280', bg:'#F3F4F6' },
+  ready:    { col:'#7C3AED', bg:'#F5F3FF' },
+  progress: { col:'#2563A8', bg:'#EBF2FB' },
+  review:   { col:'#D97706', bg:'#FFF7ED' },
+  done:     { col:'#1D7A4F', bg:'#EAF5EF' },
 };
 
 export const DEFAULT_LIST_COLS = [

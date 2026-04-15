@@ -1,3 +1,7 @@
+---
+version: 3.0.0
+---
+
 # featureMatrix-ServerAdmin
 
 브라우저에서 기능 매트릭스를 관리하고, Flask 서버를 통해 여러 사용자가 같은 데이터를 공유할 수 있게 만든 관리자 도구입니다.
@@ -11,7 +15,7 @@
 
 - 기능 항목 CRUD
 - 매트릭스, 리스트, 대시보드, 보드(칸반) 뷰
-- 텍스트 검색과 필드 기반 검색 (`owner:홍길동`, `status:완료`)
+- 텍스트 검색과 필드 기반 검색 (`owner:홍길동`, `status:done`)
 - 서버 모드와 로컬 모드 지원
 - 항목 편집 락, 활동 로그, 관리자/편집자 권한 분리
 - JSON 백업, CSV/TSV 가져오기, TSV/XLS/HTML/MD ZIP 내보내기
@@ -251,7 +255,7 @@ docker run -d -p 5000:5000 -e ADMIN_PASSWORD=1234 -e EDITOR_PASSWORD= -e FEATURE
 
 ## 버전과 릴리스
 
-- 현재 앱 버전은 루트의 `VERSION` 파일을 기준으로 합니다. (현재: v1.3.1)
+- 현재 앱 버전은 루트의 `VERSION` 파일과 문서 상단 `version` 메타를 기준으로 합니다.
 - 프런트 빌드 시 버전과 빌드 번호가 화면에 주입됩니다.
 - `release.js`는 버전 업데이트와 git tag/push 자동화를 위한 스크립트입니다.
 

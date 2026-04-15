@@ -75,6 +75,7 @@ function _hasAuthToken() {
 }
 
 function _currentUserName() {
+  if (!_hasAuthToken()) return '익명';
   return getStore().settings?.userName || '익명';
 }
 
@@ -93,13 +94,8 @@ function _clientId() {
 
 function _syncActiveUser() {
   if (!_socket?.connected) return;
-  if (_hasAuthToken()) {
-    _socket.emit('register_user', { user: _currentUserName(), clientId: _clientId() });
-    _socket.emit('get_active_users');
-  } else {
-    _socket.emit('unregister_user', { clientId: _clientId() });
-    setStore({ activeUsers: [] });
-  }
+  _socket.emit('register_user', { user: _currentUserName(), clientId: _clientId() });
+  _socket.emit('get_active_users');
 }
 
 function _setActiveUsers(users) {

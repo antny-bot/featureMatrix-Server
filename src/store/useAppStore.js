@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { SK, DEFAULT_LIST_COLS, DATA_VERSION, MIGRATIONS, UNDO_MAX } from '../app/constants.js';
+import { DEFAULT_LIST_COLS, STATUS_LBL, UNDO_MAX } from '../app/constants.js';
 
 /* ── 초기 상태 (state.js의 S와 동일한 구조) ── */
 const initialState = {
@@ -18,12 +18,12 @@ const initialState = {
   },
   display: {
     showOwner: true,
-    showStar: true,
-    showNewBadge: true,
-    showCellCount: true,
+    showStar: false,
+    showNewBadge: false,
+    showCellCount: false,
     showUpdated: false,
     showStatus: true,
-    showMdBadge: true,
+    showMdBadge: false,
     showQuickAdd: false,
   },
   settings: {
@@ -37,20 +37,15 @@ const initialState = {
     groupOrder: [],
     catOrder: [],
     dbHeroName: '',
-    dbSections: ['stats', 'insight', 'heatmap'],
+    dbSections: ['stats', 'insight', 'heatmap', 'metrics'],
+    dbSectionVisibility: { stats: true, insight: true, heatmap: true, metrics: true },
     changeLogMax: 50,
     boardFoldCount: 6,
     storageMode: 'server',
     serverUrl: '',
     pollInterval: 60,
     userName: '',
-    statusLabels: {
-      '대기': '대기',
-      '시작가능': '시작가능',
-      '진행중': '진행중',
-      '검토중': '검토중',
-      '완료': '완료',
-    },
+    statusLabels: { ...STATUS_LBL },
   },
   sort: { key: 'key', dir: 'asc' },
   mxSelectionKeys: [],
@@ -212,6 +207,7 @@ export const useAppStore = create(
       groupOrder: [...(settings.groupOrder || [])],
       catOrder: [...(settings.catOrder || [])],
       dbSections: [...(settings.dbSections || [])],
+      dbSectionVisibility: { ...(settings.dbSectionVisibility || {}) },
       listColumns: JSON.parse(JSON.stringify(settings.listColumns || [])),
     };
     const next = [...undoStack, JSON.stringify(snapshot)];
@@ -231,6 +227,7 @@ export const useAppStore = create(
       groupOrder: snapshot.groupOrder,
       catOrder: snapshot.catOrder,
       dbSections: snapshot.dbSections,
+      dbSectionVisibility: snapshot.dbSectionVisibility || settings.dbSectionVisibility,
       listColumns: snapshot.listColumns,
     };
 

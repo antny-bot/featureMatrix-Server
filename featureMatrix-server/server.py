@@ -5,7 +5,8 @@ Flask 기반 공유 데이터 서버
 실행: python server.py [--port 5000] [--host 0.0.0.0] [--admin-password 1234] [--editor-password 5678]
 """
 
-import json, os, time, argparse, secrets, threading
+import json, os, time, argparse, secrets, threading, hashlib
+from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_socketio import SocketIO, emit, disconnect as sio_disconnect
@@ -18,6 +19,7 @@ DATA_FILE      = DATA_DIR / 'data.json'
 CONFIG_FILE    = DATA_DIR / 'config.json'
 ACTIVITY_FILE  = DATA_DIR / 'activity.json'
 TOKENS_FILE    = DATA_DIR / 'tokens.json'
+METRICS_FILE   = DATA_DIR / 'daily_metrics.json'
 
 TOKEN_TTL_MS   = 24 * 60 * 60 * 1000  # 24시간
 
@@ -41,6 +43,7 @@ socket_users = {}  # { sid: user }
 socket_clients = {}  # { sid: client_id }
 active_users = {}  # { client_id: { user, joinTime, sids } }
 active_users_lock = threading.Lock()
+metrics_lock = threading.Lock()
 
 # ── 토큰 파일 저장/로드 (관리자 토큰만 영속) ──────────────
 def load_tokens():
@@ -102,6 +105,7 @@ def _init_socketio():
                         logger=False, engineio_logger=False)
     _register_socketio_events()
     _start_lock_timeout_task()
+    _start_daily_metrics_task()
 
 LOCK_TIMEOUT_MS = 5 * 60 * 1000  # 5분
 
@@ -134,6 +138,150 @@ def read_activity():
 def write_activity(entries):
     with open(ACTIVITY_FILE, 'w', encoding='utf-8') as f:
         json.dump(entries, f, ensure_ascii=False, separators=(',', ':'))
+
+METRIC_ITEM_FIELDS = [
+    'key', 'name', 'desc', 'path', 'group', 'subGroup', 'category', 'subCategory',
+    'priority', 'status', 'owner', 'isDelete', 'isImportant', 'relSystem', 'memo',
+    'mdPath', 'mdContent'
+]
+
+def read_metrics():
+    if not METRICS_FILE.exists():
+        return []
+    try:
+        with open(METRICS_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+def write_metrics(entries):
+    with open(METRICS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(entries, f, ensure_ascii=False, separators=(',', ':'))
+
+def metric_public(metric):
+    return {k: v for k, v in (metric or {}).items() if not k.startswith('_')}
+
+def item_signature(item):
+    comparable = {field: item.get(field, '') for field in METRIC_ITEM_FIELDS}
+    raw = json.dumps(comparable, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()[:16]
+
+def build_item_signatures(items):
+    signatures = {}
+    for item in items:
+        key = str(item.get('key') or '').strip()
+        if key:
+            signatures[key] = item_signature(item)
+    return signatures
+
+def calculate_daily_metric(payload, date_str=None, previous_metric=None):
+    payload = payload or {}
+    items = payload.get('items') or []
+    if not isinstance(items, list):
+        items = []
+
+    status_counts = {}
+    priority_counts = {}
+    owners = set()
+    groups = set()
+    active_items = []
+    deleted_count = 0
+    important_count = 0
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        is_deleted = item.get('isDelete') == 'Y'
+        if is_deleted:
+            deleted_count += 1
+            continue
+        else:
+            active_items.append(item)
+
+        if item.get('isImportant') == 'Y':
+            important_count += 1
+
+        status = item.get('status') or 'none'
+        priority = item.get('priority') or 'none'
+        status_counts[status] = status_counts.get(status, 0) + 1
+        priority_counts[priority] = priority_counts.get(priority, 0) + 1
+
+        owner = (item.get('owner') or '').strip()
+        group = (item.get('group') or '').strip()
+        if owner:
+            owners.add(owner)
+        if group:
+            groups.add(group)
+
+    signatures = build_item_signatures([item for item in items if isinstance(item, dict)])
+    previous_signatures = (previous_metric or {}).get('_itemSignatures') or {}
+    current_keys = set(signatures)
+    previous_keys = set(previous_signatures)
+    added_items = len(current_keys - previous_keys)
+    removed_items = len(previous_keys - current_keys)
+    modified_items = sum(
+        1 for key in current_keys & previous_keys
+        if signatures.get(key) != previous_signatures.get(key)
+    )
+    changed_items = added_items + removed_items + modified_items
+    done_count = status_counts.get('done', 0)
+
+    return {
+        'date': date_str or datetime.now().date().isoformat(),
+        'recordedAt': int(time.time() * 1000),
+        'totalItems': len(items),
+        'activeItems': len(active_items),
+        'deletedItems': deleted_count,
+        'importantItems': important_count,
+        'changedItems': changed_items,
+        'addedItems': added_items,
+        'removedItems': removed_items,
+        'modifiedItems': modified_items,
+        'doneItems': done_count,
+        'doneRatio': round((done_count / len(active_items)) * 100, 1) if active_items else 0,
+        'ownerCount': len(owners),
+        'groupCount': len(groups),
+        'statusCounts': status_counts,
+        'priorityCounts': priority_counts,
+        '_itemSignatures': signatures,
+    }
+
+def record_daily_metrics(date_str=None):
+    date_str = date_str or datetime.now().date().isoformat()
+    with metrics_lock:
+        entries = read_metrics()
+        previous_metric = None
+        for metric in reversed(entries):
+            if metric.get('date') != date_str:
+                previous_metric = metric
+                break
+
+        metric = calculate_daily_metric(read_data().get('payload'), date_str, previous_metric)
+        entries = [entry for entry in entries if entry.get('date') != date_str]
+        entries.append(metric)
+        entries.sort(key=lambda entry: entry.get('date', ''))
+        write_metrics(entries)
+        return metric
+
+def ensure_today_metrics():
+    today = datetime.now().date().isoformat()
+    entries = read_metrics()
+    if not any(entry.get('date') == today for entry in entries):
+        record_daily_metrics(today)
+
+def _start_daily_metrics_task():
+    def _task():
+        ensure_today_metrics()
+        while True:
+            now = datetime.now()
+            next_midnight = (now + timedelta(days=1)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            time.sleep(max(1, (next_midnight - now).total_seconds()))
+            record_daily_metrics(next_midnight.date().isoformat())
+    t = threading.Thread(target=_task, daemon=True)
+    t.start()
 
 # ── 인증 헬퍼 ─────────────────────────────────────────────
 def check_admin_token():
@@ -180,7 +328,10 @@ def add_cors(response):
 
 @app.route('/api/data', methods=['OPTIONS'])
 @app.route('/api/auth', methods=['OPTIONS'])
+@app.route('/api/auth/status', methods=['OPTIONS'])
 @app.route('/api/log', methods=['OPTIONS'])
+@app.route('/api/metrics', methods=['OPTIONS'])
+@app.route('/api/metrics/snapshot', methods=['OPTIONS'])
 @app.route('/api/lock', methods=['OPTIONS'])
 @app.route('/api/unlock', methods=['OPTIONS'])
 @app.route('/api/set-editor-password', methods=['OPTIONS'])
@@ -213,6 +364,39 @@ def auth():
             save_tokens()
             return jsonify({'ok': True, 'token': token, 'role': 'admin'})
         return jsonify({'ok': False, 'error': '비밀번호가 올바르지 않습니다.'}), 401
+
+# ── GET /api/auth/status ─── 현재 토큰의 서버 기준 인증 상태 ─────────
+@app.route('/api/auth/status', methods=['GET'])
+def auth_status():
+    purge_expired_tokens()
+    now = int(time.time() * 1000)
+    admin_token = request.headers.get('X-Admin-Token', '')
+    editor_token = request.headers.get('X-Editor-Token', '')
+
+    admin_exp = admin_tokens.get(admin_token, 0) if admin_token else 0
+    if admin_exp > now:
+        return jsonify({
+            'ok': True,
+            'authenticated': True,
+            'role': 'admin',
+            'expiresAt': admin_exp,
+        })
+
+    editor_exp = editor_tokens.get(editor_token, 0) if editor_token else 0
+    if editor_exp > now:
+        return jsonify({
+            'ok': True,
+            'authenticated': True,
+            'role': 'editor',
+            'expiresAt': editor_exp,
+        })
+
+    return jsonify({
+        'ok': True,
+        'authenticated': False,
+        'role': 'anonymous',
+        'expiresAt': 0,
+    })
 
 # ── GET /api/data ─── 인증 없이 읽기 허용 ────────────────
 @app.route('/api/data', methods=['GET'])
@@ -263,6 +447,31 @@ def get_log():
     except (ValueError, TypeError):
         limit = 100
     return jsonify({'ok': True, 'entries': list(reversed(entries))[:limit]})
+
+@app.route('/api/metrics', methods=['GET'])
+def get_metrics():
+    try:
+        days = int(request.args.get('days', 30))
+        days = max(1, min(365, days))
+    except (ValueError, TypeError):
+        days = 30
+
+    entries = [metric_public(entry) for entry in read_metrics()]
+    return jsonify({'ok': True, 'metrics': entries[-days:]})
+
+@app.route('/api/metrics/snapshot', methods=['POST'])
+def post_metrics_snapshot():
+    if not check_editor_token():
+        return jsonify({'ok': False, 'error': 'Editor permission required'}), 403
+    body = request.get_json(silent=True) or {}
+    date_str = body.get('date') or datetime.now().date().isoformat()
+    try:
+        datetime.strptime(date_str, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'ok': False, 'error': 'Invalid date'}), 400
+
+    metric = record_daily_metrics(date_str)
+    return jsonify({'ok': True, 'metric': metric_public(metric)})
 
 # ── IP 마스킹 헬퍼 ─────────────────────────────────────────
 def mask_ip(ip: str) -> str:

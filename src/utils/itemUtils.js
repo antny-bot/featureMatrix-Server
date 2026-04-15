@@ -1,4 +1,7 @@
-import { MIGRATIONS, DATA_VERSION, FLABELS, DEFAULT_LIST_COLS } from '../app/constants.js';
+import { 
+  MIGRATIONS, DATA_VERSION, FLABELS, DEFAULT_LIST_COLS,
+  STATUS_KEY_MAP, STATUS_LBL, STATUS_OPTS
+} from '../app/constants.js';
 import { getStore } from '../store/useAppStore.js';
 
 /**
@@ -11,6 +14,54 @@ export function migrateItems(items, fromVersion = 1) {
     if (fn) result = result.map(fn);
   }
   return result;
+}
+
+export function migrateStatusValue(value) {
+  return STATUS_KEY_MAP[value] || value || '';
+}
+
+export function migrateStatusLabels(labels = {}) {
+  const source = labels || {};
+  return STATUS_OPTS.reduce((next, key) => {
+    const legacyKey = Object.keys(STATUS_KEY_MAP).find(oldKey => STATUS_KEY_MAP[oldKey] === key);
+    next[key] = source[key] ?? source[legacyKey] ?? STATUS_LBL[key];
+    return next;
+  }, {});
+}
+
+export function migrateFilters(filters = {}) {
+  const sourceStatuses = Array.isArray(filters.statuses) ? filters.statuses : [];
+  return {
+    ...filters,
+    statuses: sourceStatuses.map(migrateStatusValue).filter(Boolean),
+  };
+}
+
+export function migrateSettings(settings = {}) {
+  const sectionKeys = ['stats', 'insight', 'heatmap', 'metrics'];
+  const sourceSections = Array.isArray(settings.dbSections) ? settings.dbSections : [];
+  const dbSections = [
+    ...sourceSections.filter(section => sectionKeys.includes(section)),
+    ...sectionKeys.filter(section => !sourceSections.includes(section)),
+  ];
+  const dbSectionVisibility = sectionKeys.reduce((next, section) => {
+    next[section] = settings.dbSectionVisibility?.[section] !== false;
+    return next;
+  }, {});
+
+  return {
+    ...settings,
+    dbSections,
+    dbSectionVisibility,
+    statusLabels: migrateStatusLabels(settings.statusLabels),
+  };
+}
+
+export function migrateChangeLog(changeLog = []) {
+  return changeLog.map(entry => ({
+    ...entry,
+    status: migrateStatusValue(entry.status),
+  }));
 }
 
 export function genKey() {

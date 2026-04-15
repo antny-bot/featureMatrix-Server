@@ -1,41 +1,45 @@
-# Data & Config (자동 생성되는 파일 무시)
+# VCS and platform metadata
+.git/
+.github/
+
+# Local agent/editor metadata
+.claude/
+.vscode/
+.idea/
+
+# Runtime data and local config
+.env
+data/
 config.json
 data.json
 featureMatrix-server/config.json
 featureMatrix-server/data.json
-featureMatrix-server/tokens.json
-featureMatrix-server/activity.json
-
-src/dist
-data
-.env
-featureMatrix-server/__pycache__
-featureMatrix-server/*.pyc
-featureMatrix-server/static/index.html
-featureMatrix-server/config.json
-featureMatrix-server/data.json
 featureMatrix-server/activity.json
 featureMatrix-server/tokens.json
 
-
-# Python
-__pycache__/
-*.py[cod]
-
-# Node & OS
-node_modules/
-src/node_modules
-.DS_Store
-
-# 빌드 아티팩트
+# Build artifacts and generated frontend output
 src/dist/
-
-# Review/build outputs managed from src/
 src/dist/**
 featureMatrix-server/static/index.html
-featureMatrix-server/static/fonts/*.woff2
-src/package-lock.json
 
-# Runtime/generated data
-featureMatrix-server/activity.json
-featureMatrix-server/tokens.json
+# Dependencies and generated lock/cache files that agents rarely need to read
+node_modules/
+src/node_modules/
+src/package-lock.json
+__pycache__/
+featureMatrix-server/__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Binary/static assets
+featureMatrix-server/static/fonts/*.woff2
+
+# Agent scratch/planning outputs
+scratch*.js
+*_migration.js
+implementation.md
+docs/*plan*.md
+
+# OS noise
+.DS_Store
+Thumbs.db

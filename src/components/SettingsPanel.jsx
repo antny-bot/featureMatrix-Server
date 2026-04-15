@@ -5,6 +5,7 @@ import { useDBSync } from '../hooks/useDBSync.js';
 import { useModals } from '../hooks/useModals.js';
 import { applyVars } from '../app/theme.js';
 import { DEMO, DEFAULT_LIST_COLS, STATUS_OPTS } from '../app/constants.js';
+import { migrateSettings } from '../utils/itemUtils.js';
 import ActivityLogPanel from './ActivityLogPanel.jsx';
 import DashboardSectionOrder from './DashboardSectionOrder.jsx';
 import SettingsColumnsPanel from './SettingsColumnsPanel.jsx';
@@ -75,7 +76,7 @@ export default function SettingsPanel() {
     reader.onload = e => {
       try {
         const data = JSON.parse(e.target.result);
-        if (data.settings) store.setSettings({ ...store.settings, ...data.settings });
+        if (data.settings) store.setSettings(migrateSettings({ ...store.settings, ...data.settings }));
         if (data.display) store.setDisplay({ ...store.display, ...data.display });
         applyVars();
         persistSettings();

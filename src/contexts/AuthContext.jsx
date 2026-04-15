@@ -30,6 +30,10 @@ function readAuth() {
   return { adminFlag, editorFlag, serverMode };
 }
 
+function hasStoredAuth() {
+  return !!(sessionStorage.getItem(ADMIN_TOKEN_KEY) || sessionStorage.getItem(EDITOR_TOKEN_KEY));
+}
+
 const AuthContext = createContext({
   isAdmin:      false,
   isEditor:     false,
@@ -59,6 +63,39 @@ export function getEditorToken() {
 
 export function updateAdminUI() {
   authRefresh?.();
+}
+
+function clearAuthSession(notifyUser = false) {
+  const hadAuth = hasStoredAuth();
+  unregisterActiveUser();
+  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+  sessionStorage.removeItem(EDITOR_TOKEN_KEY);
+  updateAdminUI();
+  registerActiveUser();
+  if (notifyUser && hadAuth) {
+    notify('세션이 만료되었습니다. 다시 로그인해 주세요.', 'warning');
+  }
+}
+
+export async function validateAuthSession({ notifyUser = false } = {}) {
+  if (!hasStoredAuth()) return true;
+
+  try {
+    const json = await apiFetch('/api/auth/status');
+    if (!json.authenticated) {
+      clearAuthSession(notifyUser);
+      return false;
+    }
+
+    const adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+    if (adminToken && json.role !== 'admin') {
+      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+      updateAdminUI();
+    }
+    return true;
+  } catch (e) {
+    return true;
+  }
 }
 
 export function openLoginModal(role = 'editor', callback = null) {
@@ -110,10 +147,7 @@ export async function submitLogin() {
 }
 
 export function logout() {
-  unregisterActiveUser();
-  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-  sessionStorage.removeItem(EDITOR_TOKEN_KEY);
-  updateAdminUI();
+  clearAuthSession(false);
   notify('로그아웃됐습니다.', 'success');
 }
 
@@ -154,6 +188,27 @@ export function AuthProvider({ children }) {
       if (authRefresh === refresh) authRefresh = null;
     };
   }, [refresh]);
+
+  useEffect(() => {
+    if (!auth.isServerMode) return undefined;
+
+    validateAuthSession({ notifyUser: true });
+    const intervalId = setInterval(() => {
+      validateAuthSession({ notifyUser: true });
+    }, 60 * 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        validateAuthSession({ notifyUser: true });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [auth.isServerMode]);
 
   return (
     <AuthContext.Provider value={{ ...auth, refresh, logout, openLoginModal }}>

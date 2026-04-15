@@ -1,3 +1,7 @@
+---
+version: 3.0.0
+---
+
 # featureMatrix-ServerAdmin Implementation Guide
 
 이 문서는 개발자용 구조 문서다. 현재 코드 기준으로 프런트엔드, 서버, 저장 방식, 빌드 흐름을 빠르게 파악할 수 있도록 정리한다.

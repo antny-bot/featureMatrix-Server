@@ -3,12 +3,26 @@ import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from '../hooks/useDBSync.js';
 
 const SECTION_LABELS = {
-  stats: '스탯 카드 4개',
-  insight: '그룹 진척도 · 담당자 · 타임라인',
-  heatmap: '히트맵',
+  stats: '스탯 카드',
+  insight: '그룹 진척도 · 담당별 현황',
+  heatmap: '기능 분포 히트맵',
+  metrics: '일별 리포트',
 };
 
-const DEFAULT_SECTIONS = ['stats', 'insight', 'heatmap'];
+const DEFAULT_SECTIONS = ['stats', 'insight', 'heatmap', 'metrics'];
+
+function normalizeSections(sections) {
+  const source = Array.isArray(sections) ? sections : [];
+  const known = source.filter(section => DEFAULT_SECTIONS.includes(section));
+  return [
+    ...known,
+    ...DEFAULT_SECTIONS.filter(section => !known.includes(section)),
+  ];
+}
+
+function isSectionVisible(visibility, section) {
+  return visibility?.[section] !== false;
+}
 
 function moveItem(list, fromIndex, toIndex) {
   if (fromIndex === toIndex || fromIndex == null) return list;
@@ -20,15 +34,17 @@ function moveItem(list, fromIndex, toIndex) {
 
 export default function DashboardSectionOrder() {
   const store = useAppStore();
-  const sections = store.settings.dbSections || DEFAULT_SECTIONS;
+  const sections = normalizeSections(store.settings.dbSections);
+  const visibility = store.settings.dbSectionVisibility || {};
   const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
-  
+
   const [dragIndex, setDragIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
-  const persistSections = async (newSections) => {
+  const persistSettings = async (patch) => {
+    const nextSettings = { ...store.settings, ...patch };
     store.pushUndo();
-    store.setSettings({ ...store.settings, dbSections: newSections });
+    store.setSettings(nextSettings);
     if (store.settings.storageMode === 'server') {
       const ok = await saveToServer();
       if (ok) broadcastSharedData();
@@ -40,65 +56,89 @@ export default function DashboardSectionOrder() {
   const moveSection = (index, direction) => {
     const nextIndex = index + direction;
     if (nextIndex < 0 || nextIndex >= sections.length) return;
-    persistSections(moveItem(sections, index, nextIndex));
+    persistSettings({ dbSections: moveItem(sections, index, nextIndex) });
+  };
+
+  const toggleSection = (section) => {
+    persistSettings({
+      dbSections: sections,
+      dbSectionVisibility: {
+        ...visibility,
+        [section]: !isSectionVisible(visibility, section),
+      },
+    });
   };
 
   const dropSection = toIndex => {
     if (dragIndex == null || dragIndex === toIndex) return;
-    persistSections(moveItem(sections, dragIndex, toIndex));
+    persistSettings({ dbSections: moveItem(sections, dragIndex, toIndex) });
     setDragIndex(null);
     setDragOverIndex(null);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-      {sections.map((section, index) => (
-        <div
-          className="db-sec-row"
-          draggable
-          data-idx={index}
-          key={section}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 10px',
-            background: 'var(--surface-2)',
-            borderRadius: '7px',
-            border: '1px solid var(--border)',
-            cursor: 'grab',
-            transition: 'opacity .15s,box-shadow .15s',
-            opacity: dragIndex === index ? 0.4 : undefined,
-            boxShadow: dragOverIndex === index && dragIndex !== index
-              ? (dragIndex < index ? '0 3px 0 var(--accent)' : '0 -3px 0 var(--accent)')
-              : undefined,
-          }}
-          onDragStart={event => {
-            setDragIndex(index);
-            event.dataTransfer.effectAllowed = 'move';
-          }}
-          onDragOver={event => {
-            event.preventDefault();
-            event.dataTransfer.dropEffect = 'move';
-            setDragOverIndex(index);
-          }}
-          onDragLeave={() => setDragOverIndex(null)}
-          onDrop={event => {
-            event.preventDefault();
-            dropSection(index);
-          }}
-          onDragEnd={() => {
-            setDragIndex(null);
-            setDragOverIndex(null);
-          }}
-        >
-          <span style={{ fontSize: '.85rem', color: 'var(--text-3)', cursor: 'grab', padding: '0 2px' }} title="드래그로 순서 변경">⠿</span>
-          <span style={{ fontSize: '.75rem', color: 'var(--text-3)', fontWeight: 700, width: '16px' }}>{index + 1}</span>
-          <span style={{ flex: 1, fontSize: '.8rem', fontWeight: 600, color: 'var(--text)' }}>{SECTION_LABELS[section] || section}</span>
-          <button className="btn btn-g btn-sm" style={{ width: '24px', height: '24px', padding: 0, fontSize: '.7rem' }} disabled={index === 0} onClick={() => moveSection(index, -1)}>▲</button>
-          <button className="btn btn-g btn-sm" style={{ width: '24px', height: '24px', padding: 0, fontSize: '.7rem' }} disabled={index === sections.length - 1} onClick={() => moveSection(index, 1)}>▼</button>
-        </div>
-      ))}
+      {sections.map((section, index) => {
+        const visible = isSectionVisible(visibility, section);
+        return (
+          <div
+            className="db-sec-row"
+            draggable
+            data-idx={index}
+            key={section}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '7px 10px',
+              background: 'var(--surface-2)',
+              borderRadius: '7px',
+              border: '1px solid var(--border)',
+              cursor: 'grab',
+              transition: 'opacity .15s,box-shadow .15s',
+              opacity: dragIndex === index ? 0.4 : visible ? undefined : 0.58,
+              boxShadow: dragOverIndex === index && dragIndex !== index
+                ? (dragIndex < index ? '0 3px 0 var(--accent)' : '0 -3px 0 var(--accent)')
+                : undefined,
+            }}
+            onDragStart={event => {
+              setDragIndex(index);
+              event.dataTransfer.effectAllowed = 'move';
+            }}
+            onDragOver={event => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+              setDragOverIndex(index);
+            }}
+            onDragLeave={() => setDragOverIndex(null)}
+            onDrop={event => {
+              event.preventDefault();
+              dropSection(index);
+            }}
+            onDragEnd={() => {
+              setDragIndex(null);
+              setDragOverIndex(null);
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={visible}
+              aria-label={`${SECTION_LABELS[section] || section} 표시`}
+              onChange={() => toggleSection(section)}
+              onClick={event => event.stopPropagation()}
+              onPointerDown={event => event.stopPropagation()}
+            />
+            <span style={{ fontSize: '.85rem', color: 'var(--text-3)', cursor: 'grab', padding: '0 2px' }} title="드래그로 순서 변경">☰</span>
+            <span style={{ fontSize: '.75rem', color: 'var(--text-3)', fontWeight: 700, width: '16px' }}>{index + 1}</span>
+            <span style={{ flex: 1, fontSize: '.8rem', fontWeight: 600, color: 'var(--text)' }}>{SECTION_LABELS[section] || section}</span>
+            <span style={{ fontSize: '.68rem', color: visible ? 'var(--success)' : 'var(--text-3)', minWidth: '34px', textAlign: 'right' }}>
+              {visible ? '표시' : '숨김'}
+            </span>
+            <button className="btn btn-g btn-sm" style={{ width: '24px', height: '24px', padding: 0, fontSize: '.7rem' }} disabled={index === 0} onClick={() => moveSection(index, -1)}>↑</button>
+            <button className="btn btn-g btn-sm" style={{ width: '24px', height: '24px', padding: 0, fontSize: '.7rem' }} disabled={index === sections.length - 1} onClick={() => moveSection(index, 1)}>↓</button>
+          </div>
+        );
+      })}
     </div>
   );
 }
