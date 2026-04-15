@@ -1,19 +1,20 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAppStore, getStore } from '../store/useAppStore.js';
 import { apiFetch } from '../utils/api.js';
-import { migrateItems } from '../utils/itemUtils.js';
+import { migrateChangeLog, migrateItems, migrateSettings } from '../utils/itemUtils.js';
 import { ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY, SK, DATA_VERSION } from '../app/constants.js';
 import { initSocket, disconnectSocket, isSocketConnected, emitDataSave, emitLock, emitUnlock, releaseLocalLock } from '../app/socket.js';
 
 /* 서버에 저장할 settings 키 목록 */
 const SHARED_SETTINGS = [
-  'title','subtitle','groupOrder','catOrder','dbHeroName','dbSections',
+  'title','subtitle','groupOrder','catOrder','dbHeroName','dbSections','dbSectionVisibility',
   'priorityStyles','customColors','matrixWidth','cellFold',
   'colW','catW','subCatW','cardRadius','cardGap','changeLogMax',
   'statusLabels',
 ];
 
-export function useDBSync() {
+export function useDBSync(options = {}) {
+  const { enableConnection = false } = options;
   const store = useAppStore();
   const pollTimerRef = useRef(null);
 
@@ -31,6 +32,7 @@ export function useDBSync() {
       changeLog: current.changeLog,
       display: current.display,
       filters: current.filters,
+      dataVersion: DATA_VERSION,
       local: {
         baseFont: current.settings.baseFont,
         cardFont: current.settings.cardFont,
@@ -38,6 +40,8 @@ export function useDBSync() {
         panelPos: current.settings.panelPos,
         panelVisible: current.settings.panelVisible,
         listColumns: current.settings.listColumns,
+        dbSections: current.settings.dbSections,
+        dbSectionVisibility: current.settings.dbSectionVisibility,
         storageMode: current.settings.storageMode,
         serverUrl: current.settings.serverUrl,
         pollInterval: current.settings.pollInterval,
@@ -60,11 +64,12 @@ export function useDBSync() {
     if (!d) return;
     const current = getStore();
     if (d.items) store.setItems(migrateItems(d.items, d.dataVersion || 1));
-    if (Array.isArray(d.changeLog)) store.setChangeLog(d.changeLog);
+    if (Array.isArray(d.changeLog)) store.setChangeLog(migrateChangeLog(d.changeLog));
     if (d.settings) {
       const nextSettings = { ...current.settings };
+      const migratedSettings = migrateSettings(d.settings);
       SHARED_SETTINGS.forEach(k => {
-        if (d.settings[k] !== undefined) nextSettings[k] = d.settings[k];
+        if (migratedSettings[k] !== undefined) nextSettings[k] = migratedSettings[k];
       });
       store.setSettings(nextSettings);
     }
@@ -114,24 +119,25 @@ export function useDBSync() {
   }, [store, saveLocal, applyServerPayload]);
 
   const pollServer = useCallback(async () => {
+    const current = getStore();
     try {
       const json = await apiFetch('/api/ping');
-      store.setServerStatus('ok');
+      current.setServerStatus('ok');
       
       if (!isSocketConnected() && json.locks) {
-        store.updateLocks(json.locks);
+        current.updateLocks(json.locks);
       }
 
-      if (!isSocketConnected() && json.serverTs > store.serverTs) {
+      if (!isSocketConnected() && json.serverTs > current.serverTs) {
         const editor = json.lastEditor || '누군가';
-        store.setBanner(true, `⚠ ${editor}님이 데이터를 변경했습니다.`);
+        current.setBanner(true, `⚠ ${editor}님이 데이터를 변경했습니다.`);
       }
       return json;
     } catch(e) {
-      store.setServerStatus('error');
+      current.setServerStatus('error');
       return null;
     }
-  }, [store, isSocketConnected]);
+  }, []);
 
   const lockItem = useCallback((key) => {
     if (store.settings.storageMode !== 'server' || !key) return;
@@ -166,6 +172,8 @@ export function useDBSync() {
   }, [store.settings.storageMode, store.settings.userName]);
 
   useEffect(() => {
+    if (!enableConnection) return undefined;
+
     if (store.settings.storageMode === 'server') {
       initSocket();
     } else {
@@ -181,7 +189,7 @@ export function useDBSync() {
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  }, [store.settings.storageMode, store.settings.pollInterval, pollServer]);
+  }, [enableConnection, store.settings.storageMode, store.settings.pollInterval]);
 
 
 

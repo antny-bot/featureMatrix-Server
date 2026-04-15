@@ -12,10 +12,11 @@ import { getStore, useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
 import { DEMO, SK } from '../app/constants.js';
 import { applyVars } from '../app/theme.js';
+import { migrateChangeLog, migrateFilters, migrateItems, migrateSettings } from '../utils/itemUtils.js';
 
 export default function App() {
   const store = useAppStore();
-  const { loadFromServer, saveLocal, logActivity, unlockItem, saveToServer, broadcastSharedData } = useDBSync();
+  const { loadFromServer, saveLocal, logActivity, unlockItem, saveToServer, broadcastSharedData } = useDBSync({ enableConnection: true });
   const { closeModal, closeEditModal, openModal, openAddModal } = useModals();
 
   // 단축키 액션 정의
@@ -57,16 +58,29 @@ export default function App() {
       if (raw) {
         try {
           const d = JSON.parse(raw);
+          if (d.items) store.setItems(migrateItems(d.items, d.dataVersion || 1));
+          if (Array.isArray(d.changeLog)) store.setChangeLog(migrateChangeLog(d.changeLog));
+          if (d.filters) store.setFilters(migrateFilters({ ...getStore().filters, ...d.filters }));
+          if (d.display) store.setDisplay({ ...getStore().display, ...d.display });
           if (d.local) {
             const nextSettings = { 
               ...initialSettings,
-              storageMode: d.local.storageMode,
-              serverUrl: d.local.serverUrl,
-              userName: d.local.userName,
+              baseFont: d.local.baseFont ?? initialSettings.baseFont,
+              cardFont: d.local.cardFont ?? initialSettings.cardFont,
+              dbSections: d.local.dbSections || initialSettings.dbSections,
+              dbSectionVisibility: d.local.dbSectionVisibility || initialSettings.dbSectionVisibility,
+              listColumns: d.local.listColumns || initialSettings.listColumns,
+              panelPos: d.local.panelPos || initialSettings.panelPos,
+              panelVisible: d.local.panelVisible ?? initialSettings.panelVisible,
+              pollInterval: d.local.pollInterval ?? initialSettings.pollInterval,
+              storageMode: d.local.storageMode || initialSettings.storageMode,
+              serverUrl: d.local.serverUrl || initialSettings.serverUrl,
+              userName: d.local.userName || initialSettings.userName,
               themeId: d.local.themeId || initialSettings.themeId,
             };
-            store.setSettings(nextSettings);
-            initialSettings = nextSettings;
+            const migratedSettings = migrateSettings(nextSettings);
+            store.setSettings(migratedSettings);
+            initialSettings = migratedSettings;
           }
         } catch (e) {}
       }

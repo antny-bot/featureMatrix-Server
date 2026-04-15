@@ -52,7 +52,7 @@ export default function OverlayMenus() {
 
       {statusMenu && (
         <div className="status-quick-menu" style={{ left: statusMenu.x, top: statusMenu.y }} onClick={e => e.stopPropagation()}>
-          {[['', '— 없음'], ...STATUS_OPTS.map(s => [s, s])].map(([value, label]) => (
+          {[['', '— 없음'], ...STATUS_OPTS.map(s => [s, store.settings.statusLabels?.[s] || s])].map(([value, label]) => (
             <button
               className={`status-quick-item${statusMenu.currentStatus === value ? ' on' : ''}`}
               key={value || 'none'}

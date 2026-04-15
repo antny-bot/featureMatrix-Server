@@ -1,4 +1,6 @@
-# Data & Config (자동 생성되는 파일 무시)
+# Runtime data and local config
+.env
+data/
 config.json
 data.json
 featureMatrix-server/config.json
@@ -6,13 +8,28 @@ featureMatrix-server/data.json
 featureMatrix-server/tokens.json
 featureMatrix-server/activity.json
 
+# Build artifacts
+src/dist/
+featureMatrix-server/static/index.html
+
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
-# Node & OS
+# Node and package managers
 node_modules/
-.DS_Store
+src/node_modules/
+.npm/
 
-# 빌드 아티팩트
-src/dist/
+# Agent scratch/planning outputs
+scratch*.js
+*_migration.js
+implementation.md
+docs/*plan*.md
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

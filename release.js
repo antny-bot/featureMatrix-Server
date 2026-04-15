@@ -32,10 +32,12 @@
  *  1. 버전 형식 검증 (x.y.z 형태인지)
  *  2. main 브랜치 여부 확인
  *  3. 커밋 안 된 변경사항 있으면 차단
- *  4. 태그 중복 확인
- *  5. VERSION 파일 수정
- *  6. git commit + push
- *  7. git tag v{version} + push → GitHub Actions 트리거
+ *  4. 현재 VERSION 확인
+ *  5. 태그 중복 확인
+ *  6. VERSION 파일 수정
+ *  7. README.md, implementation.md 버전 정보 동기화
+ *  8. git commit + push
+ *  9. git tag v{version} + push → GitHub Actions 트리거
  *     ├─ Docker 이미지 빌드 → GHCR (latest, x.y.z, x.y, x)
  *     └─ GitHub Releases 페이지 자동 생성
  * ─────────────────────────────────────────────────
@@ -54,6 +56,34 @@ function run(cmd, silent = false) {
 function fail(msg) {
   console.error(`\n❌ ${msg}\n`);
   process.exit(1);
+}
+
+function syncMarkdownFrontMatterVersion(filePath, version) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const lineBreak = content.includes('\r\n') ? '\r\n' : '\n';
+  const versionLine = `version: ${version}`;
+  let updated;
+
+  if (content.startsWith(`---${lineBreak}`)) {
+    const closingMarker = `${lineBreak}---${lineBreak}`;
+    const closingIndex = content.indexOf(closingMarker, lineBreak.length);
+
+    if (closingIndex === -1) {
+      fail(`${path.basename(filePath)}의 front matter 닫힘 표시를 찾지 못했습니다.`);
+    }
+
+    const frontMatter = content.slice(0, closingIndex);
+    const body = content.slice(closingIndex);
+    const nextFrontMatter = /^version:\s*\d+\.\d+\.\d+$/m.test(frontMatter)
+      ? frontMatter.replace(/^version:\s*\d+\.\d+\.\d+$/m, versionLine)
+      : `${frontMatter}${lineBreak}${versionLine}`;
+
+    updated = `${nextFrontMatter}${body}`;
+  } else {
+    updated = `---${lineBreak}${versionLine}${lineBreak}---${lineBreak}${lineBreak}${content}`;
+  }
+
+  fs.writeFileSync(filePath, updated, 'utf8');
 }
 
 /* ── 1. 버전 인자 검증 ── */
@@ -93,13 +123,18 @@ console.log(`
 console.log('📝 VERSION 파일 업데이트...');
 fs.writeFileSync(versionFile, `${newVersion}\n`, 'utf8');
 
-/* ── 7. git commit + push ── */
+/* ── 7. 문서 버전 정보 동기화 ── */
+console.log('📝 README.md, implementation.md 버전 정보 동기화...');
+syncMarkdownFrontMatterVersion(path.join(__dirname, 'README.md'), newVersion);
+syncMarkdownFrontMatterVersion(path.join(__dirname, 'implementation.md'), newVersion);
+
+/* ── 8. git commit + push ── */
 console.log('\n📦 커밋 및 push...');
-run(`git add VERSION`);
+run(`git add VERSION README.md implementation.md`);
 run(`git commit -m "chore: bump version to ${newVersion}"`);
 run(`git push origin main`);
 
-/* ── 8. git tag + push → GitHub Actions 트리거 ── */
+/* ── 9. git tag + push → GitHub Actions 트리거 ── */
 console.log('\n🏷️  태그 생성 및 push...');
 run(`git tag v${newVersion}`);
 run(`git push origin v${newVersion}`);

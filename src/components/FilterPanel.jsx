@@ -52,7 +52,7 @@ function Toggle({ id, label, checked = false, onChange }) {
   );
 }
 
-function PriorityChips() {
+function PriorityChips({ onPersist }) {
   const store = useAppStore();
   const colors = getColors();
   const priorities = store.filters.priorities;
@@ -61,6 +61,7 @@ function PriorityChips() {
     store.pushUndo();
     const next = checked ? [...priorities, val] : priorities.filter(v => v !== val);
     store.setFilters({ ...store.filters, priorities: next });
+    onPersist();
   };
 
   return (
@@ -85,7 +86,7 @@ function PriorityChips() {
   );
 }
 
-function StatusChips() {
+function StatusChips({ onPersist }) {
   const store = useAppStore();
   const { items, filters } = store;
   const statuses = filters.statuses || [];
@@ -103,6 +104,7 @@ function StatusChips() {
     store.pushUndo();
     const next = checked ? [...statuses, status] : statuses.filter(s => s !== status);
     store.setFilters({ ...store.filters, statuses: next });
+    onPersist();
   };
 
   return (
@@ -125,7 +127,7 @@ function StatusChips() {
   );
 }
 
-function OwnerChips() {
+function OwnerChips({ onPersist }) {
   const store = useAppStore();
   const owners = store.filters.owners || [];
   const allOwners = getUniqSorted('owner', store.items);
@@ -135,6 +137,7 @@ function OwnerChips() {
     const norm = normOwner(owner);
     const next = checked ? [...owners, norm] : owners.filter(o => o !== norm);
     store.setFilters({ ...store.filters, owners: next });
+    onPersist();
   };
 
   return (
@@ -185,15 +188,18 @@ export default function FilterPanel() {
     store.pushUndo();
     setFilters({ priorities: [], statuses: [], showDeleted: false, importantOnly: false, owners: [] });
     setSearchQ('');
-  }, [store, setFilters, setSearchQ]);
+    saveLocal();
+  }, [store, setFilters, setSearchQ, saveLocal]);
 
   const updateFilter = (key, val) => {
     store.pushUndo();
     setFilters({ ...filters, [key]: val });
+    saveLocal();
   };
 
   const updateDisplay = (key, val) => {
     setDisplay({ ...display, [key]: val });
+    saveLocal();
   };
 
   return (
@@ -205,9 +211,9 @@ export default function FilterPanel() {
           <button className="btn btn-g btn-sm" onClick={resetFiltersAction} style={{ height: '20px', padding: '0 6px', fontSize: '.65rem' }}>초기화</button>
         </div>
 
-        <FilterSection title="우선순위"><PriorityChips /></FilterSection>
-        <FilterSection title="진행상태"><StatusChips /></FilterSection>
-        <FilterSection title="담당"><OwnerChips /></FilterSection>
+        <FilterSection title="우선순위"><PriorityChips onPersist={saveLocal} /></FilterSection>
+        <FilterSection title="진행상태"><StatusChips onPersist={saveLocal} /></FilterSection>
+        <FilterSection title="담당"><OwnerChips onPersist={saveLocal} /></FilterSection>
 
         <FilterSection title="표시 조건">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>

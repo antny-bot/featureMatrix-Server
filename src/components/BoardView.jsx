@@ -55,9 +55,9 @@ export default function BoardView() {
   const byCol = useMemo(() => {
     const map = Object.fromEntries(STATUS_OPTS.map(k => [k, []]));
     filteredItems.forEach(it => {
-      const st = it.status || '대기';
+      const st = it.status || 'backlog';
       if (map[st]) map[st].push(it);
-      else map['대기'].push(it);
+      else map.backlog.push(it);
     });
     return map;
   }, [filteredItems]);

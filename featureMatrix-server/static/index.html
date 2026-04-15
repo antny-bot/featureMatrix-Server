@@ -584,6 +584,32 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
   [data-theme="dark"] body{background:#fff!important;color:#000!important}
 }
 
+/* Daily metrics */
+.db-metrics-panel{overflow:hidden}
+.db-metric-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:700px){.db-metric-summary{grid-template-columns:1fr}}
+.db-metric-summary>div{border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.db-metric-label{font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.db-metric-summary strong{font-size:1.55rem;line-height:1;font-weight:900;color:var(--text)}
+.db-metric-summary span:last-child{font-size:.72rem;color:var(--text-3)}
+.db-metric-summary span.up{color:var(--danger)}
+.db-metric-summary span.down{color:var(--success)}
+.db-trend-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:end}
+@media(max-width:760px){.db-trend-grid{grid-template-columns:1fr}}
+.db-trend-chart svg{width:100%;height:120px;display:block;overflow:visible}
+.db-trend-chart line{stroke:var(--border-2);stroke-width:1}
+.db-trend-chart polyline{fill:none;stroke:var(--success);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.db-trend-chart circle{fill:var(--surface);stroke:var(--success);stroke-width:2}
+.db-trend-caption{font-size:.68rem;color:var(--text-3);margin-top:4px}
+.db-change-bars{height:120px;display:flex;align-items:end;gap:7px;border-bottom:1px solid var(--border-2);padding:0 2px 18px}
+.db-change-bar{position:relative;flex:1;min-width:12px;height:100%;display:flex;align-items:end;justify-content:center}
+.db-change-total,.db-change-fill{position:absolute;bottom:0;width:100%;border-radius:5px 5px 0 0}
+.db-change-total{background:var(--surface-3)}
+.db-change-fill{background:var(--accent);max-width:70%}
+.db-change-bar em{position:absolute;bottom:-17px;font-size:.58rem;color:var(--text-3);font-style:normal;white-space:nowrap}
+.db-status-strip{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:18px}
+.db-status-strip span{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--text-2)}
+.db-status-strip i{width:7px;height:7px;border-radius:50%;display:inline-block}
 
 </style>
 <!-- #5 KaTeX (수식 렌더링) -->
@@ -13380,13 +13406,17 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   var UNDO_MAX = 20;
   var ADMIN_TOKEN_KEY = "fmAdminToken";
   var EDITOR_TOKEN_KEY = "fmEditorToken";
-  var DATA_VERSION = 2;
+  var DATA_VERSION = 3;
   var MIGRATIONS = {
     1: (item) => ({
       ...item,
       mdContent: item.mdContent ?? "",
       status: item.status ?? "",
       updatedAt: item.updatedAt ?? 0
+    }),
+    2: (item) => ({
+      ...item,
+      status: STATUS_KEY_MAP[item.status] || item.status || ""
     })
   };
   var FIELDS = [
@@ -13427,21 +13457,29 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     mdPath: "MD\uACBD\uB85C",
     mdContent: "MD\uB0B4\uC6A9"
   };
-  var STATUS_OPTS = ["\uB300\uAE30", "\uC2DC\uC791\uAC00\uB2A5", "\uC9C4\uD589\uC911", "\uAC80\uD1A0\uC911", "\uC644\uB8CC"];
-  var STATUS_CLS = { \uB300\uAE30: "status-backlog", \uC2DC\uC791\uAC00\uB2A5: "status-ready", \uC9C4\uD589\uC911: "status-progress", \uAC80\uD1A0\uC911: "status-review", \uC644\uB8CC: "status-done" };
+  var STATUS_KEY_MAP = {
+    "\uB300\uAE30": "backlog",
+    "\uC2DC\uC791\uAC00\uB2A5": "ready",
+    "\uC9C4\uD589\uC911": "progress",
+    "\uAC80\uD1A0\uC911": "review",
+    "\uC644\uB8CC": "done"
+  };
+  var STATUS_OPTS = ["backlog", "ready", "progress", "review", "done"];
+  var STATUS_CLS = { backlog: "status-backlog", ready: "status-ready", progress: "status-progress", review: "status-review", done: "status-done" };
+  var STATUS_LBL = { backlog: "\uB300\uAE30", ready: "\uC2DC\uC791\uAC00\uB2A5", progress: "\uC9C4\uD589\uC911", review: "\uAC80\uD1A0\uC911", done: "\uC644\uB8CC" };
   var STATUS_ACCENT = {
-    "\uB300\uAE30": "var(--text-3)",
-    "\uC2DC\uC791\uAC00\uB2A5": "#7C3AED",
-    "\uC9C4\uD589\uC911": "var(--accent)",
-    "\uAC80\uD1A0\uC911": "#D97706",
-    "\uC644\uB8CC": "var(--success)"
+    backlog: "var(--text-3)",
+    ready: "#7C3AED",
+    progress: "var(--accent)",
+    review: "#D97706",
+    done: "var(--success)"
   };
   var STATUS_CHIP_COLORS = {
-    "\uB300\uAE30": { col: "#6B7280", bg: "#F3F4F6" },
-    "\uC2DC\uC791\uAC00\uB2A5": { col: "#7C3AED", bg: "#F5F3FF" },
-    "\uC9C4\uD589\uC911": { col: "#2563A8", bg: "#EBF2FB" },
-    "\uAC80\uD1A0\uC911": { col: "#D97706", bg: "#FFF7ED" },
-    "\uC644\uB8CC": { col: "#1D7A4F", bg: "#EAF5EF" }
+    backlog: { col: "#6B7280", bg: "#F3F4F6" },
+    ready: { col: "#7C3AED", bg: "#F5F3FF" },
+    progress: { col: "#2563A8", bg: "#EBF2FB" },
+    review: { col: "#D97706", bg: "#FFF7ED" },
+    done: { col: "#1D7A4F", bg: "#EAF5EF" }
   };
   var DEFAULT_LIST_COLS = [
     { key: "key", visible: true },
@@ -17212,12 +17250,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     },
     display: {
       showOwner: true,
-      showStar: true,
-      showNewBadge: true,
-      showCellCount: true,
+      showStar: false,
+      showNewBadge: false,
+      showCellCount: false,
       showUpdated: false,
       showStatus: true,
-      showMdBadge: true,
+      showMdBadge: false,
       showQuickAdd: false
     },
     settings: {
@@ -17241,20 +17279,15 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       groupOrder: [],
       catOrder: [],
       dbHeroName: "",
-      dbSections: ["stats", "insight", "heatmap"],
+      dbSections: ["stats", "insight", "heatmap", "metrics"],
+      dbSectionVisibility: { stats: true, insight: true, heatmap: true, metrics: true },
       changeLogMax: 50,
       boardFoldCount: 6,
       storageMode: "server",
       serverUrl: "",
       pollInterval: 60,
       userName: "",
-      statusLabels: {
-        "\uB300\uAE30": "\uB300\uAE30",
-        "\uC2DC\uC791\uAC00\uB2A5": "\uC2DC\uC791\uAC00\uB2A5",
-        "\uC9C4\uD589\uC911": "\uC9C4\uD589\uC911",
-        "\uAC80\uD1A0\uC911": "\uAC80\uD1A0\uC911",
-        "\uC644\uB8CC": "\uC644\uB8CC"
-      }
+      statusLabels: { ...STATUS_LBL }
     },
     sort: { key: "key", dir: "asc" },
     mxSelectionKeys: [],
@@ -17405,6 +17438,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             groupOrder: [...settings.groupOrder || []],
             catOrder: [...settings.catOrder || []],
             dbSections: [...settings.dbSections || []],
+            dbSectionVisibility: { ...settings.dbSectionVisibility || {} },
             listColumns: JSON.parse(JSON.stringify(settings.listColumns || []))
           };
           const next = [...undoStack, JSON.stringify(snapshot)];
@@ -17422,6 +17456,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             groupOrder: snapshot.groupOrder,
             catOrder: snapshot.catOrder,
             dbSections: snapshot.dbSections,
+            dbSectionVisibility: snapshot.dbSectionVisibility || settings.dbSectionVisibility,
             listColumns: snapshot.listColumns
           };
           set({
@@ -17494,6 +17529,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return !!(sessionStorage.getItem(ADMIN_TOKEN_KEY) || sessionStorage.getItem(EDITOR_TOKEN_KEY));
   }
   function _currentUserName() {
+    if (!_hasAuthToken()) return "\uC775\uBA85";
     return getStore().settings?.userName || "\uC775\uBA85";
   }
   function _clientId() {
@@ -17510,13 +17546,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
   function _syncActiveUser() {
     if (!_socket?.connected) return;
-    if (_hasAuthToken()) {
-      _socket.emit("register_user", { user: _currentUserName(), clientId: _clientId() });
-      _socket.emit("get_active_users");
-    } else {
-      _socket.emit("unregister_user", { clientId: _clientId() });
-      setStore({ activeUsers: [] });
-    }
+    _socket.emit("register_user", { user: _currentUserName(), clientId: _clientId() });
+    _socket.emit("get_active_users");
   }
   function _setActiveUsers(users) {
     const ownSid = _socket?.id;
@@ -17694,6 +17725,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const editorFlag = !serverMode || !!(editorToken || adminToken);
     return { adminFlag, editorFlag, serverMode };
   }
+  function hasStoredAuth() {
+    return !!(sessionStorage.getItem(ADMIN_TOKEN_KEY) || sessionStorage.getItem(EDITOR_TOKEN_KEY));
+  }
   var AuthContext = (0, import_react2.createContext)({
     isAdmin: false,
     isEditor: false,
@@ -17715,6 +17749,35 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
   function updateAdminUI() {
     authRefresh?.();
+  }
+  function clearAuthSession(notifyUser = false) {
+    const hadAuth = hasStoredAuth();
+    unregisterActiveUser();
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(EDITOR_TOKEN_KEY);
+    updateAdminUI();
+    registerActiveUser();
+    if (notifyUser && hadAuth) {
+      notify("\uC138\uC158\uC774 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.", "warning");
+    }
+  }
+  async function validateAuthSession({ notifyUser = false } = {}) {
+    if (!hasStoredAuth()) return true;
+    try {
+      const json = await apiFetch("/api/auth/status");
+      if (!json.authenticated) {
+        clearAuthSession(notifyUser);
+        return false;
+      }
+      const adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+      if (adminToken && json.role !== "admin") {
+        sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+        updateAdminUI();
+      }
+      return true;
+    } catch (e) {
+      return true;
+    }
   }
   function openLoginModal(role = "editor", callback = null) {
     const store = getStore();
@@ -17756,10 +17819,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }
   }
   function logout() {
-    unregisterActiveUser();
-    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-    sessionStorage.removeItem(EDITOR_TOKEN_KEY);
-    updateAdminUI();
+    clearAuthSession(false);
     notify("\uB85C\uADF8\uC544\uC6C3\uB410\uC2B5\uB2C8\uB2E4.", "success");
   }
   function requireAdmin(callback) {
@@ -17784,6 +17844,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         if (authRefresh === refresh) authRefresh = null;
       };
     }, [refresh]);
+    (0, import_react2.useEffect)(() => {
+      if (!auth.isServerMode) return void 0;
+      validateAuthSession({ notifyUser: true });
+      const intervalId = setInterval(() => {
+        validateAuthSession({ notifyUser: true });
+      }, 60 * 1e3);
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "visible") {
+          validateAuthSession({ notifyUser: true });
+        }
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () => {
+        clearInterval(intervalId);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      };
+    }, [auth.isServerMode]);
     return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthContext.Provider, { value: { ...auth, refresh, logout, openLoginModal }, children });
   }
   function useAuth() {
@@ -17906,6 +17983,48 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       if (fn) result = result.map(fn);
     }
     return result;
+  }
+  function migrateStatusValue(value2) {
+    return STATUS_KEY_MAP[value2] || value2 || "";
+  }
+  function migrateStatusLabels(labels = {}) {
+    const source = labels || {};
+    return STATUS_OPTS.reduce((next, key) => {
+      const legacyKey = Object.keys(STATUS_KEY_MAP).find((oldKey) => STATUS_KEY_MAP[oldKey] === key);
+      next[key] = source[key] ?? source[legacyKey] ?? STATUS_LBL[key];
+      return next;
+    }, {});
+  }
+  function migrateFilters(filters = {}) {
+    const sourceStatuses = Array.isArray(filters.statuses) ? filters.statuses : [];
+    return {
+      ...filters,
+      statuses: sourceStatuses.map(migrateStatusValue).filter(Boolean)
+    };
+  }
+  function migrateSettings(settings = {}) {
+    const sectionKeys = ["stats", "insight", "heatmap", "metrics"];
+    const sourceSections = Array.isArray(settings.dbSections) ? settings.dbSections : [];
+    const dbSections = [
+      ...sourceSections.filter((section) => sectionKeys.includes(section)),
+      ...sectionKeys.filter((section) => !sourceSections.includes(section))
+    ];
+    const dbSectionVisibility = sectionKeys.reduce((next, section) => {
+      next[section] = settings.dbSectionVisibility?.[section] !== false;
+      return next;
+    }, {});
+    return {
+      ...settings,
+      dbSections,
+      dbSectionVisibility,
+      statusLabels: migrateStatusLabels(settings.statusLabels)
+    };
+  }
+  function migrateChangeLog(changeLog = []) {
+    return changeLog.map((entry) => ({
+      ...entry,
+      status: migrateStatusValue(entry.status)
+    }));
   }
   function genKey() {
     let max = 0;
@@ -18189,6 +18308,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     "catOrder",
     "dbHeroName",
     "dbSections",
+    "dbSectionVisibility",
     "priorityStyles",
     "customColors",
     "matrixWidth",
@@ -18201,7 +18321,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     "changeLogMax",
     "statusLabels"
   ];
-  function useDBSync() {
+  function useDBSync(options = {}) {
+    const { enableConnection = false } = options;
     const store = useAppStore();
     const pollTimerRef = (0, import_react4.useRef)(null);
     const buildServerPayload = (0, import_react4.useCallback)(() => {
@@ -18219,6 +18340,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         changeLog: current.changeLog,
         display: current.display,
         filters: current.filters,
+        dataVersion: DATA_VERSION,
         local: {
           baseFont: current.settings.baseFont,
           cardFont: current.settings.cardFont,
@@ -18226,6 +18348,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           panelPos: current.settings.panelPos,
           panelVisible: current.settings.panelVisible,
           listColumns: current.settings.listColumns,
+          dbSections: current.settings.dbSections,
+          dbSectionVisibility: current.settings.dbSectionVisibility,
           storageMode: current.settings.storageMode,
           serverUrl: current.settings.serverUrl,
           pollInterval: current.settings.pollInterval,
@@ -18246,11 +18370,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       if (!d) return;
       const current = getStore();
       if (d.items) store.setItems(migrateItems(d.items, d.dataVersion || 1));
-      if (Array.isArray(d.changeLog)) store.setChangeLog(d.changeLog);
+      if (Array.isArray(d.changeLog)) store.setChangeLog(migrateChangeLog(d.changeLog));
       if (d.settings) {
         const nextSettings = { ...current.settings };
+        const migratedSettings = migrateSettings(d.settings);
         SHARED_SETTINGS.forEach((k) => {
-          if (d.settings[k] !== void 0) nextSettings[k] = d.settings[k];
+          if (migratedSettings[k] !== void 0) nextSettings[k] = migratedSettings[k];
         });
         store.setSettings(nextSettings);
       }
@@ -18297,22 +18422,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       }
     }, [store, saveLocal, applyServerPayload]);
     const pollServer = (0, import_react4.useCallback)(async () => {
+      const current = getStore();
       try {
         const json = await apiFetch("/api/ping");
-        store.setServerStatus("ok");
+        current.setServerStatus("ok");
         if (!isSocketConnected() && json.locks) {
-          store.updateLocks(json.locks);
+          current.updateLocks(json.locks);
         }
-        if (!isSocketConnected() && json.serverTs > store.serverTs) {
+        if (!isSocketConnected() && json.serverTs > current.serverTs) {
           const editor = json.lastEditor || "\uB204\uAD70\uAC00";
-          store.setBanner(true, `\u26A0 ${editor}\uB2D8\uC774 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.`);
+          current.setBanner(true, `\u26A0 ${editor}\uB2D8\uC774 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.`);
         }
         return json;
       } catch (e) {
-        store.setServerStatus("error");
+        current.setServerStatus("error");
         return null;
       }
-    }, [store, isSocketConnected]);
+    }, []);
     const lockItem = (0, import_react4.useCallback)((key) => {
       if (store.settings.storageMode !== "server" || !key) return;
       const user = store.settings.userName || "\uC775\uBA85";
@@ -18346,6 +18472,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       }
     }, [store.settings.storageMode, store.settings.userName]);
     (0, import_react4.useEffect)(() => {
+      if (!enableConnection) return void 0;
       if (store.settings.storageMode === "server") {
         initSocket();
       } else {
@@ -18359,7 +18486,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       return () => {
         if (pollTimerRef.current) clearInterval(pollTimerRef.current);
       };
-    }, [store.settings.storageMode, store.settings.pollInterval, pollServer]);
+    }, [enableConnection, store.settings.storageMode, store.settings.pollInterval]);
     return {
       saveToServer,
       loadFromServer,
@@ -18883,7 +19010,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tgl-lbl", children: label })
     ] });
   }
-  function PriorityChips() {
+  function PriorityChips({ onPersist }) {
     const store = useAppStore();
     const colors = getColors();
     const priorities = store.filters.priorities;
@@ -18891,6 +19018,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       store.pushUndo();
       const next = checked ? [...priorities, val] : priorities.filter((v) => v !== val);
       store.setFilters({ ...store.filters, priorities: next });
+      onPersist();
     };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "pchips", children: PRIORITY_CHIPS.map(({ val, pk }) => {
       const checked = priorities.includes(val);
@@ -18904,7 +19032,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       ] }, val);
     }) });
   }
-  function StatusChips() {
+  function StatusChips({ onPersist }) {
     const store = useAppStore();
     const { items, filters } = store;
     const statuses = filters.statuses || [];
@@ -18920,6 +19048,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       store.pushUndo();
       const next = checked ? [...statuses, status] : statuses.filter((s) => s !== status);
       store.setFilters({ ...store.filters, statuses: next });
+      onPersist();
     };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { display: "flex", flexWrap: "wrap", gap: "3px" }, children: STATUS_OPTS.map((status) => {
       const checked = statuses.includes(status);
@@ -18932,7 +19061,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       ] }, status);
     }) });
   }
-  function OwnerChips() {
+  function OwnerChips({ onPersist }) {
     const store = useAppStore();
     const owners = store.filters.owners || [];
     const allOwners = getUniqSorted("owner", store.items);
@@ -18941,6 +19070,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       const norm = normOwner(owner);
       const next = checked ? [...owners, norm] : owners.filter((o) => o !== norm);
       store.setFilters({ ...store.filters, owners: next });
+      onPersist();
     };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "owner-chips", children: allOwners.map((owner) => {
       const normalized = normOwner(owner);
@@ -18979,13 +19109,16 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       store.pushUndo();
       setFilters({ priorities: [], statuses: [], showDeleted: false, importantOnly: false, owners: [] });
       setSearchQ("");
-    }, [store, setFilters, setSearchQ]);
+      saveLocal();
+    }, [store, setFilters, setSearchQ, saveLocal]);
     const updateFilter = (key, val) => {
       store.pushUndo();
       setFilters({ ...filters, [key]: val });
+      saveLocal();
     };
     const updateDisplay = (key, val) => {
       setDisplay({ ...display, [key]: val });
+      saveLocal();
     };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("aside", { className: panelClassName, id: "fpanel", children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { className: "fpanel-toggle", onClick: togglePanel, title: "\uD544\uD130 \uD328\uB110 (F)", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(ToggleIcon, {}) }),
@@ -18994,9 +19127,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { style: { fontSize: ".64rem", fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--text-3)" }, children: "\uD544\uD130" }),
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { className: "btn btn-g btn-sm", onClick: resetFiltersAction, style: { height: "20px", padding: "0 6px", fontSize: ".65rem" }, children: "\uCD08\uAE30\uD654" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uC6B0\uC120\uC21C\uC704", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(PriorityChips, {}) }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uC9C4\uD589\uC0C1\uD0DC", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(StatusChips, {}) }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uB2F4\uB2F9", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(OwnerChips, {}) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uC6B0\uC120\uC21C\uC704", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(PriorityChips, { onPersist: saveLocal }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uC9C4\uD589\uC0C1\uD0DC", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(StatusChips, { onPersist: saveLocal }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uB2F4\uB2F9", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(OwnerChips, { onPersist: saveLocal }) }),
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uD45C\uC2DC \uC870\uAC74", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "7px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Toggle, { label: "\uC0AD\uC81C \uD3EC\uD568", checked: filters.showDeleted, onChange: (v) => updateFilter("showDeleted", v) }),
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Toggle, { label: "\uC911\uC694\uB9CC \uBCF4\uAE30", checked: filters.importantOnly, onChange: (v) => updateFilter("importantOnly", v) })
@@ -19151,9 +19284,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   // components/DashboardView.jsx
   var import_react10 = __toESM(require_react());
   var import_jsx_runtime7 = __toESM(require_jsx_runtime());
-  var SECTION_DEFAULTS = ["stats", "insight", "heatmap"];
+  var SECTION_DEFAULTS = ["stats", "insight", "heatmap", "metrics"];
   var SECTION_KEYS = new Set(SECTION_DEFAULTS);
   var LEGEND_OPACITY = [0.06, 0.3, 0.55, 0.8, 1];
+  function isSectionVisible(visibility, section) {
+    return visibility?.[section] !== false;
+  }
   function useCountUp(value2, duration = 1e3) {
     const [displayValue, setDisplayValue] = (0, import_react10.useState)(0);
     (0, import_react10.useEffect)(() => {
@@ -19186,6 +19322,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const { items, changeLog, settings, filters, searchQ } = store;
     const containerRef = (0, import_react10.useRef)(null);
     const [hmView, setHmView] = (0, import_react10.useState)("cat");
+    const [dailyMetrics, setDailyMetrics] = (0, import_react10.useState)([]);
+    const [metricsStatus, setMetricsStatus] = (0, import_react10.useState)("idle");
     const resetFilters = (0, import_react10.useCallback)(() => {
       store.setFilters({
         priorities: [],
@@ -19206,7 +19344,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       let done = 0;
       all.forEach((item) => {
         if (item.isImportant === "Y") imp += 1;
-        if (item.status === "\uC644\uB8CC") done += 1;
+        if (item.status === "done") done += 1;
         if (statusCount[item.status] !== void 0) statusCount[item.status] += 1;
         const owner = normOwner(item.owner);
         if (!ownerMap[owner]) {
@@ -19222,12 +19360,16 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       const groups = [...orderedGroups, ...allGroups.filter((group) => !orderedGroups.includes(group))];
       const orderedCats = settings.catOrder.filter((cat) => allCats.includes(cat));
       const cats = [...orderedCats, ...allCats.filter((cat) => !orderedCats.includes(cat))];
-      const sections = (settings.dbSections || SECTION_DEFAULTS).filter((section) => SECTION_KEYS.has(section));
+      const configuredSections = (settings.dbSections || SECTION_DEFAULTS).filter((section) => SECTION_KEYS.has(section));
+      const sections = [
+        ...configuredSections,
+        ...SECTION_DEFAULTS.filter((section) => !configuredSections.includes(section))
+      ].filter((section) => isSectionVisible(settings.dbSectionVisibility, section));
       const recent = (changeLog || []).slice().reverse().slice(0, settings.changeLogMax || 50);
       const owners = Object.entries(ownerMap).sort((a, b) => {
         if (b[1].total !== a[1].total) return b[1].total - a[1].total;
         if (b[1].high !== a[1].high) return b[1].high - a[1].high;
-        return (b[1].status["\uC644\uB8CC"] || 0) - (a[1].status["\uC644\uB8CC"] || 0);
+        return (b[1].status.done || 0) - (a[1].status.done || 0);
       }).slice(0, 10);
       return {
         all,
@@ -19244,6 +19386,29 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         total
       };
     }, [items, changeLog, settings, filters, searchQ]);
+    (0, import_react10.useEffect)(() => {
+      let cancelled = false;
+      if (settings.storageMode !== "server") {
+        setDailyMetrics([]);
+        setMetricsStatus("loaded");
+        return () => {
+          cancelled = true;
+        };
+      }
+      setMetricsStatus("loading");
+      apiFetch("/api/metrics?days=30").then((json) => {
+        if (cancelled) return;
+        setDailyMetrics(Array.isArray(json.metrics) ? json.metrics : []);
+        setMetricsStatus("loaded");
+      }).catch(() => {
+        if (cancelled) return;
+        setDailyMetrics([]);
+        setMetricsStatus("error");
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [store.serverTs, settings.storageMode, settings.serverUrl]);
     (0, import_react10.useEffect)(() => {
       const container = containerRef.current;
       if (!container) return;
@@ -19274,7 +19439,19 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         ] })
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-body", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-body-left", children: data.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Section, { section, data, hmView, setHmView, settings }, section)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-body-left", children: data.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+          Section,
+          {
+            section,
+            data,
+            hmView,
+            setHmView,
+            settings,
+            metrics: dailyMetrics,
+            metricsStatus
+          },
+          section
+        )) }),
         /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-body-right", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-panel db-timeline-panel", children: [
           /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-panel-hd", children: [
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-panel-title", children: "\uCD5C\uADFC \uBCC0\uACBD" }),
@@ -19285,10 +19462,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       ] })
     ] });
   }
-  function Section({ section, data, hmView, setHmView, settings }) {
+  function Section({ section, data, hmView, setHmView, settings, metrics, metricsStatus }) {
     if (section === "stats") return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(StatsSection, { data, settings });
     if (section === "insight") return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(InsightSection, { data, settings });
     if (section === "heatmap") return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(HeatmapSection, { data, hmView, setHmView, settings });
+    if (section === "metrics") return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(MetricsTrendPanel, { metrics, status: metricsStatus, settings });
     return null;
   }
   function StatsSection({ data, settings }) {
@@ -19345,6 +19523,91 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(HeatmapGrid, { data, hmView, settings })
     ] });
   }
+  function MetricsTrendPanel({ metrics, status, settings }) {
+    const rows = (metrics || []).slice(-14);
+    const latest = rows[rows.length - 1] || null;
+    const previous = rows[rows.length - 2] || null;
+    const maxChanged = Math.max(1, ...rows.map((metric) => metric.changedItems || 0));
+    const maxTotal = Math.max(1, ...rows.map((metric) => metric.activeItems || metric.totalItems || 0));
+    const points = rows.map((metric, index) => {
+      const x = rows.length === 1 ? 100 : index / (rows.length - 1) * 200;
+      const ratio = Math.max(0, Math.min(100, Number(metric.doneRatio) || 0));
+      const y = 70 - ratio / 100 * 60;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    const deltaChanged = latest && previous ? (latest.changedItems || 0) - (previous.changedItems || 0) : 0;
+    const latestStatusCounts = latest?.statusCounts || {};
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-panel db-metrics-panel", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-panel-hd", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-panel-title", children: "\uC77C\uBCC4 \uB9AC\uD3EC\uD2B8" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-panel-sub", children: "\uB9E4\uC77C 0\uC2DC \uC2A4\uB0C5\uC0F7 \uAE30\uC900" })
+      ] }),
+      status === "loading" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-empty", children: "\uC77C\uBCC4 \uC9C0\uD45C\uB97C \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4" }),
+      status === "error" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-empty", children: "\uC77C\uBCC4 \uC9C0\uD45C\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4" }),
+      status !== "loading" && status !== "error" && rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-empty", children: "\uC544\uC9C1 \uAE30\uB85D\uB41C \uC77C\uBCC4 \uC9C0\uD45C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4" }),
+      rows.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-metric-summary", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-metric-label", children: "\uCD5C\uADFC \uBCC0\uACBD" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("strong", { children: latest.changedItems || 0 }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: deltaChanged > 0 ? "up" : deltaChanged < 0 ? "down" : "", children: deltaChanged === 0 ? "\uC804\uC77C \uB3D9\uC77C" : `${deltaChanged > 0 ? "+" : ""}${deltaChanged}` })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-metric-label", children: "\uD65C\uC131 \uAE30\uB2A5" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("strong", { children: latest.activeItems ?? latest.totalItems ?? 0 }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
+              "\uC0AD\uC81C ",
+              latest.deletedItems || 0
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-metric-label", children: "\uC644\uB8CC\uC728" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("strong", { children: [
+              latest.doneRatio || 0,
+              "%"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
+              latest.doneItems || 0,
+              "\uAC1C \uC644\uB8CC"
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-trend-grid", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-trend-chart", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("svg", { viewBox: "0 0 200 78", role: "img", "aria-label": "\uC644\uB8CC\uC728 \uCD94\uC774", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("line", { x1: "0", y1: "70", x2: "200", y2: "70" }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("polyline", { points }),
+              rows.map((metric, index) => {
+                const [x, y] = points.split(" ")[index].split(",");
+                return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("circle", { cx: x, cy: y, r: "2.5" }, metric.date);
+              })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-trend-caption", children: "\uC644\uB8CC\uC728 \uCD94\uC774" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-change-bars", children: rows.map((metric) => {
+            const height = Math.max(4, (metric.changedItems || 0) / maxChanged * 100);
+            const totalHeight = Math.max(8, (metric.activeItems || metric.totalItems || 0) / maxTotal * 100);
+            return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-change-bar", title: `${metric.date}: \uBCC0\uACBD ${metric.changedItems || 0}\uAC1C`, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-change-total", style: { height: `${totalHeight}%` } }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-change-fill", style: { height: `${height}%` } }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("em", { children: formatMetricDay(metric.date) })
+            ] }, metric.date);
+          }) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-status-strip", children: STATUS_OPTS.map((statusKey) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("i", { style: { background: STATUS_ACCENT[statusKey] } }),
+          settings.statusLabels?.[statusKey] || statusKey,
+          " ",
+          latestStatusCounts[statusKey] || 0
+        ] }, statusKey)) })
+      ] })
+    ] });
+  }
+  function formatMetricDay(dateText) {
+    if (!dateText) return "";
+    const parts2 = dateText.split("-");
+    return parts2.length === 3 ? `${Number(parts2[1])}/${Number(parts2[2])}` : dateText;
+  }
   function GroupProgress({ data, settings }) {
     if (data.groups.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-empty", children: "\uADF8\uB8F9 \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4" });
     return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-gp-list", children: data.groups.map((group) => {
@@ -19355,7 +19618,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       items.forEach((item) => {
         if (counts[item.status] !== void 0) counts[item.status] += 1;
       });
-      const donePct = Math.round((counts["\uC644\uB8CC"] || 0) / total * 100);
+      const donePct = Math.round((counts.done || 0) / total * 100);
       return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-gp-row", children: [
         /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-gp-info", children: [
           /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-gp-name", title: group, children: group }),
@@ -20120,9 +20383,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const byCol = (0, import_react15.useMemo)(() => {
       const map = Object.fromEntries(STATUS_OPTS.map((k) => [k, []]));
       filteredItems.forEach((it) => {
-        const st = it.status || "\uB300\uAE30";
+        const st = it.status || "backlog";
         if (map[st]) map[st].push(it);
-        else map["\uB300\uAE30"].push(it);
+        else map.backlog.push(it);
       });
       return map;
     }, [filteredItems]);
@@ -21508,11 +21771,23 @@ ${sample}
   var import_react23 = __toESM(require_react());
   var import_jsx_runtime21 = __toESM(require_jsx_runtime());
   var SECTION_LABELS = {
-    stats: "\uC2A4\uD0EF \uCE74\uB4DC 4\uAC1C",
-    insight: "\uADF8\uB8F9 \uC9C4\uCC99\uB3C4 \xB7 \uB2F4\uB2F9\uC790 \xB7 \uD0C0\uC784\uB77C\uC778",
-    heatmap: "\uD788\uD2B8\uB9F5"
+    stats: "\uC2A4\uD0EF \uCE74\uB4DC",
+    insight: "\uADF8\uB8F9 \uC9C4\uCC99\uB3C4 \xB7 \uB2F4\uB2F9\uBCC4 \uD604\uD669",
+    heatmap: "\uAE30\uB2A5 \uBD84\uD3EC \uD788\uD2B8\uB9F5",
+    metrics: "\uC77C\uBCC4 \uB9AC\uD3EC\uD2B8"
   };
-  var DEFAULT_SECTIONS = ["stats", "insight", "heatmap"];
+  var DEFAULT_SECTIONS = ["stats", "insight", "heatmap", "metrics"];
+  function normalizeSections(sections) {
+    const source = Array.isArray(sections) ? sections : [];
+    const known = source.filter((section) => DEFAULT_SECTIONS.includes(section));
+    return [
+      ...known,
+      ...DEFAULT_SECTIONS.filter((section) => !known.includes(section))
+    ];
+  }
+  function isSectionVisible2(visibility, section) {
+    return visibility?.[section] !== false;
+  }
   function moveItem(list, fromIndex, toIndex) {
     if (fromIndex === toIndex || fromIndex == null) return list;
     const next = [...list];
@@ -21522,13 +21797,15 @@ ${sample}
   }
   function DashboardSectionOrder() {
     const store = useAppStore();
-    const sections = store.settings.dbSections || DEFAULT_SECTIONS;
+    const sections = normalizeSections(store.settings.dbSections);
+    const visibility = store.settings.dbSectionVisibility || {};
     const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
     const [dragIndex, setDragIndex] = (0, import_react23.useState)(null);
     const [dragOverIndex, setDragOverIndex] = (0, import_react23.useState)(null);
-    const persistSections = async (newSections) => {
+    const persistSettings = async (patch) => {
+      const nextSettings = { ...store.settings, ...patch };
       store.pushUndo();
-      store.setSettings({ ...store.settings, dbSections: newSections });
+      store.setSettings(nextSettings);
       if (store.settings.storageMode === "server") {
         const ok = await saveToServer();
         if (ok) broadcastSharedData();
@@ -21539,61 +21816,85 @@ ${sample}
     const moveSection = (index, direction) => {
       const nextIndex = index + direction;
       if (nextIndex < 0 || nextIndex >= sections.length) return;
-      persistSections(moveItem(sections, index, nextIndex));
+      persistSettings({ dbSections: moveItem(sections, index, nextIndex) });
+    };
+    const toggleSection = (section) => {
+      persistSettings({
+        dbSections: sections,
+        dbSectionVisibility: {
+          ...visibility,
+          [section]: !isSectionVisible2(visibility, section)
+        }
+      });
     };
     const dropSection = (toIndex) => {
       if (dragIndex == null || dragIndex === toIndex) return;
-      persistSections(moveItem(sections, dragIndex, toIndex));
+      persistSettings({ dbSections: moveItem(sections, dragIndex, toIndex) });
       setDragIndex(null);
       setDragOverIndex(null);
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", width: "100%" }, children: sections.map((section, index) => /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(
-      "div",
-      {
-        className: "db-sec-row",
-        draggable: true,
-        "data-idx": index,
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "7px 10px",
-          background: "var(--surface-2)",
-          borderRadius: "7px",
-          border: "1px solid var(--border)",
-          cursor: "grab",
-          transition: "opacity .15s,box-shadow .15s",
-          opacity: dragIndex === index ? 0.4 : void 0,
-          boxShadow: dragOverIndex === index && dragIndex !== index ? dragIndex < index ? "0 3px 0 var(--accent)" : "0 -3px 0 var(--accent)" : void 0
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", width: "100%" }, children: sections.map((section, index) => {
+      const visible = isSectionVisible2(visibility, section);
+      return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(
+        "div",
+        {
+          className: "db-sec-row",
+          draggable: true,
+          "data-idx": index,
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "7px 10px",
+            background: "var(--surface-2)",
+            borderRadius: "7px",
+            border: "1px solid var(--border)",
+            cursor: "grab",
+            transition: "opacity .15s,box-shadow .15s",
+            opacity: dragIndex === index ? 0.4 : visible ? void 0 : 0.58,
+            boxShadow: dragOverIndex === index && dragIndex !== index ? dragIndex < index ? "0 3px 0 var(--accent)" : "0 -3px 0 var(--accent)" : void 0
+          },
+          onDragStart: (event) => {
+            setDragIndex(index);
+            event.dataTransfer.effectAllowed = "move";
+          },
+          onDragOver: (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            setDragOverIndex(index);
+          },
+          onDragLeave: () => setDragOverIndex(null),
+          onDrop: (event) => {
+            event.preventDefault();
+            dropSection(index);
+          },
+          onDragEnd: () => {
+            setDragIndex(null);
+            setDragOverIndex(null);
+          },
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+              "input",
+              {
+                type: "checkbox",
+                checked: visible,
+                "aria-label": `${SECTION_LABELS[section] || section} \uD45C\uC2DC`,
+                onChange: () => toggleSection(section),
+                onClick: (event) => event.stopPropagation(),
+                onPointerDown: (event) => event.stopPropagation()
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".85rem", color: "var(--text-3)", cursor: "grab", padding: "0 2px" }, title: "\uB4DC\uB798\uADF8\uB85C \uC21C\uC11C \uBCC0\uACBD", children: "\u2630" }),
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".75rem", color: "var(--text-3)", fontWeight: 700, width: "16px" }, children: index + 1 }),
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { flex: 1, fontSize: ".8rem", fontWeight: 600, color: "var(--text)" }, children: SECTION_LABELS[section] || section }),
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".68rem", color: visible ? "var(--success)" : "var(--text-3)", minWidth: "34px", textAlign: "right" }, children: visible ? "\uD45C\uC2DC" : "\uC228\uAE40" }),
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-g btn-sm", style: { width: "24px", height: "24px", padding: 0, fontSize: ".7rem" }, disabled: index === 0, onClick: () => moveSection(index, -1), children: "\u2191" }),
+            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-g btn-sm", style: { width: "24px", height: "24px", padding: 0, fontSize: ".7rem" }, disabled: index === sections.length - 1, onClick: () => moveSection(index, 1), children: "\u2193" })
+          ]
         },
-        onDragStart: (event) => {
-          setDragIndex(index);
-          event.dataTransfer.effectAllowed = "move";
-        },
-        onDragOver: (event) => {
-          event.preventDefault();
-          event.dataTransfer.dropEffect = "move";
-          setDragOverIndex(index);
-        },
-        onDragLeave: () => setDragOverIndex(null),
-        onDrop: (event) => {
-          event.preventDefault();
-          dropSection(index);
-        },
-        onDragEnd: () => {
-          setDragIndex(null);
-          setDragOverIndex(null);
-        },
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".85rem", color: "var(--text-3)", cursor: "grab", padding: "0 2px" }, title: "\uB4DC\uB798\uADF8\uB85C \uC21C\uC11C \uBCC0\uACBD", children: "\u283F" }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".75rem", color: "var(--text-3)", fontWeight: 700, width: "16px" }, children: index + 1 }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { flex: 1, fontSize: ".8rem", fontWeight: 600, color: "var(--text)" }, children: SECTION_LABELS[section] || section }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-g btn-sm", style: { width: "24px", height: "24px", padding: 0, fontSize: ".7rem" }, disabled: index === 0, onClick: () => moveSection(index, -1), children: "\u25B2" }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-g btn-sm", style: { width: "24px", height: "24px", padding: 0, fontSize: ".7rem" }, disabled: index === sections.length - 1, onClick: () => moveSection(index, 1), children: "\u25BC" })
-        ]
-      },
-      section
-    )) });
+        section
+      );
+    }) });
   }
 
   // components/SettingsColumnsPanel.jsx
@@ -22019,7 +22320,7 @@ ${sample}
     const { closeModal, openModal } = useModals();
     const [activeTab, setActiveTab] = (0, import_react26.useState)("sg");
     const settingsFileRef = (0, import_react26.useRef)(null);
-    const appVersion = true ? "2.2.0" : "dev";
+    const appVersion = true ? "3.0.0" : "dev";
     const buildId = true ? "20260415.local" : "local";
     const persistSettings = (0, import_react26.useCallback)(async (nextSettings = useAppStore.getState().settings) => {
       if (nextSettings.storageMode === "server") await saveToServer();
@@ -22061,7 +22362,7 @@ ${sample}
       reader.onload = (e) => {
         try {
           const data = JSON.parse(e.target.result);
-          if (data.settings) store.setSettings({ ...store.settings, ...data.settings });
+          if (data.settings) store.setSettings(migrateSettings({ ...store.settings, ...data.settings }));
           if (data.display) store.setDisplay({ ...store.display, ...data.display });
           applyVars();
           persistSettings();
@@ -37141,7 +37442,7 @@ ${sample}
         /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "ctx-sep" }),
         /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { className: "ctx-item danger", onClick: () => runContextAction(() => quickToggleDel(contextMenu.key)), children: contextMenu.isDeleted ? "\u21A9 \uC0AD\uC81C \uBCF5\uC6D0" : "\u2715 \uC0AD\uC81C \uCC98\uB9AC" })
       ] }),
-      statusMenu && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "status-quick-menu", style: { left: statusMenu.x, top: statusMenu.y }, onClick: (e) => e.stopPropagation(), children: [["", "\u2014 \uC5C6\uC74C"], ...STATUS_OPTS.map((s) => [s, s])].map(([value2, label]) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+      statusMenu && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "status-quick-menu", style: { left: statusMenu.x, top: statusMenu.y }, onClick: (e) => e.stopPropagation(), children: [["", "\u2014 \uC5C6\uC74C"], ...STATUS_OPTS.map((s) => [s, store.settings.statusLabels?.[s] || s])].map(([value2, label]) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
         "button",
         {
           className: `status-quick-item${statusMenu.currentStatus === value2 ? " on" : ""}`,
@@ -37329,7 +37630,7 @@ ${sample}
   var import_jsx_runtime28 = __toESM(require_jsx_runtime());
   function App() {
     const store = useAppStore();
-    const { loadFromServer, saveLocal, logActivity, unlockItem, saveToServer, broadcastSharedData } = useDBSync();
+    const { loadFromServer, saveLocal, logActivity, unlockItem, saveToServer, broadcastSharedData } = useDBSync({ enableConnection: true });
     const { closeModal, closeEditModal, openModal, openAddModal } = useModals();
     const keyboardActions = (0, import_react31.useMemo)(() => ({
       onEscape: () => {
@@ -37365,16 +37666,29 @@ ${sample}
         if (raw) {
           try {
             const d = JSON.parse(raw);
+            if (d.items) store.setItems(migrateItems(d.items, d.dataVersion || 1));
+            if (Array.isArray(d.changeLog)) store.setChangeLog(migrateChangeLog(d.changeLog));
+            if (d.filters) store.setFilters(migrateFilters({ ...getStore().filters, ...d.filters }));
+            if (d.display) store.setDisplay({ ...getStore().display, ...d.display });
             if (d.local) {
               const nextSettings = {
                 ...initialSettings,
-                storageMode: d.local.storageMode,
-                serverUrl: d.local.serverUrl,
-                userName: d.local.userName,
+                baseFont: d.local.baseFont ?? initialSettings.baseFont,
+                cardFont: d.local.cardFont ?? initialSettings.cardFont,
+                dbSections: d.local.dbSections || initialSettings.dbSections,
+                dbSectionVisibility: d.local.dbSectionVisibility || initialSettings.dbSectionVisibility,
+                listColumns: d.local.listColumns || initialSettings.listColumns,
+                panelPos: d.local.panelPos || initialSettings.panelPos,
+                panelVisible: d.local.panelVisible ?? initialSettings.panelVisible,
+                pollInterval: d.local.pollInterval ?? initialSettings.pollInterval,
+                storageMode: d.local.storageMode || initialSettings.storageMode,
+                serverUrl: d.local.serverUrl || initialSettings.serverUrl,
+                userName: d.local.userName || initialSettings.userName,
                 themeId: d.local.themeId || initialSettings.themeId
               };
-              store.setSettings(nextSettings);
-              initialSettings = nextSettings;
+              const migratedSettings = migrateSettings(nextSettings);
+              store.setSettings(migratedSettings);
+              initialSettings = migratedSettings;
             }
           } catch (e) {
           }

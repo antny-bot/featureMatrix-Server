@@ -2,14 +2,19 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { STATUS_ACCENT, STATUS_OPTS } from '../app/constants.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
+import { apiFetch } from '../utils/api.js';
 import { 
   getFiltered, isFilterActive, fmtDate, 
   getOwnerColor, getPK, normOwner 
 } from '../utils/itemUtils.js';
 
-const SECTION_DEFAULTS = ['stats', 'insight', 'heatmap'];
+const SECTION_DEFAULTS = ['stats', 'insight', 'heatmap', 'metrics'];
 const SECTION_KEYS = new Set(SECTION_DEFAULTS);
 const LEGEND_OPACITY = [0.06, 0.30, 0.55, 0.80, 1.00];
+
+function isSectionVisible(visibility, section) {
+  return visibility?.[section] !== false;
+}
 
 function useCountUp(value, duration = 1000) {
   const [displayValue, setDisplayValue] = useState(0);
@@ -53,6 +58,8 @@ export default function DashboardView() {
 
   const containerRef = useRef(null);
   const [hmView, setHmView] = useState('cat');
+  const [dailyMetrics, setDailyMetrics] = useState([]);
+  const [metricsStatus, setMetricsStatus] = useState('idle');
 
   const resetFilters = useCallback(() => {
     store.setFilters({
@@ -76,7 +83,7 @@ export default function DashboardView() {
 
     all.forEach(item => {
       if (item.isImportant === 'Y') imp += 1;
-      if (item.status === '완료') done += 1;
+      if (item.status === 'done') done += 1;
       if (statusCount[item.status] !== undefined) statusCount[item.status] += 1;
 
       const owner = normOwner(item.owner);
@@ -94,13 +101,17 @@ export default function DashboardView() {
     const groups = [...orderedGroups, ...allGroups.filter(group => !orderedGroups.includes(group))];
     const orderedCats = settings.catOrder.filter(cat => allCats.includes(cat));
     const cats = [...orderedCats, ...allCats.filter(cat => !orderedCats.includes(cat))];
-    const sections = (settings.dbSections || SECTION_DEFAULTS).filter(section => SECTION_KEYS.has(section));
+    const configuredSections = (settings.dbSections || SECTION_DEFAULTS).filter(section => SECTION_KEYS.has(section));
+    const sections = [
+      ...configuredSections,
+      ...SECTION_DEFAULTS.filter(section => !configuredSections.includes(section)),
+    ].filter(section => isSectionVisible(settings.dbSectionVisibility, section));
     const recent = (changeLog || []).slice().reverse().slice(0, settings.changeLogMax || 50);
     const owners = Object.entries(ownerMap)
       .sort((a, b) => {
         if (b[1].total !== a[1].total) return b[1].total - a[1].total;
         if (b[1].high !== a[1].high) return b[1].high - a[1].high;
-        return (b[1].status['완료'] || 0) - (a[1].status['완료'] || 0);
+        return (b[1].status.done || 0) - (a[1].status.done || 0);
       })
       .slice(0, 10);
 
@@ -119,6 +130,32 @@ export default function DashboardView() {
       total,
     };
   }, [items, changeLog, settings, filters, searchQ]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (settings.storageMode !== 'server') {
+      setDailyMetrics([]);
+      setMetricsStatus('loaded');
+      return () => {
+        cancelled = true;
+      };
+    }
+    setMetricsStatus('loading');
+    apiFetch('/api/metrics?days=30')
+      .then(json => {
+        if (cancelled) return;
+        setDailyMetrics(Array.isArray(json.metrics) ? json.metrics : []);
+        setMetricsStatus('loaded');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setDailyMetrics([]);
+        setMetricsStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [store.serverTs, settings.storageMode, settings.serverUrl]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -159,7 +196,16 @@ export default function DashboardView() {
       <div className="db-body">
         <div className="db-body-left">
           {data.sections.map(section => (
-            <Section key={section} section={section} data={data} hmView={hmView} setHmView={setHmView} settings={settings} />
+            <Section
+              key={section}
+              section={section}
+              data={data}
+              hmView={hmView}
+              setHmView={setHmView}
+              settings={settings}
+              metrics={dailyMetrics}
+              metricsStatus={metricsStatus}
+            />
           ))}
         </div>
 
@@ -177,10 +223,11 @@ export default function DashboardView() {
   );
 }
 
-function Section({ section, data, hmView, setHmView, settings }) {
+function Section({ section, data, hmView, setHmView, settings, metrics, metricsStatus }) {
   if (section === 'stats') return <StatsSection data={data} settings={settings} />;
   if (section === 'insight') return <InsightSection data={data} settings={settings} />;
   if (section === 'heatmap') return <HeatmapSection data={data} hmView={hmView} setHmView={setHmView} settings={settings} />;
+  if (section === 'metrics') return <MetricsTrendPanel metrics={metrics} status={metricsStatus} settings={settings} />;
   return null;
 }
 
@@ -241,6 +288,101 @@ function HeatmapSection({ data, hmView, setHmView, settings }) {
   );
 }
 
+function MetricsTrendPanel({ metrics, status, settings }) {
+  const rows = (metrics || []).slice(-14);
+  const latest = rows[rows.length - 1] || null;
+  const previous = rows[rows.length - 2] || null;
+  const maxChanged = Math.max(1, ...rows.map(metric => metric.changedItems || 0));
+  const maxTotal = Math.max(1, ...rows.map(metric => metric.activeItems || metric.totalItems || 0));
+  const points = rows.map((metric, index) => {
+    const x = rows.length === 1 ? 100 : (index / (rows.length - 1)) * 200;
+    const ratio = Math.max(0, Math.min(100, Number(metric.doneRatio) || 0));
+    const y = 70 - (ratio / 100) * 60;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const deltaChanged = latest && previous ? (latest.changedItems || 0) - (previous.changedItems || 0) : 0;
+  const latestStatusCounts = latest?.statusCounts || {};
+
+  return (
+    <div className="db-panel db-metrics-panel">
+      <div className="db-panel-hd">
+        <div className="db-panel-title">일별 리포트</div>
+        <div className="db-panel-sub">매일 0시 스냅샷 기준</div>
+      </div>
+      {status === 'loading' && <div className="db-empty">일별 지표를 불러오는 중입니다</div>}
+      {status === 'error' && <div className="db-empty">일별 지표를 불러오지 못했습니다</div>}
+      {status !== 'loading' && status !== 'error' && rows.length === 0 && (
+        <div className="db-empty">아직 기록된 일별 지표가 없습니다</div>
+      )}
+      {rows.length > 0 && (
+        <>
+          <div className="db-metric-summary">
+            <div>
+              <span className="db-metric-label">최근 변경</span>
+              <strong>{latest.changedItems || 0}</strong>
+              <span className={deltaChanged > 0 ? 'up' : deltaChanged < 0 ? 'down' : ''}>
+                {deltaChanged === 0 ? '전일 동일' : `${deltaChanged > 0 ? '+' : ''}${deltaChanged}`}
+              </span>
+            </div>
+            <div>
+              <span className="db-metric-label">활성 기능</span>
+              <strong>{latest.activeItems ?? latest.totalItems ?? 0}</strong>
+              <span>삭제 {latest.deletedItems || 0}</span>
+            </div>
+            <div>
+              <span className="db-metric-label">완료율</span>
+              <strong>{latest.doneRatio || 0}%</strong>
+              <span>{latest.doneItems || 0}개 완료</span>
+            </div>
+          </div>
+
+          <div className="db-trend-grid">
+            <div className="db-trend-chart">
+              <svg viewBox="0 0 200 78" role="img" aria-label="완료율 추이">
+                <line x1="0" y1="70" x2="200" y2="70" />
+                <polyline points={points} />
+                {rows.map((metric, index) => {
+                  const [x, y] = points.split(' ')[index].split(',');
+                  return <circle key={metric.date} cx={x} cy={y} r="2.5" />;
+                })}
+              </svg>
+              <div className="db-trend-caption">완료율 추이</div>
+            </div>
+            <div className="db-change-bars">
+              {rows.map(metric => {
+                const height = Math.max(4, ((metric.changedItems || 0) / maxChanged) * 100);
+                const totalHeight = Math.max(8, (((metric.activeItems || metric.totalItems || 0) / maxTotal) * 100));
+                return (
+                  <div className="db-change-bar" key={metric.date} title={`${metric.date}: 변경 ${metric.changedItems || 0}개`}>
+                    <span className="db-change-total" style={{ height: `${totalHeight}%` }} />
+                    <span className="db-change-fill" style={{ height: `${height}%` }} />
+                    <em>{formatMetricDay(metric.date)}</em>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="db-status-strip">
+            {STATUS_OPTS.map(statusKey => (
+              <span key={statusKey}>
+                <i style={{ background: STATUS_ACCENT[statusKey] }} />
+                {settings.statusLabels?.[statusKey] || statusKey} {latestStatusCounts[statusKey] || 0}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function formatMetricDay(dateText) {
+  if (!dateText) return '';
+  const parts = dateText.split('-');
+  return parts.length === 3 ? `${Number(parts[1])}/${Number(parts[2])}` : dateText;
+}
+
 function GroupProgress({ data, settings }) {
   if (data.groups.length === 0) return <div className="db-empty">그룹 데이터가 없습니다</div>;
 
@@ -255,7 +397,7 @@ function GroupProgress({ data, settings }) {
         items.forEach(item => {
           if (counts[item.status] !== undefined) counts[item.status] += 1;
         });
-        const donePct = Math.round((counts['완료'] || 0) / total * 100);
+        const donePct = Math.round((counts.done || 0) / total * 100);
 
         return (
           <div className="db-gp-row" key={group}>

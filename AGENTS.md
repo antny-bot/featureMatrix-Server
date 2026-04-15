@@ -42,6 +42,17 @@
 | `featureMatrix-server/activity.json` | 런타임 활동 로그 데이터 |
 | `featureMatrix-server/tokens.json` | 런타임 인증 토큰 데이터 |
 
+Additional agent-ignore targets:
+
+| Path | Reason |
+|------|--------|
+| `.git/` | VCS metadata; use Git commands instead of reading internals |
+| `.github/` | GitHub workflow metadata; read only when working on CI/release configuration |
+| `.claude/` | Local agent metadata |
+| `node_modules/`, `src/node_modules/` | Installed dependencies |
+| `implementation.md`, `docs/*plan*.md` | Agent planning/reference notes, not application source |
+| `scratch*.js`, `*_migration.js` | Temporary scratch/migration scripts |
+
 ## Commands
 - Run App: `python app.py` or `flask run`
 - Install Dependencies: `pip install -r requirements.txt`
