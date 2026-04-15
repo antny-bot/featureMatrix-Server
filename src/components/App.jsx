@@ -15,7 +15,7 @@ import { applyVars } from '../app/theme.js';
 import { migrateChangeLog, migrateFilters, migrateItems, migrateSettings } from '../utils/itemUtils.js';
 
 export default function App() {
-  const store = useAppStore();
+  const settingsTitle = useAppStore(s => s.settings.title);
   const { loadFromServer, saveLocal, logActivity, unlockItem, saveToServer, broadcastSharedData } = useDBSync({ enableConnection: true });
   const { closeModal, closeEditModal, openModal, openAddModal } = useModals();
 
@@ -32,11 +32,15 @@ export default function App() {
     onSearchFocus: () => getStore().requestSearchFocus(),
     openModal: (name) => openModal(name),
     openAddModal: () => openAddModal(),
-    togglePanel: () => store.setSettings({ ...store.settings, panelVisible: !store.settings.panelVisible }),
+    togglePanel: () => {
+      const { settings, setSettings } = useAppStore.getState();
+      setSettings({ ...settings, panelVisible: !settings.panelVisible });
+    },
     doUndo: async () => {
-      const prevItems = store.doUndo();
+      const { doUndo, settings } = useAppStore.getState();
+      const prevItems = doUndo();
       if (prevItems) {
-        if (store.settings.storageMode === 'server') {
+        if (settings.storageMode === 'server') {
           const ok = await saveToServer();
           if (ok) broadcastSharedData();
         } else {
@@ -45,7 +49,7 @@ export default function App() {
         logActivity('실행 취소', '상태가 이전으로 되돌려졌습니다.');
       }
     },
-  }), [store, closeEditModal, closeModal, openModal, openAddModal]);
+  }), [closeEditModal, closeModal, openModal, openAddModal, saveToServer, broadcastSharedData, saveLocal, logActivity]);
 
   useKeyboardShortcuts(keyboardActions);
 
@@ -58,12 +62,13 @@ export default function App() {
       if (raw) {
         try {
           const d = JSON.parse(raw);
-          if (d.items) store.setItems(migrateItems(d.items, d.dataVersion || 1));
-          if (Array.isArray(d.changeLog)) store.setChangeLog(migrateChangeLog(d.changeLog));
-          if (d.filters) store.setFilters(migrateFilters({ ...getStore().filters, ...d.filters }));
-          if (d.display) store.setDisplay({ ...getStore().display, ...d.display });
+          const { setItems, setChangeLog, setFilters, setDisplay, setSettings } = useAppStore.getState();
+          if (d.items) setItems(migrateItems(d.items, d.dataVersion || 1));
+          if (Array.isArray(d.changeLog)) setChangeLog(migrateChangeLog(d.changeLog));
+          if (d.filters) setFilters(migrateFilters({ ...getStore().filters, ...d.filters }));
+          if (d.display) setDisplay({ ...getStore().display, ...d.display });
           if (d.local) {
-            const nextSettings = { 
+            const nextSettings = {
               ...initialSettings,
               baseFont: d.local.baseFont ?? initialSettings.baseFont,
               cardFont: d.local.cardFont ?? initialSettings.cardFont,
@@ -79,7 +84,7 @@ export default function App() {
               themeId: d.local.themeId || initialSettings.themeId,
             };
             const migratedSettings = migrateSettings(nextSettings);
-            store.setSettings(migratedSettings);
+            setSettings(migratedSettings);
             initialSettings = migratedSettings;
           }
         } catch (e) {}
@@ -89,7 +94,7 @@ export default function App() {
       if (initialSettings.storageMode === 'server') {
         await loadFromServer();
       } else if (getStore().items.length === 0) {
-        store.setItems(JSON.parse(JSON.stringify(DEMO)));
+        useAppStore.getState().setItems(JSON.parse(JSON.stringify(DEMO)));
       }
 
       // 3. 테마 초기 적용
@@ -104,14 +109,15 @@ export default function App() {
 
     // 윈도우 종료 시 정리 (필요 시)
     return () => {
-      if (store.editKey) unlockItem(store.editKey);
+      const { editKey } = useAppStore.getState();
+      if (editKey) unlockItem(editKey);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, []);
 
   useEffect(() => {
-    document.title = store.settings.title || 'featureMATRIX';
-  }, [store.settings.title]);
+    document.title = settingsTitle || 'featureMATRIX';
+  }, [settingsTitle]);
 
   return (
     <ErrorBoundary level="app" label="앱">

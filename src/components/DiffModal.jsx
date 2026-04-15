@@ -5,16 +5,19 @@ import { useModals } from '../hooks/useModals.js';
 const DIFF_FIELDS = ['name', 'priority', 'status', 'owner', 'group', 'category'];
 
 export default function DiffModal() {
-  const store = useAppStore();
+  const undoStack    = useAppStore(s => s.undoStack);
+  const items        = useAppStore(s => s.items);
+  const statusLabels = useAppStore(s => s.settings.statusLabels);
+  const activeModal  = useAppStore(s => s.activeModal);
   const { closeModal } = useModals();
 
   const buildDiffRows = useMemo(() => {
-    const stack = store.undoStack || [];
+    const stack = undoStack || [];
     if (!stack.length) return { empty: '변경 이력이 없습니다.', rows: [] };
 
     const data = JSON.parse(stack[stack.length - 1]);
     const prev = Array.isArray(data) ? data : (data.items || []);
-    const cur = store.items;
+    const cur = items;
 
     const curMap = Object.fromEntries(cur.map(item => [item.key, item]));
     const prevMap = Object.fromEntries(prev.map(item => [item.key, item]));
@@ -46,14 +49,14 @@ export default function DiffModal() {
       empty: rows.length ? '' : '마지막 저장 이후 변경 없음',
       rows,
     };
-  }, [store.items, store.undoStack]);
+  }, [items, undoStack]);
 
   const content = useMemo(() => {
-    if (store.activeModal !== 'diffModal') return { empty: '', rows: [] };
+    if (activeModal !== 'diffModal') return { empty: '', rows: [] };
     return buildDiffRows;
-  }, [store.activeModal, buildDiffRows]);
+  }, [activeModal, buildDiffRows]);
 
-  if (store.activeModal !== 'diffModal') return null;
+  if (activeModal !== 'diffModal') return null;
 
   return (
     <div className="ov on" id="diffModal">
@@ -84,7 +87,7 @@ export default function DiffModal() {
                       {row.type === 'deleted' && <span style={{ color: 'var(--danger)', fontWeight: 600 }}>삭제됨 ({row.name})</span>}
                       {row.type === 'changed' && row.diffs.map(diff => {
                         const isStatus = diff.field === 'status';
-                        const labels = store.settings.statusLabels || {};
+                        const labels = statusLabels || {};
                         const beforeLbl = isStatus ? (labels[diff.before] || diff.before) : diff.before;
                         const afterLbl = isStatus ? (labels[diff.after] || diff.after) : diff.after;
                         return (

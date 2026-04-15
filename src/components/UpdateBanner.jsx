@@ -1,8 +1,8 @@
 import { useAppStore } from '../store/useAppStore.js';
 
 export default function UpdateBanner() {
-  const store = useAppStore();
-  const banner = store.banner;
+  const banner    = useAppStore(s => s.banner);
+  const setBanner = useAppStore(s => s.setBanner);
 
   if (!banner.visible) return null;
 
@@ -33,7 +33,7 @@ export default function UpdateBanner() {
       </button>
       <button
         className="btn btn-g btn-sm"
-        onClick={() => store.setBanner(false)}
+        onClick={() => setBanner(false)}
       >
         나중에
       </button>

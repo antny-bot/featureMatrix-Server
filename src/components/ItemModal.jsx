@@ -26,7 +26,11 @@ const EMPTY_FORM = {
 };
 
 export default function ItemModal() {
-  const store = useAppStore();
+  const editKey      = useAppStore(s => s.editKey);
+  const settings     = useAppStore(s => s.settings);
+  const editModal    = useAppStore(s => s.editModal);
+  const storeNotify  = useAppStore(s => s.notify);
+  const items        = useAppStore(s => s.items);
   const { closeEditModal, saveItem, hardDelete, expSingleMd } = useModals();
 
   const [activeTab,      setActiveTab]      = useState('info');
@@ -57,11 +61,11 @@ export default function ItemModal() {
   }, []);
 
   const schedulePreview = useCallback(() => {
-    if (!isSocketConnected() || !store.editKey) return;
+    if (!isSocketConnected() || !editKey) return;
     clearTimeout(previewTimerRef.current);
     previewTimerRef.current = setTimeout(() => {
-      const key  = store.editKey;
-      const user = store.settings?.userName || '익명';
+      const key  = editKey;
+      const user = settings?.userName || '익명';
       const current = formRef.current;
       const preview = {
         name: current.name || '',
@@ -76,7 +80,7 @@ export default function ItemModal() {
       };
       emitPreview(key, user, preview);
     }, 300);
-  }, [store.editKey, store.settings?.userName]);
+  }, [editKey, settings]);
 
   const updateField = useCallback((field, value) => {
     setForm(current => {
@@ -123,7 +127,7 @@ export default function ItemModal() {
 
   /* 전역 스토어 상태 동기화 */
   useEffect(() => {
-    const { visible, mode, key, item, activeTab, mdMode } = store.editModal;
+    const { visible, mode, key, item, activeTab, mdMode } = editModal;
     if (!visible) return;
 
     const mergedForm = { ...EMPTY_FORM, ...(item || {}) };
@@ -136,7 +140,7 @@ export default function ItemModal() {
     formRef.current = mergedForm;
     setMdPreview(parseMd(mergedForm.mdContent || ''));
     updateMdStats(mergedForm.mdContent || '');
-  }, [store.editModal]);
+  }, [editModal]);
 
   const applyMdEdit = useCallback((editor) => {
     const textarea = textareaRef.current;
@@ -195,18 +199,18 @@ export default function ItemModal() {
     const r = new FileReader();
     r.onload = ev => {
       updateField('mdContent', ev.target.result);
-      store.notify('MD 파일 불러왔습니다: ' + file.name, 'success');
+      storeNotify('MD 파일 불러왔습니다: ' + file.name, 'success');
       setMdMode('preview');
     };
     r.readAsText(file, 'UTF-8'); e.target.value = '';
   };
 
   const dataLists = {
-    group: getUniqSorted('group', store.items),
-    subGroup: getUniqSorted('subGroup', store.items),
-    category: getUniqSorted('category', store.items),
-    subCategory: getUniqSorted('subCategory', store.items),
-    owner: getUniqSorted('owner', store.items),
+    group: getUniqSorted('group', items),
+    subGroup: getUniqSorted('subGroup', items),
+    category: getUniqSorted('category', items),
+    subCategory: getUniqSorted('subCategory', items),
+    owner: getUniqSorted('owner', items),
   };
 
   const isReadOnly = modalMode === 'detail';
@@ -215,7 +219,7 @@ export default function ItemModal() {
   const taStyle  = { display: showEditor ? 'block' : 'none', flex: showEditor ? '1 1 0' : undefined, width: showEditor ? '100%' : undefined };
   const pvStyle  = { display: showPreview ? 'block' : 'none', flex: showPreview ? '1 1 0' : undefined, width: showPreview ? '100%' : undefined };
 
-  if (!store.editModal.visible) return null;
+  if (!editModal.visible) return null;
 
   return (
     <div className="ov on" id="editModal">
@@ -290,7 +294,7 @@ export default function ItemModal() {
               <label className="lbl">진행상태</label>
               <select className="sel" id="fStatus" value={form.status} onChange={event => updateField('status', event.target.value)}>
                 <option value="">—</option>
-                {STATUS_OPTS.map(s => <option key={s} value={s}>{store.settings.statusLabels?.[s] || s}</option>)}
+                {STATUS_OPTS.map(s => <option key={s} value={s}>{settings.statusLabels?.[s] || s}</option>)}
               </select>
             </div>
             <div className="field">

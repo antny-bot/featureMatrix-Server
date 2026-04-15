@@ -129,8 +129,7 @@ function PreviewCards({ colors, settings }) {
 }
 
 export default function SettingsDesignPanel() {
-  const store = useAppStore();
-  const settings = store.settings;
+  const settings = useAppStore(s => s.settings);
   const colors = getColors();
   const { saveLocal, saveToServer } = useDBSync();
 
@@ -141,22 +140,20 @@ export default function SettingsDesignPanel() {
 
   const applyThemeReact = (themeId) => {
     if (!THEMES[themeId]) return;
-    const nextSettings = { 
-      ...settings, 
-      themeId, 
-      customColors: { light: {}, dark: {} } 
-    };
-    store.setSettings(nextSettings);
+    const { setSettings, notify, settings: s } = useAppStore.getState();
+    const nextSettings = { ...s, themeId, customColors: { light: {}, dark: {} } };
+    setSettings(nextSettings);
     handleSave();
     setTimeout(() => {
       applyVars();
-      store.notify(`테마 적용: ${THEMES[themeId].name}`, 'success');
+      notify(`테마 적용: ${THEMES[themeId].name}`, 'success');
     }, 0);
   };
 
   const setPresetReact = (priorityKey, presetId) => {
-    const nextStyles = { ...settings.priorityStyles, [priorityKey]: presetId };
-    store.setSettings({ ...settings, priorityStyles: nextStyles });
+    const { setSettings, settings: s } = useAppStore.getState();
+    const nextStyles = { ...s.priorityStyles, [priorityKey]: presetId };
+    setSettings({ ...s, priorityStyles: nextStyles });
     handleSave();
   };
 

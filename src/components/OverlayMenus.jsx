@@ -5,30 +5,30 @@ import { useModals } from '../hooks/useModals.js';
 import { findItem, normOwner } from '../utils/itemUtils.js';
 
 export default function OverlayMenus() {
-  const store = useAppStore();
+  const contextMenu      = useAppStore(s => s.contextMenu);
+  const statusMenu       = useAppStore(s => s.statusMenu);
+  const tooltip          = useAppStore(s => s.tooltip);
+  const items            = useAppStore(s => s.items);
+  const statusLabels     = useAppStore(s => s.settings.statusLabels);
+  const setContextMenu   = useAppStore(s => s.setContextMenu);
+  const setStatusMenu    = useAppStore(s => s.setStatusMenu);
   const { openEditModal, openMdModal, duplicateItem, quickToggleDel, setItemStatus } = useModals();
-  const contextMenu = store.contextMenu;
-  const statusMenu = store.statusMenu;
-  const tooltip = store.tooltip;
-
-  // 툴팁 등은 store에서 관리되므로, 여기서는 그저 렌더링과 닫힘만 관리해주면 됨.
-  // 단, hover tooltip의 타이머 로직이 완전히 스토어로 넘어가진 않았으므로 로컬에서 클리어만 해줌.
 
   useEffect(() => {
     if (!contextMenu && !statusMenu) return undefined;
     const closeMenus = () => {
-      store.setContextMenu(null);
-      store.setStatusMenu(null);
+      setContextMenu(null);
+      setStatusMenu(null);
     };
     const timer = setTimeout(() => document.addEventListener('click', closeMenus, { once: true }), 0);
     return () => {
       clearTimeout(timer);
       document.removeEventListener('click', closeMenus);
     };
-  }, [contextMenu, statusMenu, store]);
+  }, [contextMenu, statusMenu, setContextMenu, setStatusMenu]);
 
   const runContextAction = action => {
-    store.setContextMenu(null);
+    setContextMenu(null);
     action();
   };
 
@@ -52,11 +52,11 @@ export default function OverlayMenus() {
 
       {statusMenu && (
         <div className="status-quick-menu" style={{ left: statusMenu.x, top: statusMenu.y }} onClick={e => e.stopPropagation()}>
-          {[['', '— 없음'], ...STATUS_OPTS.map(s => [s, store.settings.statusLabels?.[s] || s])].map(([value, label]) => (
+          {[['', '— 없음'], ...STATUS_OPTS.map(s => [s, statusLabels?.[s] || s])].map(([value, label]) => (
             <button
               className={`status-quick-item${statusMenu.currentStatus === value ? ' on' : ''}`}
               key={value || 'none'}
-              onClick={() => { store.setStatusMenu(null); setItemStatus(statusMenu.key, value); }}
+              onClick={() => { setStatusMenu(null); setItemStatus(statusMenu.key, value); }}
             >
               {label}
             </button>
@@ -66,7 +66,7 @@ export default function OverlayMenus() {
 
       <div className={`ftt${tooltip ? ' on' : ''}`} style={tooltip ? { left: tooltip.x, top: tooltip.y } : undefined}>
         {tooltip && (() => {
-          const item = findItem(tooltip.key, store.items);
+          const item = findItem(tooltip.key, items);
           if (!item) return null;
           return (
             <>

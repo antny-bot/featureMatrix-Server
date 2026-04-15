@@ -1,167 +1,135 @@
 import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from './useDBSync.js';
+import { usePersistItems } from './usePersistItems.js';
 import { genKey, findItem, pushChangeLog, sanitizeFilename, dlBlob } from '../utils/itemUtils.js';
 
 export function useModals() {
-  const store = useAppStore();
-  const { saveToServer, saveLocal, lockItem, unlockItem, logActivity, broadcastSharedData } = useDBSync();
+  const { lockItem, unlockItem, logActivity } = useDBSync();
+  const { persistItems } = usePersistItems();
 
   const openModal = useCallback((id) => {
-    store.setActiveModal(id);
-  }, [store]);
+    useAppStore.getState().setActiveModal(id);
+  }, []);
 
   const closeModal = useCallback((id) => {
-    const current = useAppStore.getState().activeModal;
-    if (current === id) store.setActiveModal(null);
-  }, [store]);
+    if (useAppStore.getState().activeModal === id) {
+      useAppStore.getState().setActiveModal(null);
+    }
+  }, []);
 
   const closeEditModal = useCallback(() => {
-    const editKey = useAppStore.getState().editKey;
+    const { editKey, setEditKey, closeEditModal: close } = useAppStore.getState();
     if (editKey) unlockItem(editKey);
-    useAppStore.getState().setEditKey(null);
-    useAppStore.getState().closeEditModal();
+    setEditKey(null);
+    close();
   }, [unlockItem]);
 
   const openEditModal = useCallback((key) => {
-    store.setEditKey(key);
-    const item = findItem(key, store.items);
+    const { setEditKey, openEditModal: open, items, settings } = useAppStore.getState();
+    const item = findItem(key, items);
     if (!item) return;
-
-    store.openEditModal('edit', key, { ...item });
-    if (store.settings.storageMode === 'server') lockItem(key);
-  }, [store, lockItem]);
+    setEditKey(key);
+    open('edit', key, { ...item });
+    if (settings.storageMode === 'server') lockItem(key);
+  }, [lockItem]);
 
   const openAddModal = useCallback((defaults = {}) => {
-    store.setEditKey(null);
+    const { setEditKey, openEditModal: open } = useAppStore.getState();
+    setEditKey(null);
     const newKey = genKey();
     const newItem = {
-      key: newKey,
-      priority: '중',
-      name: '',
-      desc: '',
-      path: '',
-      group: '',
-      subGroup: '',
-      category: '',
-      subCategory: '',
-      owner: '',
-      status: '',
-      relSystem: '',
-      memo: '',
-      mdContent: '',
-      isImportant: 'N',
-      isDelete: 'N',
-      ...defaults
+      key: newKey, priority: '중', name: '', desc: '', path: '',
+      group: '', subGroup: '', category: '', subCategory: '',
+      owner: '', status: '', relSystem: '', memo: '', mdContent: '',
+      isImportant: 'N', isDelete: 'N', ...defaults,
     };
-    store.openEditModal('add', newKey, newItem);
-  }, [store]);
+    open('add', newKey, newItem);
+  }, []);
 
   const openAddInCell = useCallback((group, subGroup, category, subCategory) => {
     openAddModal({
-      group: group === '(미분류)' ? '' : (group || ''),
-      subGroup: subGroup || '',
-      category: category === '(미분류)' ? '' : (category || ''),
+      group:       group    === '(미분류)' ? '' : (group    || ''),
+      subGroup:    subGroup || '',
+      category:    category === '(미분류)' ? '' : (category || ''),
       subCategory: subCategory || '',
     });
   }, [openAddModal]);
 
   const openMdModal = useCallback((key) => {
-    store.setEditKey(key);
-    const item = findItem(key, store.items);
+    const { setEditKey, openEditModal: open, items, settings } = useAppStore.getState();
+    const item = findItem(key, items);
     if (!item) return;
-
     const nextMdMode = item.mdContent?.trim() ? 'preview' : 'edit';
-    store.openEditModal('edit', key, { ...item }, 'md', nextMdMode);
-    if (store.settings.storageMode === 'server') lockItem(key);
-  }, [store, lockItem]);
+    setEditKey(key);
+    open('edit', key, { ...item }, 'md', nextMdMode);
+    if (settings.storageMode === 'server') lockItem(key);
+  }, [lockItem]);
 
   const saveItem = useCallback(async (form) => {
+    const { notify, pushUndo, items, editKey, setItems, setEditKey, closeEditModal: close } = useAppStore.getState();
     const name = (form.name || '').trim();
     if (!name) {
-      store.notify('기능명을 입력해주세요.', 'error');
+      notify('기능명을 입력해주세요.', 'error');
       return;
     }
 
-    const ni = {
-      ...form,
-      name,
-      updatedAt: Date.now()
-    };
+    const ni = { ...form, name, updatedAt: Date.now() };
 
-    store.pushUndo();
-    const items = [...store.items];
-    const editKey = store.editKey;
+    pushUndo();
+    const nextItems = [...items];
 
     if (editKey) {
-      const idx = items.findIndex(it => it.key === editKey);
+      const idx = nextItems.findIndex(it => it.key === editKey);
       if (idx !== -1) {
-        items[idx] = ni;
+        nextItems[idx] = ni;
         pushChangeLog('수정', ni.key, ni.name, { status: ni.status, owner: ni.owner });
         logActivity('수정', `${ni.key} ${ni.name}`);
       }
     } else {
-      items.push(ni);
+      nextItems.push(ni);
       pushChangeLog('추가', ni.key, ni.name, { status: ni.status, owner: ni.owner });
       logActivity('추가', `${ni.key} ${ni.name}`);
     }
 
-    store.setItems(items);
-    useAppStore.getState().closeEditModal();
-    
+    setItems(nextItems);
+    close();
     if (editKey) unlockItem(editKey);
-    store.setEditKey(null);
+    setEditKey(null);
 
-    if (store.settings.storageMode === 'server') {
-      await saveToServer();
-      broadcastSharedData();
-    } else {
-      saveLocal();
-    }
-    
-    store.notify('저장되었습니다.', 'success');
-  }, [store, logActivity, unlockItem, saveToServer, saveLocal, broadcastSharedData]);
+    await persistItems();
+    notify('저장되었습니다.', 'success');
+  }, [logActivity, unlockItem, persistItems]);
 
   const hardDelete = useCallback(async (key) => {
-    const it = findItem(key, store.items);
+    const { items, notify, pushUndo, setItems, setEditKey, closeEditModal: close } = useAppStore.getState();
+    const it = findItem(key, items);
     if (!it || !confirm(`${key} 항목을 완전히 삭제하시겠습니까?`)) return;
 
-    store.pushUndo();
-    const nextItems = store.items.filter(it => it.key !== key);
-    store.setItems(nextItems);
-    
+    pushUndo();
+    setItems(items.filter(i => i.key !== key));
     logActivity('완전삭제', `${key} ${it.name || ''}`);
     pushChangeLog('완전삭제', key, it.name || key);
-    
-    useAppStore.getState().closeEditModal();
-    unlockItem(key);
-    store.setEditKey(null);
 
-    if (store.settings.storageMode === 'server') {
-      await saveToServer();
-      broadcastSharedData();
-    } else {
-      saveLocal();
-    }
-    store.notify('완전 삭제되었습니다.', 'success');
-  }, [store, logActivity, unlockItem, saveToServer, saveLocal, broadcastSharedData]);
+    close();
+    unlockItem(key);
+    setEditKey(null);
+
+    await persistItems();
+    notify('완전 삭제되었습니다.', 'success');
+  }, [logActivity, unlockItem, persistItems]);
 
   const duplicateItem = useCallback(async (key) => {
-    const src = findItem(key, store.items);
+    const { items, notify, pushUndo, setItems } = useAppStore.getState();
+    const src = findItem(key, items);
     if (!src) return;
-    
-    store.pushUndo();
-    const newItem = { ...src, key: genKey(), updatedAt: Date.now() };
-    store.setItems([...store.items, newItem]);
-    
-    if (store.settings.storageMode === 'server') {
-      await saveToServer();
-      broadcastSharedData();
-    } else {
-      saveLocal();
-    }
-    store.notify(`${src.key} 복제 완료`, 'success');
-  }, [store, saveToServer, saveLocal, broadcastSharedData]);
+
+    pushUndo();
+    setItems([...items, { ...src, key: genKey(), updatedAt: Date.now() }]);
+
+    await persistItems();
+    notify(`${src.key} 복제 완료`, 'success');
+  }, [persistItems]);
 
   const expSingleMd = useCallback((form) => {
     const content = form.mdContent || '';
@@ -169,40 +137,36 @@ export function useModals() {
       useAppStore.getState().notify('MD 내용이 없습니다.', 'error');
       return;
     }
-    const key = form.key || 'unknown';
+    const key  = form.key || 'unknown';
     const name = sanitizeFilename(form.name) || 'untitled';
-    dlBlob(content, key + '_' + name + '.md', 'text/markdown;charset=utf-8');
+    dlBlob(content, `${key}_${name}.md`, 'text/markdown;charset=utf-8');
     useAppStore.getState().notify('MD 파일 저장됨.', 'success');
   }, []);
 
   const quickToggleDel = useCallback(async (key) => {
-    const item = findItem(key, store.items);
+    const { items, pushUndo, setItems } = useAppStore.getState();
+    const item = findItem(key, items);
     if (!item) return;
     const nextValue = item.isDelete === 'Y' ? 'N' : 'Y';
-    store.pushUndo();
-    store.setItems(store.items.map(it => it.key === key ? { ...it, isDelete: nextValue, updatedAt: Date.now() } : it));
+    pushUndo();
+    setItems(items.map(it =>
+      it.key === key ? { ...it, isDelete: nextValue, updatedAt: Date.now() } : it
+    ));
     pushChangeLog(nextValue === 'Y' ? '삭제처리' : '삭제복원', key, item.name || key);
-    if (store.settings.storageMode === 'server') {
-      await saveToServer();
-      broadcastSharedData();
-    } else {
-      saveLocal();
-    }
-  }, [store, saveToServer, saveLocal, broadcastSharedData]);
+    await persistItems();
+  }, [persistItems]);
 
   const setItemStatus = useCallback(async (key, status) => {
-    const item = findItem(key, store.items);
+    const { items, pushUndo, setItems } = useAppStore.getState();
+    const item = findItem(key, items);
     if (!item) return;
-    store.pushUndo();
-    store.setItems(store.items.map(it => it.key === key ? { ...it, status, updatedAt: Date.now() } : it));
+    pushUndo();
+    setItems(items.map(it =>
+      it.key === key ? { ...it, status, updatedAt: Date.now() } : it
+    ));
     pushChangeLog('상태변경', key, item.name || key, { status, owner: item.owner });
-    if (store.settings.storageMode === 'server') {
-      await saveToServer();
-      broadcastSharedData();
-    } else {
-      saveLocal();
-    }
-  }, [store, saveToServer, saveLocal, broadcastSharedData]);
+    await persistItems();
+  }, [persistItems]);
 
   return {
     openModal,

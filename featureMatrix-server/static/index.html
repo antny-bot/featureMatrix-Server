@@ -584,32 +584,6 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
   [data-theme="dark"] body{background:#fff!important;color:#000!important}
 }
 
-/* Daily metrics */
-.db-metrics-panel{overflow:hidden}
-.db-metric-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-@media(max-width:700px){.db-metric-summary{grid-template-columns:1fr}}
-.db-metric-summary>div{border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.db-metric-label{font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
-.db-metric-summary strong{font-size:1.55rem;line-height:1;font-weight:900;color:var(--text)}
-.db-metric-summary span:last-child{font-size:.72rem;color:var(--text-3)}
-.db-metric-summary span.up{color:var(--danger)}
-.db-metric-summary span.down{color:var(--success)}
-.db-trend-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:end}
-@media(max-width:760px){.db-trend-grid{grid-template-columns:1fr}}
-.db-trend-chart svg{width:100%;height:120px;display:block;overflow:visible}
-.db-trend-chart line{stroke:var(--border-2);stroke-width:1}
-.db-trend-chart polyline{fill:none;stroke:var(--success);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
-.db-trend-chart circle{fill:var(--surface);stroke:var(--success);stroke-width:2}
-.db-trend-caption{font-size:.68rem;color:var(--text-3);margin-top:4px}
-.db-change-bars{height:120px;display:flex;align-items:end;gap:7px;border-bottom:1px solid var(--border-2);padding:0 2px 18px}
-.db-change-bar{position:relative;flex:1;min-width:12px;height:100%;display:flex;align-items:end;justify-content:center}
-.db-change-total,.db-change-fill{position:absolute;bottom:0;width:100%;border-radius:5px 5px 0 0}
-.db-change-total{background:var(--surface-3)}
-.db-change-fill{background:var(--accent);max-width:70%}
-.db-change-bar em{position:absolute;bottom:-17px;font-size:.58rem;color:var(--text-3);font-style:normal;white-space:nowrap}
-.db-status-strip{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:18px}
-.db-status-strip span{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--text-2)}
-.db-status-strip i{width:7px;height:7px;border-radius:50%;display:inline-block}
 
 </style>
 <!-- #5 KaTeX (수식 렌더링) -->
@@ -13393,10 +13367,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   var import_client = __toESM(require_client());
 
   // components/App.jsx
-  var import_react31 = __toESM(require_react());
+  var import_react33 = __toESM(require_react());
 
   // components/Header.jsx
-  var import_react6 = __toESM(require_react());
+  var import_react7 = __toESM(require_react());
 
   // contexts/AuthContext.jsx
   var import_react2 = __toESM(require_react());
@@ -13406,17 +13380,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   var UNDO_MAX = 20;
   var ADMIN_TOKEN_KEY = "fmAdminToken";
   var EDITOR_TOKEN_KEY = "fmEditorToken";
-  var DATA_VERSION = 3;
+  var DATA_VERSION = 2;
   var MIGRATIONS = {
     1: (item) => ({
       ...item,
       mdContent: item.mdContent ?? "",
       status: item.status ?? "",
       updatedAt: item.updatedAt ?? 0
-    }),
-    2: (item) => ({
-      ...item,
-      status: STATUS_KEY_MAP[item.status] || item.status || ""
     })
   };
   var FIELDS = [
@@ -13457,29 +13427,21 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     mdPath: "MD\uACBD\uB85C",
     mdContent: "MD\uB0B4\uC6A9"
   };
-  var STATUS_KEY_MAP = {
-    "\uB300\uAE30": "backlog",
-    "\uC2DC\uC791\uAC00\uB2A5": "ready",
-    "\uC9C4\uD589\uC911": "progress",
-    "\uAC80\uD1A0\uC911": "review",
-    "\uC644\uB8CC": "done"
-  };
-  var STATUS_OPTS = ["backlog", "ready", "progress", "review", "done"];
-  var STATUS_CLS = { backlog: "status-backlog", ready: "status-ready", progress: "status-progress", review: "status-review", done: "status-done" };
-  var STATUS_LBL = { backlog: "\uB300\uAE30", ready: "\uC2DC\uC791\uAC00\uB2A5", progress: "\uC9C4\uD589\uC911", review: "\uAC80\uD1A0\uC911", done: "\uC644\uB8CC" };
+  var STATUS_OPTS = ["\uB300\uAE30", "\uC2DC\uC791\uAC00\uB2A5", "\uC9C4\uD589\uC911", "\uAC80\uD1A0\uC911", "\uC644\uB8CC"];
+  var STATUS_CLS = { \uB300\uAE30: "status-backlog", \uC2DC\uC791\uAC00\uB2A5: "status-ready", \uC9C4\uD589\uC911: "status-progress", \uAC80\uD1A0\uC911: "status-review", \uC644\uB8CC: "status-done" };
   var STATUS_ACCENT = {
-    backlog: "var(--text-3)",
-    ready: "#7C3AED",
-    progress: "var(--accent)",
-    review: "#D97706",
-    done: "var(--success)"
+    "\uB300\uAE30": "var(--text-3)",
+    "\uC2DC\uC791\uAC00\uB2A5": "#7C3AED",
+    "\uC9C4\uD589\uC911": "var(--accent)",
+    "\uAC80\uD1A0\uC911": "#D97706",
+    "\uC644\uB8CC": "var(--success)"
   };
   var STATUS_CHIP_COLORS = {
-    backlog: { col: "#6B7280", bg: "#F3F4F6" },
-    ready: { col: "#7C3AED", bg: "#F5F3FF" },
-    progress: { col: "#2563A8", bg: "#EBF2FB" },
-    review: { col: "#D97706", bg: "#FFF7ED" },
-    done: { col: "#1D7A4F", bg: "#EAF5EF" }
+    "\uB300\uAE30": { col: "#6B7280", bg: "#F3F4F6" },
+    "\uC2DC\uC791\uAC00\uB2A5": { col: "#7C3AED", bg: "#F5F3FF" },
+    "\uC9C4\uD589\uC911": { col: "#2563A8", bg: "#EBF2FB" },
+    "\uAC80\uD1A0\uC911": { col: "#D97706", bg: "#FFF7ED" },
+    "\uC644\uB8CC": { col: "#1D7A4F", bg: "#EAF5EF" }
   };
   var DEFAULT_LIST_COLS = [
     { key: "key", visible: true },
@@ -17250,12 +17212,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     },
     display: {
       showOwner: true,
-      showStar: false,
-      showNewBadge: false,
-      showCellCount: false,
+      showStar: true,
+      showNewBadge: true,
+      showCellCount: true,
       showUpdated: false,
       showStatus: true,
-      showMdBadge: false,
+      showMdBadge: true,
       showQuickAdd: false
     },
     settings: {
@@ -17279,15 +17241,20 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       groupOrder: [],
       catOrder: [],
       dbHeroName: "",
-      dbSections: ["stats", "insight", "heatmap", "metrics"],
-      dbSectionVisibility: { stats: true, insight: true, heatmap: true, metrics: true },
+      dbSections: ["stats", "insight", "heatmap"],
       changeLogMax: 50,
       boardFoldCount: 6,
       storageMode: "server",
       serverUrl: "",
       pollInterval: 60,
       userName: "",
-      statusLabels: { ...STATUS_LBL }
+      statusLabels: {
+        "\uB300\uAE30": "\uB300\uAE30",
+        "\uC2DC\uC791\uAC00\uB2A5": "\uC2DC\uC791\uAC00\uB2A5",
+        "\uC9C4\uD589\uC911": "\uC9C4\uD589\uC911",
+        "\uAC80\uD1A0\uC911": "\uAC80\uD1A0\uC911",
+        "\uC644\uB8CC": "\uC644\uB8CC"
+      }
     },
     sort: { key: "key", dir: "asc" },
     mxSelectionKeys: [],
@@ -17438,7 +17405,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             groupOrder: [...settings.groupOrder || []],
             catOrder: [...settings.catOrder || []],
             dbSections: [...settings.dbSections || []],
-            dbSectionVisibility: { ...settings.dbSectionVisibility || {} },
             listColumns: JSON.parse(JSON.stringify(settings.listColumns || []))
           };
           const next = [...undoStack, JSON.stringify(snapshot)];
@@ -17456,7 +17422,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             groupOrder: snapshot.groupOrder,
             catOrder: snapshot.catOrder,
             dbSections: snapshot.dbSections,
-            dbSectionVisibility: snapshot.dbSectionVisibility || settings.dbSectionVisibility,
             listColumns: snapshot.listColumns
           };
           set({
@@ -17529,7 +17494,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return !!(sessionStorage.getItem(ADMIN_TOKEN_KEY) || sessionStorage.getItem(EDITOR_TOKEN_KEY));
   }
   function _currentUserName() {
-    if (!_hasAuthToken()) return "\uC775\uBA85";
     return getStore().settings?.userName || "\uC775\uBA85";
   }
   function _clientId() {
@@ -17546,8 +17510,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
   function _syncActiveUser() {
     if (!_socket?.connected) return;
-    _socket.emit("register_user", { user: _currentUserName(), clientId: _clientId() });
-    _socket.emit("get_active_users");
+    if (_hasAuthToken()) {
+      _socket.emit("register_user", { user: _currentUserName(), clientId: _clientId() });
+      _socket.emit("get_active_users");
+    } else {
+      _socket.emit("unregister_user", { clientId: _clientId() });
+      setStore({ activeUsers: [] });
+    }
   }
   function _setActiveUsers(users) {
     const ownSid = _socket?.id;
@@ -17725,9 +17694,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const editorFlag = !serverMode || !!(editorToken || adminToken);
     return { adminFlag, editorFlag, serverMode };
   }
-  function hasStoredAuth() {
-    return !!(sessionStorage.getItem(ADMIN_TOKEN_KEY) || sessionStorage.getItem(EDITOR_TOKEN_KEY));
-  }
   var AuthContext = (0, import_react2.createContext)({
     isAdmin: false,
     isEditor: false,
@@ -17749,35 +17715,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
   function updateAdminUI() {
     authRefresh?.();
-  }
-  function clearAuthSession(notifyUser = false) {
-    const hadAuth = hasStoredAuth();
-    unregisterActiveUser();
-    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-    sessionStorage.removeItem(EDITOR_TOKEN_KEY);
-    updateAdminUI();
-    registerActiveUser();
-    if (notifyUser && hadAuth) {
-      notify("\uC138\uC158\uC774 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.", "warning");
-    }
-  }
-  async function validateAuthSession({ notifyUser = false } = {}) {
-    if (!hasStoredAuth()) return true;
-    try {
-      const json = await apiFetch("/api/auth/status");
-      if (!json.authenticated) {
-        clearAuthSession(notifyUser);
-        return false;
-      }
-      const adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY);
-      if (adminToken && json.role !== "admin") {
-        sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-        updateAdminUI();
-      }
-      return true;
-    } catch (e) {
-      return true;
-    }
   }
   function openLoginModal(role = "editor", callback = null) {
     const store = getStore();
@@ -17819,7 +17756,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }
   }
   function logout() {
-    clearAuthSession(false);
+    unregisterActiveUser();
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(EDITOR_TOKEN_KEY);
+    updateAdminUI();
     notify("\uB85C\uADF8\uC544\uC6C3\uB410\uC2B5\uB2C8\uB2E4.", "success");
   }
   function requireAdmin(callback) {
@@ -17844,23 +17784,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         if (authRefresh === refresh) authRefresh = null;
       };
     }, [refresh]);
-    (0, import_react2.useEffect)(() => {
-      if (!auth.isServerMode) return void 0;
-      validateAuthSession({ notifyUser: true });
-      const intervalId = setInterval(() => {
-        validateAuthSession({ notifyUser: true });
-      }, 60 * 1e3);
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === "visible") {
-          validateAuthSession({ notifyUser: true });
-        }
-      };
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-      return () => {
-        clearInterval(intervalId);
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      };
-    }, [auth.isServerMode]);
     return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthContext.Provider, { value: { ...auth, refresh, logout, openLoginModal }, children });
   }
   function useAuth() {
@@ -17970,7 +17893,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   var useTheme = () => (0, import_react3.useContext)(ThemeContext);
 
   // hooks/useModals.js
-  var import_react5 = __toESM(require_react());
+  var import_react6 = __toESM(require_react());
 
   // hooks/useDBSync.js
   var import_react4 = __toESM(require_react());
@@ -17983,48 +17906,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       if (fn) result = result.map(fn);
     }
     return result;
-  }
-  function migrateStatusValue(value2) {
-    return STATUS_KEY_MAP[value2] || value2 || "";
-  }
-  function migrateStatusLabels(labels = {}) {
-    const source = labels || {};
-    return STATUS_OPTS.reduce((next, key) => {
-      const legacyKey = Object.keys(STATUS_KEY_MAP).find((oldKey) => STATUS_KEY_MAP[oldKey] === key);
-      next[key] = source[key] ?? source[legacyKey] ?? STATUS_LBL[key];
-      return next;
-    }, {});
-  }
-  function migrateFilters(filters = {}) {
-    const sourceStatuses = Array.isArray(filters.statuses) ? filters.statuses : [];
-    return {
-      ...filters,
-      statuses: sourceStatuses.map(migrateStatusValue).filter(Boolean)
-    };
-  }
-  function migrateSettings(settings = {}) {
-    const sectionKeys = ["stats", "insight", "heatmap", "metrics"];
-    const sourceSections = Array.isArray(settings.dbSections) ? settings.dbSections : [];
-    const dbSections = [
-      ...sourceSections.filter((section) => sectionKeys.includes(section)),
-      ...sectionKeys.filter((section) => !sourceSections.includes(section))
-    ];
-    const dbSectionVisibility = sectionKeys.reduce((next, section) => {
-      next[section] = settings.dbSectionVisibility?.[section] !== false;
-      return next;
-    }, {});
-    return {
-      ...settings,
-      dbSections,
-      dbSectionVisibility,
-      statusLabels: migrateStatusLabels(settings.statusLabels)
-    };
-  }
-  function migrateChangeLog(changeLog = []) {
-    return changeLog.map((entry) => ({
-      ...entry,
-      status: migrateStatusValue(entry.status)
-    }));
   }
   function genKey() {
     let max = 0;
@@ -18308,7 +18189,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     "catOrder",
     "dbHeroName",
     "dbSections",
-    "dbSectionVisibility",
     "priorityStyles",
     "customColors",
     "matrixWidth",
@@ -18321,8 +18201,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     "changeLogMax",
     "statusLabels"
   ];
-  function useDBSync(options = {}) {
-    const { enableConnection = false } = options;
+  function useDBSync() {
     const store = useAppStore();
     const pollTimerRef = (0, import_react4.useRef)(null);
     const buildServerPayload = (0, import_react4.useCallback)(() => {
@@ -18340,7 +18219,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         changeLog: current.changeLog,
         display: current.display,
         filters: current.filters,
-        dataVersion: DATA_VERSION,
         local: {
           baseFont: current.settings.baseFont,
           cardFont: current.settings.cardFont,
@@ -18348,8 +18226,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           panelPos: current.settings.panelPos,
           panelVisible: current.settings.panelVisible,
           listColumns: current.settings.listColumns,
-          dbSections: current.settings.dbSections,
-          dbSectionVisibility: current.settings.dbSectionVisibility,
           storageMode: current.settings.storageMode,
           serverUrl: current.settings.serverUrl,
           pollInterval: current.settings.pollInterval,
@@ -18370,12 +18246,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       if (!d) return;
       const current = getStore();
       if (d.items) store.setItems(migrateItems(d.items, d.dataVersion || 1));
-      if (Array.isArray(d.changeLog)) store.setChangeLog(migrateChangeLog(d.changeLog));
+      if (Array.isArray(d.changeLog)) store.setChangeLog(d.changeLog);
       if (d.settings) {
         const nextSettings = { ...current.settings };
-        const migratedSettings = migrateSettings(d.settings);
         SHARED_SETTINGS.forEach((k) => {
-          if (migratedSettings[k] !== void 0) nextSettings[k] = migratedSettings[k];
+          if (d.settings[k] !== void 0) nextSettings[k] = d.settings[k];
         });
         store.setSettings(nextSettings);
       }
@@ -18422,23 +18297,22 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       }
     }, [store, saveLocal, applyServerPayload]);
     const pollServer = (0, import_react4.useCallback)(async () => {
-      const current = getStore();
       try {
         const json = await apiFetch("/api/ping");
-        current.setServerStatus("ok");
+        store.setServerStatus("ok");
         if (!isSocketConnected() && json.locks) {
-          current.updateLocks(json.locks);
+          store.updateLocks(json.locks);
         }
-        if (!isSocketConnected() && json.serverTs > current.serverTs) {
+        if (!isSocketConnected() && json.serverTs > store.serverTs) {
           const editor = json.lastEditor || "\uB204\uAD70\uAC00";
-          current.setBanner(true, `\u26A0 ${editor}\uB2D8\uC774 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.`);
+          store.setBanner(true, `\u26A0 ${editor}\uB2D8\uC774 \uB370\uC774\uD130\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.`);
         }
         return json;
       } catch (e) {
-        current.setServerStatus("error");
+        store.setServerStatus("error");
         return null;
       }
-    }, []);
+    }, [store, isSocketConnected]);
     const lockItem = (0, import_react4.useCallback)((key) => {
       if (store.settings.storageMode !== "server" || !key) return;
       const user = store.settings.userName || "\uC775\uBA85";
@@ -18472,7 +18346,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       }
     }, [store.settings.storageMode, store.settings.userName]);
     (0, import_react4.useEffect)(() => {
-      if (!enableConnection) return void 0;
       if (store.settings.storageMode === "server") {
         initSocket();
       } else {
@@ -18486,7 +18359,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       return () => {
         if (pollTimerRef.current) clearInterval(pollTimerRef.current);
       };
-    }, [enableConnection, store.settings.storageMode, store.settings.pollInterval]);
+    }, [store.settings.storageMode, store.settings.pollInterval, pollServer]);
     return {
       saveToServer,
       loadFromServer,
@@ -18513,32 +18386,56 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     };
   }
 
+  // hooks/usePersistItems.js
+  var import_react5 = __toESM(require_react());
+  function usePersistItems() {
+    const { saveToServer, saveLocal, unlockItem, broadcastSharedData } = useDBSync();
+    const persistItems = (0, import_react5.useCallback)(async (keysToUnlock = []) => {
+      const { settings } = useAppStore.getState();
+      if (settings.storageMode === "server") {
+        const ok = await saveToServer();
+        if (ok) {
+          keysToUnlock.forEach((k) => unlockItem(k));
+          broadcastSharedData();
+        }
+        return ok ?? false;
+      } else {
+        saveLocal();
+        return true;
+      }
+    }, [saveToServer, saveLocal, unlockItem, broadcastSharedData]);
+    return { persistItems };
+  }
+
   // hooks/useModals.js
   function useModals() {
-    const store = useAppStore();
-    const { saveToServer, saveLocal, lockItem, unlockItem, logActivity, broadcastSharedData } = useDBSync();
-    const openModal = (0, import_react5.useCallback)((id) => {
-      store.setActiveModal(id);
-    }, [store]);
-    const closeModal = (0, import_react5.useCallback)((id) => {
-      const current = useAppStore.getState().activeModal;
-      if (current === id) store.setActiveModal(null);
-    }, [store]);
-    const closeEditModal = (0, import_react5.useCallback)(() => {
-      const editKey = useAppStore.getState().editKey;
+    const { lockItem, unlockItem, logActivity } = useDBSync();
+    const { persistItems } = usePersistItems();
+    const openModal = (0, import_react6.useCallback)((id) => {
+      useAppStore.getState().setActiveModal(id);
+    }, []);
+    const closeModal = (0, import_react6.useCallback)((id) => {
+      if (useAppStore.getState().activeModal === id) {
+        useAppStore.getState().setActiveModal(null);
+      }
+    }, []);
+    const closeEditModal = (0, import_react6.useCallback)(() => {
+      const { editKey, setEditKey, closeEditModal: close2 } = useAppStore.getState();
       if (editKey) unlockItem(editKey);
-      useAppStore.getState().setEditKey(null);
-      useAppStore.getState().closeEditModal();
+      setEditKey(null);
+      close2();
     }, [unlockItem]);
-    const openEditModal = (0, import_react5.useCallback)((key) => {
-      store.setEditKey(key);
-      const item = findItem(key, store.items);
+    const openEditModal = (0, import_react6.useCallback)((key) => {
+      const { setEditKey, openEditModal: open2, items, settings } = useAppStore.getState();
+      const item = findItem(key, items);
       if (!item) return;
-      store.openEditModal("edit", key, { ...item });
-      if (store.settings.storageMode === "server") lockItem(key);
-    }, [store, lockItem]);
-    const openAddModal = (0, import_react5.useCallback)((defaults = {}) => {
-      store.setEditKey(null);
+      setEditKey(key);
+      open2("edit", key, { ...item });
+      if (settings.storageMode === "server") lockItem(key);
+    }, [lockItem]);
+    const openAddModal = (0, import_react6.useCallback)((defaults = {}) => {
+      const { setEditKey, openEditModal: open2 } = useAppStore.getState();
+      setEditKey(null);
       const newKey = genKey();
       const newItem = {
         key: newKey,
@@ -18559,9 +18456,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         isDelete: "N",
         ...defaults
       };
-      store.openEditModal("add", newKey, newItem);
-    }, [store]);
-    const openAddInCell = (0, import_react5.useCallback)((group, subGroup, category, subCategory) => {
+      open2("add", newKey, newItem);
+    }, []);
+    const openAddInCell = (0, import_react6.useCallback)((group, subGroup, category, subCategory) => {
       openAddModal({
         group: group === "(\uBBF8\uBD84\uB958)" ? "" : group || "",
         subGroup: subGroup || "",
@@ -18569,86 +18466,68 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         subCategory: subCategory || ""
       });
     }, [openAddModal]);
-    const openMdModal = (0, import_react5.useCallback)((key) => {
-      store.setEditKey(key);
-      const item = findItem(key, store.items);
+    const openMdModal = (0, import_react6.useCallback)((key) => {
+      const { setEditKey, openEditModal: open2, items, settings } = useAppStore.getState();
+      const item = findItem(key, items);
       if (!item) return;
       const nextMdMode = item.mdContent?.trim() ? "preview" : "edit";
-      store.openEditModal("edit", key, { ...item }, "md", nextMdMode);
-      if (store.settings.storageMode === "server") lockItem(key);
-    }, [store, lockItem]);
-    const saveItem = (0, import_react5.useCallback)(async (form) => {
+      setEditKey(key);
+      open2("edit", key, { ...item }, "md", nextMdMode);
+      if (settings.storageMode === "server") lockItem(key);
+    }, [lockItem]);
+    const saveItem = (0, import_react6.useCallback)(async (form) => {
+      const { notify: notify3, pushUndo, items, editKey, setItems, setEditKey, closeEditModal: close2 } = useAppStore.getState();
       const name = (form.name || "").trim();
       if (!name) {
-        store.notify("\uAE30\uB2A5\uBA85\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.", "error");
+        notify3("\uAE30\uB2A5\uBA85\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.", "error");
         return;
       }
-      const ni = {
-        ...form,
-        name,
-        updatedAt: Date.now()
-      };
-      store.pushUndo();
-      const items = [...store.items];
-      const editKey = store.editKey;
+      const ni = { ...form, name, updatedAt: Date.now() };
+      pushUndo();
+      const nextItems = [...items];
       if (editKey) {
-        const idx = items.findIndex((it) => it.key === editKey);
+        const idx = nextItems.findIndex((it) => it.key === editKey);
         if (idx !== -1) {
-          items[idx] = ni;
+          nextItems[idx] = ni;
           pushChangeLog("\uC218\uC815", ni.key, ni.name, { status: ni.status, owner: ni.owner });
           logActivity("\uC218\uC815", `${ni.key} ${ni.name}`);
         }
       } else {
-        items.push(ni);
+        nextItems.push(ni);
         pushChangeLog("\uCD94\uAC00", ni.key, ni.name, { status: ni.status, owner: ni.owner });
         logActivity("\uCD94\uAC00", `${ni.key} ${ni.name}`);
       }
-      store.setItems(items);
-      useAppStore.getState().closeEditModal();
+      setItems(nextItems);
+      close2();
       if (editKey) unlockItem(editKey);
-      store.setEditKey(null);
-      if (store.settings.storageMode === "server") {
-        await saveToServer();
-        broadcastSharedData();
-      } else {
-        saveLocal();
-      }
-      store.notify("\uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", "success");
-    }, [store, logActivity, unlockItem, saveToServer, saveLocal, broadcastSharedData]);
-    const hardDelete = (0, import_react5.useCallback)(async (key) => {
-      const it = findItem(key, store.items);
+      setEditKey(null);
+      await persistItems();
+      notify3("\uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", "success");
+    }, [logActivity, unlockItem, persistItems]);
+    const hardDelete = (0, import_react6.useCallback)(async (key) => {
+      const { items, notify: notify3, pushUndo, setItems, setEditKey, closeEditModal: close2 } = useAppStore.getState();
+      const it = findItem(key, items);
       if (!it || !confirm(`${key} \uD56D\uBAA9\uC744 \uC644\uC804\uD788 \uC0AD\uC81C\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?`)) return;
-      store.pushUndo();
-      const nextItems = store.items.filter((it2) => it2.key !== key);
-      store.setItems(nextItems);
+      pushUndo();
+      setItems(items.filter((i) => i.key !== key));
       logActivity("\uC644\uC804\uC0AD\uC81C", `${key} ${it.name || ""}`);
       pushChangeLog("\uC644\uC804\uC0AD\uC81C", key, it.name || key);
-      useAppStore.getState().closeEditModal();
+      close2();
       unlockItem(key);
-      store.setEditKey(null);
-      if (store.settings.storageMode === "server") {
-        await saveToServer();
-        broadcastSharedData();
-      } else {
-        saveLocal();
-      }
-      store.notify("\uC644\uC804 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", "success");
-    }, [store, logActivity, unlockItem, saveToServer, saveLocal, broadcastSharedData]);
-    const duplicateItem = (0, import_react5.useCallback)(async (key) => {
-      const src = findItem(key, store.items);
+      setEditKey(null);
+      await persistItems();
+      notify3("\uC644\uC804 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", "success");
+    }, [logActivity, unlockItem, persistItems]);
+    const duplicateItem = (0, import_react6.useCallback)(async (key) => {
+      const { items, notify: notify3, pushUndo, setItems } = useAppStore.getState();
+      const src = findItem(key, items);
       if (!src) return;
-      store.pushUndo();
-      const newItem = { ...src, key: genKey(), updatedAt: Date.now() };
-      store.setItems([...store.items, newItem]);
-      if (store.settings.storageMode === "server") {
-        await saveToServer();
-        broadcastSharedData();
-      } else {
-        saveLocal();
-      }
-      store.notify(`${src.key} \uBCF5\uC81C \uC644\uB8CC`, "success");
-    }, [store, saveToServer, saveLocal, broadcastSharedData]);
-    const expSingleMd = (0, import_react5.useCallback)((form) => {
+      pushUndo();
+      setItems([...items, { ...src, key: genKey(), updatedAt: Date.now() }]);
+      await persistItems();
+      notify3(`${src.key} \uBCF5\uC81C \uC644\uB8CC`, "success");
+    }, [persistItems]);
+    const expSingleMd = (0, import_react6.useCallback)((form) => {
       const content = form.mdContent || "";
       if (!content.trim()) {
         useAppStore.getState().notify("MD \uB0B4\uC6A9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.", "error");
@@ -18656,36 +18535,32 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       }
       const key = form.key || "unknown";
       const name = sanitizeFilename(form.name) || "untitled";
-      dlBlob(content, key + "_" + name + ".md", "text/markdown;charset=utf-8");
+      dlBlob(content, `${key}_${name}.md`, "text/markdown;charset=utf-8");
       useAppStore.getState().notify("MD \uD30C\uC77C \uC800\uC7A5\uB428.", "success");
     }, []);
-    const quickToggleDel = (0, import_react5.useCallback)(async (key) => {
-      const item = findItem(key, store.items);
+    const quickToggleDel = (0, import_react6.useCallback)(async (key) => {
+      const { items, pushUndo, setItems } = useAppStore.getState();
+      const item = findItem(key, items);
       if (!item) return;
       const nextValue = item.isDelete === "Y" ? "N" : "Y";
-      store.pushUndo();
-      store.setItems(store.items.map((it) => it.key === key ? { ...it, isDelete: nextValue, updatedAt: Date.now() } : it));
+      pushUndo();
+      setItems(items.map(
+        (it) => it.key === key ? { ...it, isDelete: nextValue, updatedAt: Date.now() } : it
+      ));
       pushChangeLog(nextValue === "Y" ? "\uC0AD\uC81C\uCC98\uB9AC" : "\uC0AD\uC81C\uBCF5\uC6D0", key, item.name || key);
-      if (store.settings.storageMode === "server") {
-        await saveToServer();
-        broadcastSharedData();
-      } else {
-        saveLocal();
-      }
-    }, [store, saveToServer, saveLocal, broadcastSharedData]);
-    const setItemStatus = (0, import_react5.useCallback)(async (key, status) => {
-      const item = findItem(key, store.items);
+      await persistItems();
+    }, [persistItems]);
+    const setItemStatus = (0, import_react6.useCallback)(async (key, status) => {
+      const { items, pushUndo, setItems } = useAppStore.getState();
+      const item = findItem(key, items);
       if (!item) return;
-      store.pushUndo();
-      store.setItems(store.items.map((it) => it.key === key ? { ...it, status, updatedAt: Date.now() } : it));
+      pushUndo();
+      setItems(items.map(
+        (it) => it.key === key ? { ...it, status, updatedAt: Date.now() } : it
+      ));
       pushChangeLog("\uC0C1\uD0DC\uBCC0\uACBD", key, item.name || key, { status, owner: item.owner });
-      if (store.settings.storageMode === "server") {
-        await saveToServer();
-        broadcastSharedData();
-      } else {
-        saveLocal();
-      }
-    }, [store, saveToServer, saveLocal, broadcastSharedData]);
+      await persistItems();
+    }, [persistItems]);
     return {
       openModal,
       closeModal,
@@ -18788,15 +18663,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode, logout: logout2, openLoginModal: openLoginModal2 } = useAuth();
     const { isDark, toggleTheme: toggleTheme2 } = useTheme();
     const { openModal } = useModals();
-    const store = useAppStore();
-    const title = store.settings.title || "featureMATRIX";
-    const subtitle = store.settings.subtitle || "Function Matrix";
-    const storageMode = store.settings.storageMode || "server";
-    const { serverStatus, wsStatus, activeUsers, view, searchQ, filters, items, searchFocusNonce } = store;
-    const userName = store.settings.userName || "Anonymous";
-    const searchRef = (0, import_react6.useRef)(null);
+    const settings = useAppStore((s) => s.settings);
+    const serverStatus = useAppStore((s) => s.serverStatus);
+    const wsStatus = useAppStore((s) => s.wsStatus);
+    const activeUsers = useAppStore((s) => s.activeUsers);
+    const view = useAppStore((s) => s.view);
+    const searchQ = useAppStore((s) => s.searchQ);
+    const filters = useAppStore((s) => s.filters);
+    const items = useAppStore((s) => s.items);
+    const searchFocusNonce = useAppStore((s) => s.searchFocusNonce);
+    const setSearchQ = useAppStore((s) => s.setSearchQ);
+    const title = settings.title || "featureMATRIX";
+    const subtitle = settings.subtitle || "Function Matrix";
+    const storageMode = settings.storageMode || "server";
+    const userName = settings.userName || "Anonymous";
+    const searchRef = (0, import_react7.useRef)(null);
     const showSearch = view !== "dashboard";
-    const filteredCount = (0, import_react6.useMemo)(() => getFiltered(items, filters, searchQ).length, [items, filters, searchQ]);
+    const filteredCount = (0, import_react7.useMemo)(() => getFiltered(items, filters, searchQ).length, [items, filters, searchQ]);
     const showLogoutBtn = (isAdmin2 || isEditor2) && isServerMode;
     const logoutTitle = "Logout";
     const loginState = isAdmin2 ? { label: "Admin", icon: ICON_ADMIN, active: true } : isEditor2 ? { label: "Editor", icon: ICON_EDITOR, active: true } : { label: "Login", icon: ICON_LOGIN, active: false };
@@ -18806,7 +18689,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const statusDot = showWsDot ? wsDot : restDot;
     const showStatusDot = storageMode === "server";
     const serverLabel = showWsDot ? wsStatus === "reconnecting" ? "\uC7AC\uC5F0\uACB0 \uC911" : wsStatus === "connected" ? "\uC2E4\uC2DC\uAC04" : "\uC5F0\uACB0\uB04A\uAE40" : storageMode === "server" ? "\uC11C\uBC84" : "\uB85C\uCEEC";
-    (0, import_react6.useEffect)(() => {
+    (0, import_react7.useEffect)(() => {
       if (searchFocusNonce > 0) searchRef.current?.focus();
     }, [searchFocusNonce]);
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("header", { className: "hdr", children: [
@@ -18827,10 +18710,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               className: "search-inp",
               placeholder: "Search (name / key / owner / path)",
               value: searchQ,
-              onChange: (e) => store.setSearchQ(e.target.value)
+              onChange: (e) => setSearchQ(e.target.value)
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: `search-clear${searchQ ? " on" : ""}`, onClick: () => store.setSearchQ(""), children: "x" })
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: `search-clear${searchQ ? " on" : ""}`, onClick: () => setSearchQ(""), children: "x" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "hdr-count-badge", children: filteredCount ? `${filteredCount}` : "" })
       ] }) }),
@@ -18914,9 +18797,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] });
   }
   function NavigationSide() {
-    const store = useAppStore();
+    const view = useAppStore((s) => s.view);
+    const setView = useAppStore((s) => s.setView);
     const { openModal } = useModals();
-    const view = store.view;
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("nav", { className: "nav-side", id: "navSide", children: [
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
         NavButton,
@@ -18925,7 +18808,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           label: "\uB300\uC2DC\uBCF4\uB4DC",
           icon: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(DashboardIcon, {}),
           active: view === "dashboard",
-          onClick: () => store.setView("dashboard")
+          onClick: () => setView("dashboard")
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
@@ -18935,7 +18818,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           label: "\uB9E4\uD2B8\uB9AD\uC2A4",
           icon: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(MatrixIcon, {}),
           active: view === "matrix",
-          onClick: () => store.setView("matrix")
+          onClick: () => setView("matrix")
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
@@ -18945,7 +18828,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           label: "\uBCF4\uB4DC",
           icon: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(BoardIcon, {}),
           active: view === "board",
-          onClick: () => store.setView("board")
+          onClick: () => setView("board")
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
@@ -18955,7 +18838,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           label: "\uB9AC\uC2A4\uD2B8",
           icon: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(ListIcon, {}),
           active: view === "list",
-          onClick: () => store.setView("list")
+          onClick: () => setView("list")
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "nav-spacer" }),
@@ -18973,7 +18856,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/FilterPanel.jsx
-  var import_react7 = __toESM(require_react());
+  var import_react8 = __toESM(require_react());
   var import_jsx_runtime5 = __toESM(require_jsx_runtime());
   var PRIORITY_CHIPS = [
     { val: "\uC0C1", pk: "high" },
@@ -18994,7 +18877,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] });
   }
   function FilterSection({ title, children }) {
-    const [collapsed, setCollapsed] = (0, import_react7.useState)(false);
+    const [collapsed, setCollapsed] = (0, import_react8.useState)(false);
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: `fsec${collapsed ? " sec-collapsed" : ""}`, children: [
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "fsec-ttl", onClick: () => setCollapsed((v) => !v), children: title }),
@@ -19010,15 +18893,15 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tgl-lbl", children: label })
     ] });
   }
-  function PriorityChips({ onPersist }) {
-    const store = useAppStore();
+  function PriorityChips() {
+    const filters = useAppStore((s) => s.filters);
     const colors = getColors();
-    const priorities = store.filters.priorities;
+    const priorities = filters.priorities;
     const togglePrio = (val, checked) => {
-      store.pushUndo();
-      const next = checked ? [...priorities, val] : priorities.filter((v) => v !== val);
-      store.setFilters({ ...store.filters, priorities: next });
-      onPersist();
+      const { pushUndo, setFilters, filters: f } = useAppStore.getState();
+      pushUndo();
+      const next = checked ? [...f.priorities, val] : f.priorities.filter((v) => v !== val);
+      setFilters({ ...f, priorities: next });
     };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "pchips", children: PRIORITY_CHIPS.map(({ val, pk }) => {
       const checked = priorities.includes(val);
@@ -19032,23 +18915,25 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       ] }, val);
     }) });
   }
-  function StatusChips({ onPersist }) {
-    const store = useAppStore();
-    const { items, filters } = store;
+  function StatusChips() {
+    const items = useAppStore((s) => s.items);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
+    const statusLabels = useAppStore((s) => s.settings.statusLabels);
     const statuses = filters.statuses || [];
-    const counts = (0, import_react7.useMemo)(() => {
+    const counts = (0, import_react8.useMemo)(() => {
       const c = {};
-      const countItems = isFilterActive(filters, store.searchQ) ? getFiltered(items, filters, store.searchQ) : items.filter((it) => it.isDelete !== "Y");
+      const countItems = isFilterActive(filters, searchQ) ? getFiltered(items, filters, searchQ) : items.filter((it) => it.isDelete !== "Y");
       countItems.forEach((it) => {
         if (it.status) c[it.status] = (c[it.status] || 0) + 1;
       });
       return c;
-    }, [items, filters, store.searchQ]);
+    }, [items, filters, searchQ]);
     const toggleStatus = (status, checked) => {
-      store.pushUndo();
-      const next = checked ? [...statuses, status] : statuses.filter((s) => s !== status);
-      store.setFilters({ ...store.filters, statuses: next });
-      onPersist();
+      const { pushUndo, setFilters, filters: f } = useAppStore.getState();
+      pushUndo();
+      const next = checked ? [...f.statuses || [], status] : (f.statuses || []).filter((s) => s !== status);
+      setFilters({ ...f, statuses: next });
     };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { display: "flex", flexWrap: "wrap", gap: "3px" }, children: STATUS_OPTS.map((status) => {
       const checked = statuses.includes(status);
@@ -19056,21 +18941,22 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       const style = checked ? { color: col, background: bg, borderColor: col, fontSize: ".7rem", cursor: "pointer", marginBottom: "3px" } : { color: col, borderColor: "var(--border-2)", fontSize: ".7rem", cursor: "pointer", marginBottom: "3px" };
       return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { className: "pchip", style, children: [
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("input", { type: "checkbox", checked, style: { display: "none" }, onChange: (e) => toggleStatus(status, e.target.checked) }),
-        store.settings.statusLabels?.[status] || status,
+        statusLabels?.[status] || status,
         !!counts[status] && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { style: { fontSize: ".6rem", opacity: 0.7, marginLeft: "3px" }, children: counts[status] })
       ] }, status);
     }) });
   }
-  function OwnerChips({ onPersist }) {
-    const store = useAppStore();
-    const owners = store.filters.owners || [];
-    const allOwners = getUniqSorted("owner", store.items);
+  function OwnerChips() {
+    const filters = useAppStore((s) => s.filters);
+    const items = useAppStore((s) => s.items);
+    const owners = filters.owners || [];
+    const allOwners = getUniqSorted("owner", items);
     const toggleOwner = (owner, checked) => {
-      store.pushUndo();
+      const { pushUndo, setFilters, filters: f } = useAppStore.getState();
+      pushUndo();
       const norm = normOwner(owner);
-      const next = checked ? [...owners, norm] : owners.filter((o) => o !== norm);
-      store.setFilters({ ...store.filters, owners: next });
-      onPersist();
+      const next = checked ? [...f.owners || [], norm] : (f.owners || []).filter((o) => o !== norm);
+      setFilters({ ...f, owners: next });
     };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "owner-chips", children: allOwners.map((owner) => {
       const normalized = normOwner(owner);
@@ -19085,10 +18971,18 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }) });
   }
   function FilterPanel() {
-    const store = useAppStore();
+    const filters = useAppStore((s) => s.filters);
+    const display = useAppStore((s) => s.display);
+    const undoDepth = useAppStore((s) => s.undoDepth);
+    const view = useAppStore((s) => s.view);
+    const settings = useAppStore((s) => s.settings);
+    const setFilters = useAppStore((s) => s.setFilters);
+    const setDisplay = useAppStore((s) => s.setDisplay);
+    const setSettings = useAppStore((s) => s.setSettings);
+    const setSearchQ = useAppStore((s) => s.setSearchQ);
     const { saveLocal, saveToServer, broadcastSharedData, logActivity } = useDBSync();
-    const { filters, display, undoDepth, view, settings, setSearchQ, setFilters, setDisplay, setSettings, doUndo } = store;
     const handleUndo = async () => {
+      const { doUndo } = useAppStore.getState();
       const prevItems = doUndo();
       if (prevItems) {
         if (settings.storageMode === "server") {
@@ -19102,23 +18996,22 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     };
     const panelVisible = settings.panelVisible;
     const panelClassName = ["fpanel", !panelVisible ? "collapsed" : "", view === "dashboard" ? "fp-hide" : ""].filter(Boolean).join(" ");
-    const togglePanel = (0, import_react7.useCallback)(() => {
+    const togglePanel = (0, import_react8.useCallback)(() => {
       setSettings({ ...settings, panelVisible: !panelVisible });
     }, [settings, panelVisible, setSettings]);
-    const resetFiltersAction = (0, import_react7.useCallback)(() => {
-      store.pushUndo();
+    const resetFiltersAction = (0, import_react8.useCallback)(() => {
+      const { pushUndo } = useAppStore.getState();
+      pushUndo();
       setFilters({ priorities: [], statuses: [], showDeleted: false, importantOnly: false, owners: [] });
       setSearchQ("");
-      saveLocal();
-    }, [store, setFilters, setSearchQ, saveLocal]);
+    }, [setFilters, setSearchQ]);
     const updateFilter = (key, val) => {
-      store.pushUndo();
+      const { pushUndo } = useAppStore.getState();
+      pushUndo();
       setFilters({ ...filters, [key]: val });
-      saveLocal();
     };
     const updateDisplay = (key, val) => {
       setDisplay({ ...display, [key]: val });
-      saveLocal();
     };
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("aside", { className: panelClassName, id: "fpanel", children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { className: "fpanel-toggle", onClick: togglePanel, title: "\uD544\uD130 \uD328\uB110 (F)", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(ToggleIcon, {}) }),
@@ -19127,9 +19020,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { style: { fontSize: ".64rem", fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--text-3)" }, children: "\uD544\uD130" }),
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { className: "btn btn-g btn-sm", onClick: resetFiltersAction, style: { height: "20px", padding: "0 6px", fontSize: ".65rem" }, children: "\uCD08\uAE30\uD654" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uC6B0\uC120\uC21C\uC704", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(PriorityChips, { onPersist: saveLocal }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uC9C4\uD589\uC0C1\uD0DC", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(StatusChips, { onPersist: saveLocal }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uB2F4\uB2F9", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(OwnerChips, { onPersist: saveLocal }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uC6B0\uC120\uC21C\uC704", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(PriorityChips, {}) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uC9C4\uD589\uC0C1\uD0DC", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(StatusChips, {}) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uB2F4\uB2F9", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(OwnerChips, {}) }),
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(FilterSection, { title: "\uD45C\uC2DC \uC870\uAC74", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "7px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Toggle, { label: "\uC0AD\uC81C \uD3EC\uD568", checked: filters.showDeleted, onChange: (v) => updateFilter("showDeleted", v) }),
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Toggle, { label: "\uC911\uC694\uB9CC \uBCF4\uAE30", checked: filters.importantOnly, onChange: (v) => updateFilter("importantOnly", v) })
@@ -19156,68 +19049,53 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/BulkActionBar.jsx
-  var import_react9 = __toESM(require_react());
+  var import_react10 = __toESM(require_react());
 
   // hooks/useListActions.js
-  var import_react8 = __toESM(require_react());
+  var import_react9 = __toESM(require_react());
   function useListActions() {
-    const store = useAppStore();
-    const { saveLocal, saveToServer, logActivity } = useDBSync();
-    const handleSave = (0, import_react8.useCallback)(async () => {
-      if (store.settings.storageMode === "server") await saveToServer();
-      else saveLocal();
-    }, [store.settings.storageMode, saveLocal, saveToServer]);
-    const bulkToggle = (0, import_react8.useCallback)((key) => {
-      const prev = new Set(store.bulkSelectionKeys);
+    const setBulkSelectionKeys = useAppStore((s) => s.setBulkSelectionKeys);
+    const { logActivity } = useDBSync();
+    const { persistItems } = usePersistItems();
+    const bulkToggle = (0, import_react9.useCallback)((key) => {
+      const prev = new Set(useAppStore.getState().bulkSelectionKeys);
       if (prev.has(key)) prev.delete(key);
       else prev.add(key);
-      store.setBulkSelectionKeys([...prev]);
-    }, [store]);
-    const bulkToggleAll = (0, import_react8.useCallback)((checked, filteredItems) => {
-      if (checked) {
-        store.setBulkSelectionKeys(filteredItems.map((it) => it.key));
-      } else {
-        store.setBulkSelectionKeys([]);
-      }
-    }, [store]);
-    const bulkClearSelection = (0, import_react8.useCallback)(() => {
-      store.setBulkSelectionKeys([]);
-    }, [store]);
-    const toggleSort = (0, import_react8.useCallback)((key) => {
-      const s = { ...store.sort };
-      if (s.key === key) {
-        s.dir = s.dir === "asc" ? "desc" : "asc";
-      } else {
-        s.key = key;
-        s.dir = "asc";
-      }
-      store.setState({ sort: s });
-    }, [store]);
-    const setBulkPriority = (0, import_react8.useCallback)(async (priority) => {
-      const keys = store.bulkSelectionKeys;
-      if (!keys.length) return;
-      store.pushUndo();
-      const nextItems = store.items.map((it) => {
-        if (keys.includes(it.key)) return { ...it, priority };
-        return it;
-      });
-      store.setItems(nextItems);
-      await logActivity("\uC77C\uAD04\uBCC0\uACBD", `\uC6B0\uC120\uC21C\uC704\u2192${priority} (${keys.join(", ")})`);
-      await handleSave();
-    }, [store, logActivity, handleSave]);
-    const setBulkOwner = (0, import_react8.useCallback)(async (owner) => {
+      setBulkSelectionKeys([...prev]);
+    }, [setBulkSelectionKeys]);
+    const bulkToggleAll = (0, import_react9.useCallback)((checked, filteredItems) => {
+      setBulkSelectionKeys(checked ? filteredItems.map((it) => it.key) : []);
+    }, [setBulkSelectionKeys]);
+    const bulkClearSelection = (0, import_react9.useCallback)(() => {
+      setBulkSelectionKeys([]);
+    }, [setBulkSelectionKeys]);
+    const toggleSort = (0, import_react9.useCallback)((key) => {
+      const s = { ...useAppStore.getState().sort };
+      s.dir = s.key === key ? s.dir === "asc" ? "desc" : "asc" : "asc";
+      s.key = key;
+      useAppStore.setState({ sort: s });
+    }, []);
+    const setBulkPriority = (0, import_react9.useCallback)(async (priority) => {
+      const { bulkSelectionKeys, pushUndo, items, setItems } = useAppStore.getState();
+      if (!bulkSelectionKeys.length) return;
+      pushUndo();
+      setItems(items.map(
+        (it) => bulkSelectionKeys.includes(it.key) ? { ...it, priority } : it
+      ));
+      await logActivity("\uC77C\uAD04\uBCC0\uACBD", `\uC6B0\uC120\uC21C\uC704\u2192${priority} (${bulkSelectionKeys.join(", ")})`);
+      await persistItems();
+    }, [logActivity, persistItems]);
+    const setBulkOwner = (0, import_react9.useCallback)(async (owner) => {
       const nextOwner = String(owner || "").trim();
-      const keys = store.bulkSelectionKeys;
-      if (!nextOwner || !keys.length) return;
-      store.pushUndo();
-      const nextItems = store.items.map((it) => {
-        if (keys.includes(it.key)) return { ...it, owner: nextOwner };
-        return it;
-      });
-      store.setItems(nextItems);
-      await logActivity("\uC77C\uAD04\uBCC0\uACBD", `\uB2F4\uB2F9\u2192${nextOwner} (${keys.join(", ")})`);
-      await handleSave();
-    }, [store, logActivity, handleSave]);
+      const { bulkSelectionKeys, pushUndo, items, setItems } = useAppStore.getState();
+      if (!nextOwner || !bulkSelectionKeys.length) return;
+      pushUndo();
+      setItems(items.map(
+        (it) => bulkSelectionKeys.includes(it.key) ? { ...it, owner: nextOwner } : it
+      ));
+      await logActivity("\uC77C\uAD04\uBCC0\uACBD", `\uB2F4\uB2F9\u2192${nextOwner} (${bulkSelectionKeys.join(", ")})`);
+      await persistItems();
+    }, [logActivity, persistItems]);
     return {
       bulkToggle,
       bulkToggleAll,
@@ -19235,7 +19113,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const selectedKeys = useAppStore((s) => s.bulkSelectionKeys);
     const { isAdmin: adminOk } = useAuth();
     const { setBulkPriority, setBulkOwner, bulkClearSelection } = useListActions();
-    const [owner, setOwner] = (0, import_react9.useState)("");
+    const [owner, setOwner] = (0, import_react10.useState)("");
     const updateOwner = async () => {
       if (!owner.trim()) return;
       await setBulkOwner(owner);
@@ -19282,17 +19160,14 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/DashboardView.jsx
-  var import_react10 = __toESM(require_react());
+  var import_react11 = __toESM(require_react());
   var import_jsx_runtime7 = __toESM(require_jsx_runtime());
-  var SECTION_DEFAULTS = ["stats", "insight", "heatmap", "metrics"];
+  var SECTION_DEFAULTS = ["stats", "insight", "heatmap"];
   var SECTION_KEYS = new Set(SECTION_DEFAULTS);
   var LEGEND_OPACITY = [0.06, 0.3, 0.55, 0.8, 1];
-  function isSectionVisible(visibility, section) {
-    return visibility?.[section] !== false;
-  }
   function useCountUp(value2, duration = 1e3) {
-    const [displayValue, setDisplayValue] = (0, import_react10.useState)(0);
-    (0, import_react10.useEffect)(() => {
+    const [displayValue, setDisplayValue] = (0, import_react11.useState)(0);
+    (0, import_react11.useEffect)(() => {
       let frameId = 0;
       const startValue = displayValue;
       const diff = value2 - startValue;
@@ -19317,24 +19192,28 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className, style, children: displayValue.toLocaleString() });
   }
   function DashboardView() {
-    const store = useAppStore();
+    const items = useAppStore((s) => s.items);
+    const changeLog = useAppStore((s) => s.changeLog);
+    const settings = useAppStore((s) => s.settings);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
+    const setFilters = useAppStore((s) => s.setFilters);
+    const setSearchQ = useAppStore((s) => s.setSearchQ);
+    const setView = useAppStore((s) => s.setView);
     const { openEditModal } = useModals();
-    const { items, changeLog, settings, filters, searchQ } = store;
-    const containerRef = (0, import_react10.useRef)(null);
-    const [hmView, setHmView] = (0, import_react10.useState)("cat");
-    const [dailyMetrics, setDailyMetrics] = (0, import_react10.useState)([]);
-    const [metricsStatus, setMetricsStatus] = (0, import_react10.useState)("idle");
-    const resetFilters = (0, import_react10.useCallback)(() => {
-      store.setFilters({
+    const containerRef = (0, import_react11.useRef)(null);
+    const [hmView, setHmView] = (0, import_react11.useState)("cat");
+    const resetFilters = (0, import_react11.useCallback)(() => {
+      setFilters({
         priorities: [],
         statuses: [],
         showDeleted: false,
         importantOnly: false,
         owners: []
       });
-      store.setSearchQ("");
-    }, [store]);
-    const data = (0, import_react10.useMemo)(() => {
+      setSearchQ("");
+    }, [setFilters, setSearchQ]);
+    const data = (0, import_react11.useMemo)(() => {
       const filterOn = isFilterActive(filters, searchQ);
       const all = filterOn ? getFiltered(items, filters, searchQ) : items.filter((it) => it.isDelete !== "Y");
       const total = all.length;
@@ -19344,7 +19223,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       let done = 0;
       all.forEach((item) => {
         if (item.isImportant === "Y") imp += 1;
-        if (item.status === "done") done += 1;
+        if (item.status === "\uC644\uB8CC") done += 1;
         if (statusCount[item.status] !== void 0) statusCount[item.status] += 1;
         const owner = normOwner(item.owner);
         if (!ownerMap[owner]) {
@@ -19360,16 +19239,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       const groups = [...orderedGroups, ...allGroups.filter((group) => !orderedGroups.includes(group))];
       const orderedCats = settings.catOrder.filter((cat) => allCats.includes(cat));
       const cats = [...orderedCats, ...allCats.filter((cat) => !orderedCats.includes(cat))];
-      const configuredSections = (settings.dbSections || SECTION_DEFAULTS).filter((section) => SECTION_KEYS.has(section));
-      const sections = [
-        ...configuredSections,
-        ...SECTION_DEFAULTS.filter((section) => !configuredSections.includes(section))
-      ].filter((section) => isSectionVisible(settings.dbSectionVisibility, section));
+      const sections = (settings.dbSections || SECTION_DEFAULTS).filter((section) => SECTION_KEYS.has(section));
       const recent = (changeLog || []).slice().reverse().slice(0, settings.changeLogMax || 50);
       const owners = Object.entries(ownerMap).sort((a, b) => {
         if (b[1].total !== a[1].total) return b[1].total - a[1].total;
         if (b[1].high !== a[1].high) return b[1].high - a[1].high;
-        return (b[1].status.done || 0) - (a[1].status.done || 0);
+        return (b[1].status["\uC644\uB8CC"] || 0) - (a[1].status["\uC644\uB8CC"] || 0);
       }).slice(0, 10);
       return {
         all,
@@ -19386,30 +19261,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         total
       };
     }, [items, changeLog, settings, filters, searchQ]);
-    (0, import_react10.useEffect)(() => {
-      let cancelled = false;
-      if (settings.storageMode !== "server") {
-        setDailyMetrics([]);
-        setMetricsStatus("loaded");
-        return () => {
-          cancelled = true;
-        };
-      }
-      setMetricsStatus("loading");
-      apiFetch("/api/metrics?days=30").then((json) => {
-        if (cancelled) return;
-        setDailyMetrics(Array.isArray(json.metrics) ? json.metrics : []);
-        setMetricsStatus("loaded");
-      }).catch(() => {
-        if (cancelled) return;
-        setDailyMetrics([]);
-        setMetricsStatus("error");
-      });
-      return () => {
-        cancelled = true;
-      };
-    }, [store.serverTs, settings.storageMode, settings.serverUrl]);
-    (0, import_react10.useEffect)(() => {
+    (0, import_react11.useEffect)(() => {
       const container = containerRef.current;
       if (!container) return;
       const bodyLeft = container.querySelector(".db-body-left");
@@ -19439,34 +19291,21 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         ] })
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-body", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-body-left", children: data.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-          Section,
-          {
-            section,
-            data,
-            hmView,
-            setHmView,
-            settings,
-            metrics: dailyMetrics,
-            metricsStatus
-          },
-          section
-        )) }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-body-left", children: data.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Section, { section, data, hmView, setHmView, settings }, section)) }),
         /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-body-right", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-panel db-timeline-panel", children: [
           /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-panel-hd", children: [
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-panel-title", children: "\uCD5C\uADFC \uBCC0\uACBD" }),
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-panel-sub", children: "\uCD94\uAC00\xB7\uC218\uC815\xB7\uC0AD\uC81C \uAE30\uC900" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Timeline, { recent: data.recent, openEditModal, switchView: store.setView })
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Timeline, { recent: data.recent, openEditModal, switchView: setView })
         ] }) })
       ] })
     ] });
   }
-  function Section({ section, data, hmView, setHmView, settings, metrics, metricsStatus }) {
+  function Section({ section, data, hmView, setHmView, settings }) {
     if (section === "stats") return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(StatsSection, { data, settings });
     if (section === "insight") return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(InsightSection, { data, settings });
     if (section === "heatmap") return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(HeatmapSection, { data, hmView, setHmView, settings });
-    if (section === "metrics") return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(MetricsTrendPanel, { metrics, status: metricsStatus, settings });
     return null;
   }
   function StatsSection({ data, settings }) {
@@ -19523,91 +19362,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(HeatmapGrid, { data, hmView, settings })
     ] });
   }
-  function MetricsTrendPanel({ metrics, status, settings }) {
-    const rows = (metrics || []).slice(-14);
-    const latest = rows[rows.length - 1] || null;
-    const previous = rows[rows.length - 2] || null;
-    const maxChanged = Math.max(1, ...rows.map((metric) => metric.changedItems || 0));
-    const maxTotal = Math.max(1, ...rows.map((metric) => metric.activeItems || metric.totalItems || 0));
-    const points = rows.map((metric, index) => {
-      const x = rows.length === 1 ? 100 : index / (rows.length - 1) * 200;
-      const ratio = Math.max(0, Math.min(100, Number(metric.doneRatio) || 0));
-      const y = 70 - ratio / 100 * 60;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(" ");
-    const deltaChanged = latest && previous ? (latest.changedItems || 0) - (previous.changedItems || 0) : 0;
-    const latestStatusCounts = latest?.statusCounts || {};
-    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-panel db-metrics-panel", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-panel-hd", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-panel-title", children: "\uC77C\uBCC4 \uB9AC\uD3EC\uD2B8" }),
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-panel-sub", children: "\uB9E4\uC77C 0\uC2DC \uC2A4\uB0C5\uC0F7 \uAE30\uC900" })
-      ] }),
-      status === "loading" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-empty", children: "\uC77C\uBCC4 \uC9C0\uD45C\uB97C \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4" }),
-      status === "error" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-empty", children: "\uC77C\uBCC4 \uC9C0\uD45C\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4" }),
-      status !== "loading" && status !== "error" && rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-empty", children: "\uC544\uC9C1 \uAE30\uB85D\uB41C \uC77C\uBCC4 \uC9C0\uD45C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4" }),
-      rows.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-metric-summary", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-metric-label", children: "\uCD5C\uADFC \uBCC0\uACBD" }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("strong", { children: latest.changedItems || 0 }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: deltaChanged > 0 ? "up" : deltaChanged < 0 ? "down" : "", children: deltaChanged === 0 ? "\uC804\uC77C \uB3D9\uC77C" : `${deltaChanged > 0 ? "+" : ""}${deltaChanged}` })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-metric-label", children: "\uD65C\uC131 \uAE30\uB2A5" }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("strong", { children: latest.activeItems ?? latest.totalItems ?? 0 }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
-              "\uC0AD\uC81C ",
-              latest.deletedItems || 0
-            ] })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-metric-label", children: "\uC644\uB8CC\uC728" }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("strong", { children: [
-              latest.doneRatio || 0,
-              "%"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
-              latest.doneItems || 0,
-              "\uAC1C \uC644\uB8CC"
-            ] })
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-trend-grid", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-trend-chart", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("svg", { viewBox: "0 0 200 78", role: "img", "aria-label": "\uC644\uB8CC\uC728 \uCD94\uC774", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("line", { x1: "0", y1: "70", x2: "200", y2: "70" }),
-              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("polyline", { points }),
-              rows.map((metric, index) => {
-                const [x, y] = points.split(" ")[index].split(",");
-                return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("circle", { cx: x, cy: y, r: "2.5" }, metric.date);
-              })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-trend-caption", children: "\uC644\uB8CC\uC728 \uCD94\uC774" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-change-bars", children: rows.map((metric) => {
-            const height = Math.max(4, (metric.changedItems || 0) / maxChanged * 100);
-            const totalHeight = Math.max(8, (metric.activeItems || metric.totalItems || 0) / maxTotal * 100);
-            return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-change-bar", title: `${metric.date}: \uBCC0\uACBD ${metric.changedItems || 0}\uAC1C`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-change-total", style: { height: `${totalHeight}%` } }),
-              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-change-fill", style: { height: `${height}%` } }),
-              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("em", { children: formatMetricDay(metric.date) })
-            ] }, metric.date);
-          }) })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-status-strip", children: STATUS_OPTS.map((statusKey) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("i", { style: { background: STATUS_ACCENT[statusKey] } }),
-          settings.statusLabels?.[statusKey] || statusKey,
-          " ",
-          latestStatusCounts[statusKey] || 0
-        ] }, statusKey)) })
-      ] })
-    ] });
-  }
-  function formatMetricDay(dateText) {
-    if (!dateText) return "";
-    const parts2 = dateText.split("-");
-    return parts2.length === 3 ? `${Number(parts2[1])}/${Number(parts2[2])}` : dateText;
-  }
   function GroupProgress({ data, settings }) {
     if (data.groups.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-empty", children: "\uADF8\uB8F9 \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4" });
     return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "db-gp-list", children: data.groups.map((group) => {
@@ -19618,7 +19372,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       items.forEach((item) => {
         if (counts[item.status] !== void 0) counts[item.status] += 1;
       });
-      const donePct = Math.round((counts.done || 0) / total * 100);
+      const donePct = Math.round((counts["\uC644\uB8CC"] || 0) / total * 100);
       return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-gp-row", children: [
         /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "db-gp-info", children: [
           /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "db-gp-name", title: group, children: group }),
@@ -19795,10 +19549,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/MatrixView.jsx
-  var import_react13 = __toESM(require_react());
+  var import_react15 = __toESM(require_react());
 
   // components/FeatureCard.jsx
-  var import_react11 = __toESM(require_react());
+  var import_react12 = __toESM(require_react());
   var import_jsx_runtime8 = __toESM(require_jsx_runtime());
   function highlightText(value2, query) {
     const text2 = String(value2 || "");
@@ -19850,7 +19604,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       ] }, label))
     ] });
   }
-  var FeatureCard = (0, import_react11.forwardRef)(function FeatureCard2({
+  var FeatureCard = (0, import_react12.forwardRef)(function FeatureCard2({
     item,
     colors,
     id,
@@ -19996,13 +19750,14 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   var FeatureCard_default = FeatureCard;
 
   // hooks/useMatrixActions.js
-  var import_react12 = __toESM(require_react());
-  function useMatrixActions() {
-    const store = useAppStore();
-    const { saveToServer, saveLocal, lockItem, unlockItem, logActivity, broadcastSharedData } = useDBSync();
-    const handleCardClick = (0, import_react12.useCallback)((e, key) => {
+  var import_react14 = __toESM(require_react());
+
+  // hooks/useSelectionHandler.js
+  var import_react13 = __toESM(require_react());
+  function useSelectionHandler(getKeys, setKeys) {
+    const handleCardClick = (0, import_react13.useCallback)((e, key) => {
       e.stopPropagation();
-      const prev = new Set(store.mxSelectionKeys);
+      const prev = new Set(getKeys());
       if (e.shiftKey) {
         if (prev.has(key)) prev.delete(key);
         else prev.add(key);
@@ -20010,15 +19765,28 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         prev.clear();
         prev.add(key);
       }
-      store.setMxSelectionKeys([...prev]);
-    }, [store]);
-    const clearSelection = (0, import_react12.useCallback)(() => {
-      store.setMxSelectionKeys([]);
-    }, [store]);
-    const moveItems = (0, import_react12.useCallback)(async (keys, target) => {
+      setKeys([...prev]);
+    }, [getKeys, setKeys]);
+    const clearSelection = (0, import_react13.useCallback)(() => setKeys([]), [setKeys]);
+    return { handleCardClick, clearSelection };
+  }
+
+  // hooks/useMatrixActions.js
+  function useMatrixActions() {
+    const setMxSelectionKeys = useAppStore((s) => s.setMxSelectionKeys);
+    const setIsDragging = useAppStore((s) => s.setIsDragging);
+    const notify3 = useAppStore((s) => s.notify);
+    const { lockItem, unlockItem, logActivity } = useDBSync();
+    const { persistItems } = usePersistItems();
+    const { handleCardClick, clearSelection } = useSelectionHandler(
+      () => useAppStore.getState().mxSelectionKeys,
+      setMxSelectionKeys
+    );
+    const moveItems = (0, import_react14.useCallback)(async (keys, target) => {
       const { g, sg, c, sc } = target;
-      store.pushUndo();
-      const items = [...store.items];
+      const { pushUndo, items: currentItems, setItems } = useAppStore.getState();
+      pushUndo();
+      const items = [...currentItems];
       const movedKeys = Array.from(keys);
       movedKeys.forEach((k) => {
         const idx = items.findIndex((it) => it.key === k);
@@ -20034,20 +19802,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         pushChangeLog("\uC774\uB3D9", item.key, item.name, { status: item.status, owner: item.owner });
         logActivity("\uC774\uB3D9", `${item.key} ${item.name}: ${from} \u2192 ${to}`);
       });
-      store.setItems(items);
-      store.setMxSelectionKeys([]);
-      store.setIsDragging(false);
-      if (store.settings.storageMode === "server") {
-        const ok = await saveToServer();
-        if (ok) {
-          movedKeys.forEach((k) => unlockItem(k));
-          broadcastSharedData();
-        }
-      } else {
-        saveLocal();
-      }
-      store.notify(movedKeys.length > 1 ? `${movedKeys.length}\uAC1C \uC774\uB3D9 \uC644\uB8CC.` : "\uC774\uB3D9 \uC644\uB8CC.", "success");
-    }, [store, logActivity, saveToServer, saveLocal, unlockItem, broadcastSharedData]);
+      setItems(items);
+      setMxSelectionKeys([]);
+      setIsDragging(false);
+      await persistItems(movedKeys);
+      notify3(movedKeys.length > 1 ? `${movedKeys.length}\uAC1C \uC774\uB3D9 \uC644\uB8CC.` : "\uC774\uB3D9 \uC644\uB8CC.", "success");
+    }, [setMxSelectionKeys, setIsDragging, notify3, persistItems, logActivity]);
     return {
       handleCardClick,
       clearSelection,
@@ -20107,28 +19867,24 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return { cellMap, counts, structure };
   }
   function MatrixView() {
-    const store = useAppStore();
-    const items = store.items;
-    const editLocks = store.editLocks;
-    const previews = store.previews;
-    const settings = store.settings;
-    const display = store.display;
-    const filters = store.filters;
-    const searchQ = store.searchQ;
-    const cellFold = store.settings.cellFold;
-    const selectedKeys = store.mxSelectionKeys;
-    const isDragging = store.isDragging;
-    const dragKey = store.dragKey;
+    const items = useAppStore((s) => s.items);
+    const editLocks = useAppStore((s) => s.editLocks);
+    const settings = useAppStore((s) => s.settings);
+    const display = useAppStore((s) => s.display);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
+    const selectedKeys = useAppStore((s) => s.mxSelectionKeys);
+    const isDragging = useAppStore((s) => s.isDragging);
     const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useMatrixActions();
     const { lockItem, unlockItem } = useDBSync();
     const { openEditModal, openAddInCell } = useModals();
     const { isEditor: editorOk } = useAuth();
-    const [expandedCells, setExpandedCells] = (0, import_react13.useState)(/* @__PURE__ */ new Set());
-    const [dropCellKey, setDropCellKey] = (0, import_react13.useState)(null);
-    (0, import_react13.useEffect)(() => {
+    const [expandedCells, setExpandedCells] = (0, import_react15.useState)(/* @__PURE__ */ new Set());
+    const [dropCellKey, setDropCellKey] = (0, import_react15.useState)(null);
+    (0, import_react15.useEffect)(() => {
       setExpandedCells(/* @__PURE__ */ new Set());
     }, [filters, searchQ, settings.cellFold]);
-    const toggleExpand = (0, import_react13.useCallback)((e, cellKey, expand) => {
+    const toggleExpand = (0, import_react15.useCallback)((e, cellKey, expand) => {
       e.stopPropagation();
       setExpandedCells((prev) => {
         const next = new Set(prev);
@@ -20137,38 +19893,40 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         return next;
       });
     }, []);
-    const filteredItems = (0, import_react13.useMemo)(() => getFiltered(items, filters, searchQ), [items, filters, searchQ]);
-    const matrix = (0, import_react13.useMemo)(() => getMatrixData(filteredItems), [filteredItems]);
+    const filteredItems = (0, import_react15.useMemo)(() => getFiltered(items, filters, searchQ), [items, filters, searchQ]);
+    const matrix = (0, import_react15.useMemo)(() => getMatrixData(filteredItems), [filteredItems]);
     const colors = getColors();
-    const onDragStart = (0, import_react13.useCallback)((e, key) => {
-      store.setIsDragging(true);
-      store.setMxSelectionKeys(selectedKeys.includes(key) ? selectedKeys : [key]);
-      const keysToMove = selectedKeys.includes(key) ? selectedKeys : [key];
+    const onDragStart = (0, import_react15.useCallback)((e, key) => {
+      const { setIsDragging, setMxSelectionKeys, mxSelectionKeys, notify: notify3 } = useAppStore.getState();
+      setIsDragging(true);
+      const keysToMove = mxSelectionKeys.includes(key) ? mxSelectionKeys : [key];
+      setMxSelectionKeys(keysToMove);
       const lockedOther = keysToMove.filter((k) => editLocks[k] && editLocks[k].user !== (settings.userName || "\uC775\uBA85"));
       if (lockedOther.length) {
-        store.notify(`${editLocks[lockedOther[0]].user}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC778 \uD56D\uBAA9\uC740 \uC774\uB3D9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`, "warning");
-        store.setIsDragging(false);
+        notify3(`${editLocks[lockedOther[0]].user}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC778 \uD56D\uBAA9\uC740 \uC774\uB3D9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`, "warning");
+        setIsDragging(false);
         e.preventDefault();
         return;
       }
       lockKeys(keysToMove);
       e.dataTransfer.effectAllowed = "move";
-    }, [store, selectedKeys, editLocks, settings.userName, lockKeys]);
-    const onDragEnd = (0, import_react13.useCallback)(() => {
-      const keys = store.mxSelectionKeys;
-      unlockKeys(keys);
-      store.setIsDragging(false);
+    }, [editLocks, settings, lockKeys]);
+    const onDragEnd = (0, import_react15.useCallback)(() => {
+      const { mxSelectionKeys, setIsDragging } = useAppStore.getState();
+      unlockKeys(mxSelectionKeys);
+      setIsDragging(false);
       setDropCellKey(null);
-    }, [store, unlockKeys]);
-    const onDrop = (0, import_react13.useCallback)((e, target) => {
+    }, [unlockKeys]);
+    const onDrop = (0, import_react15.useCallback)((e, target) => {
       e.preventDefault();
       setDropCellKey(null);
-      if (!store.isDragging) return;
-      moveItems(store.mxSelectionKeys, target);
-    }, [store, moveItems]);
-    const handleCanvasClick = (0, import_react13.useCallback)(() => {
-      if (store.mxSelectionKeys.length > 0) clearSelection();
-    }, [store.mxSelectionKeys.length, clearSelection]);
+      const { isDragging: dragging, mxSelectionKeys } = useAppStore.getState();
+      if (!dragging) return;
+      moveItems(mxSelectionKeys, target);
+    }, [moveItems]);
+    const handleCanvasClick = (0, import_react15.useCallback)(() => {
+      if (useAppStore.getState().mxSelectionKeys.length > 0) clearSelection();
+    }, [clearSelection]);
     if (!filteredItems.length) {
       return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyState, {});
     }
@@ -20276,35 +20034,28 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/BoardView.jsx
-  var import_react15 = __toESM(require_react());
+  var import_react17 = __toESM(require_react());
 
   // hooks/useBoardActions.js
-  var import_react14 = __toESM(require_react());
+  var import_react16 = __toESM(require_react());
   function useBoardActions() {
-    const store = useAppStore();
-    const { saveToServer, saveLocal, lockItem, unlockItem, logActivity, broadcastSharedData } = useDBSync();
-    const handleCardClick = (0, import_react14.useCallback)((e, key) => {
-      e.stopPropagation();
-      const prev = new Set(store.boardSelectionKeys);
-      if (e.shiftKey) {
-        if (prev.has(key)) prev.delete(key);
-        else prev.add(key);
-      } else {
-        prev.clear();
-        prev.add(key);
-      }
-      store.setBoardSelectionKeys([...prev]);
-    }, [store]);
-    const clearSelection = (0, import_react14.useCallback)(() => {
-      store.setBoardSelectionKeys([]);
-    }, [store]);
-    const moveItems = (0, import_react14.useCallback)(async (keys, toStatus) => {
+    const setBoardSelectionKeys = useAppStore((s) => s.setBoardSelectionKeys);
+    const setIsDragging = useAppStore((s) => s.setIsDragging);
+    const notify3 = useAppStore((s) => s.notify);
+    const { lockItem, unlockItem, logActivity } = useDBSync();
+    const { persistItems } = usePersistItems();
+    const { handleCardClick, clearSelection } = useSelectionHandler(
+      () => useAppStore.getState().boardSelectionKeys,
+      setBoardSelectionKeys
+    );
+    const moveItems = (0, import_react16.useCallback)(async (keys, toStatus) => {
       if (!isEditor()) {
-        store.notify("\uD3B8\uC9D1 \uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.", "error");
+        notify3("\uD3B8\uC9D1 \uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.", "error");
         return;
       }
-      store.pushUndo();
-      const items = [...store.items];
+      const { pushUndo, items: currentItems, setItems, settings } = useAppStore.getState();
+      pushUndo();
+      const items = [...currentItems];
       const movedItems = [];
       const keysArray = Array.from(keys);
       keysArray.forEach((k) => {
@@ -20316,7 +20067,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           item.status = toStatus;
           item.updatedAt = Date.now();
           pushChangeLog("\uC0C1\uD0DC\uBCC0\uACBD", item.key, item.name, { status: toStatus, owner: item.owner });
-          const labels = store.settings.statusLabels || {};
+          const labels = settings.statusLabels || {};
           const fromLbl = fromStatus ? labels[fromStatus] || fromStatus : "\uC0C1\uD0DC\uC5C6\uC74C";
           const toLbl = toStatus ? labels[toStatus] || toStatus : "\uC0C1\uD0DC\uC5C6\uC74C";
           logActivity("\uC774\uB3D9", `${item.key} ${item.name}: ${fromLbl} \u2192 ${toLbl}`);
@@ -20324,22 +20075,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           movedItems.push(item);
         }
       });
-      store.setItems(items);
-      store.setBoardSelectionKeys([]);
-      store.setIsDragging(false);
-      if (store.settings.storageMode === "server") {
-        const ok = await saveToServer();
-        if (ok) {
-          broadcastSharedData();
-          movedItems.forEach((item) => {
-            unlockItem(item.key);
-          });
-        }
-      } else {
-        saveLocal();
-      }
-      store.notify(movedItems.length > 1 ? `${movedItems.length}\uAC1C \uC774\uB3D9 \uC644\uB8CC.` : "\uC774\uB3D9 \uC644\uB8CC.", "success");
-    }, [store, logActivity, saveToServer, saveLocal, unlockItem, broadcastSharedData]);
+      setItems(items);
+      setBoardSelectionKeys([]);
+      setIsDragging(false);
+      await persistItems(movedItems.map((item) => item.key));
+      notify3(movedItems.length > 1 ? `${movedItems.length}\uAC1C \uC774\uB3D9 \uC644\uB8CC.` : "\uC774\uB3D9 \uC644\uB8CC.", "success");
+    }, [setBoardSelectionKeys, setIsDragging, notify3, persistItems, logActivity]);
     return {
       handleCardClick,
       clearSelection,
@@ -20363,52 +20104,53 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] });
   }
   function BoardView() {
-    const store = useAppStore();
-    const items = store.items;
-    const editLocks = store.editLocks;
-    const previews = store.previews;
-    const filters = store.filters;
-    const searchQ = store.searchQ;
-    const boardSel = store.boardSelectionKeys || [];
-    const foldCount = store.settings.boardFoldCount ?? 6;
+    const items = useAppStore((s) => s.items);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
+    const boardSel = useAppStore((s) => s.boardSelectionKeys || []);
+    const foldCount = useAppStore((s) => s.settings.boardFoldCount ?? 6);
+    const isDragging = useAppStore((s) => s.isDragging);
+    const statusLabels = useAppStore((s) => s.settings.statusLabels);
     const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useBoardActions();
     const { openMdModal } = useModals();
-    const [expanded, setExpanded] = (0, import_react15.useState)(/* @__PURE__ */ new Set());
-    const [dragOverCol, setDragOverCol] = (0, import_react15.useState)(null);
-    const filteredItems = (0, import_react15.useMemo)(
+    const [expanded, setExpanded] = (0, import_react17.useState)(/* @__PURE__ */ new Set());
+    const [dragOverCol, setDragOverCol] = (0, import_react17.useState)(null);
+    const filteredItems = (0, import_react17.useMemo)(
       () => isFilterActive(filters, searchQ) ? getFiltered(items, filters, searchQ) : items.filter((it) => it.isDelete !== "Y"),
       [items, filters, searchQ]
     );
     const colors = getColors();
-    const byCol = (0, import_react15.useMemo)(() => {
+    const byCol = (0, import_react17.useMemo)(() => {
       const map = Object.fromEntries(STATUS_OPTS.map((k) => [k, []]));
       filteredItems.forEach((it) => {
-        const st = it.status || "backlog";
+        const st = it.status || "\uB300\uAE30";
         if (map[st]) map[st].push(it);
-        else map.backlog.push(it);
+        else map["\uB300\uAE30"].push(it);
       });
       return map;
     }, [filteredItems]);
-    const onDragStart = (0, import_react15.useCallback)((e, key) => {
-      store.setIsDragging(true);
-      const keysToMove = boardSel.includes(key) ? boardSel : [key];
-      store.setBoardSelectionKeys(keysToMove);
+    const onDragStart = (0, import_react17.useCallback)((e, key) => {
+      const { setIsDragging, setBoardSelectionKeys, boardSelectionKeys } = useAppStore.getState();
+      setIsDragging(true);
+      const keysToMove = boardSelectionKeys.includes(key) ? boardSelectionKeys : [key];
+      setBoardSelectionKeys(keysToMove);
       lockKeys(new Set(keysToMove));
       e.dataTransfer.effectAllowed = "move";
-    }, [store, boardSel, lockKeys]);
-    const onDragEnd = (0, import_react15.useCallback)(() => {
-      unlockKeys(new Set(store.boardSelectionKeys));
-      store.setIsDragging(false);
+    }, [lockKeys]);
+    const onDragEnd = (0, import_react17.useCallback)(() => {
+      const { boardSelectionKeys, setIsDragging } = useAppStore.getState();
+      unlockKeys(new Set(boardSelectionKeys));
+      setIsDragging(false);
       setDragOverCol(null);
-    }, [store, unlockKeys]);
-    const onDrop = (0, import_react15.useCallback)((e, colKey) => {
+    }, [unlockKeys]);
+    const onDrop = (0, import_react17.useCallback)((e, colKey) => {
       e.preventDefault();
       setDragOverCol(null);
-      moveItems(new Set(store.boardSelectionKeys), colKey);
-    }, [store, moveItems]);
-    const handleBoardClick = (0, import_react15.useCallback)(() => {
-      if (store.boardSelectionKeys.length > 0) clearSelection();
-    }, [store.boardSelectionKeys.length, clearSelection]);
+      moveItems(new Set(useAppStore.getState().boardSelectionKeys), colKey);
+    }, [moveItems]);
+    const handleBoardClick = (0, import_react17.useCallback)(() => {
+      if (useAppStore.getState().boardSelectionKeys.length > 0) clearSelection();
+    }, [clearSelection]);
     return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(import_jsx_runtime10.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "board-cols", onClick: handleBoardClick, children: STATUS_OPTS.map((colKey) => {
         const colItems = byCol[colKey] || [];
@@ -20419,7 +20161,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         const hidden = colItems.length - foldCount;
         return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "board-col", children: [
           /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "board-col-hd", style: { borderTop: `3px solid ${STATUS_ACCENT[colKey]}` }, children: /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { children: [
-            store.settings.statusLabels?.[colKey] || colKey,
+            statusLabels?.[colKey] || colKey,
             /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "board-col-cnt", children: colItems.length })
           ] }) }),
           /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(
@@ -20449,7 +20191,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
                     colors,
                     extraClass: [
                       boardSel.includes(item.key) ? "board-selected" : "",
-                      store.isDragging && boardSel.includes(item.key) ? "dragging" : ""
+                      isDragging && boardSel.includes(item.key) ? "dragging" : ""
                     ].filter(Boolean).join(" "),
                     onClick: (event) => handleCardClick(event, item.key),
                     onDoubleClick: () => openMdModal(item.key),
@@ -20477,7 +20219,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         BoardActionBar,
         {
           boardSel,
-          onMove: Object.assign((st) => moveItems(new Set(boardSel), st), { labels: store.settings.statusLabels }),
+          onMove: Object.assign((st) => moveItems(new Set(boardSel), st), { labels: statusLabels }),
           onClear: clearSelection
         }
       )
@@ -20485,7 +20227,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/ListView.jsx
-  var import_react16 = __toESM(require_react());
+  var import_react18 = __toESM(require_react());
   var import_jsx_runtime11 = __toESM(require_jsx_runtime());
   function highlightText2(value2, query) {
     const text2 = String(value2 || "");
@@ -20540,21 +20282,20 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }
   }
   function ListView() {
-    const store = useAppStore();
-    const items = store.items;
-    const settings = store.settings;
-    const filters = store.filters;
-    const searchQ = store.searchQ;
-    const sort = store.sort;
-    const bulkSelectionKeys = store.bulkSelectionKeys;
+    const items = useAppStore((s) => s.items);
+    const settings = useAppStore((s) => s.settings);
+    const filters = useAppStore((s) => s.filters);
+    const searchQ = useAppStore((s) => s.searchQ);
+    const sort = useAppStore((s) => s.sort);
+    const bulkSelectionKeys = useAppStore((s) => s.bulkSelectionKeys);
     const { bulkToggle, bulkToggleAll, bulkClearSelection } = useListActions();
     const { openEditModal, openMdModal } = useModals();
-    const selectedKeySet = (0, import_react16.useMemo)(() => new Set(bulkSelectionKeys), [bulkSelectionKeys]);
-    const visibleColumns = (0, import_react16.useMemo)(
+    const selectedKeySet = (0, import_react18.useMemo)(() => new Set(bulkSelectionKeys), [bulkSelectionKeys]);
+    const visibleColumns = (0, import_react18.useMemo)(
       () => getVisibleCols(settings.columns),
       [settings.columns]
     );
-    const rows = (0, import_react16.useMemo)(() => {
+    const rows = (0, import_react18.useMemo)(() => {
       const filtered = getFiltered(items, filters, searchQ);
       return filtered.slice().sort((a, b) => {
         const va = a[sort.key] || "";
@@ -20563,7 +20304,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         return sort.dir === "asc" ? result : -result;
       });
     }, [items, filters, searchQ, sort]);
-    (0, import_react16.useEffect)(() => {
+    (0, import_react18.useEffect)(() => {
       if (rows.length === 0 && bulkSelectionKeys.length > 0) {
         bulkClearSelection();
       }
@@ -20573,14 +20314,15 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }
     const allChecked = rows.length > 0 && rows.every((item) => selectedKeySet.has(item.key));
     const toggleSort = (key) => {
-      const s = { ...store.sort };
+      const { sort: cur } = useAppStore.getState();
+      const s = { ...cur };
       if (s.key === key) {
         s.dir = s.dir === "asc" ? "desc" : "asc";
       } else {
         s.key = key;
         s.dir = "asc";
       }
-      store.setState({ sort: s });
+      useAppStore.setState({ sort: s });
     };
     return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ltbl-wrap", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "ltbl-scroll", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("table", { className: "ltbl", children: [
       /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("tr", { children: [
@@ -20633,9 +20375,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/ErrorBoundary.jsx
-  var import_react17 = __toESM(require_react());
+  var import_react19 = __toESM(require_react());
   var import_jsx_runtime12 = __toESM(require_jsx_runtime());
-  var ErrorBoundary = class extends import_react17.Component {
+  var ErrorBoundary = class extends import_react19.Component {
     constructor(props) {
       super(props);
       this.state = { hasError: false, error: null };
@@ -20738,8 +20480,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   // components/UpdateBanner.jsx
   var import_jsx_runtime14 = __toESM(require_jsx_runtime());
   function UpdateBanner() {
-    const store = useAppStore();
-    const banner = store.banner;
+    const banner = useAppStore((s) => s.banner);
+    const setBanner = useAppStore((s) => s.setBanner);
     if (!banner.visible) return null;
     return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)(
       "div",
@@ -20773,7 +20515,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             "button",
             {
               className: "btn btn-g btn-sm",
-              onClick: () => store.setBanner(false),
+              onClick: () => setBanner(false),
               children: "\uB098\uC911\uC5D0"
             }
           )
@@ -20783,7 +20525,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/ExportModal.jsx
-  var import_react18 = __toESM(require_react());
+  var import_react20 = __toESM(require_react());
 
   // app/io.js
   var getStore3 = () => useAppStore.getState();
@@ -21211,10 +20953,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   // components/ExportModal.jsx
   var import_jsx_runtime15 = __toESM(require_jsx_runtime());
   function ExportModal() {
-    const store = useAppStore();
+    const activeModal = useAppStore((s) => s.activeModal);
     const { closeModal } = useModals();
-    const [htmlWidth, setHtmlWidth] = (0, import_react18.useState)("fluid");
-    if (store.activeModal !== "exportModal") return null;
+    const [htmlWidth, setHtmlWidth] = (0, import_react20.useState)("fluid");
+    if (activeModal !== "exportModal") return null;
     return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "ov on", id: "exportModal", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mbox", style: { width: "460px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mhd", children: [
         /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "mtitle", children: "\u{1F4E4} \uB370\uC774\uD130 \uB0B4\uBCF4\uB0B4\uAE30" }),
@@ -21256,7 +20998,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
 
   // components/ImportModal.jsx
-  var import_react19 = __toESM(require_react());
+  var import_react21 = __toESM(require_react());
   var import_jsx_runtime16 = __toESM(require_jsx_runtime());
   var IMPORT_REQUIRED = ["key", "name"];
   function buildDefaultMapping(headers) {
@@ -21274,20 +21016,21 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     });
   }
   function ImportModal() {
-    const store = useAppStore();
+    const activeModal = useAppStore((s) => s.activeModal);
+    const storeNotify = useAppStore((s) => s.notify);
     const { saveLocal, saveToServer, logActivity } = useDBSync();
     const { closeModal } = useModals();
-    const csvFileRef = (0, import_react19.useRef)(null);
-    const mdImpRef = (0, import_react19.useRef)(null);
-    const [raw, setRaw] = (0, import_react19.useState)("");
-    const [step, setStep] = (0, import_react19.useState)(1);
-    const [headers, setHeaders] = (0, import_react19.useState)([]);
-    const [rows, setRows] = (0, import_react19.useState)([]);
-    const [mapping, setMapping] = (0, import_react19.useState)({});
-    const [isDragOver, setIsDragOver] = (0, import_react19.useState)(false);
-    const notify3 = (0, import_react19.useCallback)((msg, isErr) => store.notify(msg, isErr ? "error" : "success"), [store]);
-    const statusText = (0, import_react19.useMemo)(() => `${rows.length}\uAC1C \uD589 \uAC10\uC9C0\uB428, \uCEEC\uB7FC ${headers.length}\uAC1C`, [headers.length, rows.length]);
-    const analyzeText = (0, import_react19.useCallback)((value2 = raw) => {
+    const csvFileRef = (0, import_react21.useRef)(null);
+    const mdImpRef = (0, import_react21.useRef)(null);
+    const [raw, setRaw] = (0, import_react21.useState)("");
+    const [step, setStep] = (0, import_react21.useState)(1);
+    const [headers, setHeaders] = (0, import_react21.useState)([]);
+    const [rows, setRows] = (0, import_react21.useState)([]);
+    const [mapping, setMapping] = (0, import_react21.useState)({});
+    const [isDragOver, setIsDragOver] = (0, import_react21.useState)(false);
+    const notify3 = (0, import_react21.useCallback)((msg, isErr) => storeNotify(msg, isErr ? "error" : "success"), [storeNotify]);
+    const statusText = (0, import_react21.useMemo)(() => `${rows.length}\uAC1C \uD589 \uAC10\uC9C0\uB428, \uCEEC\uB7FC ${headers.length}\uAC1C`, [headers.length, rows.length]);
+    const analyzeText = (0, import_react21.useCallback)((value2 = raw) => {
       const text2 = value2.trim();
       if (!text2) {
         notify3("\uB370\uC774\uD130\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694.", true);
@@ -21329,7 +21072,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         notify3("\uAC00\uC838\uC62C \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.", true);
         return;
       }
-      const existingKeys = new Set(store.items.map((it) => it.key));
+      const { items: curItems, pushUndo, setItems, settings } = useAppStore.getState();
+      const existingKeys = new Set(curItems.map((it) => it.key));
       const duplicates = importedItems.filter((it) => existingKeys.has(it.key)).map((it) => it.key);
       if (!append && duplicates.length > 0) {
         const sample = `${duplicates.slice(0, 5).join(", ")}${duplicates.length > 5 ? "\u2026" : ""}`;
@@ -21337,7 +21081,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
 ${sample}
 \uB36E\uC5B4\uC4F0\uAE30?`)) return;
       }
-      store.pushUndo();
+      pushUndo();
       let nextItems = [];
       let logMsg = "";
       if (!append) {
@@ -21345,7 +21089,7 @@ ${sample}
         nextItems = importedItems;
         logMsg = `\uC804\uCCB4 \uAD50\uCCB4 (${importedItems.length}\uAC1C)`;
       } else {
-        const itemsMap = new Map(store.items.map((it) => [it.key, it]));
+        const itemsMap = new Map(curItems.map((it) => [it.key, it]));
         let added = 0;
         importedItems.forEach((it) => {
           if (itemsMap.has(it.key)) {
@@ -21358,14 +21102,14 @@ ${sample}
         nextItems = Array.from(itemsMap.values());
         logMsg = `\uBCD1\uD569 \uCD94\uAC00 (\uC2E0\uADDC ${added}\uAC1C / \uCD1D ${importedItems.length}\uAC1C)`;
       }
-      store.setItems(nextItems);
+      setItems(nextItems);
       await logActivity("\uAC00\uC838\uC624\uAE30", logMsg);
-      if (store.settings.storageMode === "server") await saveToServer();
+      if (settings.storageMode === "server") await saveToServer();
       else saveLocal();
       notify3("\uC131\uACF5\uC801\uC73C\uB85C \uAC00\uC838\uC654\uC2B5\uB2C8\uB2E4.");
       closeModal("importModal");
     };
-    if (store.activeModal !== "importModal") return null;
+    if (activeModal !== "importModal") return null;
     return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "ov on", id: "importModal", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mbox", style: { width: "600px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "mhd", children: [
         /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("span", { className: "mtitle", children: "\u{1F4E5} \uB370\uC774\uD130 \uAC00\uC838\uC624\uAE30" }),
@@ -21462,16 +21206,16 @@ ${sample}
   }
 
   // components/LoginModal.jsx
-  var import_react20 = __toESM(require_react());
+  var import_react22 = __toESM(require_react());
   var import_jsx_runtime17 = __toESM(require_jsx_runtime());
   function LoginModal() {
-    const store = useAppStore();
-    const { visible, role, name, password, error } = store.loginModal;
-    const passwordRef = (0, import_react20.useRef)(null);
+    const loginModal = useAppStore((s) => s.loginModal);
+    const { visible, role, name, password, error } = loginModal;
+    const passwordRef = (0, import_react22.useRef)(null);
     if (!visible) return null;
     const updateField = (field, value2) => {
       useAppStore.setState({
-        loginModal: { ...store.loginModal, [field]: value2 }
+        loginModal: { ...useAppStore.getState().loginModal, [field]: value2 }
       });
     };
     return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "ov on", id: "loginModal", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "mbox", style: { width: "360px" }, children: [
@@ -21561,9 +21305,9 @@ ${sample}
     { keys: ["Esc"], label: "\uCC3D \uB2EB\uAE30" }
   ];
   function ShortcutsModal() {
-    const store = useAppStore();
+    const activeModal = useAppStore((s) => s.activeModal);
     const { closeModal } = useModals();
-    if (store.activeModal !== "shortcutsModal") return null;
+    if (activeModal !== "shortcutsModal") return null;
     return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "ov on", id: "shortcutsModal", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mbox", style: { width: "400px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "mhd", children: [
         /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "mtitle", children: "\u2328 \uB2E8\uCD95\uD0A4" }),
@@ -21578,18 +21322,21 @@ ${sample}
   }
 
   // components/DiffModal.jsx
-  var import_react21 = __toESM(require_react());
+  var import_react23 = __toESM(require_react());
   var import_jsx_runtime19 = __toESM(require_jsx_runtime());
   var DIFF_FIELDS = ["name", "priority", "status", "owner", "group", "category"];
   function DiffModal() {
-    const store = useAppStore();
+    const undoStack = useAppStore((s) => s.undoStack);
+    const items = useAppStore((s) => s.items);
+    const statusLabels = useAppStore((s) => s.settings.statusLabels);
+    const activeModal = useAppStore((s) => s.activeModal);
     const { closeModal } = useModals();
-    const buildDiffRows = (0, import_react21.useMemo)(() => {
-      const stack = store.undoStack || [];
+    const buildDiffRows = (0, import_react23.useMemo)(() => {
+      const stack = undoStack || [];
       if (!stack.length) return { empty: "\uBCC0\uACBD \uC774\uB825\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.", rows: [] };
       const data = JSON.parse(stack[stack.length - 1]);
       const prev = Array.isArray(data) ? data : data.items || [];
-      const cur = store.items;
+      const cur = items;
       const curMap = Object.fromEntries(cur.map((item) => [item.key, item]));
       const prevMap = Object.fromEntries(prev.map((item) => [item.key, item]));
       const rows = [];
@@ -21613,12 +21360,12 @@ ${sample}
         empty: rows.length ? "" : "\uB9C8\uC9C0\uB9C9 \uC800\uC7A5 \uC774\uD6C4 \uBCC0\uACBD \uC5C6\uC74C",
         rows
       };
-    }, [store.items, store.undoStack]);
-    const content = (0, import_react21.useMemo)(() => {
-      if (store.activeModal !== "diffModal") return { empty: "", rows: [] };
+    }, [items, undoStack]);
+    const content = (0, import_react23.useMemo)(() => {
+      if (activeModal !== "diffModal") return { empty: "", rows: [] };
       return buildDiffRows;
-    }, [store.activeModal, buildDiffRows]);
-    if (store.activeModal !== "diffModal") return null;
+    }, [activeModal, buildDiffRows]);
+    if (activeModal !== "diffModal") return null;
     return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "ov on", id: "diffModal", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "mbox", style: { width: "640px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "mhd", children: [
         /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "mtitle", children: "\uBCC0\uACBD \uC774\uB825 (\uB9C8\uC9C0\uB9C9 Undo \uAE30\uC900)" }),
@@ -21640,7 +21387,7 @@ ${sample}
             ] }),
             row.type === "changed" && row.diffs.map((diff) => {
               const isStatus = diff.field === "status";
-              const labels = store.settings.statusLabels || {};
+              const labels = statusLabels || {};
               const beforeLbl = isStatus ? labels[diff.before] || diff.before : diff.before;
               const afterLbl = isStatus ? labels[diff.after] || diff.after : diff.after;
               return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { children: [
@@ -21664,10 +21411,10 @@ ${sample}
   }
 
   // components/SettingsPanel.jsx
-  var import_react26 = __toESM(require_react());
+  var import_react28 = __toESM(require_react());
 
   // components/ActivityLogPanel.jsx
-  var import_react22 = __toESM(require_react());
+  var import_react24 = __toESM(require_react());
   var import_jsx_runtime20 = __toESM(require_jsx_runtime());
   var ACTION_COLORS = {
     \uC811\uC18D: "var(--accent)",
@@ -21684,11 +21431,11 @@ ${sample}
     return `${date.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })} ${date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
   }
   function ActivityLogPanel({ changeLogMax, onChangeLogMax }) {
-    const [limit, setLimit] = (0, import_react22.useState)(100);
-    const [entries, setEntries] = (0, import_react22.useState)([]);
-    const [status, setStatus] = (0, import_react22.useState)("idle");
-    const [message, setMessage] = (0, import_react22.useState)("\uD0ED\uC744 \uC5F4\uBA74 \uC790\uB3D9\uC73C\uB85C \uBD88\uB7EC\uC635\uB2C8\uB2E4.");
-    const loadLog = (0, import_react22.useCallback)(async () => {
+    const [limit, setLimit] = (0, import_react24.useState)(100);
+    const [entries, setEntries] = (0, import_react24.useState)([]);
+    const [status, setStatus] = (0, import_react24.useState)("idle");
+    const [message, setMessage] = (0, import_react24.useState)("\uD0ED\uC744 \uC5F4\uBA74 \uC790\uB3D9\uC73C\uB85C \uBD88\uB7EC\uC635\uB2C8\uB2E4.");
+    const loadLog = (0, import_react24.useCallback)(async () => {
       setStatus("loading");
       setMessage("\uBD88\uB7EC\uC624\uB294 \uC911...");
       try {
@@ -21709,7 +21456,7 @@ ${sample}
         }
       }
     }, [limit]);
-    (0, import_react22.useEffect)(() => {
+    (0, import_react24.useEffect)(() => {
       loadLog();
     }, [loadLog]);
     return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
@@ -21768,26 +21515,14 @@ ${sample}
   }
 
   // components/DashboardSectionOrder.jsx
-  var import_react23 = __toESM(require_react());
+  var import_react25 = __toESM(require_react());
   var import_jsx_runtime21 = __toESM(require_jsx_runtime());
   var SECTION_LABELS = {
-    stats: "\uC2A4\uD0EF \uCE74\uB4DC",
-    insight: "\uADF8\uB8F9 \uC9C4\uCC99\uB3C4 \xB7 \uB2F4\uB2F9\uBCC4 \uD604\uD669",
-    heatmap: "\uAE30\uB2A5 \uBD84\uD3EC \uD788\uD2B8\uB9F5",
-    metrics: "\uC77C\uBCC4 \uB9AC\uD3EC\uD2B8"
+    stats: "\uC2A4\uD0EF \uCE74\uB4DC 4\uAC1C",
+    insight: "\uADF8\uB8F9 \uC9C4\uCC99\uB3C4 \xB7 \uB2F4\uB2F9\uC790 \xB7 \uD0C0\uC784\uB77C\uC778",
+    heatmap: "\uD788\uD2B8\uB9F5"
   };
-  var DEFAULT_SECTIONS = ["stats", "insight", "heatmap", "metrics"];
-  function normalizeSections(sections) {
-    const source = Array.isArray(sections) ? sections : [];
-    const known = source.filter((section) => DEFAULT_SECTIONS.includes(section));
-    return [
-      ...known,
-      ...DEFAULT_SECTIONS.filter((section) => !known.includes(section))
-    ];
-  }
-  function isSectionVisible2(visibility, section) {
-    return visibility?.[section] !== false;
-  }
+  var DEFAULT_SECTIONS = ["stats", "insight", "heatmap"];
   function moveItem(list, fromIndex, toIndex) {
     if (fromIndex === toIndex || fromIndex == null) return list;
     const next = [...list];
@@ -21796,17 +21531,16 @@ ${sample}
     return next;
   }
   function DashboardSectionOrder() {
-    const store = useAppStore();
-    const sections = normalizeSections(store.settings.dbSections);
-    const visibility = store.settings.dbSectionVisibility || {};
+    const settings = useAppStore((s) => s.settings);
+    const sections = settings.dbSections || DEFAULT_SECTIONS;
     const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
-    const [dragIndex, setDragIndex] = (0, import_react23.useState)(null);
-    const [dragOverIndex, setDragOverIndex] = (0, import_react23.useState)(null);
-    const persistSettings = async (patch) => {
-      const nextSettings = { ...store.settings, ...patch };
-      store.pushUndo();
-      store.setSettings(nextSettings);
-      if (store.settings.storageMode === "server") {
+    const [dragIndex, setDragIndex] = (0, import_react25.useState)(null);
+    const [dragOverIndex, setDragOverIndex] = (0, import_react25.useState)(null);
+    const persistSections = async (newSections) => {
+      const { pushUndo, setSettings, settings: s } = useAppStore.getState();
+      pushUndo();
+      setSettings({ ...s, dbSections: newSections });
+      if (s.storageMode === "server") {
         const ok = await saveToServer();
         if (ok) broadcastSharedData();
       } else {
@@ -21816,89 +21550,65 @@ ${sample}
     const moveSection = (index, direction) => {
       const nextIndex = index + direction;
       if (nextIndex < 0 || nextIndex >= sections.length) return;
-      persistSettings({ dbSections: moveItem(sections, index, nextIndex) });
-    };
-    const toggleSection = (section) => {
-      persistSettings({
-        dbSections: sections,
-        dbSectionVisibility: {
-          ...visibility,
-          [section]: !isSectionVisible2(visibility, section)
-        }
-      });
+      persistSections(moveItem(sections, index, nextIndex));
     };
     const dropSection = (toIndex) => {
       if (dragIndex == null || dragIndex === toIndex) return;
-      persistSettings({ dbSections: moveItem(sections, dragIndex, toIndex) });
+      persistSections(moveItem(sections, dragIndex, toIndex));
       setDragIndex(null);
       setDragOverIndex(null);
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", width: "100%" }, children: sections.map((section, index) => {
-      const visible = isSectionVisible2(visibility, section);
-      return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(
-        "div",
-        {
-          className: "db-sec-row",
-          draggable: true,
-          "data-idx": index,
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "7px 10px",
-            background: "var(--surface-2)",
-            borderRadius: "7px",
-            border: "1px solid var(--border)",
-            cursor: "grab",
-            transition: "opacity .15s,box-shadow .15s",
-            opacity: dragIndex === index ? 0.4 : visible ? void 0 : 0.58,
-            boxShadow: dragOverIndex === index && dragIndex !== index ? dragIndex < index ? "0 3px 0 var(--accent)" : "0 -3px 0 var(--accent)" : void 0
-          },
-          onDragStart: (event) => {
-            setDragIndex(index);
-            event.dataTransfer.effectAllowed = "move";
-          },
-          onDragOver: (event) => {
-            event.preventDefault();
-            event.dataTransfer.dropEffect = "move";
-            setDragOverIndex(index);
-          },
-          onDragLeave: () => setDragOverIndex(null),
-          onDrop: (event) => {
-            event.preventDefault();
-            dropSection(index);
-          },
-          onDragEnd: () => {
-            setDragIndex(null);
-            setDragOverIndex(null);
-          },
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
-              "input",
-              {
-                type: "checkbox",
-                checked: visible,
-                "aria-label": `${SECTION_LABELS[section] || section} \uD45C\uC2DC`,
-                onChange: () => toggleSection(section),
-                onClick: (event) => event.stopPropagation(),
-                onPointerDown: (event) => event.stopPropagation()
-              }
-            ),
-            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".85rem", color: "var(--text-3)", cursor: "grab", padding: "0 2px" }, title: "\uB4DC\uB798\uADF8\uB85C \uC21C\uC11C \uBCC0\uACBD", children: "\u2630" }),
-            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".75rem", color: "var(--text-3)", fontWeight: 700, width: "16px" }, children: index + 1 }),
-            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { flex: 1, fontSize: ".8rem", fontWeight: 600, color: "var(--text)" }, children: SECTION_LABELS[section] || section }),
-            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".68rem", color: visible ? "var(--success)" : "var(--text-3)", minWidth: "34px", textAlign: "right" }, children: visible ? "\uD45C\uC2DC" : "\uC228\uAE40" }),
-            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-g btn-sm", style: { width: "24px", height: "24px", padding: 0, fontSize: ".7rem" }, disabled: index === 0, onClick: () => moveSection(index, -1), children: "\u2191" }),
-            /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-g btn-sm", style: { width: "24px", height: "24px", padding: 0, fontSize: ".7rem" }, disabled: index === sections.length - 1, onClick: () => moveSection(index, 1), children: "\u2193" })
-          ]
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", width: "100%" }, children: sections.map((section, index) => /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(
+      "div",
+      {
+        className: "db-sec-row",
+        draggable: true,
+        "data-idx": index,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "7px 10px",
+          background: "var(--surface-2)",
+          borderRadius: "7px",
+          border: "1px solid var(--border)",
+          cursor: "grab",
+          transition: "opacity .15s,box-shadow .15s",
+          opacity: dragIndex === index ? 0.4 : void 0,
+          boxShadow: dragOverIndex === index && dragIndex !== index ? dragIndex < index ? "0 3px 0 var(--accent)" : "0 -3px 0 var(--accent)" : void 0
         },
-        section
-      );
-    }) });
+        onDragStart: (event) => {
+          setDragIndex(index);
+          event.dataTransfer.effectAllowed = "move";
+        },
+        onDragOver: (event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          setDragOverIndex(index);
+        },
+        onDragLeave: () => setDragOverIndex(null),
+        onDrop: (event) => {
+          event.preventDefault();
+          dropSection(index);
+        },
+        onDragEnd: () => {
+          setDragIndex(null);
+          setDragOverIndex(null);
+        },
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".85rem", color: "var(--text-3)", cursor: "grab", padding: "0 2px" }, title: "\uB4DC\uB798\uADF8\uB85C \uC21C\uC11C \uBCC0\uACBD", children: "\u283F" }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { fontSize: ".75rem", color: "var(--text-3)", fontWeight: 700, width: "16px" }, children: index + 1 }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { style: { flex: 1, fontSize: ".8rem", fontWeight: 600, color: "var(--text)" }, children: SECTION_LABELS[section] || section }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-g btn-sm", style: { width: "24px", height: "24px", padding: 0, fontSize: ".7rem" }, disabled: index === 0, onClick: () => moveSection(index, -1), children: "\u25B2" }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("button", { className: "btn btn-g btn-sm", style: { width: "24px", height: "24px", padding: 0, fontSize: ".7rem" }, disabled: index === sections.length - 1, onClick: () => moveSection(index, 1), children: "\u25BC" })
+        ]
+      },
+      section
+    )) });
   }
 
   // components/SettingsColumnsPanel.jsx
-  var import_react24 = __toESM(require_react());
+  var import_react26 = __toESM(require_react());
   var import_jsx_runtime22 = __toESM(require_jsx_runtime());
   function getAxisValues(items, settings, orderKey, field) {
     const inData = Array.from(new Set(items.map((item) => item[field] || "(\uBBF8\uBD84\uB958)"))).sort((a, b) => a.localeCompare(b, "ko"));
@@ -21913,21 +21623,20 @@ ${sample}
     return next;
   }
   function SettingsColumnsPanel() {
-    const store = useAppStore();
-    const settings = store.settings;
-    const items = store.items;
+    const settings = useAppStore((s) => s.settings);
+    const items = useAppStore((s) => s.items);
     const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
-    const [drag, setDrag] = (0, import_react24.useState)(null);
-    const [dragOver, setDragOver] = (0, import_react24.useState)(null);
-    const groupAxis = (0, import_react24.useMemo)(
+    const [drag, setDrag] = (0, import_react26.useState)(null);
+    const [dragOver, setDragOver] = (0, import_react26.useState)(null);
+    const groupAxis = (0, import_react26.useMemo)(
       () => getAxisValues(items, settings, "groupOrder", "group"),
       [items, settings]
     );
-    const categoryAxis = (0, import_react24.useMemo)(
+    const categoryAxis = (0, import_react26.useMemo)(
       () => getAxisValues(items, settings, "catOrder", "category"),
       [items, settings]
     );
-    const handleSave = (0, import_react24.useCallback)(async () => {
+    const handleSave = (0, import_react26.useCallback)(async () => {
       if (settings.storageMode === "server") {
         const ok = await saveToServer();
         if (ok) broadcastSharedData();
@@ -21936,42 +21645,47 @@ ${sample}
       }
     }, [settings.storageMode, saveLocal, saveToServer, broadcastSharedData]);
     const toggleColumn = (index, visible) => {
-      store.pushUndo();
-      const nextCols = settings.listColumns.map((column, columnIndex) => columnIndex === index ? { ...column, visible } : column);
-      store.setSettings({ ...settings, listColumns: nextCols });
+      const { pushUndo, setSettings, settings: s } = useAppStore.getState();
+      pushUndo();
+      const nextCols = s.listColumns.map((column, columnIndex) => columnIndex === index ? { ...column, visible } : column);
+      setSettings({ ...s, listColumns: nextCols });
       handleSave();
     };
     const dropColumn = (toIndex) => {
       if (!drag || drag.type !== "column") return;
-      store.pushUndo();
-      const nextCols = moveItem2(settings.listColumns, drag.index, toIndex);
-      store.setSettings({ ...settings, listColumns: nextCols });
+      const { pushUndo, setSettings, settings: s } = useAppStore.getState();
+      pushUndo();
+      const nextCols = moveItem2(s.listColumns, drag.index, toIndex);
+      setSettings({ ...s, listColumns: nextCols });
       handleSave();
       setDrag(null);
       setDragOver(null);
     };
     const resetColumns = () => {
       if (!confirm("\uB9AC\uC2A4\uD2B8 \uCEEC\uB7FC\uC744 \uCD08\uAE30\uD654\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?")) return;
-      store.pushUndo();
-      store.setSettings({ ...settings, listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)) });
+      const { pushUndo, setSettings, notify: notify3, settings: s } = useAppStore.getState();
+      pushUndo();
+      setSettings({ ...s, listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)) });
       handleSave();
-      store.notify("\uB9AC\uC2A4\uD2B8 \uCEEC\uB7FC\uC744 \uAE30\uBCF8\uAC12\uC73C\uB85C \uBCF5\uC6D0\uD588\uC2B5\uB2C8\uB2E4.", "success");
+      notify3("\uB9AC\uC2A4\uD2B8 \uCEEC\uB7FC\uC744 \uAE30\uBCF8\uAC12\uC73C\uB85C \uBCF5\uC6D0\uD588\uC2B5\uB2C8\uB2E4.", "success");
     };
     const dropAxis = (field, orderKey, values, toIndex) => {
       if (!drag || drag.type !== "axis" || drag.field !== field) return;
-      store.pushUndo();
+      const { pushUndo, setSettings, settings: s } = useAppStore.getState();
+      pushUndo();
       const nextOrder = moveItem2(values, drag.index, toIndex);
-      store.setSettings({ ...settings, [orderKey]: nextOrder });
+      setSettings({ ...s, [orderKey]: nextOrder });
       handleSave();
       setDrag(null);
       setDragOver(null);
     };
     const resetAxis = () => {
       if (!confirm("\uCD95 \uC21C\uC11C\uB97C \uCD08\uAE30\uD654\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?")) return;
-      store.pushUndo();
-      store.setSettings({ ...settings, groupOrder: [], catOrder: [] });
+      const { pushUndo, setSettings, notify: notify3, settings: s } = useAppStore.getState();
+      pushUndo();
+      setSettings({ ...s, groupOrder: [], catOrder: [] });
       handleSave();
-      store.notify("\uCD95 \uC21C\uC11C\uB97C \uC790\uB3D9 \uC815\uB82C\uB85C \uCD08\uAE30\uD654\uD588\uC2B5\uB2C8\uB2E4.", "success");
+      notify3("\uCD95 \uC21C\uC11C\uB97C \uC790\uB3D9 \uC815\uB82C\uB85C \uCD08\uAE30\uD654\uD588\uC2B5\uB2C8\uB2E4.", "success");
     };
     const dragClass = (type, key, index) => [
       "col-row",
@@ -22059,7 +21773,7 @@ ${sample}
   }
 
   // components/SettingsDesignPanel.jsx
-  var import_react25 = __toESM(require_react());
+  var import_react27 = __toESM(require_react());
   var import_jsx_runtime23 = __toESM(require_jsx_runtime());
   function cssTextToStyle2(cssText) {
     if (!cssText) return {};
@@ -22166,31 +21880,28 @@ ${sample}
     }) });
   }
   function SettingsDesignPanel() {
-    const store = useAppStore();
-    const settings = store.settings;
+    const settings = useAppStore((s) => s.settings);
     const colors = getColors();
     const { saveLocal, saveToServer } = useDBSync();
-    const handleSave = (0, import_react25.useCallback)(async () => {
+    const handleSave = (0, import_react27.useCallback)(async () => {
       if (settings.storageMode === "server") await saveToServer();
       else saveLocal();
     }, [settings.storageMode, saveLocal, saveToServer]);
     const applyThemeReact = (themeId) => {
       if (!THEMES[themeId]) return;
-      const nextSettings = {
-        ...settings,
-        themeId,
-        customColors: { light: {}, dark: {} }
-      };
-      store.setSettings(nextSettings);
+      const { setSettings, notify: notify3, settings: s } = useAppStore.getState();
+      const nextSettings = { ...s, themeId, customColors: { light: {}, dark: {} } };
+      setSettings(nextSettings);
       handleSave();
       setTimeout(() => {
         applyVars();
-        store.notify(`\uD14C\uB9C8 \uC801\uC6A9: ${THEMES[themeId].name}`, "success");
+        notify3(`\uD14C\uB9C8 \uC801\uC6A9: ${THEMES[themeId].name}`, "success");
       }, 0);
     };
     const setPresetReact = (priorityKey, presetId) => {
-      const nextStyles = { ...settings.priorityStyles, [priorityKey]: presetId };
-      store.setSettings({ ...settings, priorityStyles: nextStyles });
+      const { setSettings, settings: s } = useAppStore.getState();
+      const nextStyles = { ...s.priorityStyles, [priorityKey]: presetId };
+      setSettings({ ...s, priorityStyles: nextStyles });
       handleSave();
     };
     const setColorReact = (colorKey, value2) => {
@@ -22313,20 +22024,20 @@ ${sample}
     ] });
   }
   function SettingsPanel() {
-    const store = useAppStore();
-    const settings = store.settings;
+    const settings = useAppStore((s) => s.settings);
+    const activeModal = useAppStore((s) => s.activeModal);
     const { isAdmin: isAdmin2 } = useAuth();
     const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
     const { closeModal, openModal } = useModals();
-    const [activeTab, setActiveTab] = (0, import_react26.useState)("sg");
-    const settingsFileRef = (0, import_react26.useRef)(null);
+    const [activeTab, setActiveTab] = (0, import_react28.useState)("sg");
+    const settingsFileRef = (0, import_react28.useRef)(null);
     const appVersion = true ? "3.0.0" : "dev";
     const buildId = true ? "20260415.local" : "local";
-    const persistSettings = (0, import_react26.useCallback)(async (nextSettings = useAppStore.getState().settings) => {
+    const persistSettings = (0, import_react28.useCallback)(async (nextSettings = useAppStore.getState().settings) => {
       if (nextSettings.storageMode === "server") await saveToServer();
       else saveLocal();
     }, [saveLocal, saveToServer]);
-    const persistData = (0, import_react26.useCallback)(async () => {
+    const persistData = (0, import_react28.useCallback)(async () => {
       if (useAppStore.getState().settings.storageMode === "server") {
         const ok = await saveToServer();
         if (ok) broadcastSharedData();
@@ -22335,8 +22046,9 @@ ${sample}
       }
     }, [saveLocal, saveToServer, broadcastSharedData]);
     const updateSetting = async (key, value2, { apply = false } = {}) => {
-      const nextSettings = { ...useAppStore.getState().settings, [key]: value2 };
-      store.setSettings(nextSettings);
+      const { setSettings, settings: s } = useAppStore.getState();
+      const nextSettings = { ...s, [key]: value2 };
+      setSettings(nextSettings);
       if (apply) applyVars();
       await persistSettings(nextSettings);
     };
@@ -22346,7 +22058,8 @@ ${sample}
       updateSetting(key, nextValue, { apply: stepApply });
     };
     const exportSettings = () => {
-      const payload = { settings: store.settings, display: store.display };
+      const { settings: s, display } = useAppStore.getState();
+      const payload = { settings: s, display };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url2 = URL.createObjectURL(blob);
       Object.assign(document.createElement("a"), {
@@ -22362,13 +22075,14 @@ ${sample}
       reader.onload = (e) => {
         try {
           const data = JSON.parse(e.target.result);
-          if (data.settings) store.setSettings(migrateSettings({ ...store.settings, ...data.settings }));
-          if (data.display) store.setDisplay({ ...store.display, ...data.display });
+          const { setSettings, setDisplay, notify: notify3, settings: s, display } = useAppStore.getState();
+          if (data.settings) setSettings({ ...s, ...data.settings });
+          if (data.display) setDisplay({ ...display, ...data.display });
           applyVars();
           persistSettings();
-          store.notify("\uC124\uC815\uC744 \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4.", "success");
+          notify3("\uC124\uC815\uC744 \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4.", "success");
         } catch {
-          store.notify("\uC124\uC815 JSON\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", "error");
+          useAppStore.getState().notify("\uC124\uC815 JSON\uC744 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", "error");
         }
       };
       reader.readAsText(file, "UTF-8");
@@ -22376,8 +22090,9 @@ ${sample}
     };
     const resetSettings = () => {
       if (!confirm("\uAC1C\uC778 \uC124\uC815\uC744 \uAE30\uBCF8\uAC12\uC73C\uB85C \uCD08\uAE30\uD654\uD560\uAE4C\uC694?")) return;
+      const { setSettings, settings: s } = useAppStore.getState();
       const nextSettings = {
-        ...store.settings,
+        ...s,
         baseFont: 16,
         cardFont: 12,
         cardRadius: 6,
@@ -22395,19 +22110,20 @@ ${sample}
         customColors: { light: {}, dark: {} },
         listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS))
       };
-      store.setSettings(nextSettings);
+      setSettings(nextSettings);
       applyVars();
       persistSettings(nextSettings);
     };
     const resetData = async () => {
       if (!confirm("\uD604\uC7AC \uB370\uC774\uD130\uB97C \uB370\uBAA8 \uB370\uC774\uD130\uB85C \uCD08\uAE30\uD654\uD560\uAE4C\uC694?")) return;
-      store.pushUndo();
-      store.setItems(JSON.parse(JSON.stringify(DEMO)));
-      store.setChangeLog([]);
+      const { pushUndo, setItems, setChangeLog, notify: notify3 } = useAppStore.getState();
+      pushUndo();
+      setItems(JSON.parse(JSON.stringify(DEMO)));
+      setChangeLog([]);
       await persistData();
-      store.notify("\uB370\uC774\uD130\uB97C \uCD08\uAE30\uD654\uD588\uC2B5\uB2C8\uB2E4.", "success");
+      notify3("\uB370\uC774\uD130\uB97C \uCD08\uAE30\uD654\uD588\uC2B5\uB2C8\uB2E4.", "success");
     };
-    if (store.activeModal !== "settingsModal") return null;
+    if (activeModal !== "settingsModal") return null;
     return /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "ov on", id: "settingsModal", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "mbox", style: { width: "760px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "mhd", children: [
         /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "mtitle", children: "\uD658\uACBD \uC124\uC815" }),
@@ -22559,14 +22275,14 @@ ${sample}
     ] });
   }
   function ServerSettingsPanel({ settings, onSave }) {
-    const store = useAppStore();
-    const [form, setForm] = (0, import_react26.useState)({
+    const setSettings = useAppStore((s) => s.setSettings);
+    const [form, setForm] = (0, import_react28.useState)({
       storageMode: settings.storageMode || "server",
       userName: settings.userName || ""
     });
     const save = () => {
       const nextSettings = { ...settings, ...form };
-      store.setSettings(nextSettings);
+      setSettings(nextSettings);
       onSave(nextSettings);
     };
     const radioStyle = {
@@ -22598,7 +22314,7 @@ ${sample}
   }
 
   // components/ItemModal.jsx
-  var import_react27 = __toESM(require_react());
+  var import_react29 = __toESM(require_react());
 
   // node_modules/katex/dist/katex.mjs
   var SourceLocation = class _SourceLocation {
@@ -37063,37 +36779,41 @@ ${sample}
     isDelete: "N"
   };
   function ItemModal() {
-    const store = useAppStore();
+    const editKey = useAppStore((s) => s.editKey);
+    const settings = useAppStore((s) => s.settings);
+    const editModal = useAppStore((s) => s.editModal);
+    const storeNotify = useAppStore((s) => s.notify);
+    const items = useAppStore((s) => s.items);
     const { closeEditModal, saveItem, hardDelete, expSingleMd } = useModals();
-    const [activeTab, setActiveTab] = (0, import_react27.useState)("info");
-    const [mdMode, setMdMode] = (0, import_react27.useState)("edit");
-    const [mdPreview, setMdPreview] = (0, import_react27.useState)("");
-    const [mdStats, setMdStats] = (0, import_react27.useState)({ chars: "0\uC790", lines: "0\uC904", words: "0\uB2E8\uC5B4" });
-    const [title, setTitle] = (0, import_react27.useState)("\uAE30\uB2A5 \uCD94\uAC00");
-    const [showHardDel, setShowHardDel] = (0, import_react27.useState)(false);
-    const [modalMode, setModalMode] = (0, import_react27.useState)("add");
-    const [form, setForm] = (0, import_react27.useState)(EMPTY_FORM);
-    const previewRef = (0, import_react27.useRef)(null);
-    const mdFileRef = (0, import_react27.useRef)(null);
-    const textareaRef = (0, import_react27.useRef)(null);
-    const previewTimerRef = (0, import_react27.useRef)(null);
-    const formRef = (0, import_react27.useRef)(EMPTY_FORM);
-    (0, import_react27.useEffect)(() => {
+    const [activeTab, setActiveTab] = (0, import_react29.useState)("info");
+    const [mdMode, setMdMode] = (0, import_react29.useState)("edit");
+    const [mdPreview, setMdPreview] = (0, import_react29.useState)("");
+    const [mdStats, setMdStats] = (0, import_react29.useState)({ chars: "0\uC790", lines: "0\uC904", words: "0\uB2E8\uC5B4" });
+    const [title, setTitle] = (0, import_react29.useState)("\uAE30\uB2A5 \uCD94\uAC00");
+    const [showHardDel, setShowHardDel] = (0, import_react29.useState)(false);
+    const [modalMode, setModalMode] = (0, import_react29.useState)("add");
+    const [form, setForm] = (0, import_react29.useState)(EMPTY_FORM);
+    const previewRef = (0, import_react29.useRef)(null);
+    const mdFileRef = (0, import_react29.useRef)(null);
+    const textareaRef = (0, import_react29.useRef)(null);
+    const previewTimerRef = (0, import_react29.useRef)(null);
+    const formRef = (0, import_react29.useRef)(EMPTY_FORM);
+    (0, import_react29.useEffect)(() => {
       formRef.current = form;
     }, [form]);
-    const updateMdStats = (0, import_react27.useCallback)((value2) => {
+    const updateMdStats = (0, import_react29.useCallback)((value2) => {
       setMdStats({
         chars: `${value2.length}\uC790`,
         lines: `${value2 ? value2.split("\n").length : 0}\uC904`,
         words: `${value2.trim() ? value2.trim().split(/\s+/).length : 0}\uB2E8\uC5B4`
       });
     }, []);
-    const schedulePreview = (0, import_react27.useCallback)(() => {
-      if (!isSocketConnected() || !store.editKey) return;
+    const schedulePreview = (0, import_react29.useCallback)(() => {
+      if (!isSocketConnected() || !editKey) return;
       clearTimeout(previewTimerRef.current);
       previewTimerRef.current = setTimeout(() => {
-        const key = store.editKey;
-        const user = store.settings?.userName || "\uC775\uBA85";
+        const key = editKey;
+        const user = settings?.userName || "\uC775\uBA85";
         const current = formRef.current;
         const preview = {
           name: current.name || "",
@@ -37108,8 +36828,8 @@ ${sample}
         };
         emitPreview(key, user, preview);
       }, 300);
-    }, [store.editKey, store.settings?.userName]);
-    const updateField = (0, import_react27.useCallback)((field, value2) => {
+    }, [editKey, settings]);
+    const updateField = (0, import_react29.useCallback)((field, value2) => {
       setForm((current) => {
         const next = { ...current, [field]: value2 };
         formRef.current = next;
@@ -37121,7 +36841,7 @@ ${sample}
       }
       schedulePreview();
     }, [schedulePreview, updateMdStats]);
-    const switchMdMode = (0, import_react27.useCallback)((nextMode) => {
+    const switchMdMode = (0, import_react29.useCallback)((nextMode) => {
       const content = formRef.current.mdContent || "";
       if (nextMode !== "edit") {
         setMdPreview(parseMd(content));
@@ -37131,13 +36851,13 @@ ${sample}
         requestAnimationFrame(() => textareaRef.current?.focus());
       }
     }, []);
-    const openMdTab = (0, import_react27.useCallback)(() => {
+    const openMdTab = (0, import_react29.useCallback)(() => {
       const content = formRef.current.mdContent || "";
       setActiveTab("md");
       setMdPreview(parseMd(content));
       setMdMode(content.trim() ? "preview" : "edit");
     }, []);
-    (0, import_react27.useEffect)(() => {
+    (0, import_react29.useEffect)(() => {
       if (!previewRef.current) return;
       previewRef.current.querySelectorAll("[data-math]").forEach((el) => {
         try {
@@ -37150,8 +36870,8 @@ ${sample}
         }
       });
     }, [mdPreview]);
-    (0, import_react27.useEffect)(() => {
-      const { visible, mode, key, item, activeTab: activeTab2, mdMode: mdMode2 } = store.editModal;
+    (0, import_react29.useEffect)(() => {
+      const { visible, mode, key, item, activeTab: activeTab2, mdMode: mdMode2 } = editModal;
       if (!visible) return;
       const mergedForm = { ...EMPTY_FORM, ...item || {} };
       setModalMode(mode);
@@ -37163,8 +36883,8 @@ ${sample}
       formRef.current = mergedForm;
       setMdPreview(parseMd(mergedForm.mdContent || ""));
       updateMdStats(mergedForm.mdContent || "");
-    }, [store.editModal]);
-    const applyMdEdit = (0, import_react27.useCallback)((editor) => {
+    }, [editModal]);
+    const applyMdEdit = (0, import_react29.useCallback)((editor) => {
       const textarea = textareaRef.current;
       const current = formRef.current.mdContent || "";
       const selectionStart = textarea?.selectionStart ?? current.length;
@@ -37177,7 +36897,7 @@ ${sample}
         textarea.setSelectionRange(result.selectionStart, result.selectionEnd);
       });
     }, [updateField]);
-    const insertMd = (0, import_react27.useCallback)((before, after = "") => {
+    const insertMd = (0, import_react29.useCallback)((before, after = "") => {
       applyMdEdit((value2, start, end) => {
         const selected = value2.substring(start, end);
         const fallback = selected || "\uD14D\uC2A4\uD2B8";
@@ -37188,7 +36908,7 @@ ${sample}
         };
       });
     }, [applyMdEdit]);
-    const insertMdLine = (0, import_react27.useCallback)((prefix) => {
+    const insertMdLine = (0, import_react29.useCallback)((prefix) => {
       applyMdEdit((value2, start) => {
         const lineStart = value2.lastIndexOf("\n", start - 1) + 1;
         return {
@@ -37198,7 +36918,7 @@ ${sample}
         };
       });
     }, [applyMdEdit]);
-    const insertMdBlock = (0, import_react27.useCallback)((block) => {
+    const insertMdBlock = (0, import_react29.useCallback)((block) => {
       applyMdEdit((value2, start, end) => {
         const selected = value2.substring(start, end);
         const content = selected || block;
@@ -37218,25 +36938,25 @@ ${sample}
       const r = new FileReader();
       r.onload = (ev) => {
         updateField("mdContent", ev.target.result);
-        store.notify("MD \uD30C\uC77C \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4: " + file.name, "success");
+        storeNotify("MD \uD30C\uC77C \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4: " + file.name, "success");
         setMdMode("preview");
       };
       r.readAsText(file, "UTF-8");
       e.target.value = "";
     };
     const dataLists = {
-      group: getUniqSorted("group", store.items),
-      subGroup: getUniqSorted("subGroup", store.items),
-      category: getUniqSorted("category", store.items),
-      subCategory: getUniqSorted("subCategory", store.items),
-      owner: getUniqSorted("owner", store.items)
+      group: getUniqSorted("group", items),
+      subGroup: getUniqSorted("subGroup", items),
+      category: getUniqSorted("category", items),
+      subCategory: getUniqSorted("subCategory", items),
+      owner: getUniqSorted("owner", items)
     };
     const isReadOnly = modalMode === "detail";
     const showEditor = mdMode === "edit" || mdMode === "split";
     const showPreview = mdMode === "preview" || mdMode === "split";
     const taStyle = { display: showEditor ? "block" : "none", flex: showEditor ? "1 1 0" : void 0, width: showEditor ? "100%" : void 0 };
     const pvStyle = { display: showPreview ? "block" : "none", flex: showPreview ? "1 1 0" : void 0, width: showPreview ? "100%" : void 0 };
-    if (!store.editModal.visible) return null;
+    if (!editModal.visible) return null;
     return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "ov on", id: "editModal", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "mbox", style: { width: "760px", maxHeight: "92vh" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "mhd", style: { paddingBottom: 0, borderBottom: "none" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "mtitle", children: title }),
@@ -37307,7 +37027,7 @@ ${sample}
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uC9C4\uD589\uC0C1\uD0DC" }),
           /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("select", { className: "sel", id: "fStatus", value: form.status, onChange: (event) => updateField("status", event.target.value), children: [
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: "", children: "\u2014" }),
-            STATUS_OPTS.map((s) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: s, children: store.settings.statusLabels?.[s] || s }, s))
+            STATUS_OPTS.map((s) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: s, children: settings.statusLabels?.[s] || s }, s))
           ] })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
@@ -37407,28 +37127,30 @@ ${sample}
   }
 
   // components/OverlayMenus.jsx
-  var import_react28 = __toESM(require_react());
+  var import_react30 = __toESM(require_react());
   var import_jsx_runtime26 = __toESM(require_jsx_runtime());
   function OverlayMenus() {
-    const store = useAppStore();
+    const contextMenu = useAppStore((s) => s.contextMenu);
+    const statusMenu = useAppStore((s) => s.statusMenu);
+    const tooltip = useAppStore((s) => s.tooltip);
+    const items = useAppStore((s) => s.items);
+    const setContextMenu = useAppStore((s) => s.setContextMenu);
+    const setStatusMenu = useAppStore((s) => s.setStatusMenu);
     const { openEditModal, openMdModal, duplicateItem, quickToggleDel, setItemStatus } = useModals();
-    const contextMenu = store.contextMenu;
-    const statusMenu = store.statusMenu;
-    const tooltip = store.tooltip;
-    (0, import_react28.useEffect)(() => {
+    (0, import_react30.useEffect)(() => {
       if (!contextMenu && !statusMenu) return void 0;
       const closeMenus = () => {
-        store.setContextMenu(null);
-        store.setStatusMenu(null);
+        setContextMenu(null);
+        setStatusMenu(null);
       };
       const timer = setTimeout(() => document.addEventListener("click", closeMenus, { once: true }), 0);
       return () => {
         clearTimeout(timer);
         document.removeEventListener("click", closeMenus);
       };
-    }, [contextMenu, statusMenu, store]);
+    }, [contextMenu, statusMenu, setContextMenu, setStatusMenu]);
     const runContextAction = (action) => {
-      store.setContextMenu(null);
+      setContextMenu(null);
       action();
     };
     const openMd = (key) => {
@@ -37442,12 +37164,12 @@ ${sample}
         /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "ctx-sep" }),
         /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("button", { className: "ctx-item danger", onClick: () => runContextAction(() => quickToggleDel(contextMenu.key)), children: contextMenu.isDeleted ? "\u21A9 \uC0AD\uC81C \uBCF5\uC6D0" : "\u2715 \uC0AD\uC81C \uCC98\uB9AC" })
       ] }),
-      statusMenu && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "status-quick-menu", style: { left: statusMenu.x, top: statusMenu.y }, onClick: (e) => e.stopPropagation(), children: [["", "\u2014 \uC5C6\uC74C"], ...STATUS_OPTS.map((s) => [s, store.settings.statusLabels?.[s] || s])].map(([value2, label]) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+      statusMenu && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "status-quick-menu", style: { left: statusMenu.x, top: statusMenu.y }, onClick: (e) => e.stopPropagation(), children: [["", "\u2014 \uC5C6\uC74C"], ...STATUS_OPTS.map((s) => [s, s])].map(([value2, label]) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
         "button",
         {
           className: `status-quick-item${statusMenu.currentStatus === value2 ? " on" : ""}`,
           onClick: () => {
-            store.setStatusMenu(null);
+            setStatusMenu(null);
             setItemStatus(statusMenu.key, value2);
           },
           children: label
@@ -37455,7 +37177,7 @@ ${sample}
         value2 || "none"
       )) }),
       /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: `ftt${tooltip ? " on" : ""}`, style: tooltip ? { left: tooltip.x, top: tooltip.y } : void 0, children: tooltip && (() => {
-        const item = findItem(tooltip.key, store.items);
+        const item = findItem(tooltip.key, items);
         if (!item) return null;
         return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)(import_jsx_runtime26.Fragment, { children: [
           /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "tt-key", children: item.key }),
@@ -37472,7 +37194,7 @@ ${sample}
   }
 
   // components/AppOverlays.jsx
-  var import_react29 = __toESM(require_react());
+  var import_react31 = __toESM(require_react());
   var import_jsx_runtime27 = __toESM(require_jsx_runtime());
   function NotificationToast() {
     const toast = useAppStore((s) => s.toast);
@@ -37493,22 +37215,24 @@ ${sample}
     );
   }
   function UserNameModal() {
-    const store = useAppStore();
+    const activeModal = useAppStore((s) => s.activeModal);
+    const settings = useAppStore((s) => s.settings);
+    const setSettings = useAppStore((s) => s.setSettings);
     const { closeModal } = useModals();
     const { saveLocal } = useDBSync();
-    const [name, setName] = (0, import_react29.useState)("");
-    const inputRef = (0, import_react29.useRef)(null);
+    const [name, setName] = (0, import_react31.useState)("");
+    const inputRef = (0, import_react31.useRef)(null);
     const saveUserNamePopup = (skip = false) => {
       if (!skip) {
         const trimmed = name.trim();
         if (trimmed) {
-          store.setSettings({ ...store.settings, userName: trimmed });
+          setSettings({ ...settings, userName: trimmed });
           saveLocal();
         }
       }
       closeModal("userNameModal");
     };
-    if (store.activeModal !== "userNameModal") return null;
+    if (activeModal !== "userNameModal") return null;
     return /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "ov on", id: "userNameModal", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "mbox", style: { width: "380px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "mhd", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "mtitle", children: "\u{1F44B} \uC774\uB984\uC744 \uC54C\uB824\uC8FC\uC138\uC694" }) }),
       /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "mbody", children: [
@@ -37556,20 +37280,19 @@ ${sample}
   }
 
   // hooks/useKeyboardShortcuts.js
-  var import_react30 = __toESM(require_react());
+  var import_react32 = __toESM(require_react());
   function useKeyboardShortcuts(actions) {
-    const store = useAppStore();
-    (0, import_react30.useEffect)(() => {
+    (0, import_react32.useEffect)(() => {
       const handleKeyDown = (e) => {
         const tag = document.activeElement?.tagName || "";
         const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(tag);
         if (e.key === "Escape") {
-          if (actions.onEscape) actions.onEscape();
+          actions.onEscape?.();
           return;
         }
         if (e.key === "/" && !isInput) {
           e.preventDefault();
-          if (actions.onSearchFocus) actions.onSearchFocus();
+          actions.onSearchFocus?.();
           return;
         }
         if (isInput) return;
@@ -37591,8 +37314,8 @@ ${sample}
           }
           return;
         }
-        const key = e.key.toLowerCase();
-        switch (key) {
+        const { setView } = useAppStore.getState();
+        switch (e.key.toLowerCase()) {
           case "n":
             actions.openAddModal?.();
             break;
@@ -37600,16 +37323,16 @@ ${sample}
             actions.togglePanel?.();
             break;
           case "d":
-            store.setView("dashboard");
+            setView("dashboard");
             break;
           case "m":
-            store.setView("matrix");
+            setView("matrix");
             break;
           case "b":
-            store.setView("board");
+            setView("board");
             break;
           case "l":
-            store.setView("list");
+            setView("list");
             break;
           case "z":
             actions.doUndo?.();
@@ -37623,16 +37346,16 @@ ${sample}
       };
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
-    }, [actions, store]);
+    }, [actions]);
   }
 
   // components/App.jsx
   var import_jsx_runtime28 = __toESM(require_jsx_runtime());
   function App() {
-    const store = useAppStore();
-    const { loadFromServer, saveLocal, logActivity, unlockItem, saveToServer, broadcastSharedData } = useDBSync({ enableConnection: true });
+    const settingsTitle = useAppStore((s) => s.settings.title);
+    const { loadFromServer, saveLocal, logActivity, unlockItem, saveToServer, broadcastSharedData } = useDBSync();
     const { closeModal, closeEditModal, openModal, openAddModal } = useModals();
-    const keyboardActions = (0, import_react31.useMemo)(() => ({
+    const keyboardActions = (0, import_react33.useMemo)(() => ({
       onEscape: () => {
         closeEditModal();
         closeModal("importModal");
@@ -37644,11 +37367,15 @@ ${sample}
       onSearchFocus: () => getStore().requestSearchFocus(),
       openModal: (name) => openModal(name),
       openAddModal: () => openAddModal(),
-      togglePanel: () => store.setSettings({ ...store.settings, panelVisible: !store.settings.panelVisible }),
+      togglePanel: () => {
+        const { settings, setSettings } = useAppStore.getState();
+        setSettings({ ...settings, panelVisible: !settings.panelVisible });
+      },
       doUndo: async () => {
-        const prevItems = store.doUndo();
+        const { doUndo, settings } = useAppStore.getState();
+        const prevItems = doUndo();
         if (prevItems) {
-          if (store.settings.storageMode === "server") {
+          if (settings.storageMode === "server") {
             const ok = await saveToServer();
             if (ok) broadcastSharedData();
           } else {
@@ -37657,38 +37384,25 @@ ${sample}
           logActivity("\uC2E4\uD589 \uCDE8\uC18C", "\uC0C1\uD0DC\uAC00 \uC774\uC804\uC73C\uB85C \uB418\uB3CC\uB824\uC84C\uC2B5\uB2C8\uB2E4.");
         }
       }
-    }), [store, closeEditModal, closeModal, openModal, openAddModal]);
+    }), [closeEditModal, closeModal, openModal, openAddModal, saveToServer, broadcastSharedData, saveLocal, logActivity]);
     useKeyboardShortcuts(keyboardActions);
-    (0, import_react31.useEffect)(() => {
+    (0, import_react33.useEffect)(() => {
       async function initApp() {
         const raw = localStorage.getItem(SK);
         let initialSettings = getStore().settings;
         if (raw) {
           try {
             const d = JSON.parse(raw);
-            if (d.items) store.setItems(migrateItems(d.items, d.dataVersion || 1));
-            if (Array.isArray(d.changeLog)) store.setChangeLog(migrateChangeLog(d.changeLog));
-            if (d.filters) store.setFilters(migrateFilters({ ...getStore().filters, ...d.filters }));
-            if (d.display) store.setDisplay({ ...getStore().display, ...d.display });
             if (d.local) {
               const nextSettings = {
                 ...initialSettings,
-                baseFont: d.local.baseFont ?? initialSettings.baseFont,
-                cardFont: d.local.cardFont ?? initialSettings.cardFont,
-                dbSections: d.local.dbSections || initialSettings.dbSections,
-                dbSectionVisibility: d.local.dbSectionVisibility || initialSettings.dbSectionVisibility,
-                listColumns: d.local.listColumns || initialSettings.listColumns,
-                panelPos: d.local.panelPos || initialSettings.panelPos,
-                panelVisible: d.local.panelVisible ?? initialSettings.panelVisible,
-                pollInterval: d.local.pollInterval ?? initialSettings.pollInterval,
-                storageMode: d.local.storageMode || initialSettings.storageMode,
-                serverUrl: d.local.serverUrl || initialSettings.serverUrl,
-                userName: d.local.userName || initialSettings.userName,
+                storageMode: d.local.storageMode,
+                serverUrl: d.local.serverUrl,
+                userName: d.local.userName,
                 themeId: d.local.themeId || initialSettings.themeId
               };
-              const migratedSettings = migrateSettings(nextSettings);
-              store.setSettings(migratedSettings);
-              initialSettings = migratedSettings;
+              useAppStore.getState().setSettings(nextSettings);
+              initialSettings = nextSettings;
             }
           } catch (e) {
           }
@@ -37696,19 +37410,20 @@ ${sample}
         if (initialSettings.storageMode === "server") {
           await loadFromServer();
         } else if (getStore().items.length === 0) {
-          store.setItems(JSON.parse(JSON.stringify(DEMO)));
+          useAppStore.getState().setItems(JSON.parse(JSON.stringify(DEMO)));
         }
         applyVars();
         logActivity("\uC811\uC18D", `${getStore().items.length}\uAC1C \uD56D\uBAA9 \uD655\uC778`);
       }
       initApp();
       return () => {
-        if (store.editKey) unlockItem(store.editKey);
+        const { editKey } = useAppStore.getState();
+        if (editKey) unlockItem(editKey);
       };
     }, []);
-    (0, import_react31.useEffect)(() => {
-      document.title = store.settings.title || "featureMATRIX";
-    }, [store.settings.title]);
+    (0, import_react33.useEffect)(() => {
+      document.title = settingsTitle || "featureMATRIX";
+    }, [settingsTitle]);
     return /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(ErrorBoundary, { level: "app", label: "\uC571", children: /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(AuthProvider, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(ErrorBoundary, { level: "view", label: "\uD5E4\uB354", children: /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(Header, {}) }),
       /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(UpdateBanner, {}),

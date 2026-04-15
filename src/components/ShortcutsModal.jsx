@@ -19,10 +19,10 @@ const SHORTCUTS = [
 ];
 
 export default function ShortcutsModal() {
-  const store = useAppStore();
+  const activeModal = useAppStore(s => s.activeModal);
   const { closeModal } = useModals();
 
-  if (store.activeModal !== 'shortcutsModal') return null;
+  if (activeModal !== 'shortcutsModal') return null;
 
   return (
     <div className="ov on" id="shortcutsModal">

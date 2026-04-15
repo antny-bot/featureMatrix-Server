@@ -3,15 +3,15 @@ import { useAppStore } from '../store/useAppStore.js';
 import { submitLogin, closeLoginModal } from '../contexts/AuthContext.jsx';
 
 export default function LoginModal() {
-  const store = useAppStore();
-  const { visible, role, name, password, error } = store.loginModal;
+  const loginModal = useAppStore(s => s.loginModal);
+  const { visible, role, name, password, error } = loginModal;
   const passwordRef = useRef(null);
 
   if (!visible) return null;
 
   const updateField = (field, value) => {
     useAppStore.setState({
-      loginModal: { ...store.loginModal, [field]: value }
+      loginModal: { ...useAppStore.getState().loginModal, [field]: value }
     });
   };
 

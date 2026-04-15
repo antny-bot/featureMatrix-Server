@@ -29,7 +29,8 @@ function readTextFile(file) {
 }
 
 export default function ImportModal() {
-  const store = useAppStore();
+  const activeModal  = useAppStore(s => s.activeModal);
+  const storeNotify  = useAppStore(s => s.notify);
   const { saveLocal, saveToServer, logActivity } = useDBSync();
   const { closeModal } = useModals();
 
@@ -42,7 +43,7 @@ export default function ImportModal() {
   const [mapping, setMapping] = useState({});
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const notify = useCallback((msg, isErr) => store.notify(msg, isErr ? 'error' : 'success'), [store]);
+  const notify = useCallback((msg, isErr) => storeNotify(msg, isErr ? 'error' : 'success'), [storeNotify]);
 
   const statusText = useMemo(() => `${rows.length}개 행 감지됨, 컬럼 ${headers.length}개`, [headers.length, rows.length]);
 
@@ -88,7 +89,8 @@ export default function ImportModal() {
 
     if (!importedItems.length) { notify('가져올 데이터가 없습니다.', true); return; }
 
-    const existingKeys = new Set(store.items.map(it => it.key));
+    const { items: curItems, pushUndo, setItems, settings } = useAppStore.getState();
+    const existingKeys = new Set(curItems.map(it => it.key));
     const duplicates = importedItems.filter(it => existingKeys.has(it.key)).map(it => it.key);
 
     if (!append && duplicates.length > 0) {
@@ -96,7 +98,7 @@ export default function ImportModal() {
       if (!window.confirm(`중복 Key ${duplicates.length}개:\n${sample}\n덮어쓰기?`)) return;
     }
 
-    store.pushUndo();
+    pushUndo();
     let nextItems = [];
     let logMsg = '';
 
@@ -105,7 +107,7 @@ export default function ImportModal() {
       nextItems = importedItems;
       logMsg = `전체 교체 (${importedItems.length}개)`;
     } else {
-      const itemsMap = new Map(store.items.map(it => [it.key, it]));
+      const itemsMap = new Map(curItems.map(it => [it.key, it]));
       let added = 0;
       importedItems.forEach(it => {
         if (itemsMap.has(it.key)) {
@@ -119,17 +121,17 @@ export default function ImportModal() {
       logMsg = `병합 추가 (신규 ${added}개 / 총 ${importedItems.length}개)`;
     }
 
-    store.setItems(nextItems);
+    setItems(nextItems);
     await logActivity('가져오기', logMsg);
-    
-    if (store.settings.storageMode === 'server') await saveToServer();
+
+    if (settings.storageMode === 'server') await saveToServer();
     else saveLocal();
 
     notify('성공적으로 가져왔습니다.');
     closeModal('importModal');
   };
 
-  if (store.activeModal !== 'importModal') return null;
+  if (activeModal !== 'importModal') return null;
 
   return (
     <div className="ov on" id="importModal">

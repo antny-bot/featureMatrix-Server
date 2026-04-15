@@ -33,7 +33,9 @@ function NotificationToast() {
 }
 
 function UserNameModal() {
-  const store = useAppStore();
+  const activeModal  = useAppStore(s => s.activeModal);
+  const settings     = useAppStore(s => s.settings);
+  const setSettings  = useAppStore(s => s.setSettings);
   const { closeModal } = useModals();
   const { saveLocal } = useDBSync();
   const [name, setName] = useState('');
@@ -43,14 +45,14 @@ function UserNameModal() {
     if (!skip) {
       const trimmed = name.trim();
       if (trimmed) {
-        store.setSettings({ ...store.settings, userName: trimmed });
+        setSettings({ ...settings, userName: trimmed });
         saveLocal();
       }
     }
     closeModal('userNameModal');
   };
 
-  if (store.activeModal !== 'userNameModal') return null;
+  if (activeModal !== 'userNameModal') return null;
 
   return (
     <div className="ov on" id="userNameModal">

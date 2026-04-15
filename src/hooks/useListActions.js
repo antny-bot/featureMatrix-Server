@@ -1,76 +1,61 @@
 import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from './useDBSync.js';
+import { usePersistItems } from './usePersistItems.js';
 
 export function useListActions() {
-  const store = useAppStore();
-  const { saveLocal, saveToServer, logActivity } = useDBSync();
-
-  const handleSave = useCallback(async () => {
-    if (store.settings.storageMode === 'server') await saveToServer();
-    else saveLocal();
-  }, [store.settings.storageMode, saveLocal, saveToServer]);
+  const setBulkSelectionKeys = useAppStore(s => s.setBulkSelectionKeys);
+  const { logActivity } = useDBSync();
+  const { persistItems } = usePersistItems();
 
   const bulkToggle = useCallback((key) => {
-    const prev = new Set(store.bulkSelectionKeys);
+    const prev = new Set(useAppStore.getState().bulkSelectionKeys);
     if (prev.has(key)) prev.delete(key);
     else prev.add(key);
-    store.setBulkSelectionKeys([...prev]);
-  }, [store]);
+    setBulkSelectionKeys([...prev]);
+  }, [setBulkSelectionKeys]);
 
   const bulkToggleAll = useCallback((checked, filteredItems) => {
-    if (checked) {
-      store.setBulkSelectionKeys(filteredItems.map(it => it.key));
-    } else {
-      store.setBulkSelectionKeys([]);
-    }
-  }, [store]);
+    setBulkSelectionKeys(checked ? filteredItems.map(it => it.key) : []);
+  }, [setBulkSelectionKeys]);
 
   const bulkClearSelection = useCallback(() => {
-    store.setBulkSelectionKeys([]);
-  }, [store]);
+    setBulkSelectionKeys([]);
+  }, [setBulkSelectionKeys]);
 
   const toggleSort = useCallback((key) => {
-    const s = { ...store.sort };
-    if (s.key === key) {
-      s.dir = s.dir === 'asc' ? 'desc' : 'asc';
-    } else {
-      s.key = key;
-      s.dir = 'asc';
-    }
-    store.setState({ sort: s });
-  }, [store]);
+    const s = { ...useAppStore.getState().sort };
+    s.dir = s.key === key ? (s.dir === 'asc' ? 'desc' : 'asc') : 'asc';
+    s.key = key;
+    useAppStore.setState({ sort: s });
+  }, []);
 
   const setBulkPriority = useCallback(async (priority) => {
-    const keys = store.bulkSelectionKeys;
-    if (!keys.length) return;
+    const { bulkSelectionKeys, pushUndo, items, setItems } = useAppStore.getState();
+    if (!bulkSelectionKeys.length) return;
 
-    store.pushUndo();
-    const nextItems = store.items.map(it => {
-      if (keys.includes(it.key)) return { ...it, priority };
-      return it;
-    });
-    store.setItems(nextItems);
-    
-    await logActivity('일괄변경', `우선순위→${priority} (${keys.join(', ')})`);
-    await handleSave();
-  }, [store, logActivity, handleSave]);
+    pushUndo();
+    setItems(items.map(it =>
+      bulkSelectionKeys.includes(it.key) ? { ...it, priority } : it
+    ));
+
+    await logActivity('일괄변경', `우선순위→${priority} (${bulkSelectionKeys.join(', ')})`);
+    await persistItems();
+  }, [logActivity, persistItems]);
 
   const setBulkOwner = useCallback(async (owner) => {
     const nextOwner = String(owner || '').trim();
-    const keys = store.bulkSelectionKeys;
-    if (!nextOwner || !keys.length) return;
+    const { bulkSelectionKeys, pushUndo, items, setItems } = useAppStore.getState();
+    if (!nextOwner || !bulkSelectionKeys.length) return;
 
-    store.pushUndo();
-    const nextItems = store.items.map(it => {
-      if (keys.includes(it.key)) return { ...it, owner: nextOwner };
-      return it;
-    });
-    store.setItems(nextItems);
+    pushUndo();
+    setItems(items.map(it =>
+      bulkSelectionKeys.includes(it.key) ? { ...it, owner: nextOwner } : it
+    ));
 
-    await logActivity('일괄변경', `담당→${nextOwner} (${keys.join(', ')})`);
-    await handleSave();
-  }, [store, logActivity, handleSave]);
+    await logActivity('일괄변경', `담당→${nextOwner} (${bulkSelectionKeys.join(', ')})`);
+    await persistItems();
+  }, [logActivity, persistItems]);
 
   return {
     bulkToggle,
@@ -78,6 +63,6 @@ export function useListActions() {
     bulkClearSelection,
     toggleSort,
     setBulkPriority,
-    setBulkOwner
+    setBulkOwner,
   };
 }

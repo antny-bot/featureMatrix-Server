@@ -20,8 +20,8 @@ function ZipIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill
 
 
 export default function SettingsPanel() {
-  const store = useAppStore();
-  const settings = store.settings;
+  const settings    = useAppStore(s => s.settings);
+  const activeModal = useAppStore(s => s.activeModal);
   const { isAdmin } = useAuth();
   const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
   const { closeModal, openModal } = useModals();
@@ -46,8 +46,9 @@ export default function SettingsPanel() {
   }, [saveLocal, saveToServer, broadcastSharedData]);
 
   const updateSetting = async (key, value, { apply = false } = {}) => {
-    const nextSettings = { ...useAppStore.getState().settings, [key]: value };
-    store.setSettings(nextSettings);
+    const { setSettings, settings: s } = useAppStore.getState();
+    const nextSettings = { ...s, [key]: value };
+    setSettings(nextSettings);
     if (apply) applyVars();
     await persistSettings(nextSettings);
   };
@@ -59,7 +60,8 @@ export default function SettingsPanel() {
   };
 
   const exportSettings = () => {
-    const payload = { settings: store.settings, display: store.display };
+    const { settings: s, display } = useAppStore.getState();
+    const payload = { settings: s, display };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     Object.assign(document.createElement('a'), {
@@ -76,13 +78,14 @@ export default function SettingsPanel() {
     reader.onload = e => {
       try {
         const data = JSON.parse(e.target.result);
-        if (data.settings) store.setSettings(migrateSettings({ ...store.settings, ...data.settings }));
-        if (data.display) store.setDisplay({ ...store.display, ...data.display });
+        const { setSettings, setDisplay, notify, settings: s, display } = useAppStore.getState();
+        if (data.settings) setSettings(migrateSettings({ ...s, ...data.settings }));
+        if (data.display) setDisplay({ ...display, ...data.display });
         applyVars();
         persistSettings();
-        store.notify('설정을 불러왔습니다.', 'success');
+        notify('설정을 불러왔습니다.', 'success');
       } catch {
-        store.notify('설정 JSON을 읽을 수 없습니다.', 'error');
+        useAppStore.getState().notify('설정 JSON을 읽을 수 없습니다.', 'error');
       }
     };
     reader.readAsText(file, 'UTF-8');
@@ -91,8 +94,9 @@ export default function SettingsPanel() {
 
   const resetSettings = () => {
     if (!confirm('개인 설정을 기본값으로 초기화할까요?')) return;
+    const { setSettings, settings: s } = useAppStore.getState();
     const nextSettings = {
-      ...store.settings,
+      ...s,
       baseFont: 16, cardFont: 12, cardRadius: 6, cardGap: 4,
       colW: 130, catW: 52, subCatW: 80, cellFold: 0, boardFoldCount: 6,
       matrixWidth: 'fluid', panelPos: 'left', panelVisible: true,
@@ -101,21 +105,22 @@ export default function SettingsPanel() {
       customColors: { light: {}, dark: {} },
       listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
     };
-    store.setSettings(nextSettings);
+    setSettings(nextSettings);
     applyVars();
     persistSettings(nextSettings);
   };
 
   const resetData = async () => {
     if (!confirm('현재 데이터를 데모 데이터로 초기화할까요?')) return;
-    store.pushUndo();
-    store.setItems(JSON.parse(JSON.stringify(DEMO)));
-    store.setChangeLog([]);
+    const { pushUndo, setItems, setChangeLog, notify } = useAppStore.getState();
+    pushUndo();
+    setItems(JSON.parse(JSON.stringify(DEMO)));
+    setChangeLog([]);
     await persistData();
-    store.notify('데이터를 초기화했습니다.', 'success');
+    notify('데이터를 초기화했습니다.', 'success');
   };
 
-  if (store.activeModal !== 'settingsModal') return null;
+  if (activeModal !== 'settingsModal') return null;
 
   return (
     <div className="ov on" id="settingsModal">
@@ -282,7 +287,7 @@ function Stepper({ label, sub, value, onMinus, onPlus }) {
 }
 
 function ServerSettingsPanel({ settings, onSave }) {
-  const store = useAppStore();
+  const setSettings = useAppStore(s => s.setSettings);
   const [form, setForm] = useState({
     storageMode: settings.storageMode || 'server',
     userName: settings.userName || '',
@@ -290,7 +295,7 @@ function ServerSettingsPanel({ settings, onSave }) {
 
   const save = () => {
     const nextSettings = { ...settings, ...form };
-    store.setSettings(nextSettings);
+    setSettings(nextSettings);
     onSave(nextSettings);
   };
 

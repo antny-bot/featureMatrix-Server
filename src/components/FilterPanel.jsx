@@ -53,14 +53,15 @@ function Toggle({ id, label, checked = false, onChange }) {
 }
 
 function PriorityChips({ onPersist }) {
-  const store = useAppStore();
-  const colors = getColors();
-  const priorities = store.filters.priorities;
+  const filters    = useAppStore(s => s.filters);
+  const colors     = getColors();
+  const priorities = filters.priorities;
 
   const togglePrio = (val, checked) => {
-    store.pushUndo();
-    const next = checked ? [...priorities, val] : priorities.filter(v => v !== val);
-    store.setFilters({ ...store.filters, priorities: next });
+    const { pushUndo, setFilters, filters: f } = useAppStore.getState();
+    pushUndo();
+    const next = checked ? [...f.priorities, val] : f.priorities.filter(v => v !== val);
+    setFilters({ ...f, priorities: next });
     onPersist();
   };
 
@@ -87,23 +88,26 @@ function PriorityChips({ onPersist }) {
 }
 
 function StatusChips({ onPersist }) {
-  const store = useAppStore();
-  const { items, filters } = store;
-  const statuses = filters.statuses || [];
+  const items        = useAppStore(s => s.items);
+  const filters      = useAppStore(s => s.filters);
+  const searchQ      = useAppStore(s => s.searchQ);
+  const statusLabels = useAppStore(s => s.settings.statusLabels);
+  const statuses     = filters.statuses || [];
 
   const counts = useMemo(() => {
     const c = {};
-    const countItems = isFilterActive(filters, store.searchQ) 
-      ? getFiltered(items, filters, store.searchQ) 
+    const countItems = isFilterActive(filters, searchQ)
+      ? getFiltered(items, filters, searchQ)
       : items.filter(it => it.isDelete !== 'Y');
     countItems.forEach(it => { if (it.status) c[it.status] = (c[it.status] || 0) + 1; });
     return c;
-  }, [items, filters, store.searchQ]);
+  }, [items, filters, searchQ]);
 
   const toggleStatus = (status, checked) => {
-    store.pushUndo();
-    const next = checked ? [...statuses, status] : statuses.filter(s => s !== status);
-    store.setFilters({ ...store.filters, statuses: next });
+    const { pushUndo, setFilters, filters: f } = useAppStore.getState();
+    pushUndo();
+    const next = checked ? [...(f.statuses || []), status] : (f.statuses || []).filter(s => s !== status);
+    setFilters({ ...f, statuses: next });
     onPersist();
   };
 
@@ -119,7 +123,7 @@ function StatusChips({ onPersist }) {
         return (
           <label className="pchip" style={style} key={status}>
             <input type="checkbox" checked={checked} style={{ display: 'none' }} onChange={e => toggleStatus(status, e.target.checked)} />
-            {store.settings.statusLabels?.[status] || status}{!!counts[status] && <span style={{ fontSize: '.6rem', opacity: .7, marginLeft: '3px' }}>{counts[status]}</span>}
+            {statusLabels?.[status] || status}{!!counts[status] && <span style={{ fontSize: '.6rem', opacity: .7, marginLeft: '3px' }}>{counts[status]}</span>}
           </label>
         );
       })}
@@ -128,15 +132,17 @@ function StatusChips({ onPersist }) {
 }
 
 function OwnerChips({ onPersist }) {
-  const store = useAppStore();
-  const owners = store.filters.owners || [];
-  const allOwners = getUniqSorted('owner', store.items);
+  const filters    = useAppStore(s => s.filters);
+  const items      = useAppStore(s => s.items);
+  const owners     = filters.owners || [];
+  const allOwners  = getUniqSorted('owner', items);
 
   const toggleOwner = (owner, checked) => {
-    store.pushUndo();
+    const { pushUndo, setFilters, filters: f } = useAppStore.getState();
+    pushUndo();
     const norm = normOwner(owner);
-    const next = checked ? [...owners, norm] : owners.filter(o => o !== norm);
-    store.setFilters({ ...store.filters, owners: next });
+    const next = checked ? [...(f.owners || []), norm] : (f.owners || []).filter(o => o !== norm);
+    setFilters({ ...f, owners: next });
     onPersist();
   };
 
@@ -160,11 +166,19 @@ function OwnerChips({ onPersist }) {
 }
 
 export default function FilterPanel() {
-  const store = useAppStore();
+  const filters    = useAppStore(s => s.filters);
+  const display    = useAppStore(s => s.display);
+  const undoDepth  = useAppStore(s => s.undoDepth);
+  const view       = useAppStore(s => s.view);
+  const settings   = useAppStore(s => s.settings);
+  const setFilters = useAppStore(s => s.setFilters);
+  const setDisplay = useAppStore(s => s.setDisplay);
+  const setSettings = useAppStore(s => s.setSettings);
+  const setSearchQ = useAppStore(s => s.setSearchQ);
   const { saveLocal, saveToServer, broadcastSharedData, logActivity } = useDBSync();
-  const { filters, display, undoDepth, view, settings, setSearchQ, setFilters, setDisplay, setSettings, doUndo } = store;
-  
+
   const handleUndo = async () => {
+    const { doUndo } = useAppStore.getState();
     const prevItems = doUndo();
     if (prevItems) {
       if (settings.storageMode === 'server') {
@@ -176,7 +190,7 @@ export default function FilterPanel() {
       logActivity('실행 취소', '상태가 이전으로 되돌려졌습니다.');
     }
   };
-  
+
   const panelVisible = settings.panelVisible;
   const panelClassName = ['fpanel', !panelVisible ? 'collapsed' : '', view === 'dashboard' ? 'fp-hide' : ''].filter(Boolean).join(' ');
 
@@ -185,14 +199,16 @@ export default function FilterPanel() {
   }, [settings, panelVisible, setSettings]);
 
   const resetFiltersAction = useCallback(() => {
-    store.pushUndo();
+    const { pushUndo } = useAppStore.getState();
+    pushUndo();
     setFilters({ priorities: [], statuses: [], showDeleted: false, importantOnly: false, owners: [] });
     setSearchQ('');
     saveLocal();
-  }, [store, setFilters, setSearchQ, saveLocal]);
+  }, [setFilters, setSearchQ, saveLocal]);
 
   const updateFilter = (key, val) => {
-    store.pushUndo();
+    const { pushUndo } = useAppStore.getState();
+    pushUndo();
     setFilters({ ...filters, [key]: val });
     saveLocal();
   };

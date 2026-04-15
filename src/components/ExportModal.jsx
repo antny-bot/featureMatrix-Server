@@ -4,11 +4,11 @@ import { useModals } from '../hooks/useModals.js';
 import { expClip, expTSV, expXLS, expHTML, expMdZip } from '../app/io.js';
 
 export default function ExportModal() {
-  const store = useAppStore();
+  const activeModal = useAppStore(s => s.activeModal);
   const { closeModal } = useModals();
   const [htmlWidth, setHtmlWidth] = useState('fluid');
 
-  if (store.activeModal !== 'exportModal') return null;
+  if (activeModal !== 'exportModal') return null;
 
   return (
     <div className="ov on" id="exportModal">

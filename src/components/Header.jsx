@@ -126,13 +126,22 @@ export default function Header() {
   const { isAdmin, isEditor, isServerMode, logout, openLoginModal } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { openModal } = useModals();
-  const store = useAppStore();
-  
-  const title    = store.settings.title    || 'featureMATRIX';
-  const subtitle = store.settings.subtitle || 'Function Matrix';
-  const storageMode = store.settings.storageMode || 'server';
-  const { serverStatus, wsStatus, activeUsers, view, searchQ, filters, items, searchFocusNonce } = store;
-  const userName = store.settings.userName || 'Anonymous';
+
+  const settings         = useAppStore(s => s.settings);
+  const serverStatus     = useAppStore(s => s.serverStatus);
+  const wsStatus         = useAppStore(s => s.wsStatus);
+  const activeUsers      = useAppStore(s => s.activeUsers);
+  const view             = useAppStore(s => s.view);
+  const searchQ          = useAppStore(s => s.searchQ);
+  const filters          = useAppStore(s => s.filters);
+  const items            = useAppStore(s => s.items);
+  const searchFocusNonce = useAppStore(s => s.searchFocusNonce);
+  const setSearchQ       = useAppStore(s => s.setSearchQ);
+
+  const title       = settings.title       || 'featureMATRIX';
+  const subtitle    = settings.subtitle    || 'Function Matrix';
+  const storageMode = settings.storageMode || 'server';
+  const userName    = settings.userName    || 'Anonymous';
 
   const searchRef = useRef(null);
   const showSearch = view !== 'dashboard';
@@ -180,9 +189,9 @@ export default function Header() {
               className="search-inp"
               placeholder="Search (name / key / owner / path)"
               value={searchQ}
-              onChange={(e) => store.setSearchQ(e.target.value)}
+              onChange={(e) => setSearchQ(e.target.value)}
             />
-            <button className={`search-clear${searchQ ? ' on' : ''}`} onClick={() => store.setSearchQ('')}>x</button>
+            <button className={`search-clear${searchQ ? ' on' : ''}`} onClick={() => setSearchQ('')}>x</button>
           </div>
           <span className="hdr-count-badge">{filteredCount ? `${filteredCount}` : ''}</span>
         </div>

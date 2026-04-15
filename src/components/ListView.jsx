@@ -68,13 +68,12 @@ function ListCell({ item, columnKey, query }) {
 }
 
 export default function ListView() {
-  const store = useAppStore();
-  const items = store.items;
-  const settings = store.settings;
-  const filters = store.filters;
-  const searchQ = store.searchQ;
-  const sort = store.sort;
-  const bulkSelectionKeys = store.bulkSelectionKeys;
+  const items             = useAppStore(s => s.items);
+  const settings          = useAppStore(s => s.settings);
+  const filters           = useAppStore(s => s.filters);
+  const searchQ           = useAppStore(s => s.searchQ);
+  const sort              = useAppStore(s => s.sort);
+  const bulkSelectionKeys = useAppStore(s => s.bulkSelectionKeys);
   
   const { bulkToggle, bulkToggleAll, bulkClearSelection } = useListActions();
   const { openEditModal, openMdModal } = useModals();
@@ -111,14 +110,15 @@ export default function ListView() {
   const allChecked = rows.length > 0 && rows.every(item => selectedKeySet.has(item.key));
 
   const toggleSort = (key) => {
-    const s = { ...store.sort };
+    const { sort: cur } = useAppStore.getState();
+    const s = { ...cur };
     if (s.key === key) {
       s.dir = s.dir === 'asc' ? 'desc' : 'asc';
     } else {
       s.key = key;
       s.dir = 'asc';
     }
-    store.setState({ sort: s });
+    useAppStore.setState({ sort: s });
   };
 
   return (

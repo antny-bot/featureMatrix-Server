@@ -26,14 +26,13 @@ function BoardActionBar({ boardSel, onMove, onClear }) {
 
 /* ── 메인 컴포넌트 ── */
 export default function BoardView() {
-  const store = useAppStore();
-  const items = store.items;
-  const editLocks = store.editLocks;
-  const previews = store.previews;
-  const filters = store.filters;
-  const searchQ = store.searchQ;
-  const boardSel = store.boardSelectionKeys || [];
-  const foldCount = store.settings.boardFoldCount ?? 6;
+  const items        = useAppStore(s => s.items);
+  const filters      = useAppStore(s => s.filters);
+  const searchQ      = useAppStore(s => s.searchQ);
+  const boardSel     = useAppStore(s => s.boardSelectionKeys || []);
+  const foldCount    = useAppStore(s => s.settings.boardFoldCount ?? 6);
+  const isDragging   = useAppStore(s => s.isDragging);
+  const statusLabels = useAppStore(s => s.settings.statusLabels);
   const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useBoardActions();
   const { openMdModal } = useModals();
 
@@ -63,30 +62,30 @@ export default function BoardView() {
   }, [filteredItems]);
 
   const onDragStart = useCallback((e, key) => {
-    store.setIsDragging(true);
-    const keysToMove = boardSel.includes(key) ? boardSel : [key];
-    store.setBoardSelectionKeys(keysToMove);
-    
-    // 타 사용자 락 확인 로직 (MatrixView와 동일하게 추가 가능)
+    const { setIsDragging, setBoardSelectionKeys, boardSelectionKeys } = useAppStore.getState();
+    setIsDragging(true);
+    const keysToMove = boardSelectionKeys.includes(key) ? boardSelectionKeys : [key];
+    setBoardSelectionKeys(keysToMove);
     lockKeys(new Set(keysToMove));
     e.dataTransfer.effectAllowed = 'move';
-  }, [store, boardSel, lockKeys]);
+  }, [lockKeys]);
 
   const onDragEnd = useCallback(() => {
-    unlockKeys(new Set(store.boardSelectionKeys));
-    store.setIsDragging(false);
+    const { boardSelectionKeys, setIsDragging } = useAppStore.getState();
+    unlockKeys(new Set(boardSelectionKeys));
+    setIsDragging(false);
     setDragOverCol(null);
-  }, [store, unlockKeys]);
+  }, [unlockKeys]);
 
   const onDrop = useCallback((e, colKey) => {
     e.preventDefault();
     setDragOverCol(null);
-    moveItems(new Set(store.boardSelectionKeys), colKey);
-  }, [store, moveItems]);
+    moveItems(new Set(useAppStore.getState().boardSelectionKeys), colKey);
+  }, [moveItems]);
 
   const handleBoardClick = useCallback(() => {
-    if (store.boardSelectionKeys.length > 0) clearSelection();
-  }, [store.boardSelectionKeys.length, clearSelection]);
+    if (useAppStore.getState().boardSelectionKeys.length > 0) clearSelection();
+  }, [clearSelection]);
 
   return (
     <>
@@ -103,7 +102,7 @@ export default function BoardView() {
             <div key={colKey} className="board-col">
               <div className="board-col-hd" style={{ borderTop: `3px solid ${STATUS_ACCENT[colKey]}` }}>
                 <span>
-                  {store.settings.statusLabels?.[colKey] || colKey}
+                  {statusLabels?.[colKey] || colKey}
                   <span className="board-col-cnt">{colItems.length}</span>
                 </span>
               </div>
@@ -133,7 +132,7 @@ export default function BoardView() {
                     colors={colors}
                     extraClass={[
                       boardSel.includes(item.key) ? 'board-selected' : '',
-                      store.isDragging && boardSel.includes(item.key) ? 'dragging' : '',
+                      isDragging && boardSel.includes(item.key) ? 'dragging' : '',
                     ].filter(Boolean).join(' ')}
                     onClick={event => handleCardClick(event, item.key)}
                     onDoubleClick={() => openMdModal(item.key)}
@@ -154,7 +153,7 @@ export default function BoardView() {
       </div>
       <BoardActionBar 
         boardSel={boardSel} 
-        onMove={Object.assign((st) => moveItems(new Set(boardSel), st), { labels: store.settings.statusLabels })}
+        onMove={Object.assign((st) => moveItems(new Set(boardSel), st), { labels: statusLabels })}
         onClear={clearSelection}
       />
     </>

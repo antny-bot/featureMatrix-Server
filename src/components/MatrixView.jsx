@@ -68,18 +68,14 @@ function getMatrixData(items) {
 }
 
 export default function MatrixView() {
-  const store = useAppStore();
-  const items = store.items;
-  const editLocks = store.editLocks;
-  const previews = store.previews;
-  const settings = store.settings;
-  const display = store.display;
-  const filters = store.filters;
-  const searchQ = store.searchQ;
-  const cellFold = store.settings.cellFold;
-  const selectedKeys = store.mxSelectionKeys;
-  const isDragging = store.isDragging;
-  const dragKey = store.dragKey;
+  const items        = useAppStore(s => s.items);
+  const editLocks    = useAppStore(s => s.editLocks);
+  const settings     = useAppStore(s => s.settings);
+  const display      = useAppStore(s => s.display);
+  const filters      = useAppStore(s => s.filters);
+  const searchQ      = useAppStore(s => s.searchQ);
+  const selectedKeys = useAppStore(s => s.mxSelectionKeys);
+  const isDragging   = useAppStore(s => s.isDragging);
 
   const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useMatrixActions();
   const { lockItem, unlockItem } = useDBSync();
@@ -109,40 +105,42 @@ export default function MatrixView() {
 
   // 드래그 핸들러
   const onDragStart = useCallback((e, key) => {
-    store.setIsDragging(true);
-    store.setMxSelectionKeys(selectedKeys.includes(key) ? selectedKeys : [key]);
-    
+    const { setIsDragging, setMxSelectionKeys, mxSelectionKeys, notify } = useAppStore.getState();
+    setIsDragging(true);
+    const keysToMove = mxSelectionKeys.includes(key) ? mxSelectionKeys : [key];
+    setMxSelectionKeys(keysToMove);
+
     // 타 사용자 락 확인
-    const keysToMove = selectedKeys.includes(key) ? selectedKeys : [key];
     const lockedOther = keysToMove.filter(k => editLocks[k] && editLocks[k].user !== (settings.userName || '익명'));
     if (lockedOther.length) {
-      store.notify(`${editLocks[lockedOther[0]].user}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
-      store.setIsDragging(false);
+      notify(`${editLocks[lockedOther[0]].user}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
+      setIsDragging(false);
       e.preventDefault();
       return;
     }
-    
+
     lockKeys(keysToMove);
     e.dataTransfer.effectAllowed = 'move';
-  }, [store, selectedKeys, editLocks, settings.userName, lockKeys]);
+  }, [editLocks, settings, lockKeys]);
 
   const onDragEnd = useCallback(() => {
-    const keys = store.mxSelectionKeys;
-    unlockKeys(keys);
-    store.setIsDragging(false);
+    const { mxSelectionKeys, setIsDragging } = useAppStore.getState();
+    unlockKeys(mxSelectionKeys);
+    setIsDragging(false);
     setDropCellKey(null);
-  }, [store, unlockKeys]);
+  }, [unlockKeys]);
 
   const onDrop = useCallback((e, target) => {
     e.preventDefault();
     setDropCellKey(null);
-    if (!store.isDragging) return;
-    moveItems(store.mxSelectionKeys, target);
-  }, [store, moveItems]);
+    const { isDragging: dragging, mxSelectionKeys } = useAppStore.getState();
+    if (!dragging) return;
+    moveItems(mxSelectionKeys, target);
+  }, [moveItems]);
 
   const handleCanvasClick = useCallback(() => {
-    if (store.mxSelectionKeys.length > 0) clearSelection();
-  }, [store.mxSelectionKeys.length, clearSelection]);
+    if (useAppStore.getState().mxSelectionKeys.length > 0) clearSelection();
+  }, [clearSelection]);
 
   if (!filteredItems.length) {
     return <EmptyState />;

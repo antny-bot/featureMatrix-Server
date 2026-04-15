@@ -63,27 +63,27 @@ function NavButton({ id, title, label, icon, active = false, onClick, className 
 }
 
 export default function NavigationSide() {
-  const store = useAppStore();
+  const view    = useAppStore(s => s.view);
+  const setView = useAppStore(s => s.setView);
   const { openModal } = useModals();
-  const view = store.view;
 
   return (
     <nav className="nav-side" id="navSide">
       <NavButton
         title="대시보드" label="대시보드" icon={<DashboardIcon />}
-        active={view === 'dashboard'} onClick={() => store.setView('dashboard')}
+        active={view === 'dashboard'} onClick={() => setView('dashboard')}
       />
       <NavButton
         title="매트릭스" label="매트릭스" icon={<MatrixIcon />}
-        active={view === 'matrix'} onClick={() => store.setView('matrix')}
+        active={view === 'matrix'} onClick={() => setView('matrix')}
       />
       <NavButton
         title="보드" label="보드" icon={<BoardIcon />}
-        active={view === 'board'} onClick={() => store.setView('board')}
+        active={view === 'board'} onClick={() => setView('board')}
       />
       <NavButton
         title="리스트" label="리스트" icon={<ListIcon />}
-        active={view === 'list'} onClick={() => store.setView('list')}
+        active={view === 'list'} onClick={() => setView('list')}
       />
       <div className="nav-spacer" />
       <NavButton

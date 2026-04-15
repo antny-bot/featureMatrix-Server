@@ -33,19 +33,20 @@ function moveItem(list, fromIndex, toIndex) {
 }
 
 export default function DashboardSectionOrder() {
-  const store = useAppStore();
-  const sections = normalizeSections(store.settings.dbSections);
-  const visibility = store.settings.dbSectionVisibility || {};
+  const settings    = useAppStore(s => s.settings);
+  const sections    = normalizeSections(settings.dbSections);
+  const visibility  = settings.dbSectionVisibility || {};
   const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
 
   const [dragIndex, setDragIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
   const persistSettings = async (patch) => {
-    const nextSettings = { ...store.settings, ...patch };
-    store.pushUndo();
-    store.setSettings(nextSettings);
-    if (store.settings.storageMode === 'server') {
+    const { pushUndo, setSettings, settings: s } = useAppStore.getState();
+    const nextSettings = { ...s, ...patch };
+    pushUndo();
+    setSettings(nextSettings);
+    if (s.storageMode === 'server') {
       const ok = await saveToServer();
       if (ok) broadcastSharedData();
     } else {

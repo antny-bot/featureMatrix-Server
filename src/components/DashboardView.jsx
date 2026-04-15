@@ -52,9 +52,16 @@ function CountUpNumber({ value, className = '', style }) {
 }
 
 export default function DashboardView() {
-  const store = useAppStore();
+  const items      = useAppStore(s => s.items);
+  const changeLog  = useAppStore(s => s.changeLog);
+  const settings   = useAppStore(s => s.settings);
+  const filters    = useAppStore(s => s.filters);
+  const searchQ    = useAppStore(s => s.searchQ);
+  const serverTs   = useAppStore(s => s.serverTs);
+  const setFilters = useAppStore(s => s.setFilters);
+  const setSearchQ = useAppStore(s => s.setSearchQ);
+  const setView    = useAppStore(s => s.setView);
   const { openEditModal } = useModals();
-  const { items, changeLog, settings, filters, searchQ } = store;
 
   const containerRef = useRef(null);
   const [hmView, setHmView] = useState('cat');
@@ -62,15 +69,15 @@ export default function DashboardView() {
   const [metricsStatus, setMetricsStatus] = useState('idle');
 
   const resetFilters = useCallback(() => {
-    store.setFilters({
+    setFilters({
       priorities: [],
       statuses: [],
       showDeleted: false,
       importantOnly: false,
       owners: [],
     });
-    store.setSearchQ('');
-  }, [store]);
+    setSearchQ('');
+  }, [setFilters, setSearchQ]);
 
   const data = useMemo(() => {
     const filterOn = isFilterActive(filters, searchQ);
@@ -155,7 +162,7 @@ export default function DashboardView() {
     return () => {
       cancelled = true;
     };
-  }, [store.serverTs, settings.storageMode, settings.serverUrl]);
+  }, [serverTs, settings.storageMode, settings.serverUrl]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -215,7 +222,7 @@ export default function DashboardView() {
               <div className="db-panel-title">최근 변경</div>
               <div className="db-panel-sub">추가·수정·삭제 기준</div>
             </div>
-            <Timeline recent={data.recent} openEditModal={openEditModal} switchView={store.setView} />
+            <Timeline recent={data.recent} openEditModal={openEditModal} switchView={setView} />
           </div>
         </div>
       </div>

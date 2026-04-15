@@ -18,9 +18,8 @@ function moveItem(list, fromIndex, toIndex) {
 }
 
 export default function SettingsColumnsPanel() {
-  const store = useAppStore();
-  const settings = store.settings;
-  const items = store.items;
+  const settings = useAppStore(s => s.settings);
+  const items    = useAppStore(s => s.items);
   const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
 
   const [drag, setDrag] = useState(null);
@@ -45,19 +44,21 @@ export default function SettingsColumnsPanel() {
   }, [settings.storageMode, saveLocal, saveToServer, broadcastSharedData]);
 
   const toggleColumn = (index, visible) => {
-    store.pushUndo();
-    const nextCols = settings.listColumns.map((column, columnIndex) => (
+    const { pushUndo, setSettings, settings: s } = useAppStore.getState();
+    pushUndo();
+    const nextCols = s.listColumns.map((column, columnIndex) => (
       columnIndex === index ? { ...column, visible } : column
     ));
-    store.setSettings({ ...settings, listColumns: nextCols });
+    setSettings({ ...s, listColumns: nextCols });
     handleSave();
   };
 
   const dropColumn = toIndex => {
     if (!drag || drag.type !== 'column') return;
-    store.pushUndo();
-    const nextCols = moveItem(settings.listColumns, drag.index, toIndex);
-    store.setSettings({ ...settings, listColumns: nextCols });
+    const { pushUndo, setSettings, settings: s } = useAppStore.getState();
+    pushUndo();
+    const nextCols = moveItem(s.listColumns, drag.index, toIndex);
+    setSettings({ ...s, listColumns: nextCols });
     handleSave();
     setDrag(null);
     setDragOver(null);
@@ -65,17 +66,19 @@ export default function SettingsColumnsPanel() {
 
   const resetColumns = () => {
     if (!confirm('리스트 컬럼을 초기화하시겠습니까?')) return;
-    store.pushUndo();
-    store.setSettings({ ...settings, listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)) });
+    const { pushUndo, setSettings, notify, settings: s } = useAppStore.getState();
+    pushUndo();
+    setSettings({ ...s, listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)) });
     handleSave();
-    store.notify('리스트 컬럼을 기본값으로 복원했습니다.', 'success');
+    notify('리스트 컬럼을 기본값으로 복원했습니다.', 'success');
   };
 
   const dropAxis = (field, orderKey, values, toIndex) => {
     if (!drag || drag.type !== 'axis' || drag.field !== field) return;
-    store.pushUndo();
+    const { pushUndo, setSettings, settings: s } = useAppStore.getState();
+    pushUndo();
     const nextOrder = moveItem(values, drag.index, toIndex);
-    store.setSettings({ ...settings, [orderKey]: nextOrder });
+    setSettings({ ...s, [orderKey]: nextOrder });
     handleSave();
     setDrag(null);
     setDragOver(null);
@@ -83,10 +86,11 @@ export default function SettingsColumnsPanel() {
 
   const resetAxis = () => {
     if (!confirm('축 순서를 초기화하시겠습니까?')) return;
-    store.pushUndo();
-    store.setSettings({ ...settings, groupOrder: [], catOrder: [] });
+    const { pushUndo, setSettings, notify, settings: s } = useAppStore.getState();
+    pushUndo();
+    setSettings({ ...s, groupOrder: [], catOrder: [] });
     handleSave();
-    store.notify('축 순서를 자동 정렬로 초기화했습니다.', 'success');
+    notify('축 순서를 자동 정렬로 초기화했습니다.', 'success');
   };
 
   const dragClass = (type, key, index) => [
