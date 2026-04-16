@@ -3,20 +3,22 @@ import { STATUS_ACCENT, STATUS_OPTS } from '../app/constants.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
 import { apiFetch } from '../utils/api.js';
-import { 
-  getFiltered, isFilterActive, fmtDate, 
-  getOwnerColor, getPK, normOwner 
+import {
+  getFiltered, isFilterActive, fmtDate,
+  getOwnerColor, getPK, normOwner
 } from '../utils/itemUtils.js';
+import type { Item, ChangeLogEntry, DashboardData, OwnerCounts, AppSettings } from '../types/index.js';
 
-const SECTION_DEFAULTS = ['stats', 'insight', 'heatmap', 'metrics'];
+// #48C: insight 섹션을 groupProgress + ownersPanel 로 분리
+const SECTION_DEFAULTS = ['stats', 'groupProgress', 'ownersPanel', 'heatmap', 'metrics'];
 const SECTION_KEYS = new Set(SECTION_DEFAULTS);
 const LEGEND_OPACITY = [0.06, 0.30, 0.55, 0.80, 1.00];
 
-function isSectionVisible(visibility, section) {
+function isSectionVisible(visibility: Record<string, boolean> | undefined, section: string): boolean {
   return visibility?.[section] !== false;
 }
 
-function useCountUp(value, duration = 1000) {
+function useCountUp(value: number, duration = 1000): number {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ function useCountUp(value, duration = 1000) {
     }
 
     const startedAt = performance.now();
-    const tick = (now) => {
+    const tick = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / duration);
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplayValue(Math.round(startValue + diff * eased));
@@ -42,13 +44,30 @@ function useCountUp(value, duration = 1000) {
   return displayValue;
 }
 
-function CountUpNumber({ value, className = '', style }) {
+interface CountUpNumberProps {
+  value: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+function CountUpNumber({ value, className = '', style }: CountUpNumberProps) {
   const displayValue = useCountUp(value);
   return (
     <div className={className} style={style}>
       {displayValue.toLocaleString()}
     </div>
   );
+}
+
+interface DailyMetric {
+  date: string;
+  changedItems?: number;
+  activeItems?: number;
+  totalItems?: number;
+  deletedItems?: number;
+  doneRatio?: number;
+  doneItems?: number;
+  statusCounts?: Record<string, number>;
 }
 
 export default function DashboardView() {
@@ -58,15 +77,28 @@ export default function DashboardView() {
   const filters    = useAppStore(s => s.filters);
   const searchQ    = useAppStore(s => s.searchQ);
   const serverTs   = useAppStore(s => s.serverTs);
+  const view       = useAppStore(s => s.view);
   const setFilters = useAppStore(s => s.setFilters);
   const setSearchQ = useAppStore(s => s.setSearchQ);
   const setView    = useAppStore(s => s.setView);
   const { openEditModal } = useModals();
 
-  const containerRef = useRef(null);
-  const [hmView, setHmView] = useState('cat');
-  const [dailyMetrics, setDailyMetrics] = useState([]);
-  const [metricsStatus, setMetricsStatus] = useState('idle');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hmView, setHmView] = useState<'cat' | 'status'>('cat');
+  const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
+  const [metricsStatus, setMetricsStatus] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
+
+  // #48A: 대시보드 진입 시 최초 1회만 필터 패널 자동 숨김
+  const autoHiddenRef = useRef(false);
+  useEffect(() => {
+    if (view === 'dashboard' && !autoHiddenRef.current) {
+      autoHiddenRef.current = true;
+      const { settings: s, setSettings } = useAppStore.getState();
+      if (s.panelVisible) {
+        setSettings({ ...s, panelVisible: false });
+      }
+    }
+  }, [view]);
 
   const resetFilters = useCallback(() => {
     setFilters({
@@ -79,36 +111,38 @@ export default function DashboardView() {
     setSearchQ('');
   }, [setFilters, setSearchQ]);
 
-  const data = useMemo(() => {
+  const data = useMemo((): DashboardData => {
     const filterOn = isFilterActive(filters, searchQ);
     const all = filterOn ? getFiltered(items, filters, searchQ) : items.filter(it => it.isDelete !== 'Y');
     const total = all.length;
-    const statusCount = Object.fromEntries(STATUS_OPTS.map(status => [status, 0]));
-    const ownerMap = {};
+    const statusCount: Record<string, number> = Object.fromEntries(STATUS_OPTS.map((status: string) => [status, 0]));
+    const ownerMap: Record<string, OwnerCounts> = {};
     let imp = 0;
     let done = 0;
 
-    all.forEach(item => {
+    all.forEach((item: Item) => {
       if (item.isImportant === 'Y') imp += 1;
       if (item.status === 'done') done += 1;
-      if (statusCount[item.status] !== undefined) statusCount[item.status] += 1;
+      if (statusCount[item.status || ''] !== undefined) statusCount[item.status || ''] += 1;
 
       const owner = normOwner(item.owner);
       if (!ownerMap[owner]) {
         ownerMap[owner] = { total: 0, high: 0, mid: 0, low: 0, status: {} };
       }
       ownerMap[owner].total += 1;
-      ownerMap[owner][getPK(item.priority)] += 1;
+      ownerMap[owner][getPK(item.priority || '')] += 1;
       if (item.status) ownerMap[owner].status[item.status] = (ownerMap[owner].status[item.status] || 0) + 1;
     });
 
-    const allGroups = [...new Set(all.map(item => item.group).filter(Boolean))];
-    const allCats = [...new Set(all.map(item => item.category).filter(Boolean))];
-    const orderedGroups = settings.groupOrder.filter(group => allGroups.includes(group));
-    const groups = [...orderedGroups, ...allGroups.filter(group => !orderedGroups.includes(group))];
-    const orderedCats = settings.catOrder.filter(cat => allCats.includes(cat));
-    const cats = [...orderedCats, ...allCats.filter(cat => !orderedCats.includes(cat))];
-    const configuredSections = (settings.dbSections || SECTION_DEFAULTS).filter(section => SECTION_KEYS.has(section));
+    // #47A: 알파벳(한글) 순으로 정렬
+    const groups = [...new Set(all.map((item: Item) => item.group).filter(Boolean) as string[])].sort((a, b) =>
+      a.localeCompare(b, 'ko')
+    );
+    const cats = [...new Set(all.map((item: Item) => item.category).filter(Boolean) as string[])].sort((a, b) =>
+      a.localeCompare(b, 'ko')
+    );
+
+    const configuredSections = (settings.dbSections || SECTION_DEFAULTS).filter((section: string) => SECTION_KEYS.has(section));
     const sections = [
       ...configuredSections,
       ...SECTION_DEFAULTS.filter(section => !configuredSections.includes(section)),
@@ -120,7 +154,7 @@ export default function DashboardView() {
         if (b[1].high !== a[1].high) return b[1].high - a[1].high;
         return (b[1].status.done || 0) - (a[1].status.done || 0);
       })
-      .slice(0, 10);
+      .slice(0, 10) as [string, OwnerCounts][];
 
     return {
       all,
@@ -143,13 +177,11 @@ export default function DashboardView() {
     if (settings.storageMode !== 'server') {
       setDailyMetrics([]);
       setMetricsStatus('loaded');
-      return () => {
-        cancelled = true;
-      };
+      return () => { cancelled = true; };
     }
     setMetricsStatus('loading');
     apiFetch('/api/metrics?days=30')
-      .then(json => {
+      .then((json: { metrics?: DailyMetric[] }) => {
         if (cancelled) return;
         setDailyMetrics(Array.isArray(json.metrics) ? json.metrics : []);
         setMetricsStatus('loaded');
@@ -159,26 +191,15 @@ export default function DashboardView() {
         setDailyMetrics([]);
         setMetricsStatus('error');
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [serverTs, settings.storageMode, settings.serverUrl]);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // ResizeObserver 제거 — CSS grid align-items:stretch 로 대체 (#4 패널 수정)
 
-    const bodyLeft = container.querySelector('.db-body-left');
-    const bodyRight = container.querySelector('.db-body-right');
-    if (!bodyLeft || !bodyRight) return;
-
-    const ro = new ResizeObserver(() => {
-      bodyRight.style.maxHeight = `${bodyLeft.offsetHeight}px`;
-    });
-    ro.observe(bodyLeft);
-
-    return () => ro.disconnect();
-  }, []);
+  // 'recent' 섹션 표시 여부 (db-body-right 우측 컬럼 제어)
+  const showRecentPanel = isSectionVisible(settings.dbSectionVisibility, 'recent');
+  // 좌측 섹션 목록에서 'recent' 는 제외 (우측 패널로 별도 표시)
+  const leftSections = data.sections.filter(s => s !== 'recent');
 
   return (
     <div className="db-wrap" ref={containerRef}>
@@ -200,9 +221,9 @@ export default function DashboardView() {
         </div>
       </div>
 
-      <div className="db-body">
+      <div className={`db-body${showRecentPanel ? '' : ' db-body--no-right'}`}>
         <div className="db-body-left">
-          {data.sections.map(section => (
+          {leftSections.map(section => (
             <Section
               key={section}
               section={section}
@@ -216,29 +237,43 @@ export default function DashboardView() {
           ))}
         </div>
 
-        <div className="db-body-right">
-          <div className="db-panel db-timeline-panel">
-            <div className="db-panel-hd">
-              <div className="db-panel-title">최근 변경</div>
-              <div className="db-panel-sub">추가·수정·삭제 기준</div>
+        {showRecentPanel && (
+          <div className="db-body-right">
+            <div className="db-panel db-timeline-panel">
+              <div className="db-panel-hd">
+                <div className="db-panel-title">최근 변경</div>
+                <div className="db-panel-sub">추가·수정·삭제 기준</div>
+              </div>
+              <Timeline recent={data.recent} openEditModal={openEditModal} switchView={setView} />
             </div>
-            <Timeline recent={data.recent} openEditModal={openEditModal} switchView={setView} />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 }
 
-function Section({ section, data, hmView, setHmView, settings, metrics, metricsStatus }) {
-  if (section === 'stats') return <StatsSection data={data} settings={settings} />;
-  if (section === 'insight') return <InsightSection data={data} settings={settings} />;
-  if (section === 'heatmap') return <HeatmapSection data={data} hmView={hmView} setHmView={setHmView} settings={settings} />;
-  if (section === 'metrics') return <MetricsTrendPanel metrics={metrics} status={metricsStatus} settings={settings} />;
+interface SectionProps {
+  section: string;
+  data: DashboardData;
+  hmView: 'cat' | 'status';
+  setHmView: (v: 'cat' | 'status') => void;
+  settings: AppSettings;
+  metrics: DailyMetric[];
+  metricsStatus: string;
+}
+
+function Section({ section, data, hmView, setHmView, settings, metrics, metricsStatus }: SectionProps) {
+  if (section === 'stats')        return <StatsSection data={data} settings={settings} />;
+  // #48C: groupProgress / ownersPanel 로 분리
+  if (section === 'groupProgress') return <GroupProgressSection data={data} settings={settings} />;
+  if (section === 'ownersPanel')   return <OwnersPanelSection data={data} settings={settings} />;
+  if (section === 'heatmap')       return <HeatmapSection data={data} hmView={hmView} setHmView={setHmView} settings={settings} />;
+  if (section === 'metrics')       return <MetricsTrendPanel metrics={metrics} status={metricsStatus} settings={settings} />;
   return null;
 }
 
-function StatsSection({ data, settings }) {
+function StatsSection({ data, settings }: { data: DashboardData; settings: AppSettings }) {
   return (
     <div className="db-cards">
       <div className="db-card db-card--theme">
@@ -246,10 +281,14 @@ function StatsSection({ data, settings }) {
         <CountUpNumber className="db-card-value" value={data.total} />
         <div className="db-card-sub">중요 <strong>{data.imp}</strong>개 포함</div>
       </div>
-      {STATUS_OPTS.map(status => (
+      {(STATUS_OPTS as string[]).map(status => (
         <div className="db-card db-card--mini" key={status}>
           <div className="db-card-label">{settings.statusLabels?.[status] || status}</div>
-          <CountUpNumber className="db-card-value db-card-value--mini" style={{ color: STATUS_ACCENT[status] }} value={data.statusCount[status]} />
+          <CountUpNumber
+            className="db-card-value db-card-value--mini"
+            style={{ color: (STATUS_ACCENT as Record<string, string>)[status] }}
+            value={data.statusCount[status]}
+          />
           <div className="db-card-sub">{data.total > 0 ? Math.round(data.statusCount[status] / data.total * 100) : 0}%</div>
         </div>
       ))}
@@ -257,27 +296,37 @@ function StatsSection({ data, settings }) {
   );
 }
 
-function InsightSection({ data, settings }) {
+// #48C: GroupProgressSection — 그룹별 진척도 독립 섹션
+function GroupProgressSection({ data, settings }: { data: DashboardData; settings: AppSettings }) {
   return (
-    <>
-      <div className="db-panel">
-        <div className="db-panel-hd">
-          <div className="db-panel-title">그룹별 진척도</div>
-          <div className="db-panel-sub">대기 · 시작가능 · 진행중 · 검토중 · 완료 비율</div>
-        </div>
-        <GroupProgress data={data} settings={settings} />
+    <div className="db-panel">
+      <div className="db-panel-hd">
+        <div className="db-panel-title">그룹별 진척도</div>
+        <div className="db-panel-sub">대기 · 시작가능 · 진행중 · 검토중 · 완료 비율</div>
       </div>
-      <div className="db-panel">
-        <div className="db-panel-hd">
-          <div className="db-panel-title">담당별 기능 현황</div>
-        </div>
-        <OwnersPanel owners={data.owners} settings={settings} />
-      </div>
-    </>
+      <GroupProgress data={data} settings={settings} />
+    </div>
   );
 }
 
-function HeatmapSection({ data, hmView, setHmView, settings }) {
+// #48C: OwnersPanelSection — 담당별 기능 현황 독립 섹션
+function OwnersPanelSection({ data, settings }: { data: DashboardData; settings: AppSettings }) {
+  return (
+    <div className="db-panel">
+      <div className="db-panel-hd">
+        <div className="db-panel-title">담당별 기능 현황</div>
+      </div>
+      <OwnersPanel owners={data.owners} settings={settings} />
+    </div>
+  );
+}
+
+function HeatmapSection({ data, hmView, setHmView, settings }: {
+  data: DashboardData;
+  hmView: 'cat' | 'status';
+  setHmView: (v: 'cat' | 'status') => void;
+  settings: AppSettings;
+}) {
   return (
     <div className="db-panel db-heatmap-panel">
       <div className="db-panel-hd" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -295,15 +344,19 @@ function HeatmapSection({ data, hmView, setHmView, settings }) {
   );
 }
 
-function MetricsTrendPanel({ metrics, status, settings }) {
+function MetricsTrendPanel({ metrics, status, settings }: {
+  metrics: DailyMetric[];
+  status: string;
+  settings: AppSettings;
+}) {
   const rows = (metrics || []).slice(-14);
   const latest = rows[rows.length - 1] || null;
   const previous = rows[rows.length - 2] || null;
-  const maxChanged = Math.max(1, ...rows.map(metric => metric.changedItems || 0));
-  const maxTotal = Math.max(1, ...rows.map(metric => metric.activeItems || metric.totalItems || 0));
-  const points = rows.map((metric, index) => {
+  const maxChanged = Math.max(1, ...rows.map(m => m.changedItems || 0));
+  const maxTotal = Math.max(1, ...rows.map(m => m.activeItems || m.totalItems || 0));
+  const points = rows.map((m, index) => {
     const x = rows.length === 1 ? 100 : (index / (rows.length - 1)) * 200;
-    const ratio = Math.max(0, Math.min(100, Number(metric.doneRatio) || 0));
+    const ratio = Math.max(0, Math.min(100, Number(m.doneRatio) || 0));
     const y = 70 - (ratio / 100) * 60;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
@@ -326,20 +379,20 @@ function MetricsTrendPanel({ metrics, status, settings }) {
           <div className="db-metric-summary">
             <div>
               <span className="db-metric-label">최근 변경</span>
-              <strong>{latest.changedItems || 0}</strong>
+              <strong>{latest!.changedItems || 0}</strong>
               <span className={deltaChanged > 0 ? 'up' : deltaChanged < 0 ? 'down' : ''}>
                 {deltaChanged === 0 ? '전일 동일' : `${deltaChanged > 0 ? '+' : ''}${deltaChanged}`}
               </span>
             </div>
             <div>
               <span className="db-metric-label">활성 기능</span>
-              <strong>{latest.activeItems ?? latest.totalItems ?? 0}</strong>
-              <span>삭제 {latest.deletedItems || 0}</span>
+              <strong>{latest!.activeItems ?? latest!.totalItems ?? 0}</strong>
+              <span>삭제 {latest!.deletedItems || 0}</span>
             </div>
             <div>
               <span className="db-metric-label">완료율</span>
-              <strong>{latest.doneRatio || 0}%</strong>
-              <span>{latest.doneItems || 0}개 완료</span>
+              <strong>{latest!.doneRatio || 0}%</strong>
+              <span>{latest!.doneItems || 0}개 완료</span>
             </div>
           </div>
 
@@ -348,22 +401,22 @@ function MetricsTrendPanel({ metrics, status, settings }) {
               <svg viewBox="0 0 200 78" role="img" aria-label="완료율 추이">
                 <line x1="0" y1="70" x2="200" y2="70" />
                 <polyline points={points} />
-                {rows.map((metric, index) => {
+                {rows.map((m, index) => {
                   const [x, y] = points.split(' ')[index].split(',');
-                  return <circle key={metric.date} cx={x} cy={y} r="2.5" />;
+                  return <circle key={m.date} cx={x} cy={y} r="2.5" />;
                 })}
               </svg>
               <div className="db-trend-caption">완료율 추이</div>
             </div>
             <div className="db-change-bars">
-              {rows.map(metric => {
-                const height = Math.max(4, ((metric.changedItems || 0) / maxChanged) * 100);
-                const totalHeight = Math.max(8, (((metric.activeItems || metric.totalItems || 0) / maxTotal) * 100));
+              {rows.map(m => {
+                const height = Math.max(4, ((m.changedItems || 0) / maxChanged) * 100);
+                const totalHeight = Math.max(8, (((m.activeItems || m.totalItems || 0) / maxTotal) * 100));
                 return (
-                  <div className="db-change-bar" key={metric.date} title={`${metric.date}: 변경 ${metric.changedItems || 0}개`}>
+                  <div className="db-change-bar" key={m.date} title={`${m.date}: 변경 ${m.changedItems || 0}개`}>
                     <span className="db-change-total" style={{ height: `${totalHeight}%` }} />
                     <span className="db-change-fill" style={{ height: `${height}%` }} />
-                    <em>{formatMetricDay(metric.date)}</em>
+                    <em>{formatMetricDay(m.date)}</em>
                   </div>
                 );
               })}
@@ -371,9 +424,9 @@ function MetricsTrendPanel({ metrics, status, settings }) {
           </div>
 
           <div className="db-status-strip">
-            {STATUS_OPTS.map(statusKey => (
+            {(STATUS_OPTS as string[]).map(statusKey => (
               <span key={statusKey}>
-                <i style={{ background: STATUS_ACCENT[statusKey] }} />
+                <i style={{ background: (STATUS_ACCENT as Record<string, string>)[statusKey] }} />
                 {settings.statusLabels?.[statusKey] || statusKey} {latestStatusCounts[statusKey] || 0}
               </span>
             ))}
@@ -384,25 +437,25 @@ function MetricsTrendPanel({ metrics, status, settings }) {
   );
 }
 
-function formatMetricDay(dateText) {
+function formatMetricDay(dateText: string): string {
   if (!dateText) return '';
   const parts = dateText.split('-');
   return parts.length === 3 ? `${Number(parts[1])}/${Number(parts[2])}` : dateText;
 }
 
-function GroupProgress({ data, settings }) {
+function GroupProgress({ data, settings }: { data: DashboardData; settings: AppSettings }) {
   if (data.groups.length === 0) return <div className="db-empty">그룹 데이터가 없습니다</div>;
 
   return (
     <div className="db-gp-list">
       {data.groups.map(group => {
-        const items = data.all.filter(item => item.group === group);
-        const total = items.length;
+        const groupItems = data.all.filter((item: Item) => item.group === group);
+        const total = groupItems.length;
         if (total === 0) return null;
 
-        const counts = Object.fromEntries(STATUS_OPTS.map(status => [status, 0]));
-        items.forEach(item => {
-          if (counts[item.status] !== undefined) counts[item.status] += 1;
+        const counts: Record<string, number> = Object.fromEntries((STATUS_OPTS as string[]).map(s => [s, 0]));
+        groupItems.forEach((item: Item) => {
+          if (counts[item.status || ''] !== undefined) counts[item.status || ''] += 1;
         });
         const donePct = Math.round((counts.done || 0) / total * 100);
 
@@ -415,15 +468,15 @@ function GroupProgress({ data, settings }) {
             <div className="db-gp-bar-area">
               <div className="db-gp-bar-wrap">
                 <div className="db-gp-track">
-                  {STATUS_OPTS.filter(status => counts[status] > 0).map(status => (
+                  {(STATUS_OPTS as string[]).filter(s => counts[s] > 0).map(s => (
                     <div
                       className="db-gp-seg"
-                      key={status}
+                      key={s}
                       style={{
-                        width: `${(counts[status] / total * 100).toFixed(1)}%`,
-                        background: STATUS_ACCENT[status],
+                        width: `${(counts[s] / total * 100).toFixed(1)}%`,
+                        background: (STATUS_ACCENT as Record<string, string>)[s],
                       }}
-                      title={`${settings.statusLabels?.[status] || status} ${counts[status]}개 (${Math.round(counts[status] / total * 100)}%)`}
+                      title={`${settings.statusLabels?.[s] || s} ${counts[s]}개 (${Math.round(counts[s] / total * 100)}%)`}
                     />
                   ))}
                 </div>
@@ -440,7 +493,7 @@ function GroupProgress({ data, settings }) {
   );
 }
 
-function OwnersPanel({ owners, settings }) {
+function OwnersPanel({ owners, settings }: { owners: [string, OwnerCounts][]; settings: AppSettings }) {
   if (owners.length === 0) return <div className="db-empty">담당자 정보가 없습니다</div>;
 
   return (
@@ -456,7 +509,7 @@ function OwnersPanel({ owners, settings }) {
           counts.high > 0 && <span key="high" style={{ color: 'var(--p-high,var(--danger))', fontWeight: 700 }}>상 {counts.high}</span>,
           counts.mid > 0 && <span key="mid" style={{ color: 'var(--p-mid,var(--accent))' }}>중 {counts.mid}</span>,
           counts.low > 0 && <span key="low" style={{ color: 'var(--text-3)' }}>하 {counts.low}</span>,
-        ].filter(Boolean);
+        ].filter(Boolean) as React.ReactNode[];
 
         return (
           <div className="db-owner-row-unified" key={owner}>
@@ -467,13 +520,13 @@ function OwnersPanel({ owners, settings }) {
             </div>
             <div className="db-owner-bar-wrap" style={{ flex: 1 }}>
               <div className="db-bar-track">
-                {STATUS_OPTS.map(status => (
+                {(STATUS_OPTS as string[]).map(status => (
                   <div
                     className="db-owner-seg"
                     key={status}
                     style={{
                       width: `${total > 0 ? ((counts.status[status] || 0) / total * 100).toFixed(1) : 0}%`,
-                      background: STATUS_ACCENT[status],
+                      background: (STATUS_ACCENT as Record<string, string>)[status],
                     }}
                     title={`${settings.statusLabels?.[status] || status} ${counts.status[status] || 0}`}
                   />
@@ -482,7 +535,7 @@ function OwnersPanel({ owners, settings }) {
               <StatusLegend counts={counts.status} statusLabels={settings.statusLabels} />
             </div>
             <div style={{ minWidth: '100px', textAlign: 'right', fontSize: '.7rem', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px', flexShrink: 0 }}>
-              {prios.length ? prios.reduce((acc, node, idx) => {
+              {prios.length ? prios.reduce((acc: React.ReactNode[], node, idx) => {
                 if (idx > 0) acc.push(<span style={{ color: 'var(--border-2)', margin: '0 2px' }} key={`sep-${idx}`}>|</span>);
                 acc.push(node);
                 return acc;
@@ -495,13 +548,17 @@ function OwnersPanel({ owners, settings }) {
   );
 }
 
-function HeatmapGrid({ data, hmView, settings }) {
-  const rows = hmView === 'cat' ? data.cats : STATUS_OPTS;
+function HeatmapGrid({ data, hmView, settings }: {
+  data: DashboardData;
+  hmView: 'cat' | 'status';
+  settings: AppSettings;
+}) {
+  const rows = hmView === 'cat' ? data.cats : (STATUS_OPTS as string[]);
   if (data.groups.length === 0 || rows.length === 0) return <div className="db-empty">데이터가 없습니다</div>;
 
-  const heatmap = {};
+  const heatmap: Record<string, number> = {};
   let max = 0;
-  data.all.forEach(item => {
+  data.all.forEach((item: Item) => {
     const rowKey = hmView === 'cat' ? item.category : item.status;
     if (!item.group || !rowKey) return;
     const key = `${item.group}||${rowKey}`;
@@ -516,7 +573,11 @@ function HeatmapGrid({ data, hmView, settings }) {
         {data.groups.map(group => <div className="db-hm-col-hd" title={group} key={group}>{group}</div>)}
         {rows.map(row => (
           <div style={{ display: 'contents' }} key={row}>
-            <div className="db-hm-row-hd" title={row} style={hmView === 'status' ? { color: STATUS_ACCENT[row] || 'var(--text-3)', fontWeight: 700 } : undefined}>
+            <div
+              className="db-hm-row-hd"
+              title={row}
+              style={hmView === 'status' ? { color: (STATUS_ACCENT as Record<string, string>)[row] || 'var(--text-3)', fontWeight: 700 } : undefined}
+            >
               {hmView === 'status' ? (settings.statusLabels?.[row] || row) : row}
             </div>
             {data.groups.map(group => {
@@ -525,7 +586,7 @@ function HeatmapGrid({ data, hmView, settings }) {
               return (
                 <div
                   className={`db-hm-cell${hmView === 'status' ? ` db-hm-cell--status-${row}` : ''}`}
-                  style={{ '--op': opacity.toFixed(2) }}
+                  style={{ '--op': opacity.toFixed(2) } as React.CSSProperties}
                   title={`${group} × ${hmView === 'status' ? (settings.statusLabels?.[row] || row) : row}: ${count}개`}
                   key={`${group}:${row}`}
                 >
@@ -540,7 +601,7 @@ function HeatmapGrid({ data, hmView, settings }) {
         <span className="db-hm-legend-lbl">밀도:</span>
         <div className="db-hm-legend-bar">
           {LEGEND_OPACITY.map(opacity => (
-            <div className="db-hm-legend-seg" style={{ '--op': opacity }} key={opacity} />
+            <div className="db-hm-legend-seg" style={{ '--op': opacity } as React.CSSProperties} key={opacity} />
           ))}
         </div>
         <span className="db-hm-legend-lbl">높음</span>
@@ -549,21 +610,25 @@ function HeatmapGrid({ data, hmView, settings }) {
   );
 }
 
-function Timeline({ recent, openEditModal, switchView }) {
+function Timeline({ recent, openEditModal, switchView }: {
+  recent: ChangeLogEntry[];
+  openEditModal: (key: string) => void;
+  switchView: (v: string) => void;
+}) {
   if (recent.length === 0) return <div className="db-empty">변경 기록이 없습니다</div>;
 
   return (
     <>
       <div className="db-timeline">
         {recent.map((entry, index) => {
-          const actionColor = {
-            추가: 'var(--success)', 수정: 'var(--accent)', 삭제처리: 'var(--warning)', 
+          const actionColor = ({
+            추가: 'var(--success)', 수정: 'var(--accent)', 삭제처리: 'var(--warning)',
             삭제복원: 'var(--text-3)', 완전삭제: 'var(--danger)', 상태변경: 'var(--accent)',
-          }[entry.action] || 'var(--text-3)';
+          } as Record<string, string>)[entry.action] || 'var(--text-3)';
           const isDeleted = entry.action === '완전삭제' || entry.action === '삭제처리';
 
           return (
-          <div className="db-tl-item" style={{ '--stagger': index }} key={`${entry.ts}:${entry.key}:${index}`}>
+            <div className="db-tl-item" style={{ '--stagger': index } as React.CSSProperties} key={`${entry.ts}:${entry.key}:${index}`}>
               <div className="db-tl-line-wrap">
                 <div className="db-tl-dot" style={{ background: actionColor }} />
                 {index < recent.length - 1 && <div className="db-tl-line" />}
@@ -574,7 +639,7 @@ function Timeline({ recent, openEditModal, switchView }) {
                   className={`db-tl-name${isDeleted ? ' db-tl-name--del' : ''}`}
                   onClick={isDeleted ? undefined : () => openEditModal(entry.key)}
                 >
-                  {entry.name || entry.key}
+                  {(entry as ChangeLogEntry & { name?: string }).name || entry.key}
                 </div>
                 <div className="db-tl-meta">
                   <span className="db-tl-action" style={{ color: actionColor }}>{entry.action}</span>
@@ -591,12 +656,15 @@ function Timeline({ recent, openEditModal, switchView }) {
   );
 }
 
-function StatusLegend({ counts, statusLabels }) {
+function StatusLegend({ counts, statusLabels }: {
+  counts: Record<string, number>;
+  statusLabels?: Record<string, string>;
+}) {
   return (
     <div className="db-gp-legend">
-      {STATUS_OPTS.filter(status => counts[status] > 0).map(status => (
+      {(STATUS_OPTS as string[]).filter(status => counts[status] > 0).map(status => (
         <span className="db-gp-leg-item" key={status}>
-          <span className="db-gp-leg-dot" style={{ background: STATUS_ACCENT[status] }} />
+          <span className="db-gp-leg-dot" style={{ background: (STATUS_ACCENT as Record<string, string>)[status] }} />
           {statusLabels?.[status] || status} {counts[status]}
         </span>
       ))}

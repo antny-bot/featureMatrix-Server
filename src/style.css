@@ -316,13 +316,13 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .crow{display:flex;align-items:center;justify-content:space-between;padding:5px 0}
 .crow-lbl{font-size:.8rem;color:var(--text-2)}
 .theme-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px}
-.theme-card{cursor:pointer;border:2px solid var(--border);border-radius:9px;padding:7px 5px;text-align:center;transition:background .15s,border-color .15s}
+.theme-card{cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:9px;padding:7px 5px;text-align:center;transition:background .15s,border-color .15s}
 .theme-card:hover{background:var(--surface-2)}.theme-card.on{border-color:var(--accent);background:var(--accent-l)}
 .theme-swatches{display:flex;gap:2px;height:22px;border-radius:5px;overflow:hidden;margin-bottom:4px}
 .theme-swatch{flex:1}.theme-name{font-size:.62rem;font-weight:600;color:var(--text-2)}
 /* #4 - 카드스타일 compact */
 .preset-grid{display:flex;flex-wrap:wrap;gap:4px}
-.preset-btn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 5px;border-radius:5px;border:2px solid transparent;transition:background .14s,border-color .14s}
+.preset-btn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 5px;border-radius:5px;border:2px solid transparent;background:var(--surface);transition:background .14s,border-color .14s}
 .preset-btn:hover{background:var(--surface-2)}.preset-btn.on{border-color:var(--accent);background:var(--accent-l)}
 .preset-prev{width:28px;height:14px;border-radius:3px}
 .preset-lbl{font-size:.55rem;font-weight:500;color:var(--text-3)}
@@ -464,10 +464,11 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 @media(max-width:960px){.db-insight{grid-template-columns:1fr}}
 .db-insight-left{display:flex;flex-direction:column;gap:16px}
 /* 통합 2열 본문 레이아웃 */
-.db-body{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+.db-body{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:stretch}
+.db-body--no-right{grid-template-columns:1fr}
 @media(max-width:960px){.db-body{grid-template-columns:1fr}}
 .db-body-left{display:flex;flex-direction:column;gap:14px}
-.db-body-right{display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.db-body-right{display:flex;flex-direction:column;gap:14px;overflow-y:auto}
 /* 3열 카드 (좌측 열 안) */
 .db-cards-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:700px){.db-cards-3{grid-template-columns:1fr}}
@@ -507,7 +508,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .db-hm-col-hd{font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);text-align:center;padding:0 2px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .db-hm-row-hd{font-size:.62rem;font-weight:600;color:var(--text-2);width:80px;text-align:right;padding-right:10px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .db-hm-cell{aspect-ratio:1;min-width:28px;min-height:28px;border-radius:5px;background:var(--db-theme-c,var(--accent));opacity:var(--op,0.06);cursor:default;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--text);transition:opacity .2s,transform .15s;animation:heatCellIn .24s ease-out both}
-.db-hm-cell:hover{transform:scale(1.1);z-index:2}
+.db-hm-cell:hover{opacity:1;transform:scale(1.1);z-index:2}
 .db-hm-legend{display:flex;align-items:center;gap:8px;margin-top:14px}
 .db-hm-legend-lbl{font-size:.6rem;color:var(--text-3);letter-spacing:.04em}
 .db-hm-legend-bar{display:flex;gap:3px}

@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
+import type { KeyboardActions } from '../types/index.js';
 
-export function useKeyboardShortcuts(actions) {
+export function useKeyboardShortcuts(actions: KeyboardActions): void {
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const tag     = document.activeElement?.tagName || '';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag     = (document.activeElement as HTMLElement)?.tagName || '';
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
 
       if (e.key === 'Escape') {
@@ -29,13 +30,13 @@ export function useKeyboardShortcuts(actions) {
 
       const { setView } = useAppStore.getState();
       switch (e.key.toLowerCase()) {
-        case 'n': actions.openAddModal?.();               break;
-        case 'f': actions.togglePanel?.();                break;
-        case 'd': setView('dashboard');                   break;
-        case 'm': setView('matrix');                      break;
-        case 'b': setView('board');                       break;
-        case 'l': setView('list');                        break;
-        case 'z': actions.doUndo?.();                     break;
+        case 'n': actions.openAddModal?.();              break;
+        case 'f': actions.togglePanel?.();               break;
+        case 'd': setView('dashboard');                  break;
+        case 'm': setView('matrix');                     break;
+        case 'b': setView('board');                      break;
+        case 'l': setView('list');                       break;
+        case 'z': actions.doUndo?.();                    break;
         case '?': actions.openModal?.('shortcutsModal'); break;
         default:  break;
       }
@@ -43,5 +44,5 @@ export function useKeyboardShortcuts(actions) {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [actions]); // store 구독 제거 — setView는 getState()로 즉시 접근
+  }, [actions]);
 }

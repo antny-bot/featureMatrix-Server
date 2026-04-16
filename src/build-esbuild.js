@@ -39,6 +39,21 @@ function getBuildMeta() {
   return { version, gitHash, buildId };
 }
 
+/* ── TypeScript resolve plugin: .js/.jsx 임포트를 .ts/.tsx로 fallback ── */
+const tsJsResolvePlugin = {
+  name: 'ts-js-resolve',
+  setup(build) {
+    build.onResolve({ filter: /\.(js|jsx)$/ }, args => {
+      if (!args.resolveDir) return undefined;
+      const base = path.resolve(args.resolveDir, args.path).replace(/\.(js|jsx)$/, '');
+      for (const ext of ['.tsx', '.ts']) {
+        if (fs.existsSync(base + ext)) return { path: base + ext };
+      }
+      return undefined;
+    });
+  },
+};
+
 async function build() {
   let esbuild;
   try {
@@ -80,7 +95,7 @@ async function build() {
       // Zustand devtools 프로덕션 비활성화
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
     },
-    plugins: [],
+    plugins: [tsJsResolvePlugin],
   });
 
   if (bundleResult.errors.length) {

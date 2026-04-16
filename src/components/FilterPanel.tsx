@@ -3,10 +3,11 @@ import { STATUS_CHIP_COLORS, STATUS_OPTS } from '../app/constants.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from '../hooks/useDBSync.js';
 import { getColors } from '../app/theme.js';
-import { 
-  getFiltered, getUniqSorted, isFilterActive, 
-  getOwnerColor, normOwner 
+import {
+  getFiltered, getUniqSorted, isFilterActive,
+  getOwnerColor, normOwner
 } from '../utils/itemUtils.js';
+import type { Filters, DisplaySettings } from '../types/index.js';
 
 const PRIORITY_CHIPS = [
   { val: '상', pk: 'high' },
@@ -30,7 +31,7 @@ function UndoIcon() {
   );
 }
 
-function FilterSection({ title, children }) {
+function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <>
@@ -43,7 +44,12 @@ function FilterSection({ title, children }) {
   );
 }
 
-function Toggle({ id, label, checked = false, onChange }) {
+function Toggle({ id, label, checked = false, onChange }: {
+  id?: string;
+  label: string;
+  checked?: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <label className="tgl">
       <input id={id} type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
@@ -52,12 +58,12 @@ function Toggle({ id, label, checked = false, onChange }) {
   );
 }
 
-function PriorityChips({ onPersist }) {
+function PriorityChips({ onPersist }: { onPersist: () => void }) {
   const filters    = useAppStore(s => s.filters);
-  const colors     = getColors();
+  const colors     = getColors() as Record<string, string>;
   const priorities = filters.priorities;
 
-  const togglePrio = (val, checked) => {
+  const togglePrio = (val: string, checked: boolean) => {
     const { pushUndo, setFilters, filters: f } = useAppStore.getState();
     pushUndo();
     const next = checked ? [...f.priorities, val] : f.priorities.filter(v => v !== val);
@@ -87,7 +93,7 @@ function PriorityChips({ onPersist }) {
   );
 }
 
-function StatusChips({ onPersist }) {
+function StatusChips({ onPersist }: { onPersist: () => void }) {
   const items        = useAppStore(s => s.items);
   const filters      = useAppStore(s => s.filters);
   const searchQ      = useAppStore(s => s.searchQ);
@@ -95,7 +101,7 @@ function StatusChips({ onPersist }) {
   const statuses     = filters.statuses || [];
 
   const counts = useMemo(() => {
-    const c = {};
+    const c: Record<string, number> = {};
     const countItems = isFilterActive(filters, searchQ)
       ? getFiltered(items, filters, searchQ)
       : items.filter(it => it.isDelete !== 'Y');
@@ -103,7 +109,7 @@ function StatusChips({ onPersist }) {
     return c;
   }, [items, filters, searchQ]);
 
-  const toggleStatus = (status, checked) => {
+  const toggleStatus = (status: string, checked: boolean) => {
     const { pushUndo, setFilters, filters: f } = useAppStore.getState();
     pushUndo();
     const next = checked ? [...(f.statuses || []), status] : (f.statuses || []).filter(s => s !== status);
@@ -113,9 +119,9 @@ function StatusChips({ onPersist }) {
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
-      {STATUS_OPTS.map(status => {
+      {(STATUS_OPTS as string[]).map(status => {
         const checked = statuses.includes(status);
-        const { col, bg } = STATUS_CHIP_COLORS[status] || { col: '#888', bg: '#eee' };
+        const { col, bg } = (STATUS_CHIP_COLORS as Record<string, { col: string; bg: string }>)[status] || { col: '#888', bg: '#eee' };
         const style = checked
           ? { color: col, background: bg, borderColor: col, fontSize: '.7rem', cursor: 'pointer', marginBottom: '3px' }
           : { color: col, borderColor: 'var(--border-2)', fontSize: '.7rem', cursor: 'pointer', marginBottom: '3px' };
@@ -131,13 +137,13 @@ function StatusChips({ onPersist }) {
   );
 }
 
-function OwnerChips({ onPersist }) {
-  const filters    = useAppStore(s => s.filters);
-  const items      = useAppStore(s => s.items);
-  const owners     = filters.owners || [];
-  const allOwners  = getUniqSorted('owner', items);
+function OwnerChips({ onPersist }: { onPersist: () => void }) {
+  const filters   = useAppStore(s => s.filters);
+  const items     = useAppStore(s => s.items);
+  const owners    = filters.owners || [];
+  const allOwners = getUniqSorted('owner', items);
 
-  const toggleOwner = (owner, checked) => {
+  const toggleOwner = (owner: string, checked: boolean) => {
     const { pushUndo, setFilters, filters: f } = useAppStore.getState();
     pushUndo();
     const norm = normOwner(owner);
@@ -166,15 +172,14 @@ function OwnerChips({ onPersist }) {
 }
 
 export default function FilterPanel() {
-  const filters    = useAppStore(s => s.filters);
-  const display    = useAppStore(s => s.display);
-  const undoDepth  = useAppStore(s => s.undoDepth);
-  const view       = useAppStore(s => s.view);
-  const settings   = useAppStore(s => s.settings);
-  const setFilters = useAppStore(s => s.setFilters);
-  const setDisplay = useAppStore(s => s.setDisplay);
+  const filters     = useAppStore(s => s.filters);
+  const display     = useAppStore(s => s.display);
+  const undoDepth   = useAppStore(s => s.undoDepth);
+  const settings    = useAppStore(s => s.settings);
+  const setFilters  = useAppStore(s => s.setFilters);
+  const setDisplay  = useAppStore(s => s.setDisplay);
   const setSettings = useAppStore(s => s.setSettings);
-  const setSearchQ = useAppStore(s => s.setSearchQ);
+  const setSearchQ  = useAppStore(s => s.setSearchQ);
   const { saveLocal, saveToServer, broadcastSharedData, logActivity } = useDBSync();
 
   const handleUndo = async () => {
@@ -192,11 +197,14 @@ export default function FilterPanel() {
   };
 
   const panelVisible = settings.panelVisible;
-  const panelClassName = ['fpanel', !panelVisible ? 'collapsed' : '', view === 'dashboard' ? 'fp-hide' : ''].filter(Boolean).join(' ');
+  // #48B: fp-hide 제거 — dashboard 에서도 F키로 패널 토글 가능
+  const panelClassName = ['fpanel', !panelVisible ? 'collapsed' : ''].filter(Boolean).join(' ');
 
   const togglePanel = useCallback(() => {
-    setSettings({ ...settings, panelVisible: !panelVisible });
-  }, [settings, panelVisible, setSettings]);
+    const next = { ...settings, panelVisible: !panelVisible };
+    setSettings(next);
+    saveLocal();
+  }, [settings, panelVisible, setSettings, saveLocal]);
 
   const resetFiltersAction = useCallback(() => {
     const { pushUndo } = useAppStore.getState();
@@ -206,14 +214,14 @@ export default function FilterPanel() {
     saveLocal();
   }, [setFilters, setSearchQ, saveLocal]);
 
-  const updateFilter = (key, val) => {
+  const updateFilter = (key: keyof Filters, val: unknown) => {
     const { pushUndo } = useAppStore.getState();
     pushUndo();
     setFilters({ ...filters, [key]: val });
     saveLocal();
   };
 
-  const updateDisplay = (key, val) => {
+  const updateDisplay = (key: keyof DisplaySettings, val: unknown) => {
     setDisplay({ ...display, [key]: val });
     saveLocal();
   };
