@@ -1,30 +1,33 @@
 import { useState } from 'react';
 import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from '../hooks/useDBSync.js';
+import type { SectionKey } from '../types/index.js';
 
-const SECTION_LABELS = {
+const SECTION_LABELS: Record<SectionKey, string> = {
   stats: '스탯 카드',
-  insight: '그룹 진척도 · 담당별 현황',
+  groupProgress: '그룹별 진척도',
+  ownersPanel: '담당별 기능 현황',
   heatmap: '기능 분포 히트맵',
   metrics: '일별 리포트',
+  recent: '최근 변경',
 };
 
-const DEFAULT_SECTIONS = ['stats', 'insight', 'heatmap', 'metrics'];
+const DEFAULT_SECTIONS: SectionKey[] = ['stats', 'groupProgress', 'ownersPanel', 'heatmap', 'metrics', 'recent'];
 
-function normalizeSections(sections) {
-  const source = Array.isArray(sections) ? sections : [];
-  const known = source.filter(section => DEFAULT_SECTIONS.includes(section));
+function normalizeSections(sections: unknown): SectionKey[] {
+  const source = Array.isArray(sections) ? sections as string[] : [];
+  const known = source.filter(s => DEFAULT_SECTIONS.includes(s as SectionKey)) as SectionKey[];
   return [
     ...known,
-    ...DEFAULT_SECTIONS.filter(section => !known.includes(section)),
+    ...DEFAULT_SECTIONS.filter(s => !known.includes(s)),
   ];
 }
 
-function isSectionVisible(visibility, section) {
+function isSectionVisible(visibility: Record<string, boolean>, section: string): boolean {
   return visibility?.[section] !== false;
 }
 
-function moveItem(list, fromIndex, toIndex) {
+function moveItem<T>(list: T[], fromIndex: number, toIndex: number): T[] {
   if (fromIndex === toIndex || fromIndex == null) return list;
   const next = [...list];
   const [moved] = next.splice(fromIndex, 1);
@@ -33,15 +36,15 @@ function moveItem(list, fromIndex, toIndex) {
 }
 
 export default function DashboardSectionOrder() {
-  const settings    = useAppStore(s => s.settings);
-  const sections    = normalizeSections(settings.dbSections);
-  const visibility  = settings.dbSectionVisibility || {};
+  const settings   = useAppStore(s => s.settings);
+  const sections   = normalizeSections(settings.dbSections);
+  const visibility = (settings.dbSectionVisibility || {}) as Record<string, boolean>;
   const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
 
-  const [dragIndex, setDragIndex] = useState(null);
-  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  const persistSettings = async (patch) => {
+  const persistSettings = async (patch: Record<string, unknown>) => {
     const { pushUndo, setSettings, settings: s } = useAppStore.getState();
     const nextSettings = { ...s, ...patch };
     pushUndo();
@@ -54,13 +57,13 @@ export default function DashboardSectionOrder() {
     }
   };
 
-  const moveSection = (index, direction) => {
+  const moveSection = (index: number, direction: number) => {
     const nextIndex = index + direction;
     if (nextIndex < 0 || nextIndex >= sections.length) return;
     persistSettings({ dbSections: moveItem(sections, index, nextIndex) });
   };
 
-  const toggleSection = (section) => {
+  const toggleSection = (section: SectionKey) => {
     persistSettings({
       dbSections: sections,
       dbSectionVisibility: {
@@ -70,7 +73,7 @@ export default function DashboardSectionOrder() {
     });
   };
 
-  const dropSection = toIndex => {
+  const dropSection = (toIndex: number) => {
     if (dragIndex == null || dragIndex === toIndex) return;
     persistSettings({ dbSections: moveItem(sections, dragIndex, toIndex) });
     setDragIndex(null);
@@ -99,7 +102,7 @@ export default function DashboardSectionOrder() {
               transition: 'opacity .15s,box-shadow .15s',
               opacity: dragIndex === index ? 0.4 : visible ? undefined : 0.58,
               boxShadow: dragOverIndex === index && dragIndex !== index
-                ? (dragIndex < index ? '0 3px 0 var(--accent)' : '0 -3px 0 var(--accent)')
+                ? (dragIndex !== null && dragIndex < index ? '0 3px 0 var(--accent)' : '0 -3px 0 var(--accent)')
                 : undefined,
             }}
             onDragStart={event => {

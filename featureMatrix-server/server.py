@@ -132,8 +132,12 @@ def write_data(payload, server_ts, editor=''):
 def read_activity():
     if not ACTIVITY_FILE.exists():
         return []
-    with open(ACTIVITY_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open(ACTIVITY_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data if isinstance(data, list) else []
+    except (json.JSONDecodeError, OSError):
+        return []
 
 def write_activity(entries):
     with open(ACTIVITY_FILE, 'w', encoding='utf-8') as f:
