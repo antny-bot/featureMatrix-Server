@@ -4,10 +4,8 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { useDBSync } from '../hooks/useDBSync.js';
 import { useModals } from '../hooks/useModals.js';
 import { applyVars } from '../app/theme.js';
-import { DEMO, DEFAULT_LIST_COLS, STATUS_OPTS } from '../app/constants.js';
+import { DEFAULT_LIST_COLS } from '../app/constants.js';
 import { migrateSettings } from '../utils/itemUtils.js';
-import ActivityLogPanel from './ActivityLogPanel.jsx';
-import DashboardSectionOrder from './DashboardSectionOrder.jsx';
 import SettingsColumnsPanel from './SettingsColumnsPanel.jsx';
 import SettingsDesignPanel from './SettingsDesignPanel.jsx';
 import { expClip, expTSV, expXLS, expHTML, expMdZip } from '../app/io.js';
@@ -35,23 +33,15 @@ interface StepperProps {
   onPlus: () => void;
 }
 
-interface ServerSettingsPanelProps {
-  settings: ReturnType<typeof useAppStore.getState>['settings'];
-  onSave: (s: ReturnType<typeof useAppStore.getState>['settings']) => void;
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 export default function SettingsPanel() {
   const settings    = useAppStore(s => s.settings);
   const activeModal = useAppStore(s => s.activeModal);
-  const { isAdmin, isEditor } = useAuth();
-  const { saveLocal, saveToServer, broadcastSharedData } = useDBSync();
-  const { closeModal, openModal } = useModals();
+  const { isEditor } = useAuth();
+  const { saveLocal, saveToServer } = useDBSync();
+  const { closeModal } = useModals();
   const [activeTab, setActiveTab] = useState('display');
   const settingsFileRef = useRef<HTMLInputElement>(null);
-
-  const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
-  const buildId    = typeof __BUILD_ID__    !== 'undefined' ? __BUILD_ID__    : 'local';
 
   const persistSettings = useCallback(async (
     nextSettings = useAppStore.getState().settings,
@@ -60,28 +50,14 @@ export default function SettingsPanel() {
     else saveLocal();
   }, [saveLocal, saveToServer]);
 
-  const persistData = useCallback(async () => {
-    const s = useAppStore.getState();
-    if (s.settings.storageMode === 'server') {
-      const ok = await saveToServer();
-      if (ok) broadcastSharedData();
-    } else {
-      saveLocal();
-    }
-  }, [saveLocal, saveToServer, broadcastSharedData]);
-
-  const updateSetting = async (key: string, value: unknown, { apply = false } = {}) => {
-    const { setSettings, settings: s } = useAppStore.getState();
-    const nextSettings = { ...s, [key]: value };
-    setSettings(nextSettings);
-    if (apply) applyVars();
-    await persistSettings(nextSettings);
-  };
-
   const adjSetting = (key: string, delta: number, min: number, max: number, stepApply = true) => {
     const current = useAppStore.getState().settings;
     const nextValue = Math.max(min, Math.min(max, ((current as Record<string, number>)[key] ?? 0) + delta));
-    updateSetting(key, nextValue, { apply: stepApply });
+    const { setSettings, settings: s } = useAppStore.getState();
+    const nextSettings = { ...s, [key]: nextValue };
+    setSettings(nextSettings);
+    if (stepApply) applyVars();
+    persistSettings(nextSettings);
   };
 
   const exportSettings = () => {
@@ -134,16 +110,6 @@ export default function SettingsPanel() {
     persistSettings(nextSettings);
   };
 
-  const resetData = async () => {
-    if (!confirm('현재 데이터를 데모 데이터로 초기화할까요?')) return;
-    const { pushUndo, setItems, setChangeLog, notify } = useAppStore.getState();
-    pushUndo();
-    setItems(JSON.parse(JSON.stringify(DEMO)));
-    setChangeLog([]);
-    await persistData();
-    notify('데이터를 초기화했습니다.', 'success');
-  };
-
   if (activeModal !== 'settingsModal') return null;
 
   return (
@@ -154,12 +120,11 @@ export default function SettingsPanel() {
           <button className="mclose" onClick={() => closeModal('settingsModal')}>x</button>
         </div>
 
-        {/* ── 4-tab navigation ── */}
+        {/* ── tab navigation ── */}
         <div className="stab-row">
           <Tab id="display" active={activeTab} setActive={setActiveTab}>디스플레이</Tab>
           <Tab id="layout"  active={activeTab} setActive={setActiveTab}>레이아웃</Tab>
           {isEditor && <Tab id="data"   active={activeTab} setActive={setActiveTab}>데이터 관리</Tab>}
-          {isAdmin  && <Tab id="system" active={activeTab} setActive={setActiveTab}>시스템 설정</Tab>}
         </div>
 
         <div className="mbody" style={{ padding: '14px 20px' }}>
@@ -222,80 +187,6 @@ export default function SettingsPanel() {
             </div>
           )}
 
-          {/* ── 탭 4: 시스템 설정 (관리자) ── */}
-          {activeTab === 'system' && isAdmin && (
-            <div>
-              {/* 저장소 */}
-              <ServerSettingsPanel settings={settings} onSave={persistSettings} />
-
-              {/* 데이터 관리 */}
-              <div className="sec-ttl" style={{ marginTop: '16px' }}>데이터 관리</div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                <button className="btn btn-s btn-sm" onClick={() => openModal('importModal')}><TsvIcon /> 가져오기</button>
-                <button className="btn btn-d btn-sm" onClick={resetData}>데이터 초기화</button>
-              </div>
-
-              {/* 서버 공통 설정 */}
-              <div className="sec-ttl" style={{ marginTop: '16px' }}>서버 공통 설정</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px' }}>
-                <div className="srow-v">
-                  <div className="slbl">타이틀</div>
-                  <input className="inp" value={settings.title || ''} onChange={e => updateSetting('title', e.target.value)} />
-                </div>
-                <div className="srow-v">
-                  <div className="slbl">서브타이틀</div>
-                  <input className="inp" value={settings.subtitle || ''} onChange={e => updateSetting('subtitle', e.target.value)} />
-                </div>
-              </div>
-              <div className="srow-v" style={{ marginTop: '8px' }}>
-                <div className="slbl">대시보드 히어로 제목</div>
-                <input className="inp" value={settings.dbHeroName || ''} onChange={e => updateSetting('dbHeroName', e.target.value)} />
-              </div>
-
-              {/* 진행상태 명칭 */}
-              <div className="sec-ttl" style={{ marginTop: '16px' }}>진행상태 명칭 설정</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', marginBottom: '12px' }}>
-                {(STATUS_OPTS as string[]).map(key => (
-                  <div key={key} className="srow-v">
-                    <div className="slbl" style={{ opacity: 0.6 }}>{key} (내부키)</div>
-                    <input
-                      className="inp"
-                      value={(settings.statusLabels as Record<string, string>)?.[key] || key}
-                      onChange={e => {
-                        const nextLabels = { ...(settings.statusLabels || {}), [key]: e.target.value };
-                        updateSetting('statusLabels', nextLabels);
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* 대시보드 섹션 순서 */}
-              <div className="sec-ttl" style={{ marginTop: '16px' }}>대시보드 섹션 순서</div>
-              <div style={{ fontSize: '.77rem', color: 'var(--text-3)', marginBottom: '10px' }}>
-                드래그하거나 ▲▼ 버튼으로 순서를 변경하세요
-              </div>
-              <DashboardSectionOrder />
-
-              {/* 활동 로그 */}
-              <div style={{ marginTop: '16px' }}>
-                <ActivityLogPanel
-                  changeLogMax={settings.changeLogMax}
-                  onChangeLogMax={delta => adjSetting('changeLogMax', delta, 10, 500, false)}
-                />
-              </div>
-
-              {/* 빌드 정보 */}
-              <div className="sec-ttl" style={{ marginTop: '16px' }}>빌드 정보</div>
-              <div className="srow">
-                <div><div className="slbl">버전 정보</div></div>
-                <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text-2)' }}>
-                  {`v${appVersion} (build ${buildId})`}
-                </span>
-              </div>
-            </div>
-          )}
-
         </div>
 
         <div className="mfoot">
@@ -331,44 +222,3 @@ function Stepper({ label, sub, value, onMinus, onPlus }: StepperProps) {
   );
 }
 
-function ServerSettingsPanel({ settings, onSave }: ServerSettingsPanelProps) {
-  const setSettings = useAppStore(s => s.setSettings);
-  const [form, setForm] = useState({
-    storageMode: settings.storageMode || 'server',
-    userName:    settings.userName    || '',
-  });
-
-  const save = () => {
-    const nextSettings = { ...settings, ...form };
-    setSettings(nextSettings);
-    onSave(nextSettings);
-  };
-
-  const radioStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: '6px',
-    fontSize: '.84rem', color: 'var(--text)', fontWeight: 600,
-  };
-
-  return (
-    <div>
-      <div className="sec-ttl">데이터 소스</div>
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-        <label className="radio-lbl" style={radioStyle}>
-          <input type="radio" checked={form.storageMode === 'server'} onChange={() => setForm({ ...form, storageMode: 'server' })} />
-          서버 저장(공유)
-        </label>
-        <label className="radio-lbl" style={radioStyle}>
-          <input type="radio" checked={form.storageMode === 'local'}  onChange={() => setForm({ ...form, storageMode: 'local' })} />
-          브라우저 저장(개인)
-        </label>
-      </div>
-      <div className="srow-v">
-        <div className="slbl">표시 이름</div>
-        <input className="inp" value={form.userName} onChange={e => setForm({ ...form, userName: e.target.value })} placeholder="익명" />
-      </div>
-      <div style={{ marginTop: '14px' }}>
-        <button className="btn btn-p btn-sm" onClick={save}>저장 및 적용</button>
-      </div>
-    </div>
-  );
-}

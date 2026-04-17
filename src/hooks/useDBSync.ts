@@ -3,14 +3,14 @@ import { useAppStore, getStore } from '../store/useAppStore.js';
 import { apiFetch } from '../utils/api.js';
 import { migrateChangeLog, migrateItems, migrateSettings } from '../utils/itemUtils.js';
 import { ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY, SK, DATA_VERSION } from '../app/constants.js';
-import { initSocket, disconnectSocket, isSocketConnected, emitDataSave, emitLock, emitUnlock, releaseLocalLock } from '../app/socket.js';
+import { initSocket, disconnectSocket, isSocketConnected, emitDataSave, emitLock, emitUnlock, releaseLocalLock, emitRequestUnlock } from '../app/socket.js';
 import type { AppSettings } from '../types/index.js';
 
 interface UseDBSyncOptions {
   enableConnection?: boolean;
 }
 
-/* 서버에 저장할 settings 키 목록 (groupOrder/catOrder 제거) */
+/* 서버에 저장할 settings 키 목록 */
 const SHARED_SETTINGS: (keyof AppSettings)[] = [
   'title', 'subtitle', 'dbHeroName', 'dbSections', 'dbSectionVisibility',
   'priorityStyles', 'customColors', 'matrixWidth', 'cellFold',
@@ -114,10 +114,12 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
       }
       store.setServerTs(json.serverTs ?? 0);
       store.setServerStatus('ok');
+      store.setHasPendingLocalSave(false);
       saveLocal();
       return true;
     } catch {
       store.setServerStatus('error');
+      store.setHasPendingLocalSave(true);
       store.notify('서버에 연결할 수 없습니다. 로컬에 임시 저장됩니다.', 'warning');
       saveLocal();
       return false;
@@ -202,6 +204,20 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
     } catch { /* ignore */ }
   }, [store.settings.storageMode, store.settings.userName]);
 
+  /* 재연결 시 미전송 변경사항 자동 저장 */
+  const wsStatus = useAppStore(s => s.wsStatus);
+  const hasPendingLocalSave = useAppStore(s => s.hasPendingLocalSave);
+
+  useEffect(() => {
+    if (wsStatus !== 'connected') return;
+    if (!hasPendingLocalSave) return;
+    if (store.settings.storageMode !== 'server') return;
+
+    saveToServer().then(ok => {
+      if (ok) store.notify('연결이 복구되어 변경사항을 서버에 저장했습니다.', 'success');
+    });
+  }, [wsStatus, hasPendingLocalSave, store.settings.storageMode]);
+
   useEffect(() => {
     if (!enableConnection) return undefined;
 
@@ -209,6 +225,7 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
       initSocket();
     } else {
       disconnectSocket();
+      store.setHasPendingLocalSave(false);
     }
 
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
@@ -222,6 +239,12 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
     };
   }, [enableConnection, store.settings.storageMode, store.settings.pollInterval, pollServer]);
 
+  const requestUnlockItem = useCallback((key: string) => {
+    if (store.settings.storageMode !== 'server' || !key) return;
+    const user = store.settings.userName || '익명';
+    emitRequestUnlock(key, user);
+  }, [store.settings.storageMode, store.settings.userName]);
+
   return {
     saveToServer,
     loadFromServer,
@@ -229,6 +252,7 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
     pollServer,
     lockItem,
     unlockItem,
+    requestUnlockItem,
     logActivity,
     resolveConflictKeepMine: () => {
       store.setServerTs(0);

@@ -134,13 +134,8 @@ export function expHTML({ fluid = false } = {}) {
     arr.forEach(it => { const v=it[field]||'(미분류)'; if(!seen.has(v)){seen.add(v);r.push(v);} });
     return r.sort(sk);
   };
-  const applyOrder = (autoList, orderArr) => {
-    if (!orderArr || !orderArr.length) return autoList;
-    const set = new Set(autoList);
-    return [...orderArr.filter(v=>set.has(v)), ...autoList.filter(v=>!orderArr.includes(v))];
-  };
-  const groups = applyOrder(uniqSorted('group', store.items).filter(g=>!!gm[g]), ss.groupOrder);
-  const cats   = applyOrder(uniqSorted('category', store.items).filter(cat=>!!cm2[cat]), ss.catOrder);
+  const groups = uniqSorted('group', store.items).filter(g=>!!gm[g]);
+  const cats   = uniqSorted('category', store.items).filter(cat=>!!cm2[cat]);
   const gsubs={}, csubs={};
   for (const g in gm)    gsubs[g]   = Object.keys(gm[g]).sort(sk);
   for (const cat in cm2) csubs[cat] = Object.keys(cm2[cat]).sort(sk);

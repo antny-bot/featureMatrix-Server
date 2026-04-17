@@ -87,8 +87,6 @@ export function migrateSettings(settings: Partial<AppSettings> = {}): AppSetting
     priorityStyles: { high: 'left-thick', mid: 'left-thin', low: 'none' },
     customColors: { light: {}, dark: {} },
     listColumns: JSON.parse(JSON.stringify(DEFAULT_LIST_COLS)),
-    groupOrder: [],
-    catOrder: [],
     dbHeroName: '',
     changeLogMax: 50,
     boardFoldCount: 6,
@@ -374,18 +372,8 @@ export function buildStruct(items?: Item[], settings?: Partial<AppSettings>): St
   });
   const sk = (a: string, b: string) => { try { return a.localeCompare(b, 'ko'); } catch { return a < b ? -1 : 1; } };
 
-  const applyOrder = (autoList: string[], orderArr: string[]): string[] => {
-    if (!orderArr || !orderArr.length) return autoList;
-    const set = new Set(autoList);
-    const ordered = orderArr.filter(v => set.has(v));
-    const rest = autoList.filter(v => !ordered.includes(v));
-    return [...ordered, ...rest];
-  };
-
-  const autoGroups = getUniqSorted('group', targetItems).filter(g => !!gm[g]);
-  const autoCats   = getUniqSorted('category', targetItems).filter(c => !!cm[c]);
-  const groups = applyOrder(autoGroups, targetSettings.groupOrder || []);
-  const cats   = applyOrder(autoCats, targetSettings.catOrder || []);
+  const groups = getUniqSorted('group', targetItems).filter(g => !!gm[g]);
+  const cats   = getUniqSorted('category', targetItems).filter(c => !!cm[c]);
 
   const gsubs: Record<string, string[]> = {};
   const csubs: Record<string, string[]> = {};

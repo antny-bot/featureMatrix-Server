@@ -76,6 +76,7 @@ const initialState = {
   tooltipTimerId: null as ReturnType<typeof setTimeout> | null,
   activeModal: null as string | null,
   banner: { visible: false, message: '' },
+  hasPendingLocalSave: false,
   editModal: { visible: false, mode: 'add', key: null, item: null, activeTab: 'info', mdMode: null } as EditModal,
   loginModal: { visible: false, role: 'editor', error: '', callback: null } as LoginModal,
 };
@@ -121,6 +122,7 @@ export const useAppStore = create(
       setStatusMenu: (statusMenu: unknown) => set({ statusMenu }),
       setActiveModal: (activeModal: string | null) => set({ activeModal }),
       setBanner: (visible: boolean, message = '') => set({ banner: { visible, message } }),
+      setHasPendingLocalSave: (hasPendingLocalSave: boolean) => set({ hasPendingLocalSave }),
       openEditModal: (mode: 'add' | 'edit', key: string | null, item: Item | null, activeTab = 'info', mdMode: string | null = null) => set({
         editModal: { visible: true, mode, key, item, activeTab, mdMode },
         activeModal: 'editModal'
