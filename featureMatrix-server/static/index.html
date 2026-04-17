@@ -13397,10 +13397,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   // components/App.tsx
   var import_react33 = __toESM(require_react());
 
-  // components/Header.jsx
+  // components/Header.tsx
   var import_react7 = __toESM(require_react());
 
-  // contexts/AuthContext.jsx
+  // contexts/AuthContext.tsx
   var import_react2 = __toESM(require_react());
 
   // app/constants.js
@@ -17315,6 +17315,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     tooltipTimerId: null,
     activeModal: null,
     banner: { visible: false, message: "" },
+    hasPendingLocalSave: false,
     editModal: { visible: false, mode: "add", key: null, item: null, activeTab: "info", mdMode: null },
     loginModal: { visible: false, role: "editor", error: "", callback: null }
   };
@@ -17352,6 +17353,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         setStatusMenu: (statusMenu) => set({ statusMenu }),
         setActiveModal: (activeModal) => set({ activeModal }),
         setBanner: (visible, message = "") => set({ banner: { visible, message } }),
+        setHasPendingLocalSave: (hasPendingLocalSave) => set({ hasPendingLocalSave }),
         openEditModal: (mode, key, item, activeTab = "info", mdMode = null) => set({
           editModal: { visible: true, mode, key, item, activeTab, mdMode },
           activeModal: "editModal"
@@ -17697,9 +17699,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return payload;
   }
 
-  // contexts/AuthContext.jsx
+  // contexts/AuthContext.tsx
   var import_jsx_runtime = __toESM(require_jsx_runtime());
   var authRefresh = null;
+  var _tokenExpiresAt = 0;
   var notify = (message, type = false) => {
     useAppStore.getState().notify(message, type);
   };
@@ -17719,12 +17722,14 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     isAdmin: false,
     isEditor: false,
     isServerMode: true,
+    tokenExpiresAt: 0,
     refresh: () => {
     },
     logout: () => {
     },
     openLoginModal: () => {
-    }
+    },
+    getSessionTimeRemaining: () => 0
   });
   function isAdmin() {
     const { adminFlag } = readAuth();
@@ -17742,11 +17747,16 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     unregisterActiveUser();
     sessionStorage.removeItem(ADMIN_TOKEN_KEY);
     sessionStorage.removeItem(EDITOR_TOKEN_KEY);
+    _tokenExpiresAt = 0;
     updateAdminUI();
     registerActiveUser();
     if (notifyUser && hadAuth) {
       notify("\uC138\uC158\uC774 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.", "warning");
     }
+  }
+  function getSessionTimeRemaining() {
+    if (_tokenExpiresAt === 0) return 0;
+    return Math.max(0, _tokenExpiresAt - Date.now());
   }
   async function validateAuthSession({ notifyUser = false } = {}) {
     if (!hasStoredAuth()) return true;
@@ -17756,13 +17766,15 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         clearAuthSession(notifyUser);
         return false;
       }
+      _tokenExpiresAt = json.expiresAt ?? 0;
+      authRefresh?.();
       const adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY);
       if (adminToken && json.role !== "admin") {
         sessionStorage.removeItem(ADMIN_TOKEN_KEY);
         updateAdminUI();
       }
       return true;
-    } catch (e) {
+    } catch {
       return true;
     }
   }
@@ -17795,14 +17807,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       }
       if (trimmedName) {
         setStore({ settings: { ...store.settings, userName: trimmedName } });
+        try {
+          const raw = localStorage.getItem(SK);
+          const blob = raw ? JSON.parse(raw) : {};
+          blob.local = { ...blob.local || {}, userName: trimmedName };
+          localStorage.setItem(SK, JSON.stringify(blob));
+        } catch {
+        }
       }
+      _tokenExpiresAt = Date.now() + 24 * 60 * 60 * 1e3;
       store.closeLoginModal();
       updateAdminUI();
       registerActiveUser();
       notify(role === "admin" ? "\uAD00\uB9AC\uC790\uB85C \uB85C\uADF8\uC778\uB410\uC2B5\uB2C8\uB2E4." : "\uD3B8\uC9D1\uC790\uB85C \uB85C\uADF8\uC778\uB410\uC2B5\uB2C8\uB2E4.", "success");
       loginCallback?.();
     } catch (e) {
-      store.setLoginError(e.payload?.error || e.message || "\uC11C\uBC84\uC5D0 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+      const err = e;
+      store.setLoginError(err.payload?.error || err.message || "\uC11C\uBC84\uC5D0 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     }
   }
   function logout() {
@@ -17819,11 +17840,11 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function AuthProvider({ children }) {
     const [auth, setAuth] = (0, import_react2.useState)(() => {
       const { adminFlag, editorFlag, serverMode } = readAuth();
-      return { isAdmin: adminFlag, isEditor: editorFlag, isServerMode: serverMode };
+      return { isAdmin: adminFlag, isEditor: editorFlag, isServerMode: serverMode, tokenExpiresAt: _tokenExpiresAt };
     });
     const refresh = (0, import_react2.useCallback)(() => {
       const { adminFlag, editorFlag, serverMode } = readAuth();
-      setAuth({ isAdmin: adminFlag, isEditor: editorFlag, isServerMode: serverMode });
+      setAuth({ isAdmin: adminFlag, isEditor: editorFlag, isServerMode: serverMode, tokenExpiresAt: _tokenExpiresAt });
     }, []);
     (0, import_react2.useEffect)(() => {
       authRefresh = refresh;
@@ -17848,7 +17869,37 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       };
     }, [auth.isServerMode]);
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthContext.Provider, { value: { ...auth, refresh, logout, openLoginModal }, children });
+    (0, import_react2.useEffect)(() => {
+      if (!auth.isServerMode || !auth.isAdmin && !auth.isEditor) return;
+      if (auth.tokenExpiresAt <= 0) return;
+      const now = Date.now();
+      const msLeft = auth.tokenExpiresAt - now;
+      if (msLeft <= 0) return;
+      const WARN_MS = 5 * 60 * 1e3;
+      let warnId;
+      if (msLeft - WARN_MS > 0) {
+        warnId = setTimeout(() => {
+          notify("\uC138\uC158\uC774 5\uBD84 \uD6C4 \uB9CC\uB8CC\uB429\uB2C8\uB2E4. \uC800\uC7A5 \uD6C4 \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.", "warning");
+        }, msLeft - WARN_MS);
+      }
+      const expId = setTimeout(() => {
+        clearAuthSession(false);
+        notify("\uC138\uC158\uC774 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.", "warning");
+        openLoginModal();
+      }, msLeft);
+      return () => {
+        if (warnId) clearTimeout(warnId);
+        clearTimeout(expId);
+      };
+    }, [auth.tokenExpiresAt, auth.isAdmin, auth.isEditor, auth.isServerMode]);
+    const contextValue = {
+      ...auth,
+      refresh,
+      logout,
+      openLoginModal,
+      getSessionTimeRemaining
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthContext.Provider, { value: contextValue, children });
   }
   function useAuth() {
     return (0, import_react2.useContext)(AuthContext);
@@ -18441,10 +18492,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         }
         store.setServerTs(json.serverTs ?? 0);
         store.setServerStatus("ok");
+        store.setHasPendingLocalSave(false);
         saveLocal();
         return true;
       } catch {
         store.setServerStatus("error");
+        store.setHasPendingLocalSave(true);
         store.notify("\uC11C\uBC84\uC5D0 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uB85C\uCEEC\uC5D0 \uC784\uC2DC \uC800\uC7A5\uB429\uB2C8\uB2E4.", "warning");
         saveLocal();
         return false;
@@ -18521,12 +18574,23 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       } catch {
       }
     }, [store.settings.storageMode, store.settings.userName]);
+    const wsStatus = useAppStore((s) => s.wsStatus);
+    const hasPendingLocalSave = useAppStore((s) => s.hasPendingLocalSave);
+    (0, import_react4.useEffect)(() => {
+      if (wsStatus !== "connected") return;
+      if (!hasPendingLocalSave) return;
+      if (store.settings.storageMode !== "server") return;
+      saveToServer().then((ok) => {
+        if (ok) store.notify("\uC5F0\uACB0\uC774 \uBCF5\uAD6C\uB418\uC5B4 \uBCC0\uACBD\uC0AC\uD56D\uC744 \uC11C\uBC84\uC5D0 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4.", "success");
+      });
+    }, [wsStatus, hasPendingLocalSave, store.settings.storageMode]);
     (0, import_react4.useEffect)(() => {
       if (!enableConnection) return void 0;
       if (store.settings.storageMode === "server") {
         initSocket();
       } else {
         disconnectSocket();
+        store.setHasPendingLocalSave(false);
       }
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
       if (store.settings.storageMode === "server") {
@@ -18755,7 +18819,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     };
   }
 
-  // components/Header.jsx
+  // components/Header.tsx
   var import_jsx_runtime3 = __toESM(require_jsx_runtime());
   var ICON_SERVER = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", children: [
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("rect", { x: "2", y: "2", width: "20", height: "8", rx: "2" }),
@@ -18818,6 +18882,14 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const sum = Array.from(name).reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return tones[sum % tones.length];
   }
+  function formatSessionRemaining(ms) {
+    const totalMin = Math.floor(ms / 6e4);
+    if (totalMin < 1) return "1\uBD84 \uBBF8\uB9CC";
+    if (totalMin < 60) return `${totalMin}\uBD84`;
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return m > 0 ? `${h}\uC2DC\uAC04 ${m}\uBD84` : `${h}\uC2DC\uAC04`;
+  }
   function ActiveUserAvatars({ users }) {
     if (!users.length) return null;
     const visible = users.slice(0, 5);
@@ -18837,7 +18909,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] });
   }
   function Header() {
-    const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode, logout: logout2, openLoginModal: openLoginModal2 } = useAuth();
+    const { isAdmin: isAdmin2, isEditor: isEditor2, isServerMode, logout: logout2, openLoginModal: openLoginModal2, getSessionTimeRemaining: getSessionTimeRemaining2 } = useAuth();
     const { isDark, toggleTheme: toggleTheme2 } = useTheme();
     const { openModal } = useModals();
     const settings = useAppStore((s) => s.settings);
@@ -18860,12 +18932,17 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const showLogoutBtn = (isAdmin2 || isEditor2) && isServerMode;
     const logoutTitle = "Logout";
     const loginState = isAdmin2 ? { label: "Admin", icon: ICON_ADMIN, active: true } : isEditor2 ? { label: "Editor", icon: ICON_EDITOR, active: true } : { label: "Login", icon: ICON_LOGIN, active: false };
+    const sessionMs = isAdmin2 || isEditor2 ? getSessionTimeRemaining2() : 0;
+    const sessionLabel = sessionMs > 0 ? `\uC138\uC158 \uB9CC\uB8CC\uAE4C\uC9C0 ${formatSessionRemaining(sessionMs)} \uB0A8\uC74C` : "";
+    const sessionWarn = sessionMs > 0 && sessionMs <= 6e5;
+    const isOfflineMode = storageMode === "local";
+    const isServerDown = storageMode === "server" && serverStatus === "error" && wsStatus === "disconnected";
     const restDot = serverStatus === "ok" ? { bg: "#16a34a", title: "Server connected" } : serverStatus === "error" ? { bg: "#dc2626", title: "Server error" } : { bg: "#aaa", title: "Server status" };
-    const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP.idle;
+    const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP["idle"];
     const showWsDot = storageMode === "server" && wsStatus !== "idle";
-    const statusDot = showWsDot ? wsDot : restDot;
-    const showStatusDot = storageMode === "server";
-    const serverLabel = showWsDot ? wsStatus === "reconnecting" ? "\uC7AC\uC5F0\uACB0 \uC911" : wsStatus === "connected" ? "\uC2E4\uC2DC\uAC04" : "\uC5F0\uACB0\uB04A\uAE40" : storageMode === "server" ? "\uC11C\uBC84" : "\uB85C\uCEEC";
+    const statusDot = isOfflineMode ? { bg: "#64748b", title: "\uC624\uD504\uB77C\uC778 (\uB85C\uCEEC) \uBAA8\uB4DC" } : isServerDown ? { bg: "#dc2626", title: "\uC11C\uBC84 \uC5F0\uACB0 \uC624\uB958" } : showWsDot ? wsDot : restDot;
+    const serverLabel = isOfflineMode ? "\uC624\uD504\uB77C\uC778" : isServerDown ? "\uC11C\uBC84 \uC624\uB958" : showWsDot ? wsStatus === "reconnecting" ? "\uC7AC\uC5F0\uACB0 \uC911" : wsStatus === "connected" ? "\uC2E4\uC2DC\uAC04" : "\uC5F0\uACB0\uB04A\uAE40" : "\uC11C\uBC84";
+    const showStatusDot = storageMode === "server" || isOfflineMode;
     (0, import_react7.useEffect)(() => {
       if (searchFocusNonce > 0) searchRef.current?.focus();
     }, [searchFocusNonce]);
@@ -18898,19 +18975,36 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(ActiveUserAvatars, { users: activeUsers }),
         showLogoutBtn && activeUsers.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "hdr-user-sep", "aria-hidden": "true" }),
         showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(OwnUserBadge, { name: userName }),
-        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { type: "button", className: "btn btn-g btn-sm hdr-btn hdr-role", title: loginState.label, children: [
-          loginState.icon,
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: loginState.label })
-        ] }),
+        showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "button",
+          {
+            type: "button",
+            className: "btn btn-g btn-sm hdr-btn hdr-role",
+            title: sessionLabel || loginState.label,
+            style: sessionWarn ? { color: "#d97706" } : void 0,
+            children: [
+              loginState.icon,
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: loginState.label })
+            ]
+          }
+        ),
         showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn hdr-logout", onClick: () => logout2(), title: logoutTitle, children: [
           ICON_LOGOUT,
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "Logout" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "btn btn-g btn-sm hdr-btn", title: statusDot.title, children: [
-          showStatusDot && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { width: "7px", height: "7px", borderRadius: "50%", background: statusDot.bg, flexShrink: 0, display: "inline-block", transition: "background .3s" } }),
-          ICON_SERVER,
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: serverLabel })
-        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "button",
+          {
+            className: "btn btn-g btn-sm hdr-btn",
+            title: statusDot.title,
+            style: isServerDown ? { outline: "1px solid #dc2626", opacity: 0.85 } : void 0,
+            children: [
+              showStatusDot && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { width: "7px", height: "7px", borderRadius: "50%", background: statusDot.bg, flexShrink: 0, display: "inline-block", transition: "background .3s" } }),
+              ICON_SERVER,
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: serverLabel })
+            ]
+          }
+        ),
         isServerMode && !showLogoutBtn && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: `btn btn-g btn-sm hdr-btn hdr-login${loginState.active ? " hdr-login--on" : ""}`, onClick: () => openLoginModal2(), title: "Login", children: [
           loginState.icon,
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: loginState.label })
@@ -22622,7 +22716,7 @@ ${sample}
     ] });
   }
 
-  // components/ItemModal.jsx
+  // components/ItemModal.tsx
   var import_react29 = __toESM(require_react());
 
   // node_modules/katex/dist/katex.mjs
@@ -37067,7 +37161,7 @@ ${sample}
     }
   };
 
-  // components/ItemModal.jsx
+  // components/ItemModal.tsx
   var import_jsx_runtime25 = __toESM(require_jsx_runtime());
   var EMPTY_FORM = {
     key: "",
@@ -37119,7 +37213,7 @@ ${sample}
     }, []);
     const schedulePreview = (0, import_react29.useCallback)(() => {
       if (!isSocketConnected() || !editKey) return;
-      clearTimeout(previewTimerRef.current);
+      clearTimeout(previewTimerRef.current ?? void 0);
       previewTimerRef.current = setTimeout(() => {
         const key = editKey;
         const user = settings?.userName || "\uC775\uBA85";
@@ -37166,16 +37260,16 @@ ${sample}
       setMdPreview(parseMd(content));
       setMdMode(content.trim() ? "preview" : "edit");
     }, []);
-    (0, import_react29.useEffect)(() => {
+    (0, import_react29.useLayoutEffect)(() => {
       if (!previewRef.current) return;
       previewRef.current.querySelectorAll("[data-math]").forEach((el) => {
         try {
-          el.innerHTML = katex.renderToString(el.dataset.math, {
-            displayMode: !!el.dataset.disp,
+          el.innerHTML = katex.renderToString(el.dataset["math"] ?? "", {
+            displayMode: el.dataset["disp"] !== void 0,
             throwOnError: false
           });
-        } catch (e) {
-          el.textContent = el.dataset.math;
+        } catch {
+          el.textContent = el.dataset["math"] ?? "";
         }
       });
     }, [mdPreview]);
@@ -37242,7 +37336,7 @@ ${sample}
       });
     }, [applyMdEdit]);
     const onImpMd = (e) => {
-      const file = e.target.files[0];
+      const file = e.target.files?.[0];
       if (!file) return;
       const r = new FileReader();
       r.onload = (ev) => {
@@ -37282,7 +37376,7 @@ ${sample}
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uC6B0\uC120\uC21C\uC704" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("select", { className: "sel", id: "fPri", value: form.priority, onChange: (event) => updateField("priority", event.target.value), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("select", { className: "sel", id: "fPri", value: form.priority, onChange: (e) => updateField("priority", e.target.value), children: [
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: "\uC0C1", children: "\uC0C1" }),
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: "\uC911", children: "\uC911" }),
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: "\uD558", children: "\uD558" })
@@ -37293,64 +37387,64 @@ ${sample}
             "\uAE30\uB2A5\uBA85 ",
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { style: { color: "var(--danger)" }, children: "*" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fName", value: form.name, onChange: (event) => updateField("name", event.target.value), placeholder: "\uAE30\uB2A5\uBA85" })
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fName", value: form.name, onChange: (e) => updateField("name", e.target.value), placeholder: "\uAE30\uB2A5\uBA85" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field s2", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uC124\uBA85" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("textarea", { className: "txta", id: "fDesc", value: form.desc, onChange: (event) => updateField("desc", event.target.value), style: { minHeight: "105px", resize: "vertical" } })
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("textarea", { className: "txta", id: "fDesc", value: form.desc, onChange: (e) => updateField("desc", e.target.value), style: { minHeight: "105px", resize: "vertical" } })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field s2", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uBA54\uBAA8" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("textarea", { className: "txta", id: "fMemo", value: form.memo, onChange: (event) => updateField("memo", event.target.value), style: { minHeight: "105px", resize: "vertical" } })
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("textarea", { className: "txta", id: "fMemo", value: form.memo, onChange: (e) => updateField("memo", e.target.value), style: { minHeight: "105px", resize: "vertical" } })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field s2", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uACBD\uB85C" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fPath", value: form.path, onChange: (event) => updateField("path", event.target.value), placeholder: "/path/to/feature" })
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fPath", value: form.path, onChange: (e) => updateField("path", e.target.value), placeholder: "/path/to/feature" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uADF8\uB8F9 (X\uCD95)" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fGroup", value: form.group, onChange: (event) => updateField("group", event.target.value), list: "dlGroup" }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fGroup", value: form.group, onChange: (e) => updateField("group", e.target.value), list: "dlGroup" }),
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("datalist", { id: "dlGroup", children: dataLists.group.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: value2 }, value2)) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uC11C\uBE0C\uADF8\uB8F9" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fSubGroup", value: form.subGroup, onChange: (event) => updateField("subGroup", event.target.value), list: "dlSubGroup" }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fSubGroup", value: form.subGroup, onChange: (e) => updateField("subGroup", e.target.value), list: "dlSubGroup" }),
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("datalist", { id: "dlSubGroup", children: dataLists.subGroup.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: value2 }, value2)) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uCE74\uD14C\uACE0\uB9AC (Y\uCD95)" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fCat", value: form.category, onChange: (event) => updateField("category", event.target.value), list: "dlCat" }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fCat", value: form.category, onChange: (e) => updateField("category", e.target.value), list: "dlCat" }),
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("datalist", { id: "dlCat", children: dataLists.category.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: value2 }, value2)) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uC11C\uBE0C\uCE74\uD14C\uACE0\uB9AC" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fSubCat", value: form.subCategory, onChange: (event) => updateField("subCategory", event.target.value), list: "dlSubCat" }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fSubCat", value: form.subCategory, onChange: (e) => updateField("subCategory", e.target.value), list: "dlSubCat" }),
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("datalist", { id: "dlSubCat", children: dataLists.subCategory.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: value2 }, value2)) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uB2F4\uB2F9" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fOwner", value: form.owner, onChange: (event) => updateField("owner", event.target.value), list: "dlOwner" }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fOwner", value: form.owner, onChange: (e) => updateField("owner", e.target.value), list: "dlOwner" }),
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("datalist", { id: "dlOwner", children: dataLists.owner.map((value2) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: value2 }, value2)) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uC9C4\uD589\uC0C1\uD0DC" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("select", { className: "sel", id: "fStatus", value: form.status, onChange: (event) => updateField("status", event.target.value), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("select", { className: "sel", id: "fStatus", value: form.status, onChange: (e) => updateField("status", e.target.value), children: [
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: "", children: "\u2014" }),
             STATUS_OPTS.map((s) => /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("option", { value: s, children: settings.statusLabels?.[s] || s }, s))
           ] })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "field", children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("label", { className: "lbl", children: "\uC5F0\uAD00 \uC2DC\uC2A4\uD15C" }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fRel", value: form.relSystem, onChange: (event) => updateField("relSystem", event.target.value) })
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { className: "inp", id: "fRel", value: form.relSystem, onChange: (e) => updateField("relSystem", e.target.value) })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { style: { display: "flex", gap: "18px", alignItems: "center", paddingTop: "2px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("label", { className: "tgl", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { type: "checkbox", id: "fIsImp", checked: form.isImportant === "Y", onChange: (event) => updateField("isImportant", event.target.checked ? "Y" : "N") }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { type: "checkbox", id: "fIsImp", checked: form.isImportant === "Y", onChange: (e) => updateField("isImportant", e.target.checked ? "Y" : "N") }),
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "tgl-track" }),
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "tgl-lbl", children: "\u2605 \uC911\uC694" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("label", { className: "tgl", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { type: "checkbox", id: "fIsDel", checked: form.isDelete === "Y", onChange: (event) => updateField("isDelete", event.target.checked ? "Y" : "N") }),
+            /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("input", { type: "checkbox", id: "fIsDel", checked: form.isDelete === "Y", onChange: (e) => updateField("isDelete", e.target.checked ? "Y" : "N") }),
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "tgl-track" }),
             /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "tgl-lbl", children: "\uC0AD\uC81C \uCC98\uB9AC" })
           ] })
@@ -37405,7 +37499,7 @@ ${sample}
                 color: "var(--text)",
                 outline: "none"
               },
-              onChange: (event) => !isReadOnly && updateField("mdContent", event.target.value)
+              onChange: (e) => !isReadOnly && updateField("mdContent", e.target.value)
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(

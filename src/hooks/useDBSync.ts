@@ -114,10 +114,12 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
       }
       store.setServerTs(json.serverTs ?? 0);
       store.setServerStatus('ok');
+      store.setHasPendingLocalSave(false);
       saveLocal();
       return true;
     } catch {
       store.setServerStatus('error');
+      store.setHasPendingLocalSave(true);
       store.notify('서버에 연결할 수 없습니다. 로컬에 임시 저장됩니다.', 'warning');
       saveLocal();
       return false;
@@ -202,6 +204,20 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
     } catch { /* ignore */ }
   }, [store.settings.storageMode, store.settings.userName]);
 
+  /* 재연결 시 미전송 변경사항 자동 저장 */
+  const wsStatus = useAppStore(s => s.wsStatus);
+  const hasPendingLocalSave = useAppStore(s => s.hasPendingLocalSave);
+
+  useEffect(() => {
+    if (wsStatus !== 'connected') return;
+    if (!hasPendingLocalSave) return;
+    if (store.settings.storageMode !== 'server') return;
+
+    saveToServer().then(ok => {
+      if (ok) store.notify('연결이 복구되어 변경사항을 서버에 저장했습니다.', 'success');
+    });
+  }, [wsStatus, hasPendingLocalSave, store.settings.storageMode]);
+
   useEffect(() => {
     if (!enableConnection) return undefined;
 
@@ -209,6 +225,7 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
       initSocket();
     } else {
       disconnectSocket();
+      store.setHasPendingLocalSave(false);
     }
 
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);

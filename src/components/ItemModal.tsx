@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { STATUS_OPTS } from '../app/constants.js';
 import { getUniqSorted, parseMd } from '../utils/itemUtils.js';
 import { emitUnlock, emitPreview, isSocketConnected } from '../app/socket.js';
@@ -6,7 +6,38 @@ import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
 import katex from 'katex';
 
-const EMPTY_FORM = {
+interface ItemForm {
+  key: string;
+  priority: string;
+  name: string;
+  desc: string;
+  path: string;
+  group: string;
+  subGroup: string;
+  category: string;
+  subCategory: string;
+  owner: string;
+  status: string;
+  relSystem: string;
+  memo: string;
+  mdContent: string;
+  isImportant: 'Y' | 'N';
+  isDelete: 'Y' | 'N';
+}
+
+interface MdStats {
+  chars: string;
+  lines: string;
+  words: string;
+}
+
+interface EditorResult {
+  value: string;
+  selectionStart: number;
+  selectionEnd: number;
+}
+
+const EMPTY_FORM: ItemForm = {
   key: '',
   priority: '중',
   name: '',
@@ -33,26 +64,26 @@ export default function ItemModal() {
   const items        = useAppStore(s => s.items);
   const { closeEditModal, saveItem, hardDelete, expSingleMd } = useModals();
 
-  const [activeTab,      setActiveTab]      = useState('info');
-  const [mdMode,         setMdMode]         = useState('edit');
-  const [mdPreview,      setMdPreview]      = useState('');
-  const [mdStats,        setMdStats]        = useState({ chars: '0자', lines: '0줄', words: '0단어' });
-  const [title,          setTitle]          = useState('기능 추가');
-  const [showHardDel,    setShowHardDel]    = useState(false);
-  const [modalMode,      setModalMode]      = useState('add');
-  const [form,           setForm]           = useState(EMPTY_FORM);
-  
-  const previewRef      = useRef(null);
-  const mdFileRef       = useRef(null);
-  const textareaRef     = useRef(null);
-  const previewTimerRef = useRef(null);
-  const formRef         = useRef(EMPTY_FORM);
+  const [activeTab,      setActiveTab]      = useState<string>('info');
+  const [mdMode,         setMdMode]         = useState<string>('edit');
+  const [mdPreview,      setMdPreview]      = useState<string>('');
+  const [mdStats,        setMdStats]        = useState<MdStats>({ chars: '0자', lines: '0줄', words: '0단어' });
+  const [title,          setTitle]          = useState<string>('기능 추가');
+  const [showHardDel,    setShowHardDel]    = useState<boolean>(false);
+  const [modalMode,      setModalMode]      = useState<string>('add');
+  const [form,           setForm]           = useState<ItemForm>(EMPTY_FORM);
+
+  const previewRef      = useRef<HTMLDivElement>(null);
+  const mdFileRef       = useRef<HTMLInputElement>(null);
+  const textareaRef     = useRef<HTMLTextAreaElement>(null);
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formRef         = useRef<ItemForm>(EMPTY_FORM);
 
   useEffect(() => {
     formRef.current = form;
   }, [form]);
 
-  const updateMdStats = useCallback(value => {
+  const updateMdStats = useCallback((value: string) => {
     setMdStats({
       chars: `${value.length}자`,
       lines: `${value ? value.split('\n').length : 0}줄`,
@@ -62,7 +93,7 @@ export default function ItemModal() {
 
   const schedulePreview = useCallback(() => {
     if (!isSocketConnected() || !editKey) return;
-    clearTimeout(previewTimerRef.current);
+    clearTimeout(previewTimerRef.current ?? undefined);
     previewTimerRef.current = setTimeout(() => {
       const key  = editKey;
       const user = settings?.userName || '익명';
@@ -82,7 +113,7 @@ export default function ItemModal() {
     }, 300);
   }, [editKey, settings]);
 
-  const updateField = useCallback((field, value) => {
+  const updateField = useCallback((field: keyof ItemForm, value: string) => {
     setForm(current => {
       const next = { ...current, [field]: value };
       formRef.current = next;
@@ -95,7 +126,7 @@ export default function ItemModal() {
     schedulePreview();
   }, [schedulePreview, updateMdStats]);
 
-  const switchMdMode = useCallback((nextMode) => {
+  const switchMdMode = useCallback((nextMode: string) => {
     const content = formRef.current.mdContent || '';
     if (nextMode !== 'edit') {
       setMdPreview(parseMd(content));
@@ -113,15 +144,18 @@ export default function ItemModal() {
     setMdMode(content.trim() ? 'preview' : 'edit');
   }, []);
 
-  /* KaTeX 렌더링 — mdPreview 변경 후 DOM 반영 */
-  useEffect(() => {
+  /* KaTeX 렌더링 — paint 이전 실행으로 dangerouslySetInnerHTML 업데이트와 타이밍 충돌 방지 */
+  useLayoutEffect(() => {
     if (!previewRef.current) return;
-    previewRef.current.querySelectorAll('[data-math]').forEach(el => {
+    previewRef.current.querySelectorAll<HTMLElement>('[data-math]').forEach(el => {
       try {
-        el.innerHTML = katex.renderToString(el.dataset.math, {
-          displayMode: !!el.dataset.disp, throwOnError: false
+        el.innerHTML = katex.renderToString(el.dataset['math'] ?? '', {
+          displayMode: el.dataset['disp'] !== undefined,
+          throwOnError: false,
         });
-      } catch(e) { el.textContent = el.dataset.math; }
+      } catch {
+        el.textContent = el.dataset['math'] ?? '';
+      }
     });
   }, [mdPreview]);
 
@@ -130,7 +164,7 @@ export default function ItemModal() {
     const { visible, mode, key, item, activeTab, mdMode } = editModal;
     if (!visible) return;
 
-    const mergedForm = { ...EMPTY_FORM, ...(item || {}) };
+    const mergedForm: ItemForm = { ...EMPTY_FORM, ...(item || {}) } as ItemForm;
     setModalMode(mode);
     setTitle(mode === 'add' ? '기능 추가' : mode === 'detail' ? `기능 상세 - ${key}` : `기능 수정 - ${key}`);
     setShowHardDel(mode === 'edit');
@@ -142,7 +176,7 @@ export default function ItemModal() {
     updateMdStats(mergedForm.mdContent || '');
   }, [editModal]);
 
-  const applyMdEdit = useCallback((editor) => {
+  const applyMdEdit = useCallback((editor: (value: string, start: number, end: number) => EditorResult) => {
     const textarea = textareaRef.current;
     const current = formRef.current.mdContent || '';
     const selectionStart = textarea?.selectionStart ?? current.length;
@@ -156,7 +190,7 @@ export default function ItemModal() {
     });
   }, [updateField]);
 
-  const insertMd = useCallback((before, after = '') => {
+  const insertMd = useCallback((before: string, after = '') => {
     applyMdEdit((value, start, end) => {
       const selected = value.substring(start, end);
       const fallback = selected || '텍스트';
@@ -168,7 +202,7 @@ export default function ItemModal() {
     });
   }, [applyMdEdit]);
 
-  const insertMdLine = useCallback((prefix) => {
+  const insertMdLine = useCallback((prefix: string) => {
     applyMdEdit((value, start) => {
       const lineStart = value.lastIndexOf('\n', start - 1) + 1;
       return {
@@ -179,7 +213,7 @@ export default function ItemModal() {
     });
   }, [applyMdEdit]);
 
-  const insertMdBlock = useCallback((block) => {
+  const insertMdBlock = useCallback((block: string) => {
     applyMdEdit((value, start, end) => {
       const selected = value.substring(start, end);
       const content = selected || block;
@@ -194,11 +228,11 @@ export default function ItemModal() {
     });
   }, [applyMdEdit]);
 
-  const onImpMd = (e) => {
-    const file = e.target.files[0]; if (!file) return;
+  const onImpMd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
     const r = new FileReader();
     r.onload = ev => {
-      updateField('mdContent', ev.target.result);
+      updateField('mdContent', (ev.target as FileReader).result as string);
       storeNotify('MD 파일 불러왔습니다: ' + file.name, 'success');
       setMdMode('preview');
     };
@@ -216,8 +250,8 @@ export default function ItemModal() {
   const isReadOnly = modalMode === 'detail';
   const showEditor = mdMode === 'edit' || mdMode === 'split';
   const showPreview = mdMode === 'preview' || mdMode === 'split';
-  const taStyle  = { display: showEditor ? 'block' : 'none', flex: showEditor ? '1 1 0' : undefined, width: showEditor ? '100%' : undefined };
-  const pvStyle  = { display: showPreview ? 'block' : 'none', flex: showPreview ? '1 1 0' : undefined, width: showPreview ? '100%' : undefined };
+  const taStyle: React.CSSProperties = { display: showEditor ? 'block' : 'none', flex: showEditor ? '1 1 0' : undefined, width: showEditor ? '100%' : undefined };
+  const pvStyle: React.CSSProperties = { display: showPreview ? 'block' : 'none', flex: showPreview ? '1 1 0' : undefined, width: showPreview ? '100%' : undefined };
 
   if (!editModal.visible) return null;
 
@@ -245,65 +279,65 @@ export default function ItemModal() {
             </div>
             <div className="field">
               <label className="lbl">우선순위</label>
-              <select className="sel" id="fPri" value={form.priority} onChange={event => updateField('priority', event.target.value)}>
+              <select className="sel" id="fPri" value={form.priority} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateField('priority', e.target.value)}>
                 <option value="상">상</option><option value="중">중</option><option value="하">하</option>
               </select>
             </div>
             <div className="field s2">
               <label className="lbl">기능명 <span style={{ color: 'var(--danger)' }}>*</span></label>
-              <input className="inp" id="fName" value={form.name} onChange={event => updateField('name', event.target.value)} placeholder="기능명" />
+              <input className="inp" id="fName" value={form.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('name', e.target.value)} placeholder="기능명" />
             </div>
             <div className="field s2">
               <label className="lbl">설명</label>
-              <textarea className="txta" id="fDesc" value={form.desc} onChange={event => updateField('desc', event.target.value)} style={{ minHeight: '105px', resize: 'vertical' }} />
+              <textarea className="txta" id="fDesc" value={form.desc} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateField('desc', e.target.value)} style={{ minHeight: '105px', resize: 'vertical' }} />
             </div>
             <div className="field s2">
               <label className="lbl">메모</label>
-              <textarea className="txta" id="fMemo" value={form.memo} onChange={event => updateField('memo', event.target.value)} style={{ minHeight: '105px', resize: 'vertical' }} />
+              <textarea className="txta" id="fMemo" value={form.memo} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateField('memo', e.target.value)} style={{ minHeight: '105px', resize: 'vertical' }} />
             </div>
             <div className="field s2">
               <label className="lbl">경로</label>
-              <input className="inp" id="fPath" value={form.path} onChange={event => updateField('path', event.target.value)} placeholder="/path/to/feature" />
+              <input className="inp" id="fPath" value={form.path} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('path', e.target.value)} placeholder="/path/to/feature" />
             </div>
             <div className="field">
               <label className="lbl">그룹 (X축)</label>
-              <input className="inp" id="fGroup" value={form.group} onChange={event => updateField('group', event.target.value)} list="dlGroup" />
+              <input className="inp" id="fGroup" value={form.group} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('group', e.target.value)} list="dlGroup" />
               <datalist id="dlGroup">{dataLists.group.map(value => <option value={value} key={value} />)}</datalist>
             </div>
             <div className="field">
               <label className="lbl">서브그룹</label>
-              <input className="inp" id="fSubGroup" value={form.subGroup} onChange={event => updateField('subGroup', event.target.value)} list="dlSubGroup" />
+              <input className="inp" id="fSubGroup" value={form.subGroup} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('subGroup', e.target.value)} list="dlSubGroup" />
               <datalist id="dlSubGroup">{dataLists.subGroup.map(value => <option value={value} key={value} />)}</datalist>
             </div>
             <div className="field">
               <label className="lbl">카테고리 (Y축)</label>
-              <input className="inp" id="fCat" value={form.category} onChange={event => updateField('category', event.target.value)} list="dlCat" />
+              <input className="inp" id="fCat" value={form.category} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('category', e.target.value)} list="dlCat" />
               <datalist id="dlCat">{dataLists.category.map(value => <option value={value} key={value} />)}</datalist>
             </div>
             <div className="field">
               <label className="lbl">서브카테고리</label>
-              <input className="inp" id="fSubCat" value={form.subCategory} onChange={event => updateField('subCategory', event.target.value)} list="dlSubCat" />
+              <input className="inp" id="fSubCat" value={form.subCategory} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('subCategory', e.target.value)} list="dlSubCat" />
               <datalist id="dlSubCat">{dataLists.subCategory.map(value => <option value={value} key={value} />)}</datalist>
             </div>
             <div className="field">
               <label className="lbl">담당</label>
-              <input className="inp" id="fOwner" value={form.owner} onChange={event => updateField('owner', event.target.value)} list="dlOwner" />
+              <input className="inp" id="fOwner" value={form.owner} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('owner', e.target.value)} list="dlOwner" />
               <datalist id="dlOwner">{dataLists.owner.map(value => <option value={value} key={value} />)}</datalist>
             </div>
             <div className="field">
               <label className="lbl">진행상태</label>
-              <select className="sel" id="fStatus" value={form.status} onChange={event => updateField('status', event.target.value)}>
+              <select className="sel" id="fStatus" value={form.status} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateField('status', e.target.value)}>
                 <option value="">—</option>
-                {STATUS_OPTS.map(s => <option key={s} value={s}>{settings.statusLabels?.[s] || s}</option>)}
+                {(STATUS_OPTS as string[]).map(s => <option key={s} value={s}>{settings.statusLabels?.[s] || s}</option>)}
               </select>
             </div>
             <div className="field">
               <label className="lbl">연관 시스템</label>
-              <input className="inp" id="fRel" value={form.relSystem} onChange={event => updateField('relSystem', event.target.value)} />
+              <input className="inp" id="fRel" value={form.relSystem} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('relSystem', e.target.value)} />
             </div>
             <div style={{ display: 'flex', gap: '18px', alignItems: 'center', paddingTop: '2px' }}>
-              <label className="tgl"><input type="checkbox" id="fIsImp" checked={form.isImportant === 'Y'} onChange={event => updateField('isImportant', event.target.checked ? 'Y' : 'N')} /><span className="tgl-track" /><span className="tgl-lbl">★ 중요</span></label>
-              <label className="tgl"><input type="checkbox" id="fIsDel" checked={form.isDelete === 'Y'} onChange={event => updateField('isDelete', event.target.checked ? 'Y' : 'N')} /><span className="tgl-track" /><span className="tgl-lbl">삭제 처리</span></label>
+              <label className="tgl"><input type="checkbox" id="fIsImp" checked={form.isImportant === 'Y'} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('isImportant', e.target.checked ? 'Y' : 'N')} /><span className="tgl-track" /><span className="tgl-lbl">★ 중요</span></label>
+              <label className="tgl"><input type="checkbox" id="fIsDel" checked={form.isDelete === 'Y'} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('isDelete', e.target.checked ? 'Y' : 'N')} /><span className="tgl-track" /><span className="tgl-lbl">삭제 처리</span></label>
             </div>
           </div>
           </fieldset>
@@ -354,7 +388,7 @@ export default function ItemModal() {
                 border: '1px solid var(--border)', borderRadius: '8px',
                 background: 'var(--surface-2)', color: 'var(--text)', outline: 'none',
               }}
-              onChange={event => !isReadOnly && updateField('mdContent', event.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => !isReadOnly && updateField('mdContent', e.target.value)}
             />
             <div
               ref={previewRef}

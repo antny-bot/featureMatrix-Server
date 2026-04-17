@@ -1,7 +1,3 @@
-﻿/* ?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧
-   Header.jsx ?????ㅻ뜑 React 而댄룷?뚰듃
-?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧 */
-
 import { useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
@@ -9,7 +5,6 @@ import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
 import { getFiltered } from '../utils/itemUtils.js';
 
-/* ?? SVG ?꾩씠肄??곸닔 ?? */
 const ICON_SERVER = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <rect x="2" y="2" width="20" height="8" rx="2"/>
@@ -72,8 +67,7 @@ function IconMoon() {
   );
 }
 
-/* wsStatus ?????됱긽/?댄똻 留ㅽ븨 */
-const WS_STATUS_MAP = {
+const WS_STATUS_MAP: Record<string, { bg: string; title: string }> = {
   connected:    { bg: '#16a34a', title: 'WebSocket connected' },
   reconnecting: { bg: '#d97706', title: 'Reconnecting...' },
   disconnected: { bg: '#dc2626', title: 'WebSocket disconnected' },
@@ -81,7 +75,7 @@ const WS_STATUS_MAP = {
   idle:         { bg: '#aaa',    title: 'Server' },
 };
 
-function getUserInitial(name = '') {
+function getUserInitial(name = ''): string {
   const trimmed = name.trim();
   if (!trimmed) return '?';
   const parts = trimmed.split(/\s+/).filter(Boolean);
@@ -91,13 +85,28 @@ function getUserInitial(name = '') {
   return Array.from(trimmed)[0].toUpperCase();
 }
 
-function getAvatarTone(name = '') {
+function getAvatarTone(name = ''): string {
   const tones = ['teal', 'rose', 'amber', 'blue', 'green'];
   const sum = Array.from(name).reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return tones[sum % tones.length];
 }
 
-function ActiveUserAvatars({ users }) {
+function formatSessionRemaining(ms: number): string {
+  const totalMin = Math.floor(ms / 60000);
+  if (totalMin < 1) return '1분 미만';
+  if (totalMin < 60) return `${totalMin}분`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
+}
+
+interface ActiveUser {
+  sid?: string;
+  user: string;
+  joinTime: number;
+}
+
+function ActiveUserAvatars({ users }: { users: ActiveUser[] }) {
   if (!users.length) return null;
   const visible = users.slice(0, 5);
   const extra = users.length - visible.length;
@@ -113,7 +122,7 @@ function ActiveUserAvatars({ users }) {
   );
 }
 
-function OwnUserBadge({ name }) {
+function OwnUserBadge({ name }: { name: string }) {
   return (
     <div className="own-user" title={`User: ${name}`}>
       <span className={`active-avatar active-avatar--${getAvatarTone(name)}`}>{getUserInitial(name)}</span>
@@ -123,7 +132,7 @@ function OwnUserBadge({ name }) {
 }
 
 export default function Header() {
-  const { isAdmin, isEditor, isServerMode, logout, openLoginModal } = useAuth();
+  const { isAdmin, isEditor, isServerMode, logout, openLoginModal, getSessionTimeRemaining } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { openModal } = useModals();
 
@@ -143,9 +152,9 @@ export default function Header() {
   const storageMode = settings.storageMode || 'server';
   const userName    = settings.userName    || 'Anonymous';
 
-  const searchRef = useRef(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const showSearch = view !== 'dashboard';
-  
+
   const filteredCount = useMemo(() => getFiltered(items, filters, searchQ).length, [items, filters, searchQ]);
 
   const showLogoutBtn   = (isAdmin || isEditor) && isServerMode;
@@ -156,14 +165,38 @@ export default function Header() {
       ? { label: 'Editor', icon: ICON_EDITOR, active: true }
       : { label: 'Login', icon: ICON_LOGIN, active: false };
 
-  const restDot = serverStatus === 'ok' ? { bg: '#16a34a', title: 'Server connected' } : serverStatus === 'error' ? { bg: '#dc2626', title: 'Server error' } : { bg: '#aaa', title: 'Server status' };
-  const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP.idle;
+  // 세션 만료 시간 표시
+  const sessionMs = (isAdmin || isEditor) ? getSessionTimeRemaining() : 0;
+  const sessionLabel = sessionMs > 0 ? `세션 만료까지 ${formatSessionRemaining(sessionMs)} 남음` : '';
+  const sessionWarn  = sessionMs > 0 && sessionMs <= 600_000; // 10분 이하
+
+  // 서버 상태 표시
+  const isOfflineMode = storageMode === 'local';
+  const isServerDown  = storageMode === 'server' && serverStatus === 'error' && wsStatus === 'disconnected';
+
+  const restDot = serverStatus === 'ok'
+    ? { bg: '#16a34a', title: 'Server connected' }
+    : serverStatus === 'error'
+      ? { bg: '#dc2626', title: 'Server error' }
+      : { bg: '#aaa', title: 'Server status' };
+  const wsDot = WS_STATUS_MAP[wsStatus] || WS_STATUS_MAP['idle'];
   const showWsDot = storageMode === 'server' && wsStatus !== 'idle';
-  const statusDot = showWsDot ? wsDot : restDot;
-  const showStatusDot = storageMode === 'server';
-  const serverLabel = showWsDot
-    ? (wsStatus === 'reconnecting' ? '재연결 중' : wsStatus === 'connected' ? '실시간' : '연결끊김')
-    : (storageMode === 'server' ? '서버' : '로컬');
+
+  const statusDot = isOfflineMode
+    ? { bg: '#64748b', title: '오프라인 (로컬) 모드' }
+    : isServerDown
+      ? { bg: '#dc2626', title: '서버 연결 오류' }
+      : showWsDot ? wsDot : restDot;
+
+  const serverLabel = isOfflineMode
+    ? '오프라인'
+    : isServerDown
+      ? '서버 오류'
+      : showWsDot
+        ? (wsStatus === 'reconnecting' ? '재연결 중' : wsStatus === 'connected' ? '실시간' : '연결끊김')
+        : '서버';
+
+  const showStatusDot = storageMode === 'server' || isOfflineMode;
 
   useEffect(() => {
     if (searchFocusNonce > 0) searchRef.current?.focus();
@@ -189,7 +222,7 @@ export default function Header() {
               className="search-inp"
               placeholder="Search (name / key / owner / path)"
               value={searchQ}
-              onChange={(e) => setSearchQ(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQ(e.target.value)}
             />
             <button className={`search-clear${searchQ ? ' on' : ''}`} onClick={() => setSearchQ('')}>x</button>
           </div>
@@ -203,7 +236,12 @@ export default function Header() {
         {showLogoutBtn && <OwnUserBadge name={userName} />}
 
         {showLogoutBtn && (
-          <button type="button" className="btn btn-g btn-sm hdr-btn hdr-role" title={loginState.label}>
+          <button
+            type="button"
+            className="btn btn-g btn-sm hdr-btn hdr-role"
+            title={sessionLabel || loginState.label}
+            style={sessionWarn ? { color: '#d97706' } : undefined}
+          >
             {loginState.icon}<span>{loginState.label}</span>
           </button>
         )}
@@ -214,7 +252,11 @@ export default function Header() {
           </button>
         )}
 
-        <button className="btn btn-g btn-sm hdr-btn" title={statusDot.title}>
+        <button
+          className="btn btn-g btn-sm hdr-btn"
+          title={statusDot.title}
+          style={isServerDown ? { outline: '1px solid #dc2626', opacity: 0.85 } : undefined}
+        >
           {showStatusDot && <span style={{width:'7px', height:'7px', borderRadius:'50%', background: statusDot.bg, flexShrink:0, display:'inline-block', transition:'background .3s'}}></span>}
           {ICON_SERVER}<span>{serverLabel}</span>
         </button>
@@ -234,4 +276,3 @@ export default function Header() {
     </header>
   );
 }
-
