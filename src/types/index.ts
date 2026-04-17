@@ -174,6 +174,6 @@ export interface KeyboardActions {
   doUndo?(): void;
 }
 
-export type ViewType = 'matrix' | 'dashboard' | 'board' | 'list';
+export type ViewType = 'matrix' | 'dashboard' | 'board' | 'list' | 'admin';
 export type ServerStatus = 'idle' | 'ok' | 'error';
 export type WsStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting';

@@ -1,4 +1,5 @@
 import { useAppStore } from '../store/useAppStore.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { useModals } from '../hooks/useModals.js';
 
 function DashboardIcon() {
@@ -45,6 +46,14 @@ function ListIcon() {
   );
 }
 
+function AdminIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -54,7 +63,17 @@ function SettingsIcon() {
   );
 }
 
-function NavButton({ id, title, label, icon, active = false, onClick, className = '' }) {
+interface NavButtonProps {
+  id?: string;
+  title: string;
+  label: string;
+  icon: React.ReactNode;
+  active?: boolean;
+  onClick: () => void;
+  className?: string;
+}
+
+function NavButton({ id, title, label, icon, active = false, onClick, className = '' }: NavButtonProps) {
   return (
     <button className={`nav-item${active ? ' on' : ''}${className ? ` ${className}` : ''}`} id={id} onClick={onClick} title={title}>
       {icon}<span>{label}</span>
@@ -66,6 +85,7 @@ export default function NavigationSide() {
   const view    = useAppStore(s => s.view);
   const setView = useAppStore(s => s.setView);
   const { openModal } = useModals();
+  const { isAdmin } = useAuth();
 
   return (
     <nav className="nav-side" id="navSide">
@@ -85,6 +105,12 @@ export default function NavigationSide() {
         title="리스트" label="리스트" icon={<ListIcon />}
         active={view === 'list'} onClick={() => setView('list')}
       />
+      {isAdmin && (
+        <NavButton
+          title="관리자" label="관리자" icon={<AdminIcon />}
+          active={view === 'admin'} onClick={() => setView('admin')}
+        />
+      )}
       <div className="nav-spacer" />
       <NavButton
         title="환경 설정 (Ctrl+,)" label="설정" icon={<SettingsIcon />}

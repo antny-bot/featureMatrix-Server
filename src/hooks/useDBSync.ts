@@ -3,14 +3,14 @@ import { useAppStore, getStore } from '../store/useAppStore.js';
 import { apiFetch } from '../utils/api.js';
 import { migrateChangeLog, migrateItems, migrateSettings } from '../utils/itemUtils.js';
 import { ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY, SK, DATA_VERSION } from '../app/constants.js';
-import { initSocket, disconnectSocket, isSocketConnected, emitDataSave, emitLock, emitUnlock, releaseLocalLock } from '../app/socket.js';
+import { initSocket, disconnectSocket, isSocketConnected, emitDataSave, emitLock, emitUnlock, releaseLocalLock, emitRequestUnlock } from '../app/socket.js';
 import type { AppSettings } from '../types/index.js';
 
 interface UseDBSyncOptions {
   enableConnection?: boolean;
 }
 
-/* 서버에 저장할 settings 키 목록 (groupOrder/catOrder 제거) */
+/* 서버에 저장할 settings 키 목록 */
 const SHARED_SETTINGS: (keyof AppSettings)[] = [
   'title', 'subtitle', 'dbHeroName', 'dbSections', 'dbSectionVisibility',
   'priorityStyles', 'customColors', 'matrixWidth', 'cellFold',
@@ -239,6 +239,12 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
     };
   }, [enableConnection, store.settings.storageMode, store.settings.pollInterval, pollServer]);
 
+  const requestUnlockItem = useCallback((key: string) => {
+    if (store.settings.storageMode !== 'server' || !key) return;
+    const user = store.settings.userName || '익명';
+    emitRequestUnlock(key, user);
+  }, [store.settings.storageMode, store.settings.userName]);
+
   return {
     saveToServer,
     loadFromServer,
@@ -246,6 +252,7 @@ export function useDBSync(options: UseDBSyncOptions = {}) {
     pollServer,
     lockItem,
     unlockItem,
+    requestUnlockItem,
     logActivity,
     resolveConflictKeepMine: () => {
       store.setServerTs(0);
