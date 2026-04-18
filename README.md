@@ -26,32 +26,36 @@ version: 3.2.0
 ```text
 featureMatrix-ServerAdmin/
 |-- src/
+|   |-- main.tsx             # React 진입점
 |   |-- index.html
 |   |-- style.css
 |   |-- build-esbuild.js
 |   |-- package.json
+|   |-- tsconfig.json
 |   |-- app/
-|   |   |-- admin.js
-|   |   |-- board.js
-|   |   |-- constants.js
-|   |   |-- io.js
-|   |   |-- main.js
-|   |   |-- modal.js
-|   |   |-- render.js
-|   |   |-- settings.js
-|   |   |-- state.js
-|   |   `-- theme.js
-|   |-- components/
-|   |   |-- App.jsx
-|   |   |-- Header.jsx
-|   |   |-- DashboardView.jsx
-|   |   |-- SettingsPanel.jsx
-|   |   |-- BoardView.jsx
-|   |   |-- MatrixView.jsx
-|   |   |-- ListView.jsx
-|   |   `-- ItemModal.jsx
+|   |   |-- constants.ts    # 상수, 스키마, 마이그레이션
+|   |   |-- io.ts           # CSV/JSON/MD import/export
+|   |   |-- socket.ts       # Socket.IO 클라이언트
+|   |   `-- theme.ts        # 테마 색상 계산
+|   |-- components/         # React 컴포넌트 (.tsx)
+|   |   |-- App.tsx
+|   |   |-- Header.tsx
+|   |   |-- LayoutShell.tsx
+|   |   |-- DashboardView.tsx
+|   |   |-- MatrixView.tsx
+|   |   |-- ListView.tsx
+|   |   |-- BoardView.tsx
+|   |   |-- ItemModal.tsx
+|   |   |-- FilterPanel.tsx
+|   |   |-- SettingsPanel.tsx
+|   |   |-- AdminView.tsx
+|   |   `-- ...외 다수
 |   |-- store/
-|   |   `-- useAppStore.js
+|   |   `-- useAppStore.ts  # Zustand 전역 상태
+|   |-- hooks/              # 커스텀 훅 (서버 동기화, CRUD, 뷰 액션 등)
+|   |-- contexts/           # AuthContext, ThemeContext
+|   |-- types/              # TypeScript 타입 정의
+|   |-- utils/              # apiFetch, itemUtils
 |   `-- dist/
 |       `-- index.html
 |-- featureMatrix-server/
@@ -68,9 +72,9 @@ featureMatrix-ServerAdmin/
 
 ## 동작 방식
 
-- 프런트엔드는 React 19 + Zustand v5를 중심으로 동작합니다.
-- `src/app/*.js`에 데이터/서버/브릿지 로직이 있고, `src/components/*.jsx`에 React 컴포넌트가 있습니다.
-- React 컴포넌트는 `createPortal`로 기존 DOM 컨테이너에 주입되며, Zustand 스토어가 상태 동기화를 담당합니다.
+- 프런트엔드는 **React 19 + TypeScript + Zustand v5**를 중심으로 동작합니다.
+- `src/app/`에 핵심 유틸 로직(constants, io, socket, theme)이 있고, `src/hooks/`에 서버 동기화·CRUD·뷰 액션 로직, `src/components/*.tsx`에 React 컴포넌트가 있습니다.
+- 앱 상태는 `src/store/useAppStore.ts`의 Zustand 스토어 하나로 관리하며, 뷰 전환은 `LayoutShell.tsx`가 CSS show/hide 방식으로 처리합니다.
 - `npm run build`를 실행하면 `src/dist/index.html`이 생성되고, 자동으로 `featureMatrix-server/static/index.html`에 복사됩니다.
 - 서버는 `featureMatrix-server/server.py`에서 실행되며, 정적 HTML과 API를 함께 제공합니다.
 - 공유 데이터는 `data.json`, 활동 로그는 `activity.json`, 관리자 토큰은 `tokens.json`에 저장됩니다.
