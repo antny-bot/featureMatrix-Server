@@ -4,6 +4,24 @@ import { useModals } from '../hooks/useModals.js';
 
 const DIFF_FIELDS = ['name', 'priority', 'status', 'owner', 'group', 'category'];
 
+interface DiffChange {
+  field: string;
+  before: string;
+  after: string;
+}
+
+interface DiffRow {
+  key: string;
+  type: 'added' | 'deleted' | 'changed';
+  diffs?: DiffChange[];
+  name?: string;
+}
+
+interface DiffContent {
+  empty: string;
+  rows: DiffRow[];
+}
+
 export default function DiffModal() {
   const undoStack    = useAppStore(s => s.undoStack);
   const items        = useAppStore(s => s.items);
@@ -11,17 +29,17 @@ export default function DiffModal() {
   const activeModal  = useAppStore(s => s.activeModal);
   const { closeModal } = useModals();
 
-  const buildDiffRows = useMemo(() => {
+  const buildDiffRows = useMemo((): DiffContent => {
     const stack = undoStack || [];
     if (!stack.length) return { empty: '변경 이력이 없습니다.', rows: [] };
 
-    const data = JSON.parse(stack[stack.length - 1]);
-    const prev = Array.isArray(data) ? data : (data.items || []);
+    const data = JSON.parse(stack[stack.length - 1] as string) as unknown;
+    const prev = Array.isArray(data) ? data : ((data as Record<string, unknown>).items || []) as typeof items;
     const cur = items;
 
     const curMap = Object.fromEntries(cur.map(item => [item.key, item]));
     const prevMap = Object.fromEntries(prev.map(item => [item.key, item]));
-    const rows = [];
+    const rows: DiffRow[] = [];
 
     cur.forEach(item => {
       const old = prevMap[item.key];
@@ -30,12 +48,14 @@ export default function DiffModal() {
         return;
       }
 
+      const itemR = item as Record<string, unknown>;
+      const oldR  = old  as Record<string, unknown>;
       const diffs = DIFF_FIELDS
-        .filter(field => (old[field] || '') !== (item[field] || ''))
+        .filter(field => (oldR[field] || '') !== (itemR[field] || ''))
         .map(field => ({
           field,
-          before: old[field] || '—',
-          after: item[field] || '—',
+          before: String(oldR[field] || '—'),
+          after:  String(itemR[field] || '—'),
         }));
 
       if (diffs.length) rows.push({ key: item.key, type: 'changed', diffs });
@@ -45,13 +65,10 @@ export default function DiffModal() {
       if (!curMap[item.key]) rows.push({ key: item.key, type: 'deleted', name: item.name });
     });
 
-    return {
-      empty: rows.length ? '' : '마지막 저장 이후 변경 없음',
-      rows,
-    };
+    return { empty: rows.length ? '' : '마지막 저장 이후 변경 없음', rows };
   }, [items, undoStack]);
 
-  const content = useMemo(() => {
+  const content = useMemo((): DiffContent => {
     if (activeModal !== 'diffModal') return { empty: '', rows: [] };
     return buildDiffRows;
   }, [activeModal, buildDiffRows]);
@@ -85,11 +102,11 @@ export default function DiffModal() {
                     <td style={{ fontSize: '.78rem', lineHeight: 1.8, padding: '8px' }}>
                       {row.type === 'added' && <span style={{ color: 'var(--success)', fontWeight: 600 }}>신규 추가</span>}
                       {row.type === 'deleted' && <span style={{ color: 'var(--danger)', fontWeight: 600 }}>삭제됨 ({row.name})</span>}
-                      {row.type === 'changed' && row.diffs.map(diff => {
+                      {row.type === 'changed' && row.diffs?.map(diff => {
                         const isStatus = diff.field === 'status';
                         const labels = statusLabels || {};
                         const beforeLbl = isStatus ? (labels[diff.before] || diff.before) : diff.before;
-                        const afterLbl = isStatus ? (labels[diff.after] || diff.after) : diff.after;
+                        const afterLbl  = isStatus ? (labels[diff.after]  || diff.after)  : diff.after;
                         return (
                           <div key={diff.field}>
                             <span style={{ color: 'var(--text-3)' }}>{diff.field}:</span>{' '}

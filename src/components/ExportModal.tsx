@@ -6,7 +6,7 @@ import { expClip, expTSV, expXLS, expHTML, expMdZip } from '../app/io.js';
 export default function ExportModal() {
   const activeModal = useAppStore(s => s.activeModal);
   const { closeModal } = useModals();
-  const [htmlWidth, setHtmlWidth] = useState('fluid');
+  const [htmlWidth, setHtmlWidth] = useState<'fluid' | 'fixed'>('fluid');
 
   if (activeModal !== 'exportModal') return null;
 

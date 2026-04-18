@@ -14,12 +14,12 @@ import { useDBSync } from '../hooks/useDBSync.js';
 
 function NotificationToast() {
   const toast = useAppStore(s => s.toast);
-  const key = toast.type === true ? 'error' : toast.type;
-  const background = {
+  const key = toast.type === true ? 'error' : toast.type as string;
+  const background = ({
     error: 'var(--danger)',
     warning: 'var(--warning, #D97706)',
     success: 'var(--success, #16A34A)',
-  }[key] || 'var(--text)';
+  } as Record<string, string>)[key] || 'var(--text)';
 
   return (
     <div
@@ -39,7 +39,7 @@ function UserNameModal() {
   const { closeModal } = useModals();
   const { saveLocal } = useDBSync();
   const [name, setName] = useState('');
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const saveUserNamePopup = (skip = false) => {
     if (!skip) {
@@ -69,7 +69,7 @@ function UserNameModal() {
             id="userNamePopupInp"
             ref={inputRef}
             value={name}
-            onChange={event => setName(event.target.value)}
+            onChange={e => setName(e.target.value)}
             placeholder="이름 입력"
             style={{ marginBottom: '6px' }}
             onKeyDown={e => { if (e.key === 'Enter') saveUserNamePopup(); }}

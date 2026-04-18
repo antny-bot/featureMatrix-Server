@@ -1,34 +1,25 @@
-/**
- * socket.js — Socket.IO 클라이언트 모듈
- *
- * 책임:
- *  - Socket.IO 싱글턴 인스턴스 관리
- *  - 서버 이벤트 수신 → Zustand store 업데이트
- *  - emit 함수 노출: emitLock, emitUnlock, emitPreview, emitSave
- *  - 연결/재연결/끊김 상태를 wsStatus로 관리
- *  - 연결 전 메시지 큐 버퍼링 (자동 재전송)
- */
-
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { setStore, getStore } from '../store/useAppStore.js';
 import { ADMIN_TOKEN_KEY, EDITOR_TOKEN_KEY } from './constants.js';
+import type { Item } from '../types/index.js';
 
-// ── 내부 상태 ──────────────────────────────────────────────────────────
-let _socket = null;
-let _pendingQueue = []; // 연결 전 대기 중인 emit { event, data }
-const _recentLocalUnlocks = {};
+interface PendingMessage {
+  event: string;
+  data: unknown;
+}
+
+let _socket: Socket | null = null;
+let _pendingQueue: PendingMessage[] = [];
+const _recentLocalUnlocks: Record<string, number> = {};
 const CLIENT_ID_KEY = 'fmClientId';
 
-// ── 서버 URL 결정 ──────────────────────────────────────────────────────
-function _getServerUrl() {
+function _getServerUrl(): string {
   const url = getStore().settings?.serverUrl || '';
   if (url) return url;
-  // 현재 origin 기준 (같은 서버)
   return window.location.origin;
 }
 
-// ── Zustand editLocks 패치 헬퍼 ───────────────────────────────────────
-function _addLock(key, lockedBy, lockedAt) {
+function _addLock(key: string, lockedBy: string, lockedAt: number): void {
   const releasedAt = _recentLocalUnlocks[key] || 0;
   if (lockedBy === _currentUserName() && releasedAt && Date.now() - releasedAt < 3000) {
     return;
@@ -37,17 +28,17 @@ function _addLock(key, lockedBy, lockedAt) {
   setStore({ editLocks: { ...prev, [key]: { user: lockedBy, ts: lockedAt } } });
 }
 
-function _removeLock(key) {
+function _removeLock(key: string): void {
   const prev = { ...(getStore().editLocks || {}) };
   delete prev[key];
   setStore({ editLocks: prev });
 }
 
-function _setAllLocks(locks) {
+function _setAllLocks(locks: Record<string, { user: string; ts: number }>): void {
   setStore({ editLocks: locks || {} });
 }
 
-function _setPreview(key, data) {
+function _setPreview(key: string, data: { user: string; preview: Record<string, unknown> } | null): void {
   const prev = getStore().previews || {};
   if (data === null) {
     const next = { ...prev };
@@ -58,7 +49,7 @@ function _setPreview(key, data) {
   }
 }
 
-export function releaseLocalLock(key) {
+export function releaseLocalLock(key: string): void {
   if (!key) return;
   _recentLocalUnlocks[key] = Date.now();
   setTimeout(() => {
@@ -70,16 +61,16 @@ export function releaseLocalLock(key) {
   _setPreview(key, null);
 }
 
-function _hasAuthToken() {
+function _hasAuthToken(): boolean {
   return !!(sessionStorage.getItem(ADMIN_TOKEN_KEY) || sessionStorage.getItem(EDITOR_TOKEN_KEY));
 }
 
-function _currentUserName() {
+function _currentUserName(): string {
   if (!_hasAuthToken()) return '익명';
   return getStore().settings?.userName || '익명';
 }
 
-function _clientId() {
+function _clientId(): string {
   try {
     let id = localStorage.getItem(CLIENT_ID_KEY);
     if (!id) {
@@ -92,21 +83,20 @@ function _clientId() {
   }
 }
 
-function _syncActiveUser() {
+function _syncActiveUser(): void {
   if (!_socket?.connected) return;
   _socket.emit('register_user', { user: _currentUserName(), clientId: _clientId() });
   _socket.emit('get_active_users');
 }
 
-function _setActiveUsers(users) {
+function _setActiveUsers(users: Array<{ sid: string; clientId?: string; user: string; joinTime: number }>): void {
   const ownSid = _socket?.id;
   const ownClientId = _clientId();
   const others = (users || []).filter(user => user.sid !== ownSid && user.clientId !== ownClientId);
   setStore({ activeUsers: others });
 }
 
-// ── 큐에 쌓인 메시지 재전송 ───────────────────────────────────────────
-function _flushQueue() {
+function _flushQueue(): void {
   if (!_socket?.connected) return;
   const q = _pendingQueue.splice(0);
   for (const { event, data } of q) {
@@ -114,8 +104,9 @@ function _flushQueue() {
   }
 }
 
-// ── 이벤트 리스너 등록 ────────────────────────────────────────────────
-function _registerListeners() {
+function _registerListeners(): void {
+  if (!_socket) return;
+
   _socket.on('connect', () => {
     setStore({ wsStatus: 'connected' });
     _syncActiveUser();
@@ -134,44 +125,34 @@ function _registerListeners() {
     setStore({ wsStatus: 'reconnecting' });
   });
 
-
-  _socket.on('connect_error', () => {
-    setStore({ wsStatus: 'disconnected' });
-  });
-
-  _socket.io.on('reconnect_attempt', () => {
-    setStore({ wsStatus: 'reconnecting' });
-  });
-
   _socket.io.on('reconnect', () => {
     setStore({ wsStatus: 'connected' });
     _syncActiveUser();
     _flushQueue();
   });
 
-  // 서버 → 클라이언트 이벤트
-  _socket.on('locks_sync', ({ locks }) => {
+  _socket.on('locks_sync', ({ locks }: { locks: Record<string, { user: string; ts: number }> }) => {
     _setAllLocks(locks);
   });
 
-  _socket.on('item_locked', ({ key, lockedBy, lockedAt }) => {
+  _socket.on('item_locked', ({ key, lockedBy, lockedAt }: { key: string; lockedBy: string; lockedAt?: number }) => {
     _addLock(key, lockedBy, lockedAt || Date.now());
   });
 
-  _socket.on('item_unlocked', ({ key }) => {
+  _socket.on('item_unlocked', ({ key }: { key: string }) => {
     _removeLock(key);
     _setPreview(key, null);
   });
 
-  _socket.on('lock_denied', ({ key, lockedBy }) => {
+  _socket.on('lock_denied', ({ lockedBy }: { key: string; lockedBy: string }) => {
     getStore().notify(`${lockedBy}님이 편집 중입니다. 잠시 후 다시 시도하세요.`, 'warning');
   });
 
-  _socket.on('editing_preview', ({ key, user, preview }) => {
+  _socket.on('editing_preview', ({ key, user, preview }: { key: string; user: string; preview: Record<string, unknown> }) => {
     _setPreview(key, { user, preview });
   });
 
-  _socket.on('item_saved', ({ key, user, item }) => {
+  _socket.on('item_saved', ({ key, user: _user, item }: { key: string; user: string; item: Item }) => {
     _removeLock(key);
     _setPreview(key, null);
 
@@ -183,7 +164,7 @@ function _registerListeners() {
     setStore({ items, serverStatus: 'ok' });
   });
 
-  _socket.on('data_saved', ({ user, payload, serverTs }) => {
+  _socket.on('data_saved', ({ user, payload, serverTs }: { user: string; payload: { items?: Item[]; settings?: Record<string, unknown> } | null; serverTs: number }) => {
     if (!payload) return;
     const store = getStore();
     setStore({
@@ -195,18 +176,12 @@ function _registerListeners() {
     store.notify(`${user || '다른 사용자'}님의 변경사항이 반영되었습니다.`, 'success');
   });
 
-  _socket.on('user_list_updated', ({ users }) => {
+  _socket.on('user_list_updated', ({ users }: { users: Array<{ sid: string; clientId?: string; user: string; joinTime: number }> }) => {
     _setActiveUsers(users);
   });
 }
 
-// ── 공개 API ──────────────────────────────────────────────────────────
-
-/**
- * WebSocket 초기화. storageMode === 'server' 일 때 main.js에서 호출.
- * 이미 연결된 경우 중복 초기화 방지.
- */
-export function initSocket() {
+export function initSocket(): void {
   if (_socket) return;
 
   setStore({ wsStatus: 'connecting' });
@@ -224,10 +199,7 @@ export function initSocket() {
   _registerListeners();
 }
 
-/**
- * 소켓 연결 해제 (로컬 모드 전환 등)
- */
-export function disconnectSocket() {
+export function disconnectSocket(): void {
   if (_socket) {
     _socket.disconnect();
     _socket = null;
@@ -236,28 +208,22 @@ export function disconnectSocket() {
   setStore({ wsStatus: 'idle', editLocks: {}, previews: {}, activeUsers: [] });
 }
 
-/**
- * 현재 연결 상태 확인
- */
-export function isSocketConnected() {
+export function isSocketConnected(): boolean {
   return !!_socket?.connected;
 }
 
-export function registerActiveUser() {
+export function registerActiveUser(): void {
   _syncActiveUser();
 }
 
-export function unregisterActiveUser() {
+export function unregisterActiveUser(): void {
   if (_socket?.connected) {
     _socket.emit('unregister_user', { clientId: _clientId() });
   }
   setStore({ activeUsers: [] });
 }
 
-/**
- * 내부 emit 헬퍼 — 연결 전이면 큐에 저장
- */
-function _emit(event, data) {
+function _emit(event: string, data: unknown): void {
   if (_socket?.connected) {
     _socket.emit(event, data);
   } else {
@@ -265,44 +231,26 @@ function _emit(event, data) {
   }
 }
 
-/**
- * 항목 Lock 요청
- * @param {string} key
- * @param {string} user
- */
-export function emitLock(key, user) {
+export function emitLock(key: string, user: string): void {
   _emit('lock_item', { key, user });
 }
 
-/**
- * 항목 Lock 해제
- * @param {string} key
- * @param {string} user
- */
-export function emitUnlock(key, user) {
+export function emitUnlock(key: string, user: string): void {
   _emit('unlock_item', { key, user });
 }
 
-/**
- * 편집 미리보기 전송 (300ms 디바운스는 호출 측에서 처리)
- * @param {string} key
- * @param {string} user
- * @param {object} preview  — { name, priority, status, owner, desc, ... }
- */
-export function emitPreview(key, user, preview) {
+export function emitRequestUnlock(key: string, user: string): void {
+  _emit('request_unlock', { key, user });
+}
+
+export function emitPreview(key: string, user: string, preview: Record<string, unknown>): void {
   _emit('editing_preview', { key, user, preview });
 }
 
-/**
- * 항목 저장 완료 알림
- * @param {string} key
- * @param {string} user
- * @param {object} item
- */
-export function emitSave(key, user, item) {
+export function emitSave(key: string, user: string, item: Item): void {
   _emit('save_item', { key, user, item });
 }
 
-export function emitDataSave(user, payload, serverTs) {
+export function emitDataSave(user: string, payload: unknown, serverTs: number): void {
   _emit('save_data', { user, payload, serverTs });
 }

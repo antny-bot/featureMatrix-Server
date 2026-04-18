@@ -1,6 +1,4 @@
-/* ══════════════════════════════════════════
-   constants.js — 상수 / 설정 기본값 / 데모 데이터
-══════════════════════════════════════════ */
+import type { Item, ColumnConfig, ThemeDefinition, StatusChipColor } from '../types/index.js';
 
 export const SK             = 'sobukMXv6';
 export const UNDO_MAX       = 20;
@@ -8,18 +6,17 @@ export const CELL_OV        = 5;
 export const ADMIN_TOKEN_KEY  = 'fmAdminToken';
 export const EDITOR_TOKEN_KEY = 'fmEditorToken';
 
-/**
- * 데이터 스키마 버전 — 아이템 필드 구조가 변경될 때마다 올린다.
- * MIGRATIONS 에 이전 버전 → 현재 버전 변환 함수를 추가한다.
- */
 export const DATA_VERSION = 3;
 
-/**
- * 마이그레이션 맵: { [fromVersion]: (item) => migratedItem }
- * v1 → v2: mdContent, status, updatedAt 기본값 보장
- * v2 → v3: status 내부 키를 영문 값으로 변경
- */
-export const MIGRATIONS = {
+export const STATUS_KEY_MAP: Record<string, string> = {
+  '대기': 'backlog',
+  '시작가능': 'ready',
+  '진행중': 'progress',
+  '검토중': 'review',
+  '완료': 'done',
+};
+
+export const MIGRATIONS: Record<number, (item: Item) => Item> = {
   1: item => ({
     ...item,
     mdContent: item.mdContent ?? '',
@@ -28,16 +25,16 @@ export const MIGRATIONS = {
   }),
   2: item => ({
     ...item,
-    status: STATUS_KEY_MAP[item.status] || item.status || '',
+    status: STATUS_KEY_MAP[item.status ?? ''] || item.status || '',
   }),
 };
 
-export const FIELDS = [
+export const FIELDS: string[] = [
   'key','name','desc','path','group','subGroup','category','subCategory',
   'priority','status','owner','isDelete','isImportant','relSystem','memo','mdPath','mdContent'
 ];
 
-export const FLABELS = {
+export const FLABELS: Record<string, string> = {
   key:'Key', name:'기능명', desc:'설명', path:'경로',
   group:'그룹', subGroup:'서브그룹', category:'카테고리', subCategory:'서브카테고리',
   priority:'우선순위', status:'진행상태', owner:'담당',
@@ -45,20 +42,11 @@ export const FLABELS = {
   mdPath:'MD경로', mdContent:'MD내용'
 };
 
-export const STATUS_KEY_MAP = {
-  '대기': 'backlog',
-  '시작가능': 'ready',
-  '진행중': 'progress',
-  '검토중': 'review',
-  '완료': 'done',
-};
+export const STATUS_OPTS: string[] = ['backlog','ready','progress','review','done'];
+export const STATUS_CLS: Record<string, string>  = { backlog:'status-backlog', ready:'status-ready', progress:'status-progress', review:'status-review', done:'status-done' };
+export const STATUS_LBL: Record<string, string>  = { backlog:'대기', ready:'시작가능', progress:'진행중', review:'검토중', done:'완료' };
 
-export const STATUS_OPTS = ['backlog','ready','progress','review','done'];
-export const STATUS_CLS  = { backlog:'status-backlog', ready:'status-ready', progress:'status-progress', review:'status-review', done:'status-done' };
-export const STATUS_LBL  = { backlog:'대기', ready:'시작가능', progress:'진행중', review:'검토중', done:'완료' };
-
-/** 상태별 강조 색상 (바 세그먼트, 컬럼 상단 테두리, 텍스트 강조용) */
-export const STATUS_ACCENT = {
+export const STATUS_ACCENT: Record<string, string> = {
   backlog:  'var(--text-3)',
   ready:    '#7C3AED',
   progress: 'var(--accent)',
@@ -66,8 +54,7 @@ export const STATUS_ACCENT = {
   done:     'var(--success)',
 };
 
-/** 상태별 칩/뱃지 색상 (필터 버튼, 툴팁 등) */
-export const STATUS_CHIP_COLORS = {
+export const STATUS_CHIP_COLORS: Record<string, StatusChipColor> = {
   backlog:  { col:'#6B7280', bg:'#F3F4F6' },
   ready:    { col:'#7C3AED', bg:'#F5F3FF' },
   progress: { col:'#2563A8', bg:'#EBF2FB' },
@@ -75,7 +62,7 @@ export const STATUS_CHIP_COLORS = {
   done:     { col:'#1D7A4F', bg:'#EAF5EF' },
 };
 
-export const DEFAULT_LIST_COLS = [
+export const DEFAULT_LIST_COLS: ColumnConfig[] = [
   {key:'key',visible:true}, {key:'name',visible:true}, {key:'group',visible:true},
   {key:'subGroup',visible:true}, {key:'category',visible:true}, {key:'subCategory',visible:false},
   {key:'priority',visible:true}, {key:'status',visible:true}, {key:'owner',visible:true},
@@ -83,13 +70,13 @@ export const DEFAULT_LIST_COLS = [
   {key:'desc',visible:false}, {key:'relSystem',visible:false}, {key:'memo',visible:false}
 ];
 
-export const PRESETS = [
+export const PRESETS: Array<{id: string; label: string}> = [
   {id:'left-thick',label:'좌측②'}, {id:'left-thin',label:'좌측①'},
   {id:'all-thin',label:'전체①'},   {id:'all-thick',label:'전체②'},
   {id:'dashed',label:'점선'},       {id:'bg-fill',label:'배경색'}, {id:'none',label:'없음'}
 ];
 
-export const THEMES = {
+export const THEMES: Record<string, ThemeDefinition> = {
   sobuk: { name:'소복청',
     light: {pHigh:'#C0312A',pHighBg:'#FDECEA',pMid:'#9A6200',pMidBg:'#FDF4E1',pLow:'#D0CEC9',pLowBg:'#F2F1EE',mxGBg:'#EBF2FB',mxGC:'#2563A8',mxSgBg:'#F2F1EE',mxSgC:'#5C5752',mxCBg:'#F2F1EE',mxCC:'#5C5752',mxBorder:'#E4E2DE',mxBW:1},
     dark:  {pHigh:'#E05A52',pHighBg:'#200C0C',pMid:'#E0A030',pMidBg:'#1E1608',pLow:'#3D3B38',pLowBg:'#272523',mxGBg:'#162438',mxGC:'#5B96D8',mxSgBg:'#272523',mxSgC:'#A09B94',mxCBg:'#272523',mxCC:'#A09B94',mxBorder:'#2E2D2A',mxBW:1}},
@@ -107,7 +94,7 @@ export const THEMES = {
     dark:  {pHigh:'#FBBF24',pHighBg:'#1C1200',pMid:'#FB923C',pMidBg:'#1C0A00',pLow:'#78716C',pLowBg:'#1C1917',mxGBg:'#1C1200',mxGC:'#FBBF24',mxSgBg:'#1C1917',mxSgC:'#78716C',mxCBg:'#1C1200',mxCC:'#78716C',mxBorder:'#78350F',mxBW:1}}
 };
 
-export const DEMO = [
+export const DEMO: Item[] = [
   {key:'N0001',name:'회원 가입',desc:'신규 회원 등록.\n이메일 및 소셜 로그인 지원.',path:'/auth/register',group:'인증/보안',subGroup:'계정',category:'프론트엔드',subCategory:'폼/입력',priority:'상',owner:'홍길동',isDelete:'N',isImportant:'Y',relSystem:'Auth',memo:'',mdPath:'',mdContent:''},
   {key:'N0002',name:'로그인',desc:'이메일·비밀번호 또는 소셜 계정으로 로그인.',path:'/auth/login',group:'인증/보안',subGroup:'계정',category:'프론트엔드',subCategory:'폼/입력',priority:'상',owner:'홍길동',isDelete:'N',isImportant:'Y',relSystem:'Auth',memo:'',mdPath:'',mdContent:''},
   {key:'N0003',name:'비밀번호 재설정',desc:'이메일로 재설정 링크 전송.\n만료시간 30분.',path:'/auth/reset',group:'인증/보안',subGroup:'계정',category:'프론트엔드',subCategory:'폼/입력',priority:'중',owner:'홍길동',isDelete:'N',isImportant:'N',relSystem:'',memo:'',mdPath:'',mdContent:''},

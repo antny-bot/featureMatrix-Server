@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { Item } from '../types/index.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from './useDBSync.js';
 import { usePersistItems } from './usePersistItems.js';
@@ -8,11 +9,11 @@ export function useModals() {
   const { lockItem, unlockItem, logActivity } = useDBSync();
   const { persistItems } = usePersistItems();
 
-  const openModal = useCallback((id) => {
+  const openModal = useCallback((id: string) => {
     useAppStore.getState().setActiveModal(id);
   }, []);
 
-  const closeModal = useCallback((id) => {
+  const closeModal = useCallback((id: string) => {
     if (useAppStore.getState().activeModal === id) {
       useAppStore.getState().setActiveModal(null);
     }
@@ -25,7 +26,7 @@ export function useModals() {
     close();
   }, [unlockItem]);
 
-  const openEditModal = useCallback((key) => {
+  const openEditModal = useCallback((key: string) => {
     const { setEditKey, openEditModal: open, items, settings } = useAppStore.getState();
     const item = findItem(key, items);
     if (!item) return;
@@ -34,11 +35,11 @@ export function useModals() {
     if (settings.storageMode === 'server') lockItem(key);
   }, [lockItem]);
 
-  const openAddModal = useCallback((defaults = {}) => {
+  const openAddModal = useCallback((defaults: Partial<Item> = {}) => {
     const { setEditKey, openEditModal: open } = useAppStore.getState();
     setEditKey(null);
     const newKey = genKey();
-    const newItem = {
+    const newItem: Item = {
       key: newKey, priority: '중', name: '', desc: '', path: '',
       group: '', subGroup: '', category: '', subCategory: '',
       owner: '', status: '', relSystem: '', memo: '', mdContent: '',
@@ -47,7 +48,7 @@ export function useModals() {
     open('add', newKey, newItem);
   }, []);
 
-  const openAddInCell = useCallback((group, subGroup, category, subCategory) => {
+  const openAddInCell = useCallback((group: string, subGroup: string, category: string, subCategory: string) => {
     openAddModal({
       group:       group    === '(미분류)' ? '' : (group    || ''),
       subGroup:    subGroup || '',
@@ -56,7 +57,7 @@ export function useModals() {
     });
   }, [openAddModal]);
 
-  const openMdModal = useCallback((key) => {
+  const openMdModal = useCallback((key: string) => {
     const { setEditKey, openEditModal: open, items, settings } = useAppStore.getState();
     const item = findItem(key, items);
     if (!item) return;
@@ -66,7 +67,7 @@ export function useModals() {
     if (settings.storageMode === 'server') lockItem(key);
   }, [lockItem]);
 
-  const saveItem = useCallback(async (form) => {
+  const saveItem = useCallback(async (form: Item) => {
     const { notify, pushUndo, items, editKey, setItems, setEditKey, closeEditModal: close } = useAppStore.getState();
     const name = (form.name || '').trim();
     if (!name) {
@@ -74,7 +75,7 @@ export function useModals() {
       return;
     }
 
-    const ni = { ...form, name, updatedAt: Date.now() };
+    const ni: Item = { ...form, name, updatedAt: Date.now() };
 
     pushUndo();
     const nextItems = [...items];
@@ -101,7 +102,7 @@ export function useModals() {
     notify('저장되었습니다.', 'success');
   }, [logActivity, unlockItem, persistItems]);
 
-  const hardDelete = useCallback(async (key) => {
+  const hardDelete = useCallback(async (key: string) => {
     const { items, notify, pushUndo, setItems, setEditKey, closeEditModal: close } = useAppStore.getState();
     const it = findItem(key, items);
     if (!it || !confirm(`${key} 항목을 완전히 삭제하시겠습니까?`)) return;
@@ -119,7 +120,7 @@ export function useModals() {
     notify('완전 삭제되었습니다.', 'success');
   }, [logActivity, unlockItem, persistItems]);
 
-  const duplicateItem = useCallback(async (key) => {
+  const duplicateItem = useCallback(async (key: string) => {
     const { items, notify, pushUndo, setItems } = useAppStore.getState();
     const src = findItem(key, items);
     if (!src) return;
@@ -131,7 +132,7 @@ export function useModals() {
     notify(`${src.key} 복제 완료`, 'success');
   }, [persistItems]);
 
-  const expSingleMd = useCallback((form) => {
+  const expSingleMd = useCallback((form: Item) => {
     const content = form.mdContent || '';
     if (!content.trim()) {
       useAppStore.getState().notify('MD 내용이 없습니다.', 'error');
@@ -143,7 +144,7 @@ export function useModals() {
     useAppStore.getState().notify('MD 파일 저장됨.', 'success');
   }, []);
 
-  const quickToggleDel = useCallback(async (key) => {
+  const quickToggleDel = useCallback(async (key: string) => {
     const { items, pushUndo, setItems } = useAppStore.getState();
     const item = findItem(key, items);
     if (!item) return;
@@ -156,7 +157,7 @@ export function useModals() {
     await persistItems();
   }, [persistItems]);
 
-  const setItemStatus = useCallback(async (key, status) => {
+  const setItemStatus = useCallback(async (key: string, status: string) => {
     const { items, pushUndo, setItems } = useAppStore.getState();
     const item = findItem(key, items);
     if (!item) return;

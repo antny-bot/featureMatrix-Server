@@ -1,11 +1,12 @@
 import { useEffect, useMemo } from 'react';
+import type { Item } from '../types/index.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { FLABELS, STATUS_CLS } from '../app/constants.js';
 import { getFiltered, getVisibleCols, normOwner } from '../utils/itemUtils.js';
 import { useListActions } from '../hooks/useListActions.js';
 import { useModals } from '../hooks/useModals.js';
 
-function highlightText(value, query) {
+function highlightText(value: unknown, query: string): React.ReactNode {
   const text = String(value || '');
   if (!query || !text) return text;
 
@@ -21,21 +22,21 @@ function highlightText(value, query) {
   }
 }
 
-function PriorityPill({ priority }) {
+function PriorityPill({ priority }: { priority: string }) {
   const cls = priority === '상' ? 'h' : priority === '중' ? 'm' : 'l';
   return <span className={`pp ${cls}`}>{priority}</span>;
 }
 
-function StatusBadge({ status, labels }) {
+function StatusBadge({ status, labels }: { status?: string; labels?: Record<string, string> }) {
   if (!status) return null;
   return <span className={`status-badge ${STATUS_CLS[status] || ''}`}>{labels?.[status] || status}</span>;
 }
 
-function TextCell({ value, query, className, title }) {
+function TextCell({ value, query, className, title }: { value: unknown; query: string; className?: string; title?: string }) {
   return <td className={className} title={title}>{highlightText(value, query)}</td>;
 }
 
-function ListCell({ item, columnKey, query }) {
+function ListCell({ item, columnKey, query }: { item: Item; columnKey: string; query: string }) {
   switch (columnKey) {
     case 'key':
       return <TextCell className="ck" value={item.key} query={query} />;
@@ -57,13 +58,13 @@ function ListCell({ item, columnKey, query }) {
     }
     case 'desc':
     case 'memo': {
-      const raw = item[columnKey] || '';
+      const raw = (item as Record<string, unknown>)[columnKey] as string || '';
       const text = raw.replace(/\n/g, ' ');
       const display = text.length > 60 ? `${text.slice(0, 60)}…` : text;
       return <TextCell key={columnKey} className="desc-cell" title={raw} value={display} query={query} />;
     }
     default:
-      return <TextCell key={columnKey} value={item[columnKey] || ''} query={query} />;
+      return <TextCell key={columnKey} value={(item as Record<string, unknown>)[columnKey] ?? ''} query={query} />;
   }
 }
 
@@ -74,7 +75,7 @@ export default function ListView() {
   const searchQ           = useAppStore(s => s.searchQ);
   const sort              = useAppStore(s => s.sort);
   const bulkSelectionKeys = useAppStore(s => s.bulkSelectionKeys);
-  
+
   const { bulkToggle, bulkToggleAll, bulkClearSelection } = useListActions();
   const { openEditModal, openMdModal } = useModals();
 
@@ -88,8 +89,10 @@ export default function ListView() {
   const rows = useMemo(() => {
     const filtered = getFiltered(items, filters, searchQ);
     return filtered.slice().sort((a, b) => {
-      const va = a[sort.key] || '';
-      const vb = b[sort.key] || '';
+      const aR = a as Record<string, unknown>;
+      const bR = b as Record<string, unknown>;
+      const va = (aR[sort.key] as string) || '';
+      const vb = (bR[sort.key] as string) || '';
       const result = va < vb ? -1 : va > vb ? 1 : 0;
       return sort.dir === 'asc' ? result : -result;
     });
@@ -109,7 +112,7 @@ export default function ListView() {
 
   const allChecked = rows.length > 0 && rows.every(item => selectedKeySet.has(item.key));
 
-  const toggleSort = (key) => {
+  const toggleSort = (key: string) => {
     const { sort: cur } = useAppStore.getState();
     const s = { ...cur };
     if (s.key === key) {
@@ -139,7 +142,7 @@ export default function ListView() {
                 const sortClass = sort.key === column.key ? (sort.dir === 'asc' ? 'sa' : 'sd') : '';
                 return (
                   <th className={sortClass} onClick={() => toggleSort(column.key)} key={column.key}>
-                    {FLABELS[column.key]}
+                    {(FLABELS as Record<string, string>)[column.key]}
                   </th>
                 );
               })}

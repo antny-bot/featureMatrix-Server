@@ -1,25 +1,27 @@
-/* ══════════════════════════════════════════
-   ErrorBoundary.jsx — React 에러 경계 컴포넌트
-
-   적용 계층:
-   - 최상위(App): 치명적 에러 포착 → 전체 앱 복구 UI
-   - 뷰(Header/Dashboard/Matrix/Board/List): 해당 뷰만 격리
-   - 모달(ItemModal/SettingsPanel): 모달 오류 격리
-══════════════════════════════════════════ */
-
 import { Component } from 'react';
 
-export default class ErrorBoundary extends Component {
-  constructor(props) {
+interface Props {
+  children?: React.ReactNode;
+  level?: 'app' | 'view' | 'modal';
+  label?: string;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export default class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
     const label = this.props.label || '컴포넌트';
     console.error(`[ErrorBoundary:${label}]`, error, info.componentStack);
   }
@@ -33,7 +35,6 @@ export default class ErrorBoundary extends Component {
 
     const { level = 'view', label = '영역' } = this.props;
 
-    /* 최상위 에러 — 앱 전체 크래시 */
     if (level === 'app') {
       return (
         <div style={{
@@ -63,7 +64,6 @@ export default class ErrorBoundary extends Component {
       );
     }
 
-    /* 뷰/모달 에러 — 해당 영역만 격리 */
     return (
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',

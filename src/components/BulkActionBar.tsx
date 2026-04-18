@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useAppStore } from '../store/useAppStore.js';
 import { useListActions } from '../hooks/useListActions.js';
@@ -8,7 +8,7 @@ export default function BulkActionBar() {
   const selectedKeys = useAppStore(s => s.bulkSelectionKeys);
   const { isAdmin: adminOk } = useAuth();
   const { setBulkPriority, setBulkOwner, bulkClearSelection } = useListActions();
-  
+
   const [owner, setOwner] = useState('');
 
   const updateOwner = async () => {
@@ -18,7 +18,7 @@ export default function BulkActionBar() {
   };
 
   const visible = view === 'list' && selectedKeys.length > 0;
-  const lockStyle = adminOk ? undefined : { opacity: .45, pointerEvents: 'none' };
+  const lockStyle: React.CSSProperties | undefined = adminOk ? undefined : { opacity: 0.45, pointerEvents: 'none' };
   const lockTitle = adminOk ? undefined : '관리자 전용';
 
   return (
@@ -29,7 +29,7 @@ export default function BulkActionBar() {
         <button className="rbtn" onClick={() => setBulkPriority('상')} title={lockTitle}>상</button>
         <button className="rbtn" onClick={() => setBulkPriority('중')} title={lockTitle}>중</button>
         <button className="rbtn" onClick={() => setBulkPriority('하')} title={lockTitle}>하</button>
-        
+
         <span style={{ fontSize: '.75rem', color: 'var(--text-2)', marginLeft: '6px' }}>담당:</span>
         <input
           id="bulkOwnerInp"
@@ -42,7 +42,7 @@ export default function BulkActionBar() {
         />
         <button className="rbtn" onClick={updateOwner} title={lockTitle}>일괄변경</button>
       </div>
-      
+
       <button
         className="rbtn"
         style={{ marginLeft: '8px', color: 'var(--danger)' }}

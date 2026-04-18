@@ -6,10 +6,11 @@ import { requireAdmin } from '../contexts/AuthContext.jsx';
 import { useDBSync } from '../hooks/useDBSync.js';
 import { useModals } from '../hooks/useModals.js';
 import { findItem } from '../utils/itemUtils.js';
+import type { Item } from '../types/index.js';
 
 const IMPORT_REQUIRED = ['key', 'name'];
 
-function buildDefaultMapping(headers) {
+function buildDefaultMapping(headers: string[]): Record<string, number> {
   return Object.fromEntries(FIELDS.map(field => {
     const index = headers.findIndex(header => (
       header.trim().toLowerCase() === field.toLowerCase()
@@ -19,10 +20,10 @@ function buildDefaultMapping(headers) {
   }));
 }
 
-function readTextFile(file) {
+function readTextFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = event => resolve(event.target.result);
+    reader.onload = e => resolve(e.target?.result as string);
     reader.onerror = reject;
     reader.readAsText(file, 'UTF-8');
   });
@@ -34,16 +35,16 @@ export default function ImportModal() {
   const { saveLocal, saveToServer, logActivity } = useDBSync();
   const { closeModal } = useModals();
 
-  const csvFileRef = useRef(null);
-  const mdImpRef = useRef(null);
-  const [raw, setRaw] = useState('');
-  const [step, setStep] = useState(1);
-  const [headers, setHeaders] = useState([]);
-  const [rows, setRows] = useState([]);
-  const [mapping, setMapping] = useState({});
+  const csvFileRef = useRef<HTMLInputElement>(null);
+  const mdImpRef   = useRef<HTMLInputElement>(null);
+  const [raw, setRaw]           = useState('');
+  const [step, setStep]         = useState(1);
+  const [headers, setHeaders]   = useState<string[]>([]);
+  const [rows, setRows]         = useState<string[][]>([]);
+  const [mapping, setMapping]   = useState<Record<string, number>>({});
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const notify = useCallback((msg, isErr) => storeNotify(msg, isErr ? 'error' : 'success'), [storeNotify]);
+  const notify = useCallback((msg: string, isErr?: boolean) => storeNotify(msg, isErr ? 'error' : 'success'), [storeNotify]);
 
   const statusText = useMemo(() => `${rows.length}개 행 감지됨, 컬럼 ${headers.length}개`, [headers.length, rows.length]);
 
@@ -56,23 +57,23 @@ export default function ImportModal() {
 
     const nextHeaders = allRows[0];
     const nextRows = allRows.slice(1);
-    
+
     setHeaders(nextHeaders);
     setRows(nextRows);
     setMapping(buildDefaultMapping(nextHeaders));
     setStep(2);
   }, [raw, notify]);
 
-  const loadFile = async file => {
+  const loadFile = async (file: File | null | undefined) => {
     if (!file) return;
     try {
       const text = await readTextFile(file);
       setRaw(text);
       analyzeText(text);
-    } catch (e) { notify('파일 읽기 오류', true); }
+    } catch { notify('파일 읽기 오류', true); }
   };
 
-  const doImport = async (append) => {
+  const doImport = async (append: boolean) => {
     const unmapped = IMPORT_REQUIRED.filter(field => (mapping[field] ?? -1) < 0);
     if (unmapped.length) {
       notify(`필수 필드 매핑이 없습니다: ${unmapped.map(field => FLABELS[field] || field).join(', ')}`, true);
@@ -83,9 +84,9 @@ export default function ImportModal() {
       .map(row => Object.fromEntries(FIELDS.map(field => {
         const columnIndex = mapping[field] ?? -1;
         return [field, columnIndex >= 0 && columnIndex < row.length ? (row[columnIndex] || '') : ''];
-      })))
+      })) as Record<string, string>)
       .filter(item => item.key && item.name)
-      .map(item => ({ ...item, updatedAt: Date.now() }));
+      .map(item => ({ ...item, updatedAt: Date.now() })) as Item[];
 
     if (!importedItems.length) { notify('가져올 데이터가 없습니다.', true); return; }
 
@@ -99,7 +100,7 @@ export default function ImportModal() {
     }
 
     pushUndo();
-    let nextItems = [];
+    let nextItems: Item[] = [];
     let logMsg = '';
 
     if (!append) {
@@ -110,8 +111,9 @@ export default function ImportModal() {
       const itemsMap = new Map(curItems.map(it => [it.key, it]));
       let added = 0;
       importedItems.forEach(it => {
-        if (itemsMap.has(it.key)) {
-          itemsMap.set(it.key, { ...itemsMap.get(it.key), ...it });
+        const existing = itemsMap.get(it.key);
+        if (existing) {
+          itemsMap.set(it.key, { ...existing, ...it });
         } else {
           itemsMap.set(it.key, it);
           added++;
@@ -151,12 +153,12 @@ export default function ImportModal() {
                 onDrop={e => { e.preventDefault(); setIsDragOver(false); loadFile(e.dataTransfer.files[0]); }}
                 style={{ cursor: 'pointer', padding: '30px', textAlign: 'center', border: '2px dashed var(--border)', borderRadius: '12px', background: 'var(--surface-2)' }}
               >
-                <input type="file" ref={csvFileRef} accept=".csv,.tsv,.txt" style={{ display: 'none' }} onChange={e => { loadFile(e.target.files[0]); e.target.value = ''; }} />
+                <input type="file" ref={csvFileRef} accept=".csv,.tsv,.txt" style={{ display: 'none' }} onChange={e => { loadFile(e.target.files?.[0]); e.target.value = ''; }} />
                 <div style={{ fontSize: '1.8rem' }}>📂</div>
                 <div style={{ fontWeight: 600, marginTop: '8px' }}>파일 드래그 또는 클릭</div>
                 <div style={{ fontSize: '.7rem', color: 'var(--text-3)' }}>.csv / .tsv / .txt (Tab 구분자)</div>
               </div>
-              
+
               <div style={{ marginTop: '4px' }}>
                 <span style={{ fontSize: '.75rem', color: 'var(--text-3)' }}>직접 붙여넣기:</span>
                 <textarea
@@ -178,7 +180,7 @@ export default function ImportModal() {
                 <input
                   type="file" ref={mdImpRef} accept=".md" multiple style={{ display: 'none' }}
                   onChange={e => requireAdmin(() => {
-                    impMdFiles(e);
+                    impMdFiles(e as unknown as Event);
                     closeModal('importModal');
                   })}
                 />
@@ -193,7 +195,7 @@ export default function ImportModal() {
               <div style={{ fontSize: '.75rem', padding: '8px 12px', background: 'var(--accent-l)', color: 'var(--accent)', borderRadius: '8px', marginBottom: '12px' }}>
                 {statusText}
               </div>
-              
+
               <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '10px' }}>
                 {FIELDS.map(f => {
                   const idx = mapping[f] ?? -1;

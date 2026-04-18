@@ -1,7 +1,7 @@
 import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
 
-const SHORTCUTS = [
+const SHORTCUTS: Array<{ keys: string[]; label: string }> = [
   { keys: ['N'], label: '기능 추가' },
   { keys: ['F'], label: '필터 패널 토글' },
   { keys: ['/'], label: '검색 포커스' },

@@ -17,7 +17,7 @@ export function useBoardActions() {
     setBoardSelectionKeys
   );
 
-  const moveItems = useCallback(async (keys, toStatus) => {
+  const moveItems = useCallback(async (keys: Set<string>, toStatus: string) => {
     if (!isEditor()) {
       notify('편집 권한이 없습니다.', 'error');
       return;
@@ -26,7 +26,7 @@ export function useBoardActions() {
     const { pushUndo, items: currentItems, setItems, settings } = useAppStore.getState();
     pushUndo();
     const items = [...currentItems];
-    const movedItems = [];
+    const movedItems: typeof items = [];
     const keysArray = Array.from(keys);
 
     keysArray.forEach(k => {
@@ -63,7 +63,7 @@ export function useBoardActions() {
     handleCardClick,
     clearSelection,
     moveItems,
-    lockKeys:   (keys) => keys.forEach(k => lockItem(k)),
-    unlockKeys: (keys) => keys.forEach(k => unlockItem(k)),
+    lockKeys:   (keys: string[]) => keys.forEach(k => lockItem(k)),
+    unlockKeys: (keys: string[]) => keys.forEach(k => unlockItem(k)),
   };
 }

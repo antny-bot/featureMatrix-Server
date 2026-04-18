@@ -4,12 +4,14 @@ import { submitLogin, closeLoginModal } from '../contexts/AuthContext.jsx';
 
 export default function LoginModal() {
   const loginModal = useAppStore(s => s.loginModal);
-  const { visible, role, name, password, error } = loginModal;
-  const passwordRef = useRef(null);
+  const { visible, role, error } = loginModal;
+  const name = (loginModal as Record<string, unknown>).name as string | undefined;
+  const password = (loginModal as Record<string, unknown>).password as string | undefined;
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   if (!visible) return null;
 
-  const updateField = (field, value) => {
+  const updateField = (field: string, value: string) => {
     useAppStore.setState({
       loginModal: { ...useAppStore.getState().loginModal, [field]: value }
     });
@@ -30,7 +32,7 @@ export default function LoginModal() {
                 className="inp"
                 id="loginRoleSelect"
                 value={role}
-                onChange={event => updateField('role', event.target.value)}
+                onChange={e => updateField('role', e.target.value)}
                 style={{ height: '38px', fontSize: '.82rem', paddingTop: 0, paddingBottom: 0 }}
               >
                 <option value="editor">편집자</option>
@@ -43,10 +45,10 @@ export default function LoginModal() {
                 className="inp"
                 id="loginNameInp"
                 value={name || ''}
-                onChange={event => updateField('name', event.target.value)}
+                onChange={e => updateField('name', e.target.value)}
                 placeholder="닉네임"
                 style={{ height: '32px', fontSize: '.82rem' }}
-                onKeyDown={event => { if (event.key === 'Enter') passwordRef.current?.focus(); }}
+                onKeyDown={e => { if (e.key === 'Enter') passwordRef.current?.focus(); }}
               />
             </div>
             <div>
@@ -57,10 +59,10 @@ export default function LoginModal() {
                 ref={passwordRef}
                 type="password"
                 value={password || ''}
-                onChange={event => updateField('password', event.target.value)}
+                onChange={e => updateField('password', e.target.value)}
                 placeholder="비밀번호"
                 style={{ height: '32px', fontSize: '.82rem' }}
-                onKeyDown={event => { if (event.key === 'Enter') submitLogin(); }}
+                onKeyDown={e => { if (e.key === 'Enter') submitLogin(); }}
               />
             </div>
             <div id="loginErr" style={{ color: 'var(--danger)', fontSize: '.78rem', minHeight: '16px' }}>{error}</div>

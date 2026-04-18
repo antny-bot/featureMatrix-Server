@@ -7,8 +7,18 @@ import FeatureCard from './FeatureCard.jsx';
 import { useBoardActions } from '../hooks/useBoardActions.js';
 import { useModals } from '../hooks/useModals.js';
 
-/* ── 액션바 ── */
-function BoardActionBar({ boardSel, onMove, onClear }) {
+interface OnMoveWithLabels {
+  (st: string): void;
+  labels?: Record<string, string>;
+}
+
+interface BoardActionBarProps {
+  boardSel: string[];
+  onMove: OnMoveWithLabels;
+  onClear: () => void;
+}
+
+function BoardActionBar({ boardSel, onMove, onClear }: BoardActionBarProps) {
   if (boardSel.length === 0) return null;
 
   return (
@@ -24,7 +34,6 @@ function BoardActionBar({ boardSel, onMove, onClear }) {
   );
 }
 
-/* ── 메인 컴포넌트 ── */
 export default function BoardView() {
   const items        = useAppStore(s => s.items);
   const filters      = useAppStore(s => s.filters);
@@ -36,10 +45,9 @@ export default function BoardView() {
   const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useBoardActions();
   const { openMdModal } = useModals();
 
-  const [expanded, setExpanded] = useState(new Set());
-  const [dragOverCol, setDragOverCol] = useState(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
-  /* ── 컬럼 데이터 계산 ── */
   const filteredItems = useMemo(
     () => (
       isFilterActive(filters, searchQ)
@@ -48,11 +56,11 @@ export default function BoardView() {
     ),
     [items, filters, searchQ]
   );
-  
+
   const colors = getColors();
 
   const byCol = useMemo(() => {
-    const map = Object.fromEntries(STATUS_OPTS.map(k => [k, []]));
+    const map = Object.fromEntries(STATUS_OPTS.map(k => [k, [] as typeof items]));
     filteredItems.forEach(it => {
       const st = it.status || 'backlog';
       if (map[st]) map[st].push(it);
@@ -61,23 +69,23 @@ export default function BoardView() {
     return map;
   }, [filteredItems]);
 
-  const onDragStart = useCallback((e, key) => {
+  const onDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, key: string) => {
     const { setIsDragging, setBoardSelectionKeys, boardSelectionKeys } = useAppStore.getState();
     setIsDragging(true);
     const keysToMove = boardSelectionKeys.includes(key) ? boardSelectionKeys : [key];
     setBoardSelectionKeys(keysToMove);
-    lockKeys(new Set(keysToMove));
+    lockKeys(keysToMove);
     e.dataTransfer.effectAllowed = 'move';
   }, [lockKeys]);
 
   const onDragEnd = useCallback(() => {
     const { boardSelectionKeys, setIsDragging } = useAppStore.getState();
-    unlockKeys(new Set(boardSelectionKeys));
+    unlockKeys(boardSelectionKeys);
     setIsDragging(false);
     setDragOverCol(null);
   }, [unlockKeys]);
 
-  const onDrop = useCallback((e, colKey) => {
+  const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>, colKey: string) => {
     e.preventDefault();
     setDragOverCol(null);
     moveItems(new Set(useAppStore.getState().boardSelectionKeys), colKey);
@@ -91,7 +99,7 @@ export default function BoardView() {
     <>
       <div className="board-cols" onClick={handleBoardClick}>
         {STATUS_OPTS.map(colKey => {
-          const colItems      = byCol[colKey] || [];
+          const colItems       = byCol[colKey] || [];
           const alwaysExpanded = foldCount === 0;
           const isExp          = expanded.has(colKey) || alwaysExpanded;
           const overLimit      = !alwaysExpanded && colItems.length > foldCount;
@@ -100,7 +108,7 @@ export default function BoardView() {
 
           return (
             <div key={colKey} className="board-col">
-              <div className="board-col-hd" style={{ borderTop: `3px solid ${STATUS_ACCENT[colKey]}` }}>
+              <div className="board-col-hd" style={{ borderTop: `3px solid ${(STATUS_ACCENT as Record<string, string>)[colKey]}` }}>
                 <span>
                   {statusLabels?.[colKey] || colKey}
                   <span className="board-col-cnt">{colItems.length}</span>
@@ -119,7 +127,7 @@ export default function BoardView() {
                   setDragOverCol(colKey);
                 }}
                 onDragLeave={e => {
-                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
                     setDragOverCol(null);
                   }
                 }}
@@ -151,9 +159,9 @@ export default function BoardView() {
           );
         })}
       </div>
-      <BoardActionBar 
-        boardSel={boardSel} 
-        onMove={Object.assign((st) => moveItems(new Set(boardSel), st), { labels: statusLabels })}
+      <BoardActionBar
+        boardSel={boardSel}
+        onMove={Object.assign((st: string) => moveItems(new Set(boardSel), st), { labels: statusLabels })}
         onClear={clearSelection}
       />
     </>

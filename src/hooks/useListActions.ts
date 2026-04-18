@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { Item } from '../types/index.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from './useDBSync.js';
 import { usePersistItems } from './usePersistItems.js';
@@ -8,14 +9,14 @@ export function useListActions() {
   const { logActivity } = useDBSync();
   const { persistItems } = usePersistItems();
 
-  const bulkToggle = useCallback((key) => {
+  const bulkToggle = useCallback((key: string) => {
     const prev = new Set(useAppStore.getState().bulkSelectionKeys);
     if (prev.has(key)) prev.delete(key);
     else prev.add(key);
     setBulkSelectionKeys([...prev]);
   }, [setBulkSelectionKeys]);
 
-  const bulkToggleAll = useCallback((checked, filteredItems) => {
+  const bulkToggleAll = useCallback((checked: boolean, filteredItems: Item[]) => {
     setBulkSelectionKeys(checked ? filteredItems.map(it => it.key) : []);
   }, [setBulkSelectionKeys]);
 
@@ -23,14 +24,14 @@ export function useListActions() {
     setBulkSelectionKeys([]);
   }, [setBulkSelectionKeys]);
 
-  const toggleSort = useCallback((key) => {
+  const toggleSort = useCallback((key: string) => {
     const s = { ...useAppStore.getState().sort };
     s.dir = s.key === key ? (s.dir === 'asc' ? 'desc' : 'asc') : 'asc';
     s.key = key;
     useAppStore.setState({ sort: s });
   }, []);
 
-  const setBulkPriority = useCallback(async (priority) => {
+  const setBulkPriority = useCallback(async (priority: string) => {
     const { bulkSelectionKeys, pushUndo, items, setItems } = useAppStore.getState();
     if (!bulkSelectionKeys.length) return;
 
@@ -43,7 +44,7 @@ export function useListActions() {
     await persistItems();
   }, [logActivity, persistItems]);
 
-  const setBulkOwner = useCallback(async (owner) => {
+  const setBulkOwner = useCallback(async (owner: string) => {
     const nextOwner = String(owner || '').trim();
     const { bulkSelectionKeys, pushUndo, items, setItems } = useAppStore.getState();
     if (!nextOwner || !bulkSelectionKeys.length) return;

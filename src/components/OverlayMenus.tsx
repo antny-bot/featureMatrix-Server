@@ -1,17 +1,17 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect } from 'react';
 import { STATUS_OPTS } from '../app/constants.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { useModals } from '../hooks/useModals.js';
 import { findItem, normOwner } from '../utils/itemUtils.js';
 
 export default function OverlayMenus() {
-  const contextMenu      = useAppStore(s => s.contextMenu);
-  const statusMenu       = useAppStore(s => s.statusMenu);
-  const tooltip          = useAppStore(s => s.tooltip);
-  const items            = useAppStore(s => s.items);
-  const statusLabels     = useAppStore(s => s.settings.statusLabels);
-  const setContextMenu   = useAppStore(s => s.setContextMenu);
-  const setStatusMenu    = useAppStore(s => s.setStatusMenu);
+  const contextMenu    = useAppStore(s => s.contextMenu);
+  const statusMenu     = useAppStore(s => s.statusMenu);
+  const tooltip        = useAppStore(s => s.tooltip);
+  const items          = useAppStore(s => s.items);
+  const statusLabels   = useAppStore(s => s.settings.statusLabels);
+  const setContextMenu = useAppStore(s => s.setContextMenu);
+  const setStatusMenu  = useAppStore(s => s.setStatusMenu);
   const { openEditModal, openMdModal, duplicateItem, quickToggleDel, setItemStatus } = useModals();
 
   useEffect(() => {
@@ -27,13 +27,9 @@ export default function OverlayMenus() {
     };
   }, [contextMenu, statusMenu, setContextMenu, setStatusMenu]);
 
-  const runContextAction = action => {
+  const runContextAction = (action: () => void) => {
     setContextMenu(null);
     action();
-  };
-
-  const openMd = (key) => {
-    openMdModal(key);
   };
 
   return (
@@ -41,7 +37,7 @@ export default function OverlayMenus() {
       {contextMenu && (
         <div className="ctx-menu" style={{ left: contextMenu.x, top: contextMenu.y }} onClick={e => e.stopPropagation()}>
           <button className="ctx-item" onClick={() => runContextAction(() => openEditModal(contextMenu.key))}>✏️ 편집</button>
-          <button className="ctx-item" onClick={() => runContextAction(() => openMd(contextMenu.key))}>📝 마크다운 열기</button>
+          <button className="ctx-item" onClick={() => runContextAction(() => openMdModal(contextMenu.key))}>📝 마크다운 열기</button>
           <button className="ctx-item" onClick={() => runContextAction(() => duplicateItem(contextMenu.key))}>⧉ 복제</button>
           <div className="ctx-sep" />
           <button className="ctx-item danger" onClick={() => runContextAction(() => quickToggleDel(contextMenu.key))}>
@@ -52,7 +48,7 @@ export default function OverlayMenus() {
 
       {statusMenu && (
         <div className="status-quick-menu" style={{ left: statusMenu.x, top: statusMenu.y }} onClick={e => e.stopPropagation()}>
-          {[['', '— 없음'], ...STATUS_OPTS.map(s => [s, statusLabels?.[s] || s])].map(([value, label]) => (
+          {([['', '— 없음'], ...STATUS_OPTS.map(s => [s, statusLabels?.[s] || s])] as [string, string][]).map(([value, label]) => (
             <button
               className={`status-quick-item${statusMenu.currentStatus === value ? ' on' : ''}`}
               key={value || 'none'}

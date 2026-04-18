@@ -177,3 +177,38 @@ export interface KeyboardActions {
 export type ViewType = 'matrix' | 'dashboard' | 'board' | 'list' | 'admin';
 export type ServerStatus = 'idle' | 'ok' | 'error';
 export type WsStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
+
+export interface ThemeColorSet {
+  pHigh: string;
+  pHighBg: string;
+  pMid: string;
+  pMidBg: string;
+  pLow: string;
+  pLowBg: string;
+  mxGBg: string;
+  mxGC: string;
+  mxSgBg: string;
+  mxSgC: string;
+  mxCBg: string;
+  mxCC: string;
+  mxBorder: string;
+  mxBW: number;
+}
+
+export interface ThemeDefinition {
+  name: string;
+  light: ThemeColorSet;
+  dark: ThemeColorSet;
+}
+
+export interface StatusChipColor {
+  col: string;
+  bg: string;
+}
+
+export interface MatrixTarget {
+  g: string;
+  sg: string;
+  c: string;
+  sc: string;
+}

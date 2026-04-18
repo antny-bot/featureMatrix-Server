@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { MatrixTarget } from '../types/index.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from './useDBSync.js';
 import { usePersistItems } from './usePersistItems.js';
@@ -16,7 +17,7 @@ export function useMatrixActions() {
     setMxSelectionKeys
   );
 
-  const moveItems = useCallback(async (keys, target) => {
+  const moveItems = useCallback(async (keys: Set<string>, target: MatrixTarget) => {
     const { g, sg, c, sc } = target;
     const { pushUndo, items: currentItems, setItems } = useAppStore.getState();
     pushUndo();
@@ -55,7 +56,7 @@ export function useMatrixActions() {
     handleCardClick,
     clearSelection,
     moveItems,
-    lockKeys:   (keys) => keys.forEach(k => lockItem(k)),
-    unlockKeys: (keys) => keys.forEach(k => unlockItem(k)),
+    lockKeys:   (keys: string[]) => keys.forEach(k => lockItem(k)),
+    unlockKeys: (keys: string[]) => keys.forEach(k => unlockItem(k)),
   };
 }

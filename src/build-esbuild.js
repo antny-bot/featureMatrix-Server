@@ -70,10 +70,9 @@ async function build() {
   console.log(`📦 버전: v${version}  빌드: ${buildId}  커밋: ${gitHash}`);
 
   /* ── 1. esbuild 로 JS 번들 생성 ── */
-  // main.jsx(React) 우선, 없으면 기존 main.js fallback
-  const entryJsx = path.join(ROOT, 'main.jsx');
+  const entryJsx = path.join(ROOT, 'main.tsx');
   if (!fs.existsSync(entryJsx)) {
-    console.error('React entry not found: src/main.jsx');
+    console.error('React entry not found: src/main.tsx');
     process.exit(1);
   }
 

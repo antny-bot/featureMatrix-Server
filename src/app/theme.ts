@@ -1,29 +1,24 @@
-/* ══════════════════════════════════════════
-   theme.js — 색상 계산, CSS 변수 주입, 테마 전환
-══════════════════════════════════════════ */
-
+import type { ThemeColorSet } from '../types/index.js';
 import { THEMES } from './constants.js';
 import { useAppStore } from '../store/useAppStore.js';
 
 const getStore = () => useAppStore.getState();
-const notify = (msg, type = 'success') => getStore().notify?.(msg, type);
 
-export function getColors() {
+export function getColors(): ThemeColorSet {
   const ss = getStore().settings;
   const tid = ss.themeId || 'sobuk';
   const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   const base = (THEMES[tid] && THEMES[tid][mode]) ? THEMES[tid][mode] : THEMES.sobuk[mode];
   const custom = (ss.customColors && ss.customColors[mode]) ? ss.customColors[mode] : {};
-  return { ...base, ...custom };
+  return { ...base, ...custom } as ThemeColorSet;
 }
 
-export function applyVars() {
+export function applyVars(): void {
   const c  = getColors();
   const ss = getStore().settings;
   let css = `html{font-size:${ss.baseFont}px !important}\n`;
   css += `:root{--p-high:${c.pHigh};--p-high-bg:${c.pHighBg};--p-mid:${c.pMid};--p-mid-bg:${c.pMidBg};--p-low:${c.pLow};--p-low-bg:${c.pLowBg};--db-theme-c:${c.mxGC};--db-theme-bg:${c.mxGBg}}\n`;
   css += `.mtable,.mtable th,.mtable td{border:${c.mxBW}px solid ${c.mxBorder}}\n`;
-  /* X축 헤더: background를 dynStyle로 주입 → sticky 배경도 정확히 반영 */
   css += `.m-ghd{background:${c.mxGBg};color:${c.mxGC}}\n`;
   css += `.m-sghd{background:${c.mxSgBg};color:${c.mxSgC||'var(--text-3)'};width:${ss.colW}px;min-width:${ss.colW}px}\n`;
   css += `.m-subcat{width:${ss.subCatW}px;min-width:${ss.subCatW}px;color:${c.mxCC||'var(--text-3)'}}\n`;
@@ -38,7 +33,7 @@ export function applyVars() {
   if (el) el.textContent = css;
 }
 
-export function toggleTheme() {
+export function toggleTheme(): boolean {
   const html   = document.documentElement;
   const isDark = html.getAttribute('data-theme') === 'dark';
   const next   = !isDark;
@@ -47,7 +42,7 @@ export function toggleTheme() {
   return next;
 }
 
-export function setCustomColor(k, v) {
+export function setCustomColor(k: string, v: string): void {
   const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   const ss = getStore().settings;
   const customColors = {
@@ -61,7 +56,7 @@ export function setCustomColor(k, v) {
   applyVars();
 }
 
-export function getPresetCSS(pid, pHex, pBg) {
+export function getPresetCSS(pid: string, pHex: string, pBg: string): string {
   switch(pid) {
     case 'left-thin':  return `border:1px solid var(--border);border-left:2px solid ${pHex};background:var(--surface)`;
     case 'left-thick': return `border:1px solid var(--border);border-left:4px solid ${pHex};background:var(--surface)`;

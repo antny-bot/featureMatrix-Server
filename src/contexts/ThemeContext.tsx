@@ -1,9 +1,14 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 import { toggleTheme as toggleDocumentTheme } from '../app/theme.js';
 
-const ThemeContext = createContext({ isDark: false, toggleTheme: () => {} });
+interface ThemeContextValue {
+  isDark: boolean;
+  toggleTheme: () => void;
+}
 
-export function ThemeProvider({ children }) {
+const ThemeContext = createContext<ThemeContextValue>({ isDark: false, toggleTheme: () => {} });
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(
     () => document.documentElement.getAttribute('data-theme') === 'dark'
   );

@@ -1407,7 +1407,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   var require_react_dom_production = __commonJS({
     "node_modules/react-dom/cjs/react-dom.production.js"(exports) {
       "use strict";
-      var React2 = require_react();
+      var React3 = require_react();
       function formatProdErrorMessage(code) {
         var url2 = "https://react.dev/errors/" + code;
         if (1 < arguments.length) {
@@ -1447,7 +1447,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           implementation
         };
       }
-      var ReactSharedInternals = React2.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
+      var ReactSharedInternals = React3.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
       function getCrossOriginStringAs(as, input) {
         if ("font" === as) return "";
         if ("string" === typeof input)
@@ -1583,7 +1583,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     "node_modules/react-dom/cjs/react-dom-client.production.js"(exports) {
       "use strict";
       var Scheduler = require_scheduler();
-      var React2 = require_react();
+      var React3 = require_react();
       var ReactDOM = require_react_dom();
       function formatProdErrorMessage(code) {
         var url2 = "https://react.dev/errors/" + code;
@@ -1778,7 +1778,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         return null;
       }
       var isArrayImpl = Array.isArray;
-      var ReactSharedInternals = React2.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
+      var ReactSharedInternals = React3.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
       var ReactDOMSharedInternals = ReactDOM.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
       var sharedNotPendingObject = {
         pending: false,
@@ -13224,7 +13224,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           0 === i && attemptExplicitHydrationTarget(target);
         }
       };
-      var isomorphicReactPackageVersion$jscomp$inline_1840 = React2.version;
+      var isomorphicReactPackageVersion$jscomp$inline_1840 = React3.version;
       if ("19.2.5" !== isomorphicReactPackageVersion$jscomp$inline_1840)
         throw Error(
           formatProdErrorMessage(
@@ -13391,7 +13391,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }
   });
 
-  // main.jsx
+  // main.tsx
   var import_client = __toESM(require_client());
 
   // components/App.tsx
@@ -13403,12 +13403,19 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   // contexts/AuthContext.tsx
   var import_react2 = __toESM(require_react());
 
-  // app/constants.js
+  // app/constants.ts
   var SK = "sobukMXv6";
   var UNDO_MAX = 20;
   var ADMIN_TOKEN_KEY = "fmAdminToken";
   var EDITOR_TOKEN_KEY = "fmEditorToken";
   var DATA_VERSION = 3;
+  var STATUS_KEY_MAP = {
+    "\uB300\uAE30": "backlog",
+    "\uC2DC\uC791\uAC00\uB2A5": "ready",
+    "\uC9C4\uD589\uC911": "progress",
+    "\uAC80\uD1A0\uC911": "review",
+    "\uC644\uB8CC": "done"
+  };
   var MIGRATIONS = {
     1: (item) => ({
       ...item,
@@ -13418,7 +13425,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }),
     2: (item) => ({
       ...item,
-      status: STATUS_KEY_MAP[item.status] || item.status || ""
+      status: STATUS_KEY_MAP[item.status ?? ""] || item.status || ""
     })
   };
   var FIELDS = [
@@ -13458,13 +13465,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     memo: "\uBA54\uBAA8",
     mdPath: "MD\uACBD\uB85C",
     mdContent: "MD\uB0B4\uC6A9"
-  };
-  var STATUS_KEY_MAP = {
-    "\uB300\uAE30": "backlog",
-    "\uC2DC\uC791\uAC00\uB2A5": "ready",
-    "\uC9C4\uD589\uC911": "progress",
-    "\uAC80\uD1A0\uC911": "review",
-    "\uC644\uB8CC": "done"
   };
   var STATUS_OPTS = ["backlog", "ready", "progress", "review", "done"];
   var STATUS_CLS = { backlog: "status-backlog", ready: "status-ready", progress: "status-progress", review: "status-review", done: "status-done" };
@@ -17467,10 +17467,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   var getStore = () => useAppStore.getState();
   var setStore = (patch) => useAppStore.setState(patch);
 
-  // app/socket.js
+  // app/socket.ts
   var _socket = null;
   var _pendingQueue = [];
-  var _lastAppliedServerTs = 0;
   var _recentLocalUnlocks = {};
   var CLIENT_ID_KEY = "fmClientId";
   function _getServerUrl() {
@@ -17553,6 +17552,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }
   }
   function _registerListeners() {
+    if (!_socket) return;
     _socket.on("connect", () => {
       setStore({ wsStatus: "connected" });
       _syncActiveUser();
@@ -17560,12 +17560,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     });
     _socket.on("disconnect", () => {
       setStore({ wsStatus: "disconnected", activeUsers: [] });
-    });
-    _socket.on("connect_error", () => {
-      setStore({ wsStatus: "disconnected" });
-    });
-    _socket.io.on("reconnect_attempt", () => {
-      setStore({ wsStatus: "reconnecting" });
     });
     _socket.on("connect_error", () => {
       setStore({ wsStatus: "disconnected" });
@@ -17588,13 +17582,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       _removeLock(key);
       _setPreview(key, null);
     });
-    _socket.on("lock_denied", ({ key, lockedBy }) => {
-      getStore().notify(`${lockedBy}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC785\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uAC70\uB098 \uD574\uC81C\uB97C \uC694\uCCAD\uD558\uC138\uC694.`, "warning");
+    _socket.on("lock_denied", ({ lockedBy }) => {
+      getStore().notify(`${lockedBy}\uB2D8\uC774 \uD3B8\uC9D1 \uC911\uC785\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694.`, "warning");
     });
     _socket.on("editing_preview", ({ key, user, preview }) => {
       _setPreview(key, { user, preview });
     });
-    _socket.on("item_saved", ({ key, user, item }) => {
+    _socket.on("item_saved", ({ key, user: _user, item }) => {
       _removeLock(key);
       _setPreview(key, null);
       const store = getStore();
@@ -17604,8 +17598,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     });
     _socket.on("data_saved", ({ user, payload, serverTs }) => {
       if (!payload) return;
-      if (serverTs && serverTs <= _lastAppliedServerTs) return;
-      if (serverTs) _lastAppliedServerTs = serverTs;
       const store = getStore();
       setStore({
         items: payload.items || store.items,
@@ -17617,14 +17609,6 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     });
     _socket.on("user_list_updated", ({ users }) => {
       _setActiveUsers(users);
-    });
-    _socket.on("unlock_requested", ({ key, requester }) => {
-      const store = getStore();
-      store.notify(`${requester || "\uB204\uAD70\uAC00"}\uB2D8\uC774 ${key} \uC7A0\uAE08 \uD574\uC81C\uB97C \uC694\uCCAD\uD588\uC2B5\uB2C8\uB2E4.`, "warning");
-    });
-    _socket.on("unlock_request_failed", ({ key, error }) => {
-      const store = getStore();
-      store.notify(error || "\uC7A0\uAE08 \uD574\uC81C \uC694\uCCAD \uC2E4\uD328", "error");
     });
   }
   function initSocket() {
@@ -17674,17 +17658,17 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function emitUnlock(key, user) {
     _emit("unlock_item", { key, user });
   }
+  function emitRequestUnlock(key, user) {
+    _emit("request_unlock", { key, user });
+  }
   function emitPreview(key, user, preview) {
     _emit("editing_preview", { key, user, preview });
   }
   function emitDataSave(user, payload, serverTs) {
     _emit("save_data", { user, payload, serverTs });
   }
-  function emitRequestUnlock(key, user) {
-    _emit("request_unlock", { key, user });
-  }
 
-  // utils/api.js
+  // utils/api.ts
   function apiBase() {
     const url2 = (getStore().settings.serverUrl || "").trim();
     return url2 || window.location.origin;
@@ -17705,10 +17689,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const contentType = res.headers.get("content-type") || "";
     const payload = contentType.includes("application/json") ? await res.json() : null;
     if (!res.ok) {
-      const err = new Error(payload?.error || res.statusText || String(res.status));
-      err.status = res.status;
-      err.payload = payload;
-      throw err;
+      const errMsg = payload && typeof payload === "object" && "error" in payload ? String(payload.error) : res.statusText || String(res.status);
+      throw Object.assign(new Error(errMsg), { status: res.status, payload });
     }
     return payload;
   }
@@ -17840,26 +17822,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       store.setLoginError(err.payload?.error || err.message || "\uC11C\uBC84\uC5D0 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     }
   }
-  async function refreshToken() {
-    if (!hasStoredAuth()) return false;
-    try {
-      const json = await apiFetch("/api/auth/refresh", { method: "POST" });
-      if (json.ok && json.expiresAt) {
-        _tokenExpiresAt = json.expiresAt;
-        authRefresh?.();
-        return true;
-      }
-    } catch {
-    }
-    return false;
-  }
   function logout() {
-    const adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
-    const editorToken = sessionStorage.getItem(EDITOR_TOKEN_KEY) || "";
-    if (adminToken || editorToken) {
-      apiFetch("/api/auth/logout", { method: "POST" }).catch(() => {
-      });
-    }
     clearAuthSession(false);
     notify("\uB85C\uADF8\uC544\uC6C3\uB410\uC2B5\uB2C8\uB2E4.", "success");
   }
@@ -17911,11 +17874,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       const WARN_MS = 5 * 60 * 1e3;
       let warnId;
       if (msLeft - WARN_MS > 0) {
-        warnId = setTimeout(async () => {
-          const refreshed = await refreshToken();
-          if (!refreshed) {
-            notify("\uC138\uC158\uC774 5\uBD84 \uD6C4 \uB9CC\uB8CC\uB429\uB2C8\uB2E4. \uC800\uC7A5 \uD6C4 \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.", "warning");
-          }
+        warnId = setTimeout(() => {
+          notify("\uC138\uC158\uC774 5\uBD84 \uD6C4 \uB9CC\uB8CC\uB429\uB2C8\uB2E4. \uC800\uC7A5 \uD6C4 \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.", "warning");
         }, msLeft - WARN_MS);
       }
       const expId = setTimeout(() => {
@@ -17941,10 +17901,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return (0, import_react2.useContext)(AuthContext);
   }
 
-  // contexts/ThemeContext.jsx
+  // contexts/ThemeContext.tsx
   var import_react3 = __toESM(require_react());
 
-  // app/theme.js
+  // app/theme.ts
   var getStore2 = () => useAppStore.getState();
   function getColors() {
     const ss = getStore2().settings;
@@ -18028,7 +17988,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }
   }
 
-  // contexts/ThemeContext.jsx
+  // contexts/ThemeContext.tsx
   var import_jsx_runtime2 = __toESM(require_jsx_runtime());
   var ThemeContext = (0, import_react3.createContext)({ isDark: false, toggleTheme: () => {
   } });
@@ -18043,7 +18003,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   }
   var useTheme = () => (0, import_react3.useContext)(ThemeContext);
 
-  // hooks/useModals.js
+  // hooks/useModals.ts
   var import_react6 = __toESM(require_react());
 
   // hooks/useDBSync.ts
@@ -18658,7 +18618,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     };
   }
 
-  // hooks/usePersistItems.js
+  // hooks/usePersistItems.ts
   var import_react5 = __toESM(require_react());
   function usePersistItems() {
     const { saveToServer, saveLocal, unlockItem, broadcastSharedData } = useDBSync();
@@ -18679,7 +18639,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return { persistItems };
   }
 
-  // hooks/useModals.js
+  // hooks/useModals.ts
   function useModals() {
     const { lockItem, unlockItem, logActivity } = useDBSync();
     const { persistItems } = usePersistItems();
@@ -19371,10 +19331,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] });
   }
 
-  // components/BulkActionBar.jsx
+  // components/BulkActionBar.tsx
   var import_react10 = __toESM(require_react());
 
-  // hooks/useListActions.js
+  // hooks/useListActions.ts
   var import_react9 = __toESM(require_react());
   function useListActions() {
     const setBulkSelectionKeys = useAppStore((s) => s.setBulkSelectionKeys);
@@ -19429,7 +19389,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     };
   }
 
-  // components/BulkActionBar.jsx
+  // components/BulkActionBar.tsx
   var import_jsx_runtime6 = __toESM(require_jsx_runtime());
   function BulkActionBar() {
     const view = useAppStore((s) => s.view);
@@ -20019,10 +19979,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] }, status)) });
   }
 
-  // components/MatrixView.jsx
+  // components/MatrixView.tsx
   var import_react15 = __toESM(require_react());
 
-  // components/FeatureCard.jsx
+  // components/FeatureCard.tsx
   var import_react12 = __toESM(require_react());
   var import_jsx_runtime8 = __toESM(require_jsx_runtime());
   function highlightText(value2, query) {
@@ -20049,7 +20009,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     }, {});
   }
   function PreviewOverlay({ item, lockInfo, previewData }) {
-    if (!previewData) return null;
+    if (!previewData || !lockInfo) return null;
     const preview = previewData.preview || {};
     const rows = [
       ["\uAE30\uB2A5\uBA85", preview.name, item.name],
@@ -20071,7 +20031,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       rows.map(([label, value2]) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
         label,
         ": ",
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("b", { children: value2 })
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("b", { children: String(value2) })
       ] }, label))
     ] });
   }
@@ -20097,8 +20057,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const { isEditor: editorOk } = useAuth();
     const pk = getPK(item.priority);
     const pkColorKey = pk[0].toUpperCase() + pk.slice(1);
-    const pHex = colors[`p${pkColorKey}`] || "#888";
-    const pBg = colors[`p${pkColorKey}Bg`] || "#eee";
+    const colorsMap = colors;
+    const pHex = colorsMap[`p${pkColorKey}`] || "#888";
+    const pBg = colorsMap[`p${pkColorKey}Bg`] || "#eee";
     const priorityStyle = cssTextToStyle(getPresetCSS(settings.priorityStyles[pk], pHex, pBg));
     const isNew = item.key?.charAt(0) === "N";
     const isDeleted = item.isDelete === "Y";
@@ -20108,6 +20069,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const isLockedByOther = lockInfo && lockInfo.user !== myName;
     const previewData = isLockedByOther ? previews[item.key] : null;
     const canDrag = editorOk;
+    const restProps = props;
     return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
       "div",
       {
@@ -20127,34 +20089,34 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           marginBottom: `${settings.cardGap}px`,
           ...style
         },
-        ...props,
+        ...restProps,
         onDragStart: canDrag ? onDragStart : void 0,
         onDragEnd: canDrag ? onDragEnd : void 0,
-        onMouseOver: (event) => {
+        onMouseOver: (e) => {
           if (getStore().isDragging) return;
-          getStore().startTooltip(item.key, event.clientX + 14, event.clientY + 14);
+          getStore().startTooltip(item.key, e.clientX + 14, e.clientY + 14);
         },
         onMouseOut: () => getStore().clearTooltip(),
         onClick,
         onDoubleClick: onDoubleClick || (() => openEditModal(item.key)),
-        onContextMenu: onContextMenu || ((event) => {
-          event.preventDefault();
-          event.stopPropagation();
+        onContextMenu: onContextMenu || ((e) => {
+          e.preventDefault();
+          e.stopPropagation();
           getStore().setContextMenu({
             key: item.key,
             isDeleted: item.isDelete === "Y",
-            x: Math.min(event.clientX, window.innerWidth - 160),
-            y: Math.min(event.clientY, window.innerHeight - 180)
+            x: Math.min(e.clientX, window.innerWidth - 160),
+            y: Math.min(e.clientY, window.innerHeight - 180)
           });
         }),
         children: [
           isLockedByOther && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { position: "absolute", top: 0, left: 0, right: 0, background: "rgba(0,0,0,.55)", color: "#fff", fontSize: ".65rem", fontWeight: 700, padding: "2px 6px", borderRadius: "6px 6px 0 0", pointerEvents: "none" }, children: [
             "\u{1F512} ",
-            lockInfo.user,
+            lockInfo?.user,
             " \uD3B8\uC9D1 \uC911"
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(PreviewOverlay, { item, lockInfo, previewData }),
-          canDrag && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "card-actions", onClick: (event) => event.stopPropagation(), children: [
+          canDrag && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "card-actions", onClick: (e) => e.stopPropagation(), children: [
             /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("button", { className: "card-act-btn", title: "\uD3B8\uC9D1", onClick: () => openEditModal(item.key), children: "\u270F" }),
             /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("button", { className: "card-act-btn", title: "\uBCF5\uC81C", onClick: () => duplicateItem(item.key), children: "\u29C9" })
           ] }),
@@ -20166,8 +20128,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               "span",
               {
                 className: "md-badge",
-                onClick: (event) => {
-                  event.stopPropagation();
+                onClick: (e) => {
+                  e.stopPropagation();
                   openMdModal(item.key);
                 },
                 title: "\uB9C8\uD06C\uB2E4\uC6B4 \uBCF4\uAE30",
@@ -20179,13 +20141,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               "span",
               {
                 className: `status-badge ${STATUS_CLS[item.status] || ""}`,
-                onClick: (event) => {
-                  event.stopPropagation();
+                onClick: (e) => {
+                  e.stopPropagation();
                   getStore().setStatusMenu({
                     key: item.key,
                     currentStatus: item.status || "",
-                    x: Math.min(event.clientX, window.innerWidth - 120),
-                    y: Math.min(event.clientY + 4, window.innerHeight - 160)
+                    x: Math.min(e.clientX, window.innerWidth - 120),
+                    y: Math.min(e.clientY + 4, window.innerHeight - 160)
                   });
                 },
                 children: settings.statusLabels?.[item.status] || item.status
@@ -20195,13 +20157,13 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
               {
                 className: "status-badge",
                 style: { background: "var(--surface-3)", color: "var(--text-3)", opacity: 0.6 },
-                onClick: (event) => {
-                  event.stopPropagation();
+                onClick: (e) => {
+                  e.stopPropagation();
                   getStore().setStatusMenu({
                     key: item.key,
                     currentStatus: "",
-                    x: Math.min(event.clientX, window.innerWidth - 120),
-                    y: Math.min(event.clientY + 4, window.innerHeight - 160)
+                    x: Math.min(e.clientX, window.innerWidth - 120),
+                    y: Math.min(e.clientY + 4, window.innerHeight - 160)
                   });
                 },
                 children: "\u2014"
@@ -20220,10 +20182,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   });
   var FeatureCard_default = FeatureCard;
 
-  // hooks/useMatrixActions.js
+  // hooks/useMatrixActions.ts
   var import_react14 = __toESM(require_react());
 
-  // hooks/useSelectionHandler.js
+  // hooks/useSelectionHandler.ts
   var import_react13 = __toESM(require_react());
   function useSelectionHandler(getKeys, setKeys) {
     const handleCardClick = (0, import_react13.useCallback)((e, key) => {
@@ -20242,7 +20204,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return { handleCardClick, clearSelection };
   }
 
-  // hooks/useMatrixActions.js
+  // hooks/useMatrixActions.ts
   function useMatrixActions() {
     const setMxSelectionKeys = useAppStore((s) => s.setMxSelectionKeys);
     const setIsDragging = useAppStore((s) => s.setIsDragging);
@@ -20288,7 +20250,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     };
   }
 
-  // components/MatrixView.jsx
+  // components/MatrixView.tsx
   var import_jsx_runtime9 = __toESM(require_jsx_runtime());
   function CountBadge({ value: value2 }) {
     return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "gcnt", children: value2 });
@@ -20347,7 +20309,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const selectedKeys = useAppStore((s) => s.mxSelectionKeys);
     const isDragging = useAppStore((s) => s.isDragging);
     const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useMatrixActions();
-    const { lockItem, unlockItem } = useDBSync();
+    const { lockItem: _lockItem, unlockItem: _unlockItem } = useDBSync();
     const { openEditModal, openAddInCell } = useModals();
     const { isEditor: editorOk } = useAuth();
     const [expandedCells, setExpandedCells] = (0, import_react15.useState)(/* @__PURE__ */ new Set());
@@ -20393,7 +20355,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       setDropCellKey(null);
       const { isDragging: dragging, mxSelectionKeys } = useAppStore.getState();
       if (!dragging) return;
-      moveItems(mxSelectionKeys, target);
+      moveItems(new Set(mxSelectionKeys), target);
     }, [moveItems]);
     const handleCanvasClick = (0, import_react15.useCallback)(() => {
       if (useAppStore.getState().mxSelectionKeys.length > 0) clearSelection();
@@ -20410,8 +20372,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "mscroll", onClick: handleCanvasClick, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("table", { className: "mtable", style: { minWidth: `${tableMinW}px` }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("thead", { className: "mx-thead-sticky", children: [
         /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("tr", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { className: "m-corner", rowSpan: "2", style: { width: `${catW}px`, minWidth: `${catW}px`, maxWidth: `${catW}px` } }),
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { className: "m-corner", rowSpan: "2", style: { width: `${subCatW}px`, minWidth: `${subCatW}px`, maxWidth: `${subCatW}px` } }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { className: "m-corner", rowSpan: 2, style: { width: `${catW}px`, minWidth: `${catW}px`, maxWidth: `${catW}px` } }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("th", { className: "m-corner", rowSpan: 2, style: { width: `${subCatW}px`, minWidth: `${subCatW}px`, maxWidth: `${subCatW}px` } }),
           structure.groups.map((group) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("th", { className: "m-ghd", colSpan: structure.gsubs[group].length, children: [
             group,
             showCount && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(CountBadge, { value: counts.groups[group] || 0 })
@@ -20504,10 +20466,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] }) });
   }
 
-  // components/BoardView.jsx
+  // components/BoardView.tsx
   var import_react17 = __toESM(require_react());
 
-  // hooks/useBoardActions.js
+  // hooks/useBoardActions.ts
   var import_react16 = __toESM(require_react());
   function useBoardActions() {
     const setBoardSelectionKeys = useAppStore((s) => s.setBoardSelectionKeys);
@@ -20561,7 +20523,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     };
   }
 
-  // components/BoardView.jsx
+  // components/BoardView.tsx
   var import_jsx_runtime10 = __toESM(require_jsx_runtime());
   function BoardActionBar({ boardSel, onMove, onClear }) {
     if (boardSel.length === 0) return null;
@@ -20605,12 +20567,12 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       setIsDragging(true);
       const keysToMove = boardSelectionKeys.includes(key) ? boardSelectionKeys : [key];
       setBoardSelectionKeys(keysToMove);
-      lockKeys(new Set(keysToMove));
+      lockKeys(keysToMove);
       e.dataTransfer.effectAllowed = "move";
     }, [lockKeys]);
     const onDragEnd = (0, import_react17.useCallback)(() => {
       const { boardSelectionKeys, setIsDragging } = useAppStore.getState();
-      unlockKeys(new Set(boardSelectionKeys));
+      unlockKeys(boardSelectionKeys);
       setIsDragging(false);
       setDragOverCol(null);
     }, [unlockKeys]);
@@ -20697,7 +20659,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] });
   }
 
-  // components/ListView.jsx
+  // components/ListView.tsx
   var import_react18 = __toESM(require_react());
   var import_jsx_runtime11 = __toESM(require_jsx_runtime());
   function highlightText2(value2, query) {
@@ -20749,7 +20711,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TextCell, { className: "desc-cell", title: raw, value: display, query }, columnKey);
       }
       default:
-        return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TextCell, { value: item[columnKey] || "", query }, columnKey);
+        return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TextCell, { value: item[columnKey] ?? "", query }, columnKey);
     }
   }
   function ListView() {
@@ -20769,8 +20731,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const rows = (0, import_react18.useMemo)(() => {
       const filtered = getFiltered(items, filters, searchQ);
       return filtered.slice().sort((a, b) => {
-        const va = a[sort.key] || "";
-        const vb = b[sort.key] || "";
+        const aR = a;
+        const bR = b;
+        const va = aR[sort.key] || "";
+        const vb = bR[sort.key] || "";
         const result = va < vb ? -1 : va > vb ? 1 : 0;
         return sort.dir === "asc" ? result : -result;
       });
@@ -21295,7 +21259,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] });
   }
 
-  // components/ErrorBoundary.jsx
+  // components/ErrorBoundary.tsx
   var import_react22 = __toESM(require_react());
   var import_jsx_runtime15 = __toESM(require_jsx_runtime());
   var ErrorBoundary = class extends import_react22.Component {
@@ -21399,7 +21363,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] });
   }
 
-  // components/UpdateBanner.jsx
+  // components/UpdateBanner.tsx
   var import_jsx_runtime17 = __toESM(require_jsx_runtime());
   function UpdateBanner() {
     const banner = useAppStore((s) => s.banner);
@@ -21446,10 +21410,10 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     );
   }
 
-  // components/ExportModal.jsx
+  // components/ExportModal.tsx
   var import_react23 = __toESM(require_react());
 
-  // app/io.js
+  // app/io.ts
   var getStore3 = () => useAppStore.getState();
   var notify2 = (msg, type = "success") => getStore3().notify?.(msg, type);
   function tsvEncode(val) {
@@ -21558,7 +21522,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const chunks = [];
     Array.from(document.styleSheets).forEach((sheet) => {
       try {
-        const rules = Array.from(sheet.cssRules || []).map((rule) => rule.cssText).join("\n");
+        const rules = Array.from(sheet.cssRules).map((rule) => rule.cssText).join("\n");
         if (rules) chunks.push(rules);
       } catch {
       }
@@ -21574,7 +21538,9 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
     const ss = store.settings;
     const c = getColors();
-    const gm = {}, cm2 = {};
+    const cMap = c;
+    const gm = {};
+    const cm2 = {};
     items.forEach((it) => {
       const g = it.group || "(\uBBF8\uBD84\uB958)", sg = it.subGroup || "", cat = it.category || "(\uBBF8\uBD84\uB958)", sc = it.subCategory || "";
       if (!gm[g]) gm[g] = {};
@@ -21592,7 +21558,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     const uniqSorted = (field, arr) => {
       const seen = /* @__PURE__ */ new Set(), r = [];
       arr.forEach((it) => {
-        const v = it[field] || "(\uBBF8\uBD84\uB958)";
+        const v = String(it[field] || "(\uBBF8\uBD84\uB958)");
         if (!seen.has(v)) {
           seen.add(v);
           r.push(v);
@@ -21611,7 +21577,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       if (!cellMap[ck]) cellMap[ck] = [];
       cellMap[ck].push(it);
     });
-    const gCnt = {}, prioCount = { high: 0, mid: 0, low: 0 };
+    const gCnt = {};
+    const prioCount = { high: 0, mid: 0, low: 0 };
     items.forEach((it) => {
       const g = it.group || "(\uBBF8\uBD84\uB958)";
       gCnt[g] = (gCnt[g] || 0) + 1;
@@ -21676,7 +21643,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
             doc += `<td class="m-cell" style="background:var(--bg)">`;
             ci.forEach((itm) => {
               const pk = getPK(itm.priority), pkC = pk[0].toUpperCase() + pk.slice(1);
-              const pHex = c[`p${pkC}`] || "#888", pBg = c[`p${pkC}Bg`] || "#eee";
+              const pHex = cMap[`p${pkC}`] || "#888";
+              const pBg = cMap[`p${pkC}Bg`] || "#eee";
               const cs2 = `${getPresetCSS(ss.priorityStyles[pk], pHex, pBg)};border-radius:${ss.cardRadius}px;margin-bottom:${ss.cardGap}px;padding:5px 7px`;
               const di = store.display;
               const ownerColor = getOwnerColor(itm.owner);
@@ -21720,7 +21688,8 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     notify2(`MD ZIP \uB0B4\uBCF4\uB0B4\uAE30 \uC644\uB8CC (${files.length}\uAC1C).`);
   }
   function impMdFiles(e) {
-    const fileList = e.target.files;
+    const input = e.target;
+    const fileList = input.files;
     if (!fileList || !fileList.length) return;
     const total = fileList.length;
     let done = 0, updated = 0, notFound = 0;
@@ -21729,7 +21698,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
       ((file) => {
         const r = new FileReader();
         r.onload = (ev) => {
-          const content = ev.target.result;
+          const content = ev.target?.result;
           const rawName = file.name.replace(/\.md$/i, "");
           const key = rawName.split("_")[0];
           const it = store.items.find((candidate) => candidate.key === key);
@@ -21741,7 +21710,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
           if (done === total) {
             useAppStore.getState().setItems([...store.items]);
             notify2(`MD \uAC00\uC838\uC624\uAE30 \uC644\uB8CC: \uC5C5\uB370\uC774\uD2B8 ${updated}\uAC1C${notFound ? " / \uBBF8\uB9E4\uD551 " + notFound + "\uAC1C" : ""}.`, "success");
-            e.target.value = "";
+            input.value = "";
           }
         };
         r.readAsText(file, "UTF-8");
@@ -21794,22 +21763,16 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         75,
         3,
         4,
-        /* signature */
         20,
         0,
-        /* version needed: 2.0 */
         0,
         8,
-        /* flags: bit11=UTF-8 */
         0,
         0,
-        /* compression: store */
         0,
         0,
-        /* mod time */
         0,
         0
-        /* mod date */
       ].concat(u32le(crc)).concat(u32le(sz)).concat(u32le(sz)).concat(u16le(nameBytes.length)).concat([0, 0]));
       const localEntry = concat([lh, nameBytes, dataBytes]);
       localHeaders.push(localEntry);
@@ -21818,43 +21781,19 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         75,
         1,
         2,
-        /* signature */
         20,
         0,
-        /* version made by: 2.0 */
         20,
         0,
-        /* version needed: 2.0 */
         0,
         8,
-        /* flags: UTF-8 */
         0,
         0,
-        /* compression: store */
-        0,
-        0,
-        /* mod time */
-        0,
-        0
-        /* mod date */
-      ].concat(u32le(crc)).concat(u32le(sz)).concat(u32le(sz)).concat(u16le(nameBytes.length)).concat([
-        0,
-        0,
-        /* extra field length */
-        0,
-        0,
-        /* file comment length */
-        0,
-        0,
-        /* disk number start */
-        0,
-        0,
-        /* internal attributes */
         0,
         0,
         0,
         0
-      ]).concat(u32le(offset)));
+      ].concat(u32le(crc)).concat(u32le(sz)).concat(u32le(sz)).concat(u16le(nameBytes.length)).concat([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).concat(u32le(offset)));
       centralDirs.push(concat([cd, nameBytes]));
       offset += localEntry.length;
     });
@@ -21867,7 +21806,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     return concat([...localHeaders, ...centralDirs, eocd]);
   }
 
-  // components/ExportModal.jsx
+  // components/ExportModal.tsx
   var import_jsx_runtime18 = __toESM(require_jsx_runtime());
   function ExportModal() {
     const activeModal = useAppStore((s) => s.activeModal);
@@ -21914,7 +21853,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
     ] }) });
   }
 
-  // components/ImportModal.jsx
+  // components/ImportModal.tsx
   var import_react24 = __toESM(require_react());
   var import_jsx_runtime19 = __toESM(require_jsx_runtime());
   var IMPORT_REQUIRED = ["key", "name"];
@@ -21927,7 +21866,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
   function readTextFile(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (event) => resolve(event.target.result);
+      reader.onload = (e) => resolve(e.target?.result);
       reader.onerror = reject;
       reader.readAsText(file, "UTF-8");
     });
@@ -21971,7 +21910,7 @@ tr.bulk-selected>td{background:var(--accent-l) !important}
         const text2 = await readTextFile(file);
         setRaw(text2);
         analyzeText(text2);
-      } catch (e) {
+      } catch {
         notify3("\uD30C\uC77C \uC77D\uAE30 \uC624\uB958", true);
       }
     };
@@ -22009,8 +21948,9 @@ ${sample}
         const itemsMap = new Map(curItems.map((it) => [it.key, it]));
         let added = 0;
         importedItems.forEach((it) => {
-          if (itemsMap.has(it.key)) {
-            itemsMap.set(it.key, { ...itemsMap.get(it.key), ...it });
+          const existing = itemsMap.get(it.key);
+          if (existing) {
+            itemsMap.set(it.key, { ...existing, ...it });
           } else {
             itemsMap.set(it.key, it);
             added++;
@@ -22051,7 +21991,7 @@ ${sample}
             style: { cursor: "pointer", padding: "30px", textAlign: "center", border: "2px dashed var(--border)", borderRadius: "12px", background: "var(--surface-2)" },
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("input", { type: "file", ref: csvFileRef, accept: ".csv,.tsv,.txt", style: { display: "none" }, onChange: (e) => {
-                loadFile(e.target.files[0]);
+                loadFile(e.target.files?.[0]);
                 e.target.value = "";
               } }),
               /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { style: { fontSize: "1.8rem" }, children: "\u{1F4C2}" }),
@@ -22122,12 +22062,14 @@ ${sample}
     ] }) });
   }
 
-  // components/LoginModal.jsx
+  // components/LoginModal.tsx
   var import_react25 = __toESM(require_react());
   var import_jsx_runtime20 = __toESM(require_jsx_runtime());
   function LoginModal() {
     const loginModal = useAppStore((s) => s.loginModal);
-    const { visible, role, name, password, error } = loginModal;
+    const { visible, role, error } = loginModal;
+    const name = loginModal.name;
+    const password = loginModal.password;
     const passwordRef = (0, import_react25.useRef)(null);
     if (!visible) return null;
     const updateField = (field, value2) => {
@@ -22149,7 +22091,7 @@ ${sample}
               className: "inp",
               id: "loginRoleSelect",
               value: role,
-              onChange: (event) => updateField("role", event.target.value),
+              onChange: (e) => updateField("role", e.target.value),
               style: { height: "38px", fontSize: ".82rem", paddingTop: 0, paddingBottom: 0 },
               children: [
                 /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("option", { value: "editor", children: "\uD3B8\uC9D1\uC790" }),
@@ -22166,11 +22108,11 @@ ${sample}
               className: "inp",
               id: "loginNameInp",
               value: name || "",
-              onChange: (event) => updateField("name", event.target.value),
+              onChange: (e) => updateField("name", e.target.value),
               placeholder: "\uB2C9\uB124\uC784",
               style: { height: "32px", fontSize: ".82rem" },
-              onKeyDown: (event) => {
-                if (event.key === "Enter") passwordRef.current?.focus();
+              onKeyDown: (e) => {
+                if (e.key === "Enter") passwordRef.current?.focus();
               }
             }
           )
@@ -22185,11 +22127,11 @@ ${sample}
               ref: passwordRef,
               type: "password",
               value: password || "",
-              onChange: (event) => updateField("password", event.target.value),
+              onChange: (e) => updateField("password", e.target.value),
               placeholder: "\uBE44\uBC00\uBC88\uD638",
               style: { height: "32px", fontSize: ".82rem" },
-              onKeyDown: (event) => {
-                if (event.key === "Enter") submitLogin();
+              onKeyDown: (e) => {
+                if (e.key === "Enter") submitLogin();
               }
             }
           )
@@ -22203,7 +22145,7 @@ ${sample}
     ] }) });
   }
 
-  // components/ShortcutsModal.jsx
+  // components/ShortcutsModal.tsx
   var import_jsx_runtime21 = __toESM(require_jsx_runtime());
   var SHORTCUTS = [
     { keys: ["N"], label: "\uAE30\uB2A5 \uCD94\uAC00" },
@@ -22238,7 +22180,7 @@ ${sample}
     ] }) });
   }
 
-  // components/DiffModal.jsx
+  // components/DiffModal.tsx
   var import_react26 = __toESM(require_react());
   var import_jsx_runtime22 = __toESM(require_jsx_runtime());
   var DIFF_FIELDS = ["name", "priority", "status", "owner", "group", "category"];
@@ -22263,20 +22205,19 @@ ${sample}
           rows.push({ key: item.key, type: "added" });
           return;
         }
-        const diffs = DIFF_FIELDS.filter((field) => (old[field] || "") !== (item[field] || "")).map((field) => ({
+        const itemR = item;
+        const oldR = old;
+        const diffs = DIFF_FIELDS.filter((field) => (oldR[field] || "") !== (itemR[field] || "")).map((field) => ({
           field,
-          before: old[field] || "\u2014",
-          after: item[field] || "\u2014"
+          before: String(oldR[field] || "\u2014"),
+          after: String(itemR[field] || "\u2014")
         }));
         if (diffs.length) rows.push({ key: item.key, type: "changed", diffs });
       });
       prev.forEach((item) => {
         if (!curMap[item.key]) rows.push({ key: item.key, type: "deleted", name: item.name });
       });
-      return {
-        empty: rows.length ? "" : "\uB9C8\uC9C0\uB9C9 \uC800\uC7A5 \uC774\uD6C4 \uBCC0\uACBD \uC5C6\uC74C",
-        rows
-      };
+      return { empty: rows.length ? "" : "\uB9C8\uC9C0\uB9C9 \uC800\uC7A5 \uC774\uD6C4 \uBCC0\uACBD \uC5C6\uC74C", rows };
     }, [items, undoStack]);
     const content = (0, import_react26.useMemo)(() => {
       if (activeModal !== "diffModal") return { empty: "", rows: [] };
@@ -22302,7 +22243,7 @@ ${sample}
               row.name,
               ")"
             ] }),
-            row.type === "changed" && row.diffs.map((diff) => {
+            row.type === "changed" && row.diffs?.map((diff) => {
               const isStatus = diff.field === "status";
               const labels = statusLabels || {};
               const beforeLbl = isStatus ? labels[diff.before] || diff.before : diff.before;
@@ -37654,7 +37595,7 @@ ${sample}
     ] }) });
   }
 
-  // components/OverlayMenus.jsx
+  // components/OverlayMenus.tsx
   var import_react31 = __toESM(require_react());
   var import_jsx_runtime27 = __toESM(require_jsx_runtime());
   function OverlayMenus() {
@@ -37682,13 +37623,10 @@ ${sample}
       setContextMenu(null);
       action();
     };
-    const openMd = (key) => {
-      openMdModal(key);
-    };
     return /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)(import_jsx_runtime27.Fragment, { children: [
       contextMenu && /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "ctx-menu", style: { left: contextMenu.x, top: contextMenu.y }, onClick: (e) => e.stopPropagation(), children: [
         /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { className: "ctx-item", onClick: () => runContextAction(() => openEditModal(contextMenu.key)), children: "\u270F\uFE0F \uD3B8\uC9D1" }),
-        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { className: "ctx-item", onClick: () => runContextAction(() => openMd(contextMenu.key)), children: "\u{1F4DD} \uB9C8\uD06C\uB2E4\uC6B4 \uC5F4\uAE30" }),
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { className: "ctx-item", onClick: () => runContextAction(() => openMdModal(contextMenu.key)), children: "\u{1F4DD} \uB9C8\uD06C\uB2E4\uC6B4 \uC5F4\uAE30" }),
         /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { className: "ctx-item", onClick: () => runContextAction(() => duplicateItem(contextMenu.key)), children: "\u29C9 \uBCF5\uC81C" }),
         /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "ctx-sep" }),
         /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { className: "ctx-item danger", onClick: () => runContextAction(() => quickToggleDel(contextMenu.key)), children: contextMenu.isDeleted ? "\u21A9 \uC0AD\uC81C \uBCF5\uC6D0" : "\u2715 \uC0AD\uC81C \uCC98\uB9AC" })
@@ -37722,7 +37660,7 @@ ${sample}
     ] });
   }
 
-  // components/AppOverlays.jsx
+  // components/AppOverlays.tsx
   var import_react32 = __toESM(require_react());
   var import_jsx_runtime28 = __toESM(require_jsx_runtime());
   function NotificationToast() {
@@ -37777,7 +37715,7 @@ ${sample}
             id: "userNamePopupInp",
             ref: inputRef,
             value: name,
-            onChange: (event) => setName(event.target.value),
+            onChange: (e) => setName(e.target.value),
             placeholder: "\uC774\uB984 \uC785\uB825",
             style: { marginBottom: "6px" },
             onKeyDown: (e) => {
@@ -37996,7 +37934,7 @@ ${sample}
     ] }) }) });
   }
 
-  // main.jsx
+  // main.tsx
   var import_jsx_runtime30 = __toESM(require_jsx_runtime());
   var rootEl = document.getElementById("root");
   (0, import_client.createRoot)(rootEl).render(/* @__PURE__ */ (0, import_jsx_runtime30.jsx)(App, {}));

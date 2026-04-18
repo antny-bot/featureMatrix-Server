@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import type { Item, MatrixTarget } from '../types/index.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { buildStruct, getFiltered, sortCell } from '../utils/itemUtils.js';
 import { getColors } from '../app/theme.js';
@@ -8,7 +9,27 @@ import { useMatrixActions } from '../hooks/useMatrixActions.js';
 import { useDBSync } from '../hooks/useDBSync.js';
 import { useModals } from '../hooks/useModals.js';
 
-function CountBadge({ value }) {
+interface MatrixStructure {
+  groups: string[];
+  gsubs: Record<string, string[]>;
+  cats: string[];
+  csubs: Record<string, string[]>;
+}
+
+interface MatrixCounts {
+  groups: Record<string, number>;
+  subGroups: Record<string, number>;
+  categories: Record<string, number>;
+  subCategories: Record<string, number>;
+}
+
+interface MatrixData {
+  cellMap: Record<string, Item[]>;
+  counts: MatrixCounts;
+  structure: MatrixStructure;
+}
+
+function CountBadge({ value }: { value: number }) {
   return <span className="gcnt">{value}</span>;
 }
 
@@ -35,10 +56,10 @@ function EmptyState() {
   );
 }
 
-function getMatrixData(items) {
-  const structure = buildStruct(items);
-  const cellMap = {};
-  const counts = {
+function getMatrixData(items: Item[]): MatrixData {
+  const structure = buildStruct(items) as MatrixStructure;
+  const cellMap: Record<string, Item[]> = {};
+  const counts: MatrixCounts = {
     groups: {},
     subGroups: {},
     categories: {},
@@ -46,17 +67,17 @@ function getMatrixData(items) {
   };
 
   items.forEach(item => {
-    const group = item.group || '(미분류)';
-    const subGroup = item.subGroup || '';
-    const category = item.category || '(미분류)';
+    const group       = item.group    || '(미분류)';
+    const subGroup    = item.subGroup || '';
+    const category    = item.category || '(미분류)';
     const subCategory = item.subCategory || '';
-    const cellKey = `${group}|||${subGroup}|||${category}|||${subCategory}`;
+    const cellKey     = `${group}|||${subGroup}|||${category}|||${subCategory}`;
     if (!cellMap[cellKey]) cellMap[cellKey] = [];
     cellMap[cellKey].push(item);
 
-    counts.groups[group] = (counts.groups[group] || 0) + 1;
-    counts.subGroups[`${group}|||${subGroup}`] = (counts.subGroups[`${group}|||${subGroup}`] || 0) + 1;
-    counts.categories[category] = (counts.categories[category] || 0) + 1;
+    counts.groups[group]                               = (counts.groups[group] || 0) + 1;
+    counts.subGroups[`${group}|||${subGroup}`]         = (counts.subGroups[`${group}|||${subGroup}`] || 0) + 1;
+    counts.categories[category]                        = (counts.categories[category] || 0) + 1;
     counts.subCategories[`${category}|||${subCategory}`] = (counts.subCategories[`${category}|||${subCategory}`] || 0) + 1;
   });
 
@@ -78,18 +99,18 @@ export default function MatrixView() {
   const isDragging   = useAppStore(s => s.isDragging);
 
   const { handleCardClick, clearSelection, moveItems, lockKeys, unlockKeys } = useMatrixActions();
-  const { lockItem, unlockItem } = useDBSync();
+  const { lockItem: _lockItem, unlockItem: _unlockItem } = useDBSync();
   const { openEditModal, openAddInCell } = useModals();
   const { isEditor: editorOk } = useAuth();
 
-  const [expandedCells, setExpandedCells] = useState(new Set());
-  const [dropCellKey, setDropCellKey] = useState(null);
+  const [expandedCells, setExpandedCells] = useState<Set<string>>(new Set());
+  const [dropCellKey, setDropCellKey] = useState<string | null>(null);
 
   useEffect(() => {
     setExpandedCells(new Set());
   }, [filters, searchQ, settings.cellFold]);
 
-  const toggleExpand = useCallback((e, cellKey, expand) => {
+  const toggleExpand = useCallback((e: React.MouseEvent, cellKey: string, expand: boolean) => {
     e.stopPropagation();
     setExpandedCells(prev => {
       const next = new Set(prev);
@@ -100,17 +121,15 @@ export default function MatrixView() {
   }, []);
 
   const filteredItems = useMemo(() => getFiltered(items, filters, searchQ), [items, filters, searchQ]);
-  const matrix = useMemo(() => getMatrixData(filteredItems), [filteredItems]);
-  const colors = getColors();
+  const matrix        = useMemo(() => getMatrixData(filteredItems), [filteredItems]);
+  const colors        = getColors();
 
-  // 드래그 핸들러
-  const onDragStart = useCallback((e, key) => {
+  const onDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, key: string) => {
     const { setIsDragging, setMxSelectionKeys, mxSelectionKeys, notify } = useAppStore.getState();
     setIsDragging(true);
     const keysToMove = mxSelectionKeys.includes(key) ? mxSelectionKeys : [key];
     setMxSelectionKeys(keysToMove);
 
-    // 타 사용자 락 확인
     const lockedOther = keysToMove.filter(k => editLocks[k] && editLocks[k].user !== (settings.userName || '익명'));
     if (lockedOther.length) {
       notify(`${editLocks[lockedOther[0]].user}님이 편집 중인 항목은 이동할 수 없습니다.`, 'warning');
@@ -130,12 +149,12 @@ export default function MatrixView() {
     setDropCellKey(null);
   }, [unlockKeys]);
 
-  const onDrop = useCallback((e, target) => {
+  const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>, target: MatrixTarget) => {
     e.preventDefault();
     setDropCellKey(null);
     const { isDragging: dragging, mxSelectionKeys } = useAppStore.getState();
     if (!dragging) return;
-    moveItems(mxSelectionKeys, target);
+    moveItems(new Set(mxSelectionKeys), target);
   }, [moveItems]);
 
   const handleCanvasClick = useCallback(() => {
@@ -147,19 +166,19 @@ export default function MatrixView() {
   }
 
   const { structure, cellMap, counts } = matrix;
-  const showCount = display.showCellCount;
+  const showCount    = display.showCellCount;
   const totalSubCols = structure.groups.reduce((acc, group) => acc + structure.gsubs[group].length, 0);
-  const catW = settings.catW || 12;
-  const subCatW = settings.subCatW || 72;
-  const tableMinW = catW + subCatW + totalSubCols * (settings.colW || 130);
+  const catW         = settings.catW    || 12;
+  const subCatW      = settings.subCatW || 72;
+  const tableMinW    = catW + subCatW + totalSubCols * (settings.colW || 130);
 
   return (
     <div className="mscroll" onClick={handleCanvasClick}>
       <table className="mtable" style={{ minWidth: `${tableMinW}px` }}>
         <thead className="mx-thead-sticky">
           <tr>
-            <th className="m-corner" rowSpan="2" style={{ width: `${catW}px`, minWidth: `${catW}px`, maxWidth: `${catW}px` }} />
-            <th className="m-corner" rowSpan="2" style={{ width: `${subCatW}px`, minWidth: `${subCatW}px`, maxWidth: `${subCatW}px` }} />
+            <th className="m-corner" rowSpan={2} style={{ width: `${catW}px`, minWidth: `${catW}px`, maxWidth: `${catW}px` }} />
+            <th className="m-corner" rowSpan={2} style={{ width: `${subCatW}px`, minWidth: `${subCatW}px`, maxWidth: `${subCatW}px` }} />
             {structure.groups.map(group => (
               <th className="m-ghd" colSpan={structure.gsubs[group].length} key={group}>
                 {group}
@@ -200,12 +219,12 @@ export default function MatrixView() {
                   </td>
                   {structure.groups.flatMap(group => (
                     structure.gsubs[group].map(subGroup => {
-                      const cellKey = `${group}|||${subGroup}|||${category}|||${subCategory}`;
+                      const cellKey   = `${group}|||${subGroup}|||${category}|||${subCategory}`;
                       const cellItems = cellMap[cellKey] || [];
-                      const fold = settings.cellFold;
+                      const fold      = settings.cellFold;
                       const isExpanded = expandedCells.has(cellKey) || !!searchQ || fold === 0;
-                      const visible = isExpanded ? cellItems : cellItems.slice(0, fold);
-                      const hidden = cellItems.length - visible.length;
+                      const visible   = isExpanded ? cellItems : cellItems.slice(0, fold);
+                      const hidden    = cellItems.length - visible.length;
                       const canQuickAdd = editorOk && display.showQuickAdd;
 
                       return (
@@ -216,7 +235,7 @@ export default function MatrixView() {
                           onDragEnter={() => setDropCellKey(cellKey)}
                           onDragOver={e => e.preventDefault()}
                           onDragLeave={e => {
-                            if (!e.currentTarget.contains(e.relatedTarget)) setDropCellKey(null);
+                            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropCellKey(null);
                           }}
                           onDrop={e => onDrop(e, { g: group, sg: subGroup, c: category, sc: subCategory })}
                         >
