@@ -54,7 +54,8 @@ const tsJsResolvePlugin = {
   },
 };
 
-async function build() {
+async function runBuild() {
+  const isWatch = process.argv.includes('--watch');
   let esbuild;
   try {
     esbuild = require('esbuild');
@@ -69,78 +70,79 @@ async function build() {
   const { version, gitHash, buildId } = getBuildMeta();
   console.log(`📦 버전: v${version}  빌드: ${buildId}  커밋: ${gitHash}`);
 
-  /* ── 1. esbuild 로 JS 번들 생성 ── */
   const entryJsx = path.join(ROOT, 'main.tsx');
   if (!fs.existsSync(entryJsx)) {
     console.error('React entry not found: src/main.tsx');
     process.exit(1);
   }
 
-  const bundleResult = await esbuild.build({
+  const buildOptions = {
     entryPoints: [entryJsx],
     bundle: true,
-    write: false,          // 메모리에서 결과 받기
-    format: 'iife',        // 즉시실행함수 래핑 → 전역 오염 없음
+    write: false,
+    format: 'iife',
     target: ['es2020'],
     treeShaking: true,
     logLevel: 'info',
-    jsx: 'automatic',            // React 17+ 자동 runtime (import 불필요)
+    jsx: 'automatic',
     jsxImportSource: 'react',
     define: {
-      // 빌드 시점 버전 정보 주입 (런타임에서 new Date() 사용 금지)
       __APP_VERSION__: JSON.stringify(version),
       __BUILD_ID__:    JSON.stringify(buildId),
       __GIT_HASH__:    JSON.stringify(gitHash),
-      // Zustand devtools 프로덕션 비활성화
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || (isWatch ? 'development' : 'production')),
     },
-    plugins: [tsJsResolvePlugin],
-  });
+    plugins: [
+      tsJsResolvePlugin,
+      {
+        name: 'post-build-plugin',
+        setup(build) {
+          build.onEnd(async (result) => {
+            if (result.errors.length > 0) return;
+            
+            try {
+              const jsBundle = result.outputFiles[0].text;
+              const safeScript = jsBundle.replace(/<\/script>/gi, '<\\/script>');
 
-  if (bundleResult.errors.length) {
-    console.error('❌ 번들링 오류:', bundleResult.errors);
-    process.exit(1);
-  }
+              const katexCss = fs.readFileSync(require.resolve('katex/dist/katex.min.css'), 'utf8');
+              const css  = `${katexCss}\n${fs.readFileSync(path.join(ROOT, 'style.css'), 'utf8')}`;
+              let html   = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
-  let jsBundle = bundleResult.outputFiles[0].text;
+              html = html.replace(
+                /<link\s+rel="stylesheet"\s+href="style\.css"[^>]*>/,
+                () => `<style>\n${css}\n</style>`
+              );
+              html = html.replace(
+                /<script\s+type="module"\s+src="(?:main\.jsx|app\/main\.js)"><\/script>/,
+                () => `<script>\n'use strict';\n${safeScript}\n</script>`
+              );
 
-  /* ── 2. </script> 이스케이프 ── */
-  const safeScript = jsBundle.replace(/<\/script>/gi, '<\\/script>');
+              const outPath = path.join(DIST, 'index.html');
+              fs.writeFileSync(outPath, html, 'utf8');
 
-  const fullScript = safeScript;
+              const serverStatic = path.join(ROOT, '..', 'featureMatrix-server', 'static');
+              if (fs.existsSync(serverStatic)) {
+                fs.copyFileSync(outPath, path.join(serverStatic, 'index.html'));
+              }
+              
+              console.log(`✅ [${new Date().toLocaleTimeString()}] 빌드 완료 및 복사 성공`);
+            } catch (err) {
+              console.error('❌ 포스트 빌드 처리 중 오류 발생:', err);
+            }
+          });
+        },
+      },
+    ],
+  };
 
-  /* ── 3. HTML 읽기 & 치환 ── */
-  const katexCss = fs.readFileSync(require.resolve('katex/dist/katex.min.css'), 'utf8');
-  const css  = `${katexCss}\n${fs.readFileSync(path.join(ROOT, 'style.css'), 'utf8')}`;
-  let html   = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-
-  html = html.replace(
-    /<link\s+rel="stylesheet"\s+href="style\.css"[^>]*>/,
-    () => `<style>\n${css}\n</style>`
-  );
-  // main.jsx(React) 또는 기존 main.js 플레이스홀더를 번들로 교체
-  html = html.replace(
-    /<script\s+type="module"\s+src="(?:main\.jsx|app\/main\.js)"><\/script>/,
-    () => `<script>\n'use strict';\n${fullScript}\n</script>`
-  );
-
-  /* ── 4. 출력 ── */
-  const outPath = path.join(DIST, 'index.html');
-  fs.writeFileSync(outPath, html, 'utf8');
-
-  const bundleKB = Math.round(fs.statSync(outPath).size / 1024);
-  console.log('✅ 빌드 완료! (esbuild)');
-  console.log(`   출력: dist/index.html (${bundleKB}KB)`);
-  console.log(`   버전: v${version} (build ${buildId})`);
-  console.log(`   서버 없이 더블클릭으로 실행 가능`);
-
-  /* ── 5. 서버 static 자동 복사 ── */
-  const serverStatic = path.join(ROOT, '..', 'featureMatrix-server', 'static');
-  if (fs.existsSync(serverStatic)) {
-    const dest = path.join(serverStatic, 'index.html');
-    fs.copyFileSync(outPath, dest);
-    console.log(`   서버 복사: featureMatrix-server/static/index.html`);
+  if (isWatch) {
+    console.log('🚀 Watch 모드 시작... 파일 수정 시 자동으로 빌드됩니다.');
+    const ctx = await esbuild.context(buildOptions);
+    await ctx.watch();
+  } else {
+    await esbuild.build(buildOptions);
+    console.log('✅ 단일 빌드 완료.');
   }
 }
 
-build().catch(e => { console.error(e); process.exit(1); });
+runBuild().catch(e => { console.error(e); process.exit(1); });

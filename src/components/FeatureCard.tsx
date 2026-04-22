@@ -112,7 +112,7 @@ const FeatureCard = forwardRef<HTMLDivElement, FeatureCardProps>(function Featur
   const editLocks = useAppStore(s => s.editLocks);
   const previews  = useAppStore(s => s.previews);
   const { openEditModal, openMdModal, duplicateItem } = useModals();
-  const { isEditor: editorOk } = useAuth();
+  const { isEditor: editorOk, isAdmin: adminOk } = useAuth();
 
   const pk = getPK(item.priority);
   const pkColorKey = pk[0].toUpperCase() + pk.slice(1);
@@ -179,7 +179,7 @@ const FeatureCard = forwardRef<HTMLDivElement, FeatureCardProps>(function Featur
       {canDrag && (
         <div className="card-actions" onClick={e => e.stopPropagation()}>
           <button className="card-act-btn" title="편집" onClick={() => openEditModal(item.key)}>✏</button>
-          <button className="card-act-btn" title="복제" onClick={() => duplicateItem(item.key)}>⧉</button>
+          {adminOk && <button className="card-act-btn" title="복제" onClick={() => duplicateItem(item.key)}>⧉</button>}
         </div>
       )}
       <div className="item-hd">
@@ -200,6 +200,9 @@ const FeatureCard = forwardRef<HTMLDivElement, FeatureCardProps>(function Featur
           item.status ? (
             <span
               className={`status-badge ${STATUS_CLS[item.status] || ''}`}
+              style={settings.statusColors?.[item.status]
+                ? { background: settings.statusColors[item.status].bg, color: settings.statusColors[item.status].col }
+                : undefined}
               onClick={e => {
                 e.stopPropagation();
                 getStore().setStatusMenu({

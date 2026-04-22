@@ -133,6 +133,7 @@ export default function BoardView() {
                 }}
                 onDrop={e => onDrop(e, colKey)}
               >
+                {colItems.length === 0 && <div className="board-col-empty" />}
                 {visible.map(item => (
                   <FeatureCard
                     key={item.key}

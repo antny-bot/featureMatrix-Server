@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { THEMES, PRESETS } from '../app/constants.js';
+import { THEMES, PRESETS, STATUS_OPTS } from '../app/constants.js';
 import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from '../hooks/useDBSync.js';
 import { applyVars, getColors, getPresetCSS, setCustomColor } from '../app/theme.js';
@@ -168,6 +168,22 @@ export default function SettingsDesignPanel() {
     handleSave();
   };
 
+  const setStatusColor = (status: string, field: 'bg' | 'col', value: string) => {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return;
+    const { setSettings, settings: s } = useAppStore.getState();
+    const prev = s.statusColors?.[status] || { bg: '#eeeeee', col: '#333333' };
+    setSettings({ ...s, statusColors: { ...s.statusColors, [status]: { ...prev, [field]: value } } });
+    handleSave();
+  };
+
+  const resetStatusColor = (status: string) => {
+    const { setSettings, settings: s } = useAppStore.getState();
+    const next = { ...s.statusColors };
+    delete next[status];
+    setSettings({ ...s, statusColors: next });
+    handleSave();
+  };
+
   const adjustBorderWidth = (delta: number) => {
     const next = Math.max(1, Math.min(4, ((colors.mxBW as number) || 1) + delta));
     setCustomColor('mxBW', next);
@@ -248,6 +264,45 @@ export default function SettingsDesignPanel() {
           ))}
         </div>
       </div>
+
+      <div className="sec-ttl" style={{ marginTop: '16px' }}>상태 배지 색상</div>
+      <div style={{ fontSize: '.72rem', color: 'var(--text-3)', marginBottom: '8px' }}>
+        비워두면 기본 색상을 사용합니다.
+      </div>
+      {(STATUS_OPTS as string[]).map(st => {
+        const custom = settings.statusColors?.[st];
+        const label  = settings.statusLabels?.[st] || st;
+        return (
+          <div key={st} className="crow" style={{ alignItems: 'center', gap: '8px' }}>
+            <span className="crow-lbl" style={{ minWidth: '60px' }}>{label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <input type="color"
+                className="cpick"
+                value={custom?.bg || '#eeeeee'}
+                title="배경색"
+                onChange={e => setStatusColor(st, 'bg', e.target.value)}
+              />
+              <input type="color"
+                className="cpick"
+                value={custom?.col || '#333333'}
+                title="텍스트색"
+                onChange={e => setStatusColor(st, 'col', e.target.value)}
+              />
+              {custom && (
+                <button className="btn btn-g btn-sm" onClick={() => resetStatusColor(st)} title="초기화">↺</button>
+              )}
+              {custom && (
+                <span
+                  className="status-badge"
+                  style={{ background: custom.bg, color: custom.col, marginLeft: '4px' }}
+                >
+                  {label}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

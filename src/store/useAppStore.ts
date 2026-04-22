@@ -50,6 +50,7 @@ const initialState = {
     pollInterval: 60,
     userName: '',
     statusLabels: { ...STATUS_LBL } as Record<string, string>,
+    statusColors: {} as Record<string, { bg: string; col: string }>,
   } as AppSettings,
   sort: { key: 'key', dir: 'asc' as 'asc' | 'desc' },
   mxSelectionKeys: [] as string[],

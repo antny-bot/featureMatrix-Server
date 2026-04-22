@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node build-esbuild.js"
+    "build": "node build-esbuild.js",
+    "dev": "node build-esbuild.js --watch"
   },
   "devDependencies": {
     "esbuild": "^0.25.0"

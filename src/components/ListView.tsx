@@ -27,9 +27,17 @@ function PriorityPill({ priority }: { priority: string }) {
   return <span className={`pp ${cls}`}>{priority}</span>;
 }
 
-function StatusBadge({ status, labels }: { status?: string; labels?: Record<string, string> }) {
+function StatusBadge({ status, labels, colors }: { status?: string; labels?: Record<string, string>; colors?: Record<string, { bg: string; col: string }> }) {
   if (!status) return null;
-  return <span className={`status-badge ${STATUS_CLS[status] || ''}`}>{labels?.[status] || status}</span>;
+  const custom = colors?.[status];
+  return (
+    <span
+      className={`status-badge ${STATUS_CLS[status] || ''}`}
+      style={custom ? { background: custom.bg, color: custom.col } : undefined}
+    >
+      {labels?.[status] || status}
+    </span>
+  );
 }
 
 function TextCell({ value, query, className, title }: { value: unknown; query: string; className?: string; title?: string }) {
@@ -46,7 +54,7 @@ function ListCell({ item, columnKey, query }: { item: Item; columnKey: string; q
       return <td key="priority"><PriorityPill priority={item.priority} /></td>;
     case 'status': {
       const settings = useAppStore.getState().settings;
-      return <td key="status"><StatusBadge status={item.status} labels={settings.statusLabels} /></td>;
+      return <td key="status"><StatusBadge status={item.status} labels={settings.statusLabels} colors={settings.statusColors} /></td>;
     }
     case 'isImportant':
       return <td key="isImportant" style={{ textAlign: 'center' }}>{item.isImportant === 'Y' && <span style={{ color: 'var(--accent)' }}>★</span>}</td>;

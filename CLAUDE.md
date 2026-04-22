@@ -13,7 +13,11 @@
 
 ## Tech Stack & Style
 - **Framework**: Flask (Python)
-- **Frontend**: HTML (with Tailwind CSS preferred)
+- **Frontend**: React + TypeScript (`src/` 디렉토리), CSS 변수 기반 자체 스타일 시스템 (`src/style.css`)
+- **Tailwind CSS 정책**:
+  - 기존 컴포넌트 스타일은 `style.css`의 CSS 변수/클래스 체계를 그대로 유지한다 (전면 교체 금지)
+  - **신규 추가 컴포넌트** 또는 **기존 컴포넌트의 신규 UI 영역**에만 Tailwind 유틸리티 클래스를 점진적으로 적용한다
+  - Tailwind 클래스와 기존 CSS 클래스를 같은 요소에 혼용할 때는 충돌 여부를 확인할 것
 - **Code Style**:
   - Use clear, descriptive function and variable names.
   - Follow PEP 8 guidelines for Python code.
@@ -22,7 +26,7 @@
 ## Frontend Build System
 - **절대로 `featureMatrix-server/static/index.html`을 직접 수정하지 말 것** — 이 파일은 빌드 결과물이다.
 - 프론트엔드 소스는 `src/` 디렉토리에 있다:
-  - JS 모듈: `src/app/*.js`
+  - TS/TSX 모듈: `src/app/*.ts`, `src/components/*.tsx`, `src/hooks/*.ts` 등
   - CSS: `src/style.css`
   - HTML 템플릿: `src/index.html`
 - 빌드 명령: `cd src && npm run build`

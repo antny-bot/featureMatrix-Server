@@ -566,6 +566,8 @@ function HeatmapGrid({ data, hmView, settings }: {
     if (heatmap[key] > max) max = heatmap[key];
   });
 
+  let stagger = 0;
+
   return (
     <div className="db-hm-wrap">
       <div className="db-hm-grid" style={{ gridTemplateColumns: `auto repeat(${data.groups.length},1fr)` }}>
@@ -583,10 +585,11 @@ function HeatmapGrid({ data, hmView, settings }: {
             {data.groups.map(group => {
               const count = heatmap[`${group}||${row}`] || 0;
               const opacity = max > 0 ? (count === 0 ? 0.06 : 0.15 + count / max * 0.85) : 0.06;
+              const s = stagger++;
               return (
                 <div
                   className={`db-hm-cell${hmView === 'status' ? ` db-hm-cell--status-${row}` : ''}`}
-                  style={{ '--op': opacity.toFixed(2) } as React.CSSProperties}
+                  style={{ '--op': opacity.toFixed(2), '--stagger': s } as React.CSSProperties}
                   title={`${group} × ${hmView === 'status' ? (settings.statusLabels?.[row] || row) : row}: ${count}개`}
                   key={`${group}:${row}`}
                 >

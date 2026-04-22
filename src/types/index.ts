@@ -102,6 +102,7 @@ export interface AppSettings {
   pollInterval: number;
   userName: string;
   statusLabels: Record<string, string>;
+  statusColors: Record<string, { bg: string; col: string }>;
   [key: string]: unknown;
 }
 
