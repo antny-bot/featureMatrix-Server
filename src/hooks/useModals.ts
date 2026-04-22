@@ -4,10 +4,12 @@ import { useAppStore } from '../store/useAppStore.js';
 import { useDBSync } from './useDBSync.js';
 import { usePersistItems } from './usePersistItems.js';
 import { genKey, findItem, pushChangeLog, sanitizeFilename, dlBlob } from '../utils/itemUtils.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useModals() {
   const { lockItem, unlockItem, logActivity } = useDBSync();
   const { persistItems } = usePersistItems();
+  const { isEditor, isAdmin } = useAuth();
 
   const openModal = useCallback((id: string) => {
     useAppStore.getState().setActiveModal(id);
@@ -30,10 +32,17 @@ export function useModals() {
     const { setEditKey, openEditModal: open, items, settings } = useAppStore.getState();
     const item = findItem(key, items);
     if (!item) return;
-    setEditKey(key);
-    open('edit', key, { ...item });
-    if (settings.storageMode === 'server') lockItem(key);
-  }, [lockItem]);
+    const canEdit = isEditor || isAdmin;
+    if (canEdit) {
+      setEditKey(key);
+      open('edit', key, { ...item });
+      if (settings.storageMode === 'server') lockItem(key);
+    } else {
+      // 익명 사용자는 읽기 전용으로 열기
+      setEditKey(null);
+      open('detail', key, { ...item });
+    }
+  }, [lockItem, isEditor, isAdmin]);
 
   const openAddModal = useCallback((defaults: Partial<Item> = {}) => {
     const { setEditKey, openEditModal: open } = useAppStore.getState();
@@ -61,11 +70,17 @@ export function useModals() {
     const { setEditKey, openEditModal: open, items, settings } = useAppStore.getState();
     const item = findItem(key, items);
     if (!item) return;
+    const canEdit = isEditor || isAdmin;
     const nextMdMode = item.mdContent?.trim() ? 'preview' : 'edit';
-    setEditKey(key);
-    open('edit', key, { ...item }, 'md', nextMdMode);
-    if (settings.storageMode === 'server') lockItem(key);
-  }, [lockItem]);
+    if (canEdit) {
+      setEditKey(key);
+      open('edit', key, { ...item }, 'md', nextMdMode);
+      if (settings.storageMode === 'server') lockItem(key);
+    } else {
+      setEditKey(null);
+      open('detail', key, { ...item }, 'md', 'preview');
+    }
+  }, [lockItem, isEditor, isAdmin]);
 
   const saveItem = useCallback(async (form: Item) => {
     const { notify, pushUndo, items, editKey, setItems, setEditKey, closeEditModal: close } = useAppStore.getState();

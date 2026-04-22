@@ -44,6 +44,9 @@ socket_clients = {}  # { sid: client_id }
 active_users = {}  # { client_id: { user, joinTime, sids } }
 active_users_lock = threading.Lock()
 metrics_lock = threading.Lock()
+pending_disconnects = {}  # { client_id: {'timer': Timer, 'user': str, 'locks': [key]} }
+pending_disconnects_lock = threading.Lock()
+edit_previews = {}  # { key: {'user': str, 'preview': dict} } — 신규 접속자 동기화용
 
 # ── 토큰 파일 저장/로드 (관리자 토큰만 영속) ──────────────
 def load_tokens():
@@ -560,41 +563,75 @@ def _register_socketio_events():
 
     @socketio.on('connect')
     def on_connect():
-        """새 클라이언트 연결 시 현재 락 상태 전송"""
+        """새 클라이언트 연결 시 현재 락 + 편집 미리보기 상태 전송"""
         emit('locks_sync', {'locks': edit_locks})
+        if edit_previews:
+            emit('previews_sync', {'previews': edit_previews})
 
-    @socketio.on('disconnect')
-    def on_disconnect():
-        """연결 끊김 시 해당 사용자의 모든 락 자동 해제 및 접속자 목록 갱신"""
-        from flask import request as req
-        sid  = req.sid
-        user = socket_users.pop(sid, None)
-        client_id = socket_clients.pop(sid, None)
-        removed = False
-        with active_users_lock:
-            if client_id and client_id in active_users:
-                sids = active_users[client_id].setdefault('sids', set())
-                sids.discard(sid)
-                if not sids:
-                    del active_users[client_id]
-                    removed = True
+    def _release_locks_for_client(client_id, user):
+        """client_id 의 pending disconnect 타이머가 만료되면 락을 해제."""
+        with pending_disconnects_lock:
+            pending_disconnects.pop(client_id, None)
         if user:
             released = [k for k, v in list(edit_locks.items()) if v['user'] == user]
             for k in released:
                 del edit_locks[k]
                 socketio.emit('item_unlocked', {'key': k})
+        removed = False
+        with active_users_lock:
+            if client_id in active_users:
+                del active_users[client_id]
+                removed = True
         if removed:
             broadcast_user_list()
 
+    @socketio.on('disconnect')
+    def on_disconnect():
+        """연결 끊김 시 30초 유예 후 락 해제 (재연결 시 취소)"""
+        from flask import request as req
+        sid  = req.sid
+        user = socket_users.pop(sid, None)
+        client_id = socket_clients.pop(sid, None)
+        with active_users_lock:
+            if client_id and client_id in active_users:
+                sids = active_users[client_id].setdefault('sids', set())
+                sids.discard(sid)
+                # sids가 비어도 바로 삭제하지 않고 타이머에 위임
+        if client_id:
+            user_locks = [k for k, v in list(edit_locks.items()) if v.get('user') == user]
+            if user_locks:
+                # 30초 유예: 동일 client_id 재연결 시 취소
+                with pending_disconnects_lock:
+                    existing = pending_disconnects.get(client_id)
+                    if existing:
+                        existing['timer'].cancel()
+                    t = threading.Timer(30.0, _release_locks_for_client, args=(client_id, user))
+                    pending_disconnects[client_id] = {'timer': t, 'user': user, 'locks': user_locks}
+                    t.start()
+            else:
+                # 보유 락이 없으면 바로 정리
+                removed = False
+                with active_users_lock:
+                    if client_id in active_users and not active_users[client_id].get('sids'):
+                        del active_users[client_id]
+                        removed = True
+                if removed:
+                    broadcast_user_list()
+
     @socketio.on('register_user')
     def on_register_user(data):
-        """클라이언트가 자신의 사용자명을 등록"""
+        """클라이언트가 자신의 사용자명을 등록 (재연결 시 pending disconnect 취소)"""
         from flask import request as req
         data = data or {}
         user = (data.get('user') or '익명').strip() or '익명'
         client_id = (data.get('clientId') or req.sid).strip() or req.sid
         socket_users[req.sid] = user
         socket_clients[req.sid] = client_id
+        # 같은 client_id 로 재연결: 대기 중인 타이머 취소 (락 유지)
+        with pending_disconnects_lock:
+            pending = pending_disconnects.pop(client_id, None)
+        if pending:
+            pending['timer'].cancel()
         with active_users_lock:
             current = active_users.get(client_id)
             if current:
@@ -606,6 +643,8 @@ def _register_socketio_events():
                     'joinTime': int(time.time() * 1000),
                     'sids': {req.sid},
                 }
+        # 재연결 후 현재 락 상태를 해당 클라이언트에 전송
+        emit('locks_sync', {'locks': edit_locks})
         broadcast_user_list()
 
     @socketio.on('unregister_user')
@@ -632,7 +671,7 @@ def _register_socketio_events():
 
     @socketio.on('lock_item')
     def on_lock_item(data):
-        """항목 Lock 요청 처리"""
+        """항목 Lock 요청 처리 (1 user = 1 lock 제한)"""
         data = data or {}
         key  = data.get('key', '')
         user = data.get('user', '익명')
@@ -643,6 +682,11 @@ def _register_socketio_events():
         if existing and existing['user'] != user and (now - existing['ts']) < LOCK_TIMEOUT_MS:
             emit('lock_denied', {'key': key, 'lockedBy': existing['user']})
             return
+        # 같은 사용자가 이미 다른 item을 잠갔다면 먼저 해제
+        prev_locks = [k for k, v in list(edit_locks.items()) if v['user'] == user and k != key]
+        for prev_key in prev_locks:
+            del edit_locks[prev_key]
+            socketio.emit('item_unlocked', {'key': prev_key})
         edit_locks[key] = {'user': user, 'ts': now}
         socketio.emit('item_locked', {'key': key, 'lockedBy': user, 'lockedAt': now})
 
@@ -654,6 +698,7 @@ def _register_socketio_events():
         user = data.get('user', '익명')
         if key in edit_locks and edit_locks[key]['user'] == user:
             del edit_locks[key]
+            edit_previews.pop(key, None)
             socketio.emit('item_unlocked', {'key': key})
 
     @socketio.on('force_unlock')
@@ -673,8 +718,13 @@ def _register_socketio_events():
 
     @socketio.on('editing_preview')
     def on_editing_preview(data):
-        """편집 미리보기 전체 브로드캐스트 (발신자 포함)"""
+        """편집 미리보기 서버 저장 + 브로드캐스트"""
         from flask import request as req
+        key  = (data or {}).get('key', '')
+        user = (data or {}).get('user', '')
+        preview = (data or {}).get('preview', {})
+        if key:
+            edit_previews[key] = {'user': user, 'preview': preview}
         socketio.emit('editing_preview', data, skip_sid=req.sid)
 
     @socketio.on('save_item')

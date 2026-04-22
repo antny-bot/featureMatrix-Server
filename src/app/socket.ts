@@ -129,10 +129,24 @@ function _registerListeners(): void {
     setStore({ wsStatus: 'connected' });
     _syncActiveUser();
     _flushQueue();
+    // 재연결 후 편집 중인 item이 있으면 lock 재요청
+    const editKey = getStore().editKey;
+    if (editKey) {
+      emitLock(editKey, _currentUserName());
+    }
   });
 
   _socket.on('locks_sync', ({ locks }: { locks: Record<string, { user: string; ts: number }> }) => {
     _setAllLocks(locks);
+  });
+
+  _socket.on('previews_sync', ({ previews }: { previews: Record<string, { user: string; preview: Record<string, unknown> }> }) => {
+    const store = getStore();
+    const merged = { ...(store.previews || {}) };
+    for (const [key, data] of Object.entries(previews)) {
+      if (!merged[key]) merged[key] = data;
+    }
+    setStore({ previews: merged });
   });
 
   _socket.on('item_locked', ({ key, lockedBy, lockedAt }: { key: string; lockedBy: string; lockedAt?: number }) => {

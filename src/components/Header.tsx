@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
 import { useAppStore } from '../store/useAppStore.js';
@@ -165,10 +165,19 @@ export default function Header() {
       ? { label: 'Editor', icon: ICON_EDITOR, active: true }
       : { label: 'Login', icon: ICON_LOGIN, active: false };
 
-  // 세션 만료 시간 표시
-  const sessionMs = (isAdmin || isEditor) ? getSessionTimeRemaining() : 0;
+  // 세션 만료 시간 표시 — 1분마다 갱신
+  const [sessionMs, setSessionMs] = useState<number>(() =>
+    (isAdmin || isEditor) ? getSessionTimeRemaining() : 0
+  );
+  useEffect(() => {
+    if (!isAdmin && !isEditor) { setSessionMs(0); return; }
+    setSessionMs(getSessionTimeRemaining());
+    const id = setInterval(() => setSessionMs(getSessionTimeRemaining()), 60_000);
+    return () => clearInterval(id);
+  }, [isAdmin, isEditor, getSessionTimeRemaining]);
   const sessionLabel = sessionMs > 0 ? `세션 만료까지 ${formatSessionRemaining(sessionMs)} 남음` : '';
   const sessionWarn  = sessionMs > 0 && sessionMs <= 600_000; // 10분 이하
+  const sessionShort = sessionMs > 0 ? formatSessionRemaining(sessionMs) : '';
 
   // 서버 상태 표시
   const isOfflineMode = storageMode === 'local';
@@ -243,6 +252,11 @@ export default function Header() {
             style={sessionWarn ? { color: '#d97706' } : undefined}
           >
             {loginState.icon}<span>{loginState.label}</span>
+            {sessionShort && (
+              <span className={`session-timer${sessionWarn ? ' session-timer--warn' : ''}`}>
+                {sessionShort}
+              </span>
+            )}
           </button>
         )}
 

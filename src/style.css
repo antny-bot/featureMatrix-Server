@@ -129,6 +129,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','나눔고
 .hdr-btn:hover{color:var(--text-2)}
 .hdr-login--on{color:var(--accent)}
 .hdr-role{color:var(--accent)}
+.session-timer{font-size:.5rem;font-weight:600;opacity:.75;letter-spacing:.01em;color:var(--text-3)}
+.session-timer--warn{color:#d97706;opacity:1}
 .hdr-logout{color:var(--text-3)}
 .hdr-logout:hover{color:var(--danger);border-color:var(--danger)}
 .active-users{display:flex;align-items:center;padding:0 4px 0 2px}

@@ -72,6 +72,7 @@ export default function ItemModal() {
   const [showHardDel,    setShowHardDel]    = useState<boolean>(false);
   const [modalMode,      setModalMode]      = useState<string>('add');
   const [form,           setForm]           = useState<ItemForm>(EMPTY_FORM);
+  const [dirty,          setDirty]          = useState<boolean>(false);
 
   const previewRef      = useRef<HTMLDivElement>(null);
   const mdFileRef       = useRef<HTMLInputElement>(null);
@@ -114,6 +115,7 @@ export default function ItemModal() {
   }, [editKey, settings]);
 
   const updateField = useCallback((field: keyof ItemForm, value: string) => {
+    setDirty(true);
     setForm(current => {
       const next = { ...current, [field]: value };
       formRef.current = next;
@@ -144,7 +146,8 @@ export default function ItemModal() {
     setMdMode(content.trim() ? 'preview' : 'edit');
   }, []);
 
-  /* KaTeX 렌더링 — paint 이전 실행으로 dangerouslySetInnerHTML 업데이트와 타이밍 충돌 방지 */
+  /* KaTeX 렌더링 — mdPreview 변경 또는 모달 가시성 변경 시 재실행
+     (같은 내용으로 재오픈 시 mdPreview 값이 동일해 dependency가 변하지 않는 경우 대비) */
   useLayoutEffect(() => {
     if (!previewRef.current) return;
     previewRef.current.querySelectorAll<HTMLElement>('[data-math]').forEach(el => {
@@ -157,7 +160,7 @@ export default function ItemModal() {
         el.textContent = el.dataset['math'] ?? '';
       }
     });
-  }, [mdPreview]);
+  }, [mdPreview, editModal.visible, editModal.key]);
 
   /* 전역 스토어 상태 동기화 */
   useEffect(() => {
@@ -174,6 +177,7 @@ export default function ItemModal() {
     formRef.current = mergedForm;
     setMdPreview(parseMd(mergedForm.mdContent || ''));
     updateMdStats(mergedForm.mdContent || '');
+    setDirty(false);
   }, [editModal]);
 
   const applyMdEdit = useCallback((editor: (value: string, start: number, end: number) => EditorResult) => {
@@ -255,13 +259,18 @@ export default function ItemModal() {
 
   if (!editModal.visible) return null;
 
+  const handleClose = () => {
+    if (dirty && modalMode === 'edit' && !confirm('저장하지 않은 변경사항이 있습니다. 닫으시겠습니까?')) return;
+    closeEditModal();
+  };
+
   return (
     <div className="ov on" id="editModal">
       <div className="mbox" style={{ width: '760px', maxHeight: '92vh' }}>
 
       <div className="mhd" style={{ paddingBottom: 0, borderBottom: 'none' }}>
         <span className="mtitle">{title}</span>
-        <button className="mclose" onClick={closeEditModal}>✕</button>
+        <button className="mclose" onClick={handleClose}>✕</button>
       </div>
 
       <div className="stab-row" style={{ padding: '0 20px' }}>
@@ -417,7 +426,7 @@ export default function ItemModal() {
             {showHardDel && (
               <button className="btn btn-d btn-sm" onClick={() => hardDelete(form.key)} style={{ marginRight: 'auto' }}>완전 삭제</button>
             )}
-            <button className="btn btn-g btn-sm" onClick={closeEditModal}>취소</button>
+            <button className="btn btn-g btn-sm" onClick={handleClose}>취소</button>
             <button className="btn btn-p btn-sm" onClick={() => saveItem(form)}>저장</button>
           </>
         )}

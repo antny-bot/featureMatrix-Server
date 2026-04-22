@@ -4,6 +4,7 @@ import {
 } from '../app/constants.js';
 import { getStore } from '../store/useAppStore.js';
 import type { Item, ChangeLogEntry, AppSettings, Filters, ColumnConfig, SectionKey } from '../types/index.js';
+import katex from 'katex';
 
 /**
  * 아이템 배열에 스키마 마이그레이션을 순차 적용.
@@ -386,4 +387,17 @@ export function buildStruct(items?: Item[], settings?: Partial<AppSettings>): St
 export function getVisibleCols(userCols?: ColumnConfig[]): ColumnConfig[] {
   const cols = userCols || getStore().settings.listColumns || (DEFAULT_LIST_COLS as ColumnConfig[]);
   return cols.filter((c: ColumnConfig) => c.visible);
+}
+
+export function renderKatex(container: HTMLElement): void {
+  container.querySelectorAll<HTMLElement>('[data-math]').forEach(el => {
+    try {
+      el.innerHTML = katex.renderToString(el.dataset['math'] ?? '', {
+        displayMode: el.dataset['disp'] !== undefined,
+        throwOnError: false,
+      });
+    } catch {
+      el.textContent = el.dataset['math'] ?? '';
+    }
+  });
 }
